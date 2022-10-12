@@ -42,7 +42,7 @@ class AffinityVAE(nn.Module):
                 f"`filters` must be a tuple of length 4, got: {len(filters)}."
             )
 
-        if ndim not in SpatialDims:
+        if ndim not in SpatialDims._value2member_map_:
             raise ValueError(
                 f"`input_shape` must be have 2 or 3 dimensions, got: {ndim}."
             )
