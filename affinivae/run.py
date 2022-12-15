@@ -11,7 +11,6 @@ from train import run_train, run_validate
 from evaluate import run_evaluate
 from vis import merge, vis_latentembed_plot, vis_loss_plot, vis_recon_plot, vis_interp_grid, \
     vis_single_transversals, vis_single_transversals_pose
-# from similarity import create_lookup_tensor, create_scores_df
 
 
 @click.command(name="Pokemino Trainer")
