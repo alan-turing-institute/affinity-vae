@@ -7,7 +7,7 @@ class AffinityLoss:
 
     Parameters
     ----------
-    lookup : torch.Tensor (M, M)
+    lookup : np.ndarray (M, M)
         A square symmetric matrix where each column and row is the index of an
         object from the training set, consisting of M different objects. The
         value at (i, j) is a scalar value encoding the shape similarity between

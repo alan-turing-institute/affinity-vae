@@ -1,19 +1,24 @@
 import click
+import os
+
+# numerical libs
 import numpy as np
 import pandas as pd
-import os
+
+# deep learning libs
 import torch
 from torch.utils.data import DataLoader, Subset
 
-from model import VariationalAutoencoder
+# local imports
 from data import ProteinDataset
+from model_b import AffinityVAE
 from train import run_train, run_validate
 from evaluate import run_evaluate
 from vis import merge, vis_latentembed_plot, vis_loss_plot, vis_recon_plot, vis_interp_grid, \
-    vis_single_transversals, vis_single_transversals_pose
+    vis_single_transversals, vis_single_transversals_pose, vis_accuracy
 
 
-@click.command(name="Pokemino Trainer")
+@click.command(name="Affinity Trainer")
 @click.option('--datapath', '-d', type=str, default=None, required=True, help="Path to training data.")
 @click.option('--limit', '-lm', type=int, default=None,
               help="Limit the number of samples loaded (default None).")
@@ -34,8 +39,6 @@ from vis import merge, vis_latentembed_plot, vis_loss_plot, vis_recon_plot, vis_
                                                                 "(default every 10 epochs).")
 @click.option('--freq_sta', '-fs', type=int, default=10, help="Frequency at which to save state "
                                                               "(default every 10 epochs).")
-@click.option('--freq_lat', '-fs', type=int, default=10, help="Frequency at which to visualise the latent space "
-                                                              "(default every 10 epochs).")
 @click.option('--freq_emb', '-fe', type=int, default=10, help="Frequency at which to visualise the latent "
                                                               "space embedding (default every 10 epochs).")
 @click.option('--freq_rec', '-fr', type=int, default=10, help="Frequency at which to visualise reconstructions "
@@ -49,8 +52,6 @@ from vis import merge, vis_latentembed_plot, vis_loss_plot, vis_recon_plot, vis_
 @click.option('--freq_acc', '-fac', type=int, default=10, help="Frequency at which to visualise confusion matrix.")
 @click.option('--freq_all', '-fa', type=int, default=None, help="Frequency at which to visualise all plots except loss "
               "(default every 10 epochs).")
-@click.option('--vis_lat', '-vs', type=bool, default=False, is_flag=True,
-              help="Visualise latent space (or it's first two dimensions).")
 @click.option('--vis_emb', '-ve', type=bool, default=False, is_flag=True,
               help="Visualise latent space embedding.")
 @click.option('--vis_rec', '-vr', type=bool, default=False, is_flag=True,
@@ -69,28 +70,28 @@ from vis import merge, vis_latentembed_plot, vis_loss_plot, vis_recon_plot, vis_
 def run(datapath, limit, split, epochs, batch, learning,
         depth, channels, latent_dims, loss_fn, beta,
         pose, pose_dims,  gamma,
-        freq_eval, freq_sta, freq_lat, freq_emb, freq_rec, freq_int, freq_dis, freq_pos, freq_acc, freq_all,
-        vis_lat, vis_emb, vis_rec, vis_los, vis_int, vis_dis, vis_pos, vis_acc, vis_all,
+        freq_eval, freq_sta, freq_emb, freq_rec, freq_int, freq_dis, freq_pos, freq_acc, freq_all,
+        vis_emb, vis_rec, vis_los, vis_int, vis_dis, vis_pos, vis_acc, vis_all,
         gpu, evaluate, no_val_drop):
 
     print()
     torch.manual_seed(42)
     if vis_all:
-        vis_los, vis_lat, vis_emb, vis_rec, vis_int, vis_dis, vis_pos, vis_acc = [True] * 8
+        vis_los, vis_emb, vis_rec, vis_int, vis_dis, vis_pos, vis_acc = [True] * 7
     if freq_all:
-        freq_eval, freq_lat, freq_emb, freq_rec, freq_int, freq_dis, freq_pos, freq_acc = [freq_all] * 8
+        freq_eval, freq_emb, freq_rec, freq_int, freq_dis, freq_pos, freq_acc, freq_sta = [freq_all] * 8
 
     # ############################### DATA ###############################
-    lookup = [f for f in os.listdir(datapath) if 'scores' in f]
-    if len(lookup) > 1:
-        raise RuntimeError("More than 1 affinity matrix in the root directory {}.".format(datapath))
-    elif not (len(lookup) == 0 and 'test' in datapath):
-        lookup = lookup[0]
-    lookup = pd.read_csv(os.path.join(datapath, lookup)).set_index('Unnamed: 0')
-
     if not evaluate:
+        lookup = [f for f in os.listdir(datapath) if 'scores' in f]
+        if len(lookup) > 1:
+            raise RuntimeError("More than 1 affinity matrix in the root directory {}.".format(datapath))
+        elif not (len(lookup) == 0 and 'test' in datapath):
+            lookup = lookup[0]
+        lookup = pd.read_csv(os.path.join(datapath, lookup)).set_index('Unnamed: 0')
+
         # create ProteinDataset
-        data = ProteinDataset(datapath, lookup, lim=limit)
+        data = ProteinDataset(datapath, amatrix=lookup, lim=limit)
         print("Data size:", len(data))
 
         # split into train / val sets
@@ -114,14 +115,16 @@ def run(datapath, limit, split, epochs, batch, learning,
                                "split: {}%.".format(batch, len(train_data), len(val_data), split))
         print("Train / val batches:", len(trains), len(vals))
 
+        lookup = lookup.to_numpy(dtype=np.float32)
+
     if evaluate or ('test' in os.listdir(datapath)):
-        data = ProteinDataset(os.path.join(datapath, 'test'), lookup, lim=limit)
+        data = ProteinDataset(os.path.join(datapath, 'test'), amatrix=None, lim=limit)
         print("Eval data size:", len(data))
         tests = DataLoader(data, batch_size=batch, num_workers=8, shuffle=True)
         print("Eval batches:", len(tests))
+
     dsize = data[0]['img'].shape[-3:]
 
-    lookup = lookup.to_numpy(dtype=np.float32)
     print()
 
     # ############################### MODEL ###############################
@@ -130,57 +133,55 @@ def run(datapath, limit, split, epochs, batch, learning,
         print("\nWARNING: no GPU available, running on CPU instead.\n")
 
     if not evaluate:
-        vae = VariationalAutoencoder(channel_init=channels, latent_dims=latent_dims, depth=depth,
-                                     input_size=dsize,
-                                     lookup=lookup, gamma=gamma, pose=pose,
-                                     pose_dims=pose_dims)
+        vae = AffinityVAE(channels, depth, dsize, latent_dims, lookup, pose=pose, pose_dims=pose_dims)
         optimizer = torch.optim.Adam(params=vae.parameters(), lr=learning)  # , weight_decay=1e-5)
         train_loss, recon_loss, kldiv_loss, affin_loss, val_loss = [], [], [], [], []
     else:
         vae = torch.load('avae.pt')
     vae.to(device)
-    # print(vae)
 
     for epoch in range(epochs):
 
         meta_df = pd.DataFrame()
 
-        train_loss.append(0)
-        recon_loss.append(0)
-        kldiv_loss.append(0)
-        affin_loss.append(0)
-        val_loss.append(0)
-
         if not evaluate:
             # ############################### TRAIN ###############################
-            x, x_hat, meta_df, train_loss, recon_loss, kldiv_loss, affin_loss = \
-                run_train(vae, optimizer, device, trains,
-                          latent_dims, pose_dims, beta, gamma, loss_fn, epoch, epochs,
-                          train_loss, recon_loss, kldiv_loss, affin_loss, meta_df,
+            x, x_hat, meta_df, tloss, rloss, kloss, aloss = \
+                run_train(epoch, epochs, vae, optimizer, beta, gamma, loss_fn, device, trains, meta_df,
                           vis_emb, vis_int, vis_pos, vis_dis, vis_acc,
                           freq_emb, freq_int, freq_pos, freq_dis, freq_acc)
 
+            train_loss.append(tloss)
+            recon_loss.append(rloss)
+            kldiv_loss.append(kloss)
+            affin_loss.append(aloss)
+
             # ############################### VALIDATE ###############################
-            x_val, x_hat_val, meta_df, val_loss = run_validate(vae, device, vals,
-                                             latent_dims, pose_dims, beta, gamma, loss_fn, epoch, epochs,
-                                             val_loss, meta_df,
-                                             vis_emb, vis_int, vis_pos, vis_dis, vis_acc,
-                                             freq_emb, freq_int, freq_pos, freq_dis, freq_acc)
+            x_val, x_hat_val, meta_df, vloss =  \
+                run_validate(epoch, epochs, vae, beta, gamma, loss_fn, device, vals, meta_df,
+                             vis_emb, vis_int, vis_pos, vis_dis, vis_acc,
+                             freq_emb, freq_int, freq_pos, freq_dis, freq_acc)
+            val_loss.append(vloss)
 
         # ############################### EVALUATE ###############################
         if evaluate or ('test' in os.listdir(datapath) and (epoch + 1) % freq_eval == 0):
-            x, x_hat, meta_df = run_evaluate(vae, device, tests, latent_dims, meta_df)
+            x, x_hat, meta_df = run_evaluate(vae, device, tests, meta_df)
 
         # ############################### VISUALISE ###############################
         # save state
         if (epoch+1) % freq_sta == 0:
             torch.save(vae, 'avae.pt')
 
+        # visualise accuracy
+        if vis_acc and (epoch + 1) % freq_acc == 0:
+            acc = vis_accuracy(meta_df)
+            print('------------------->>> Accuracy: Train: %f | Val: %f\n' % (acc[0], acc[1]))
+
         # visualise loss
         if not evaluate:
             if vis_los and epoch > 0:
-                vis_loss_plot(epoch+1, train_loss, recon_loss=recon_loss, kldiv_loss=kldiv_loss, shape_loss=affin_loss, val_loss = val_loss,
-                              p=[len(trains), depth, channels, latent_dims, learning, beta, gamma])
+                vis_loss_plot(epoch+1, train_loss, recon_loss=recon_loss, kldiv_loss=kldiv_loss, shape_loss=affin_loss,
+                              val_loss=val_loss, p=[len(trains), depth, channels, latent_dims, learning, beta, gamma])
 
         # visualise reconstructions
         if vis_rec and (epoch+1) % freq_rec == 0:
@@ -208,9 +209,6 @@ def run(datapath, limit, split, epochs, batch, learning,
             vis_interp_grid(meta_df, vae, device, dsize, pose=pose)
 
         # ############################### WRAP-UP ###############################
-
-        # empty meta_df at each epoch
-        meta_df = pd.DataFrame()
 
         # only one epoch if evaluating
         if evaluate:

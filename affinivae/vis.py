@@ -1,19 +1,25 @@
-import os.path
 import copy
-from math import sqrt, ceil
-import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import ImageGrid
+import os.path
+import random
+
+# data libs
+import mrcfile
+
+# numerical libs
 import numpy as np
+from sklearn import preprocessing, metrics
 from sklearn.manifold import TSNE
+from sklearn.neighbors import KNeighborsClassifier
+import umap
+
+# visualisation libs
+import altair
+import matplotlib.pyplot as plt
+from PIL import Image
+
+# deep learning libs
 import torch
 import torchvision
-import altair
-import random
-from PIL import Image
-import mrcfile
-import umap
-from sklearn import preprocessing, metrics
-from sklearn.neighbors import KNeighborsClassifier
 
 
 def encoder(i):
@@ -22,7 +28,7 @@ def encoder(i):
     import base64
 
     with BytesIO() as buffer:
-        i.thumbnail((110,110))
+        i.thumbnail((110, 110))
         i.save(buffer, 'PNG')
         data = base64.encodebytes(buffer.getvalue()).decode('utf-8')
 
@@ -46,7 +52,8 @@ def format(im):
         batch = False
         im = np.sum(np.copy(im.squeeze(dim=0).cpu().detach().numpy()), axis=-1)  # .astype(np.uint8)
     else:
-        raise RuntimeError("Wrong data format, please pass either a single unsqueezed tensor or a batch to image formatter.")
+        raise RuntimeError("Wrong data format, please pass either a single "
+                           "unsqueezed tensor or a batch to image formatter.")
     im *= 255
     im = im.astype(np.uint8)
     if batch:
@@ -65,29 +72,29 @@ def merge(im):
     im1 = decoder(i[0])
     im2 = decoder(i[1])
 
-    new_image = Image.new('L', (im2.size[0]+im1.size[0], im2.size[1]))#, (90, 90))
-    new_image.paste(im1, (0,0))
-    new_image.paste(im2, (im1.size[0],0))
+    new_image = Image.new('L', (im2.size[0]+im1.size[0], im2.size[1]))
+    new_image.paste(im1, (0, 0))
+    new_image.paste(im2, (im1.size[0], 0))
     data = encoder(new_image)
 
     return f"data:image/png;base64,{data}"
 
 
-def vis_latentembed_plot(df, epoch, embedding='umap'): #, degrees_of_freedom, embedding='umap'):
+def vis_latentembed_plot(df, epoch, embedding='umap'):
     print("\n####################################################################################")
     print("Visualising embedding {}...\n".format(embedding))
 
     epoch += 1
     latentspace = df[[col for col in df if col.startswith('lat')]].to_numpy()
     if embedding == 'umap':
-       lat_emb = np.array(umap.UMAP().fit_transform(latentspace))
-       titlex = 'UMAP-1'
-       titley = 'UMAP-2'
+        lat_emb = np.array(umap.UMAP().fit_transform(latentspace))
+        titlex = 'UMAP-1'
+        titley = 'UMAP-2'
     else:
-       lat_emb = np.array(TSNE(n_components=2).fit_transform(latentspace))
-       titlex = 't-SNE-1'
-       titley = 't-SNE-2'
-    df['emb-x'], df['emb-y'] = np.array(lat_emb)[:,0], np.array(lat_emb)[:,1]
+        lat_emb = np.array(TSNE(n_components=2).fit_transform(latentspace))
+        titlex = 't-SNE-1'
+        titley = 't-SNE-2'
+    df['emb-x'], df['emb-y'] = np.array(lat_emb)[:, 0], np.array(lat_emb)[:, 1]
 
     plt.clf()
     plt.scatter(df['emb-x'], df['emb-y'], c=[ord(i[0]) for i in df['id']], label=df['id'])
@@ -98,7 +105,7 @@ def vis_latentembed_plot(df, epoch, embedding='umap'): #, degrees_of_freedom, em
     chart = altair.Chart(df).mark_point(size=50, opacity=0.4).encode(
         altair.X('emb-x', title=titlex),
         altair.Y('emb-y', title=titley),
-        #altair.Color('id', title='class'),
+        # altair.Color('id', title='class'),
         # altair.Opacity('mode', type='nominal',
         #               scale=altair.Scale(domain=['train', 'val', 'test'], range=['0.2', '0.4', '1.0']),
         #               title='dataset'),
@@ -131,7 +138,7 @@ def vis_loss_plot(epochs, loss, recon_loss=None, kldiv_loss=None, shape_loss=Non
     plt.xlabel("Epochs")
     plt.legend()
     if p is not None:
-        plt.title("Loss with bs: %d, d: %d, ch: %d, lat: %d, lr: %.3f, beta: %.1f, gamma: %.1f" % \
+        plt.title("Loss with bs: %d, d: %d, ch: %d, lat: %d, lr: %.3f, beta: %.1f, gamma: %.1f" %
                   (p[0], p[1], p[2], p[3], p[4], p[5], p[6]))
     else:
         plt.title("Loss")
@@ -176,9 +183,8 @@ def vis_recon_plot(img, rec, val=False):
 def vis_single_transversals(df, vae, device, patch_size, latent_dims, pose_dims, pose):
     print("\n####################################################################################")
     print("Visualising latent content disentanglement ...\n")
-    print(latent_dims)
 
-    df_latent = df.filter(regex='lat')#.reset_index(drop=True)
+    df_latent = df.filter(regex='lat')  # .reset_index(drop=True)
     mean_all_dims = [df_latent[lat_dim_col].mean() for lat_dim_col in df_latent.columns]
     std_all_dims = [df_latent[lat_dim_col].std() for lat_dim_col in df_latent.columns]
     latents = np.zeros((latent_dims * 7, latent_dims))
@@ -191,7 +197,8 @@ def vis_single_transversals(df, vae, device, patch_size, latent_dims, pose_dims,
     for lat_dim in range(latent_dims):
         for grid_spot in range(7):
             new_vector = copy.deepcopy(mean_all_dims)
-            new_vector[lat_dim] += std_all_dims[lat_dim] * (-1.2 + 0.4 * grid_spot) # every 0.4 interval from -1.2 to 1.2 sigma
+            # every 0.4 interval from -1.2 to 1.2 sigma
+            new_vector[lat_dim] += std_all_dims[lat_dim] * (-1.2 + 0.4 * grid_spot)
             latents[lat_dim * 7 + grid_spot, :] = new_vector
 
     # Decode interpolated vectors
@@ -205,7 +212,8 @@ def vis_single_transversals(df, vae, device, patch_size, latent_dims, pose_dims,
         else:
             interp_recon = vae.decoder(latents, None)
 
-    interp_recon = np.reshape(np.array(interp_recon.cpu()), (latent_dims, 7, patch_size[0], patch_size[1], patch_size[2]))
+    interp_recon = np.reshape(np.array(interp_recon.cpu()), (latent_dims, 7, patch_size[0], patch_size[1],
+                                                             patch_size[2]))
 
     grid_for_napari = np.zeros((interp_recon.shape[2] * interp_recon.shape[0],
                                 interp_recon.shape[3] * interp_recon.shape[1], interp_recon.shape[4]), dtype=np.float32)
@@ -319,7 +327,8 @@ def vis_interp_grid(df, vae, device, patch_size, pose):
         else:
             interp_recon = vae.decoder(latents, None)
 
-    interp_recon = np.reshape(np.array(interp_recon.cpu()), (grid_size, grid_size, patch_size[0], patch_size[1], patch_size[2]))
+    interp_recon = np.reshape(np.array(interp_recon.cpu()), (grid_size, grid_size, patch_size[0], patch_size[1],
+                                                             patch_size[2]))
 
     grid_for_napari = np.zeros((interp_recon.shape[2] * interp_recon.shape[0],
                                 interp_recon.shape[3] * interp_recon.shape[1], interp_recon.shape[4]), dtype=np.float32)
@@ -327,55 +336,41 @@ def vis_interp_grid(df, vae, device, patch_size, pose):
     # Create an mrc file with interpolations
     for i in range(interp_recon.shape[0]):
         for j in range(interp_recon.shape[1]):
-            grid_for_napari[i * patch_size[0]:(i + 1) * patch_size[1], j * patch_size[0]:(j + 1) * patch_size[1], :] = interp_recon[
-                                                                                                           i, j, :, :,
-                                                                                                           :]
+            grid_for_napari[i * patch_size[0]:(i + 1) * patch_size[1],
+                            j * patch_size[0]:(j + 1) * patch_size[1], :] = interp_recon[i, j, :, :, :]
     if not os.path.exists('plots'):
         os.mkdir('plots')
     with mrcfile.new("plots/interpolations.mrc", overwrite=True) as mrc:
         mrc.set_data(grid_for_napari)
 
-    # # Make a gif of interpolations varying the z coordinate
-    # frames = []
-    # for z in range(0, patch_size):
-    #     gif_frame = Image.new('L', size=(patch_size * grid_size, patch_size * grid_size))
-    #     for x in range(0, grid_size):
-    #         for y in range(0, grid_size):
-    #             gif_frame.paste(Image.fromarray(np.uint8(interp_recon[x, y, :, :, z] * 255)),
-    #                             (x * patch_size, y * patch_size))
-    #     frames.append(gif_frame)
-    # frame_one = frames[0]
-    # frame_one.save("plots/interpolations_between_classes.gif", format="GIF", append_images=frames + frames[::-1],
-    #                save_all=True, duration=200, loop=0)
-
 
 def vis_accuracy(df):
     print("\n####################################################################################")
-    print("Visualising confusion ...\n")
+    print("Visualising confusion ...\n\n")
     le = preprocessing.LabelEncoder()
 
     train_df = df[df['mode'] == 'train']
     val_df = df[df['mode'] == 'val']
 
-    X_train = train_df.filter(regex='lat')
+    x_train = train_df.filter(regex='lat')
     y_train = le.fit_transform(train_df.id)
 
-    X_val = val_df.filter(regex='lat')
+    x_val = val_df.filter(regex='lat')
     y_val = le.fit_transform(val_df.id)
 
     neigh = KNeighborsClassifier(n_neighbors=20)
-    neigh.fit(X_train, y_train)
-    y_pred_train = neigh.predict(X_train)
-    y_pred_val = neigh.predict(X_val)
+    neigh.fit(x_train, y_train)
+    y_pred_train = neigh.predict(x_train)
+    y_pred_val = neigh.predict(x_val)
     train_acc = metrics.accuracy_score(y_train, y_pred_train)
     val_acc = metrics.accuracy_score(y_val, y_pred_val)
 
-    metrics.plot_confusion_matrix(neigh, X_train, y_train)
+    metrics.plot_confusion_matrix(neigh, x_train, y_train)
     if not os.path.exists('plots'):
         os.mkdir('plots')
     plt.savefig("plots/confusion_train.png")
 
-    metrics.plot_confusion_matrix(neigh, X_val, y_val)
+    metrics.plot_confusion_matrix(neigh, x_val, y_val)
     if not os.path.exists('plots'):
         os.mkdir('plots')
     plt.savefig("plots/confusion_valid.png")
