@@ -13,7 +13,8 @@ class AffinityLoss:
         value at (i, j) is a scalar value encoding the shape similarity between
         objects i and j, pre-calculated using some shape (or other) metric. The
         identity of the matrix should be 1 since these objects are the same
-        shape. The affinity similarity should be normalized to the range (-1, 1).
+        shape. The affinity similarity should be normalized to the range
+        (-1, 1).
 
     Notes
     -----

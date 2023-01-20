@@ -18,7 +18,8 @@ def run_evaluate(vae, device, tests, meta_df):
     Returns
     -------
     x : torch.Tensor (N, CH, Z, Y, X)
-        Last mini-batch of inputs, where N stands for the number of samples in the mini-batch, CH stands for number of
+        Last mini-batch of inputs, where N stands for the number of samples in
+        the mini-batch, CH stands for number of
         channels and X, Y, Z define input dimensions.
     x_hat : torch.Tensor (N, CH, Z, Y, X)
         Last mini-batch of outputs, where N stands for the number of samples in the mini-batch, CH stands for number of

@@ -56,14 +56,16 @@ def format(im):
     im *= 255
     im = im.astype(np.uint8)
     if batch:
-        # if batch we are adding a reconstruction to an input that already exists in the DF, '&' is a separator.
+        # if batch we are adding a reconstruction to an input that already
+        # exists in the DF, '&' is a separator.
         return ["&" + encoder(Image.fromarray(i)) for i in im]
     else:
         return encoder(Image.fromarray(im))
 
 
 def merge(im):
-    """Merge 2 base64 buffers as PIL Images and encode back to base64 buffers."""
+    """Merge 2 base64 buffers as PIL Images and encode back to base64
+    buffers."""
     i = im.split("&")
     if len(i) != 2:
         raise RuntimeError(
@@ -85,7 +87,7 @@ def merge(im):
 
 def vis_latentembed_plot(df, epoch, embedding="umap"):
     print(
-        "\n####################################################################################"
+        "\n###################################################################"
     )
     print("Visualising embedding {}...\n".format(embedding))
 
@@ -122,7 +124,8 @@ def vis_latentembed_plot(df, epoch, embedding="umap"):
             altair.Y("emb-y", title=titley),
             # altair.Color('id', title='class'),
             # altair.Opacity('mode', type='nominal',
-            #               scale=altair.Scale(domain=['train', 'val', 'test'], range=['0.2', '0.4', '1.0']),
+            #               scale=altair.Scale(domain=['train', 'val', 'test'],
+            #               range=['0.2', '0.4', '1.0']),
             #               title='dataset'),
             altair.Shape(
                 "mode",
@@ -161,7 +164,7 @@ def vis_loss_plot(
     p=None,
 ):
     print(
-        "\n####################################################################################"
+        "\n###################################################################"
     )
     print("Visualising loss ...\n")
 
@@ -203,8 +206,8 @@ def vis_loss_plot(
     plt.legend()
     if p is not None:
         plt.title(
-            "Loss with bs: %d, d: %d, ch: %d, lat: %d, lr: %.3f, beta: %.1f, gamma: %.1f"
-            % (p[0], p[1], p[2], p[3], p[4], p[5], p[6])
+            "Loss with bs: %d, d: %d, ch: %d, lat: %d, lr: %.3f, beta: %.1f, "
+            "gamma: %.1f" % (p[0], p[1], p[2], p[3], p[4], p[5], p[6])
         )
     else:
         plt.title("Loss")
@@ -216,7 +219,7 @@ def vis_loss_plot(
 
 def vis_recon_plot(img, rec, val=False):
     print(
-        "\n####################################################################################"
+        "\n###################################################################"
     )
     print("Visualising reconstructions ...\n")
 
@@ -252,7 +255,7 @@ def vis_single_transversals(
     df, vae, device, patch_size, latent_dims, pose_dims, pose
 ):
     print(
-        "\n####################################################################################"
+        "\n###################################################################"
     )
     print("Visualising latent content disentanglement ...\n")
 
@@ -325,7 +328,7 @@ def vis_single_transversals_pose(
     df, vae, device, patch_size, latent_dims, pose_dims
 ):
     print(
-        "\n####################################################################################"
+        "\n###################################################################"
     )
     print("Visualising pose disentanglement ...\n")
     df_latent = df.filter(regex="lat").reset_index(drop=True)
@@ -390,14 +393,15 @@ def vis_single_transversals_pose(
 
 def vis_interp_grid(df, vae, device, patch_size, pose):
     print(
-        "\n####################################################################################"
+        "\n###################################################################"
     )
     print("Visualising interpolations ...\n")
 
     class_rep_ids = df.id.unique()
     if len(class_rep_ids) <= 3:
         print(
-            "WARNING: Not enough distinct classes, cannot visualise interpolations.\n"
+            "WARNING: Not enough distinct classes, cannot visualise "
+            "interpolations.\n"
         )
         return
     latents_of_class_reps = [
@@ -413,7 +417,8 @@ def vis_interp_grid(df, vae, device, patch_size, pose):
             for pid in class_rep_ids
         ]
 
-    # Generate a gird of latent vectors interpolated between reps of four poke_ids
+    # Generate a gird of latent vectors interpolated between reps of four
+    # poke_ids
     grid_size = 6
     inds, class_rep_vecs = list(
         zip(*random.sample(list(enumerate(latents_of_class_reps)), k=4))
@@ -490,7 +495,7 @@ def vis_interp_grid(df, vae, device, patch_size, pose):
 
 def vis_accuracy(df):
     print(
-        "\n####################################################################################"
+        "\n###################################################################"
     )
     print("Visualising confusion ...\n\n")
     le = preprocessing.LabelEncoder()

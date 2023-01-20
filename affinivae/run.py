@@ -352,9 +352,8 @@ def run(
         s = int(np.ceil(len(data) * int(split) / 100))
         if s < 2:
             raise RuntimeError(
-                "Train and validation sets must be larger than 1 sample, train: {}, val: {}.".format(
-                    len(idx[:-s]), len(idx[-s:])
-                )
+                "Train and validation sets must be larger than 1 sample, "
+                "train: {}, val: {}.".format(len(idx[:-s]), len(idx[-s:]))
             )
         train_data = Subset(data, indices=idx[:-s])
         val_data = Subset(data, indices=idx[-s:])
@@ -378,9 +377,10 @@ def run(
         if len(vals) < 1 or len(trains) < 1:
             # ensure the batch size is not smaller than validation set
             raise RuntimeError(
-                "Validation or train set is too small for the current batch size. Please edit either "
-                "split percent '-sp/--split' or batch size '-ba/--batch' or set "
-                "'-nd/--no_val_drop flag' (only if val is too small). Batch: {}, train:{}, val: {}, "
+                "Validation or train set is too small for the current batch "
+                "size. Please edit either split percent '-sp/--split' or batch"
+                " size '-ba/--batch' or set '-nd/--no_val_drop flag' (only if "
+                "val is too small). Batch: {}, train:{}, val: {}, "
                 "split: {}%.".format(
                     batch, len(train_data), len(val_data), split
                 )
@@ -437,7 +437,7 @@ def run(
         meta_df = pd.DataFrame()
 
         if not evaluate:
-            # ############################### TRAIN ###############################
+            # ############################### TRAIN ###########################
             x, x_hat, meta_df, tloss, rloss, kloss, aloss = run_train(
                 epoch,
                 epochs,
@@ -466,7 +466,7 @@ def run(
             kldiv_loss.append(kloss)
             affin_loss.append(aloss)
 
-            # ############################### VALIDATE ###############################
+            # ############################### VALIDATE ########################
             x_val, x_hat_val, meta_df, vloss = run_validate(
                 epoch,
                 epochs,
@@ -490,13 +490,13 @@ def run(
             )
             val_loss.append(vloss)
 
-        # ############################### EVALUATE ###############################
+        # ############################### EVALUATE ############################
         if evaluate or (
             "test" in os.listdir(datapath) and (epoch + 1) % freq_eval == 0
         ):
             x, x_hat, meta_df = run_evaluate(vae, device, tests, meta_df)
 
-        # ############################### VISUALISE ###############################
+        # ############################### VISUALISE ###########################
         # save state
         if (epoch + 1) % freq_sta == 0:
             torch.save(vae, "avae.pt")
@@ -560,7 +560,7 @@ def run(
         if vis_int and (epoch + 1) % freq_int == 0:
             vis_interp_grid(meta_df, vae, device, dsize, pose=pose)
 
-        # ############################### WRAP-UP ###############################
+        # ############################### WRAP-UP #############################
 
         # only one epoch if evaluating
         if evaluate:

@@ -11,11 +11,13 @@ class Encoder(nn.Module):
     Parameters
     ----------
     capacity : int
-        The capacity of the network - initial number of nodes doubled at each depth.
+        The capacity of the network - initial number of nodes doubled at each
+        depth.
     depth : int
         The depth of the network - number of downsampling layers.
     bottom_dim: tuple (X, Y) or tuple (X, Y, Z)
-        Tuple representing the size after downsampling for each image dimension X, Y and Z.
+        Tuple representing the size after downsampling for each image
+        dimension X, Y and Z.
     latent_dims: int
         Number of bottleneck latent dimensions.
     pose: bool
@@ -75,20 +77,26 @@ class Encoder(nn.Module):
         Parameters
         ----------
         x : torch.Tensor (N, CH, Z, Y, X)
-            Mini-batch of inputs, where N stands for the number of samples in the mini-batch, CH stands for number of
+            Mini-batch of inputs, where N stands for the number of samples in
+            the mini-batch, CH stands for number of
             channels and X, Y, Z define input dimensions.
 
         Returns
         -------
         x_mu : torch.Tensor (N, latent_dims)
-            Mini-batch of outputs representing latent means, where N stands for the number of samples in the mini-batch
+            Mini-batch of outputs representing latent means, where N stands
+            for the number of samples in the mini-batch
             and 'latent_dims' defines the number of latent dimensions.
         x_logvar : torch.Tensor (N, latent_dims)
-            Mini-batch of outputs representing latent log of the variance, where N stands for the number of samples in
-            the mini-batch and 'latent_dims' defines the number of latent dimensions.
+            Mini-batch of outputs representing latent log of the variance,
+            where N stands for the number of samples in
+            the mini-batch and 'latent_dims' defines the number of latent
+            dimensions.
         x_pose : torch.Tensor (N, pose_dims)
-            Optional return if pose is True. Mini-batch of outputs representing pose capturing the within-class
-            variance, where N stands for the number of samples in the mini-batch and 'pose_dims' defines the number of
+            Optional return if pose is True. Mini-batch of outputs
+            representing pose capturing the within-class
+            variance, where N stands for the number of samples in the
+            mini-batch and 'pose_dims' defines the number of
             pose dimensions.
         """
         for d in range(self.depth):
@@ -109,11 +117,13 @@ class Decoder(nn.Module):
     Parameters
     ----------
     capacity : int
-        The capacity of the network - initial number of nodes doubled at each depth.
+        The capacity of the network - initial number of nodes doubled at each
+        depth.
     depth : int
         The depth of the network - number of downsampling layers.
     bottom_dim: tuple (X, Y) or tuple (X, Y, Z)
-        Tuple representing the size after downsampling for each image dimension X, Y and Z.
+        Tuple representing the size after downsampling for each image
+        dimension X, Y and Z.
     latent_dims: int
         Number of bottleneck latent dimensions.
     pose: bool
@@ -176,16 +186,20 @@ class Decoder(nn.Module):
         Parameters
         ----------
         x : torch.Tensor (N, latent_dims)
-            Mini-batch of reparametrised encoder outputs, where N stands for the number of samples in the mini-batch and
+            Mini-batch of reparametrised encoder outputs, where N stands for
+            the number of samples in the mini-batch and
             'latent_dims' defines the number of latent dimensions.
         x_pose : torch.Tensor (N, pose_dims)
-            Mini-batch of outputs representing pose capturing the within-class variance, where N stands for the number
-            of samples in the mini-batch and 'pose_dims' defines the number of pose dimensions.
+            Mini-batch of outputs representing pose capturing the within-class
+            variance, where N stands for the number
+            of samples in the mini-batch and 'pose_dims' defines the number of
+            pose dimensions.
 
         Returns
         -------
         x : torch.Tensor (N, CH, Z, Y, X)
-            Mini-batch of outputs, where N stands for the number of samples in the mini-batch, CH stands for number of
+            Mini-batch of outputs, where N stands for the number of samples in
+            the mini-batch, CH stands for number of
             channels and X, Y, Z define input dimensions.
 
         """
@@ -207,20 +221,24 @@ class Decoder(nn.Module):
 
 
 class AffinityVAE(nn.Module):
-    """Affinity regularised Variational Autoencoder with an optional within-class variance encoding pose component.
+    """Affinity regularised Variational Autoencoder with an optional
+    within-class variance encoding pose component.
 
     Parameters
     ----------
     capacity : int
-        The capacity of the network - initial number of nodes doubled at each depth.
+        The capacity of the network - initial number of nodes doubled at each
+        depth.
     depth : int
         The depth of the network - number of downsampling layers.
     input_size: tuple (X, Y) or tuple (X, Y, Z)
-        Tuple representing the size of the input for each dimension  X, Y and Z.
+        Tuple representing the size of the input for each dimension  X, Y and
+        Z.
     latent_dims: int
         Number of bottleneck latent dimensions.
     lookup : np.ndarray [M, M]
-        A square symmetric matrix where each column and row is the index of an object class from the training set,
+        A square symmetric matrix where each column and row is the index of an
+        object class from the training set,
         consisting of M different classes.
     pose: bool
         Determines whether pose component is on or off.
@@ -241,8 +259,9 @@ class AffinityVAE(nn.Module):
         super(AffinityVAE, self).__init__()
         assert all(
             [int(x) == x for x in np.array(input_size) / (2**depth)]
-        ), "Input size not compatible with --depth. Input must be divisible by {}.".format(
-            2**depth
+        ), (
+            "Input size not compatible with --depth. Input must be divisible "
+            "by {}.".format(2**depth)
         )
         self.bottom_dim = tuple([int(i / (2**depth)) for i in input_size])
         self.pose = pose
@@ -271,26 +290,35 @@ class AffinityVAE(nn.Module):
         Parameters
         ----------
         x : torch.Tensor (N, CH, Z, Y, X)
-            Mini-batch of inputs, where N stands for the number of samples in the mini-batch, CH stands for number of
+            Mini-batch of inputs, where N stands for the number of samples in
+            the mini-batch, CH stands for number of
             channels and X, Y, Z define input dimensions.
 
         Returns
         -------
         x_recon : torch.Tensor (N, CH, Z, Y, X)
-            Mini-batch of outputs, where N stands for the number of samples in the mini-batch, CH stands for number of
+            Mini-batch of outputs, where N stands for the number of samples in
+            the mini-batch, CH stands for number of
             channels and X, Y, Z define input dimensions.
         latent_mu : torch.Tensor (N, latent_dims)
-            Mini-batch of encoder outputs representing latent means, where N stands for the number of samples in the
-            mini-batch and 'latent_dims' defines the number of latent dimensions.
+            Mini-batch of encoder outputs representing latent means, where N
+            stands for the number of samples in the
+            mini-batch and 'latent_dims' defines the number of latent
+            dimensions.
         latent_logvar : torch.Tensor (N, latent_dims)
-            Mini-batch of encoder outputs representing latent log of the variance, where N stands for the number of
-            samples in the mini-batch and 'latent_dims' defines the number of latent dimensions.
+            Mini-batch of encoder outputs representing latent log of the
+            variance, where N stands for the number of
+            samples in the mini-batch and 'latent_dims' defines the number of
+            latent dimensions.
         latent : torch.Tensor (N, latent_dims)
-            Mini-batch of reparametrised encoder outputs, where N stands for the number of samples in the mini-batch
+            Mini-batch of reparametrised encoder outputs, where N stands for
+            the number of samples in the mini-batch
             and 'latent_dims' defines the number of latent dimensions.
         latent_pose : torch.Tensor (N, pose_dims)
-            Optional return if pose is True. Mini-batch of encoder outputs representing pose capturing the within-class
-            variance, where N stands for the number of samples in the mini-batch and 'pose_dims' defines the number of
+            Optional return if pose is True. Mini-batch of encoder outputs
+            representing pose capturing the within-class
+            variance, where N stands for the number of samples in the
+            mini-batch and 'pose_dims' defines the number of
             pose dimensions.
 
         """
@@ -315,16 +343,20 @@ class AffinityVAE(nn.Module):
         Parameters
         ----------
         mu : torch.Tensor (N, latent_dims)
-            Mini-batch of outputs representing latent means, where N stands for the number of samples in the mini-batch
+            Mini-batch of outputs representing latent means, where N stands
+            for the number of samples in the mini-batch
             and 'latent_dims' defines the number of latent dimensions.
         logvar : torch.Tensor (N, latent_dims)
-            Mini-batch of outputs representing latent log of the variance, where N stands for the number of samples in
-            the mini-batch and 'latent_dims' defines the number of latent dimensions.
+            Mini-batch of outputs representing latent log of the variance,
+            where N stands for the number of samples in
+            the mini-batch and 'latent_dims' defines the number of latent
+            dimensions.
 
         Returns
         -------
         latent : torch.Tensor (N, latent_dims)
-            Mini-batch of reparametrised encoder outputs, where N stands for the number of samples in the mini-batch
+            Mini-batch of reparametrised encoder outputs, where N stands for
+            the number of samples in the mini-batch
             and 'latent_dims' defines the number of latent dimensions.
         """
         if self.training:
@@ -346,35 +378,48 @@ class AffinityVAE(nn.Module):
         loss_fn="MSE",
         device=None,
     ):
-        """AffinityVAE loss consisting of reconstruction loss, beta parametrised latent regularisation loss and
-        gamma parametrised affinity regularisation loss. Reconstruction loss should be Mean Squared Error for real
-        valued data and Binary Cross-Entropy for binary data. Latent regularisation loss is KL Divergence. Affinity
+        """AffinityVAE loss consisting of reconstruction loss, beta
+        parametrised latent regularisation loss and
+        gamma parametrised affinity regularisation loss. Reconstruction loss
+        should be Mean Squared Error for real
+        valued data and Binary Cross-Entropy for binary data. Latent
+        regularisation loss is KL Divergence. Affinity
         regularisation is defined in loss.py.
 
         Parameters
         ----------
         recon_x : torch.Tensor (N, CH, Z, Y, X)
-            Mini-batch of outputs, where N stands for the number of samples in the mini-batch, CH stands for number of
+            Mini-batch of outputs, where N stands for the number of samples in
+            the mini-batch, CH stands for number of
             channels and X, Y, Z define input dimensions.
         x : torch.Tensor (N, CH, Z, Y, X)
-            Mini-batch of inputs, where N stands for the number of samples in the mini-batch, CH stands for number of
+            Mini-batch of inputs, where N stands for the number of samples in
+            the mini-batch, CH stands for number of
             channels and X, Y, Z define input dimensions.
         mu : torch.Tensor (N, latent_dims)
-            Mini-batch of encoder outputs representing latent means, where N stands for the number of samples in the
-            mini-batch and 'latent_dims' defines the number of latent dimensions.
+            Mini-batch of encoder outputs representing latent means, where N
+            stands for the number of samples in the
+            mini-batch and 'latent_dims' defines the number of latent
+            dimensions.
         logvar : torch.Tensor (N, latent_dims)
-            Mini-batch of encoder outputs representing latent log of the variance, where N stands for the number of
-            samples in the mini-batch and 'latent_dims' defines the number of latent dimensions.
+            Mini-batch of encoder outputs representing latent log of the
+            variance, where N stands for the number of
+            samples in the mini-batch and 'latent_dims' defines the number of
+            latent dimensions.
         beta: float
             Beta parameter defining weight on latent regularisation term.
         gamma : float
-            Gamma parameter defining weight on affinity regularisation term. If gamma is None, affinity loss
+            Gamma parameter defining weight on affinity regularisation term.
+            If gamma is None, affinity loss
             is not computed and does not count towards the total loss.
         ids : torch.Tensor (N, )
-            A vector of N objects in the mini-batch of the indices representing the identity of the object's class as
-            an index. These indices should correspond to the rows and columns of the `lookup` table.
+            A vector of N objects in the mini-batch of the indices
+            representing the identity of the object's class as
+            an index. These indices should correspond to the rows and columns
+            of the `lookup` table.
         loss_fn : 'MSE' or 'BCE'
-            Function used for reconstruction loss. BCE uses Binary Cross-Entropy for binary data and MSE uses Mean
+            Function used for reconstruction loss. BCE uses Binary
+            Cross-Entropy for binary data and MSE uses Mean
             Squared Error for real-valued data.
         device : torch.device
             Device used to calculate the loss.
@@ -403,7 +448,8 @@ class AffinityVAE(nn.Module):
             )
         else:
             raise RuntimeError(
-                "AffinityVAE loss requires 'BCE' or 'MSE' for 'loss_fn' parameter."
+                "AffinityVAE loss requires 'BCE' or 'MSE' for 'loss_fn' "
+                "parameter."
             )
 
         # kldiv loss

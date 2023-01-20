@@ -40,10 +40,12 @@ def run_train(
     beta: float
         Beta parameter defining weight on latent regularisation term.
     gamma : float
-        Gamma parameter defining weight on affinity regularisation term. If gamma is None, affinity loss
+        Gamma parameter defining weight on affinity regularisation term. If
+        gamma is None, affinity loss
         is not computed and does not count towards the total loss.
     loss_fn : 'MSE' or 'BCE'
-        Function used for reconstruction loss. BCE uses Binary Cross-Entropy for binary data and MSE uses Mean
+        Function used for reconstruction loss. BCE uses Binary Cross-Entropy
+        for binary data and MSE uses Mean
         Squared Error for real-valued data.
     device : torch.device
         Device to train on, e.g. GPU or CPU.
@@ -77,10 +79,12 @@ def run_train(
     Returns
     -------
     x : torch.Tensor (N, CH, Z, Y, X)
-        Last mini-batch of inputs, where N stands for the number of samples in the mini-batch, CH stands for number of
+        Last mini-batch of inputs, where N stands for the number of samples in
+        the mini-batch, CH stands for number of
         channels and X, Y, Z define input dimensions.
     x_hat : torch.Tensor (N, CH, Z, Y, X)
-        Last mini-batch of outputs, where N stands for the number of samples in the mini-batch, CH stands for number of
+        Last mini-batch of outputs, where N stands for the number of samples
+        in the mini-batch, CH stands for number of
         channels and X, Y, Z define input dimensions.
     meta : dict
         Associated metadata.
@@ -119,7 +123,8 @@ def run_train(
         kldiv_loss += kloss.item()
         affin_loss += aloss.item()
         print(
-            "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | KLdiv: %f | Affin: %f"
+            "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
+            "KLdiv: %f | Affin: %f"
             % (
                 epoch + 1,
                 epochs,
@@ -167,7 +172,8 @@ def run_train(
     kldiv_loss /= len(trains)
     affin_loss /= len(trains)
     print(
-        "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | KLdiv: %f | Affin: %f"
+        "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
+        "KLdiv: %f | Affin: %f"
         % (
             epoch + 1,
             epochs,
@@ -217,10 +223,12 @@ def run_validate(
     beta: float
         Beta parameter defining weight on latent regularisation term.
     gamma : float
-        Gamma parameter defining weight on affinity regularisation term. If gamma is None, affinity loss
+        Gamma parameter defining weight on affinity regularisation term. If
+        gamma is None, affinity loss
         is not computed and does not count towards the total loss.
     loss_fn : 'MSE' or 'BCE'
-        Function used for reconstruction loss. BCE uses Binary Cross-Entropy for binary data and MSE uses Mean
+        Function used for reconstruction loss. BCE uses Binary Cross-Entropy
+        for binary data and MSE uses Mean
         Squared Error for real-valued data.
     device : torch.device
         Device to train on, e.g. GPU or CPU.
@@ -254,10 +262,12 @@ def run_validate(
     Returns
     -------
     x : torch.Tensor (N, CH, Z, Y, X)
-        Last mini-batch of inputs, where N stands for the number of samples in the mini-batch, CH stands for number of
+        Last mini-batch of inputs, where N stands for the number of samples in
+        the mini-batch, CH stands for number of
         channels and X, Y, Z define input dimensions.
     x_hat : torch.Tensor (N, CH, Z, Y, X)
-        Last mini-batch of outputs, where N stands for the number of samples in the mini-batch, CH stands for number of
+        Last mini-batch of outputs, where N stands for the number of samples
+        in the mini-batch, CH stands for number of
         channels and X, Y, Z define input dimensions.
     meta : dict
         Associated metadata.

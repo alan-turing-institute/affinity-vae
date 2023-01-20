@@ -8,19 +8,23 @@ from vis import format
 
 
 class ProteinDataset(Dataset):
-    """Protein dataset. Opens MRC files and returns images along with their affinity and associated metadata.
+    """Protein dataset. Opens MRC files and returns images along with their
+    affinity and associated metadata.
 
     Parameters
     ----------
     root_dir : string
         Base directory containing .mrc files.
     amatrix : pd.DataFrame
-        A square symmetric matrix where each column and row is the index of an object class from the training set,
-        consisting of M different classes. First row and column contain IDs of the classes.
+        A square symmetric matrix where each column and row is the index of an
+        object class from the training set,
+        consisting of M different classes. First row and column contain IDs of
+        the classes.
     transform: torchvision.transforms.Transform
         List of transforms to be applied to the images.
     lim : int
-        Limit the dataset size to the given number; useful for debugging purposes.
+        Limit the dataset size to the given number; useful for debugging
+        purposes.
     """
 
     def __init__(self, root_dir, amatrix=None, transform=None, lim=None):
@@ -39,7 +43,8 @@ class ProteinDataset(Dataset):
                     transforms.ToTensor(),
                     transforms.Lambda(lambda x: x.unsqueeze(0))
                     # transforms.Resize(64),
-                    # transforms.Lambda(lambda x: (x - x.min()) / (x.max() - x.min()))
+                    # transforms.Lambda(lambda x: \
+                    # (x - x.min()) / (x.max() - x.min()))
                 ]
             )
         else:
@@ -49,7 +54,8 @@ class ProteinDataset(Dataset):
         return len(self.paths)
 
     def __getitem__(self, item):
-        """Load and image, its metadata and optionally, its affinity class index.
+        """Load and image, its metadata and optionally, its affinity class
+        index.
 
         Parameters
         ----------
