@@ -27,7 +27,7 @@ class AffinityLoss:
         self.l1loss = nn.L1Loss()
 
     def __call__(
-            self, y_true: torch.Tensor, y_pred: torch.Tensor, device
+        self, y_true: torch.Tensor, y_pred: torch.Tensor, device
     ) -> torch.Tensor:
         """Return the affinity loss.
 
@@ -52,9 +52,6 @@ class AffinityLoss:
         # now calculate the latent similarity
         z_id = torch.tensor(list(range(y_pred.shape[0])))
         c = torch.combinations(z_id, r=2, with_replacement=False)
-        latent_similarity = self.cos(
-            y_pred[c[:, 0], :],
-            y_pred[c[:, 1], :]
-        )
+        latent_similarity = self.cos(y_pred[c[:, 0], :], y_pred[c[:, 1], :])
         loss = self.l1loss(latent_similarity, affinity)
         return loss

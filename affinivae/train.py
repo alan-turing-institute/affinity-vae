@@ -1,12 +1,30 @@
 import numpy as np
 import pandas as pd
-
 from vis import format
 
 
-def run_train(epoch, epochs, vae, optimizer, beta, gamma, loss_fn, device, trains, meta_df,
-              vis_emb, vis_int, vis_pos, vis_dis, vis_acc,
-              freq_emb, freq_int, freq_pos, freq_dis, freq_acc):
+def run_train(
+    epoch,
+    epochs,
+    vae,
+    optimizer,
+    beta,
+    gamma,
+    loss_fn,
+    device,
+    trains,
+    meta_df,
+    vis_emb,
+    vis_int,
+    vis_pos,
+    vis_dis,
+    vis_acc,
+    freq_emb,
+    freq_int,
+    freq_pos,
+    freq_dis,
+    freq_acc,
+):
     """Defines a single epoch training pass.
 
     Parameters
@@ -81,25 +99,39 @@ def run_train(epoch, epochs, vae, optimizer, beta, gamma, loss_fn, device, train
 
     for b, batch in enumerate(trains):
         # forward
-        x = batch['img'].to(device)
+        x = batch["img"].to(device)
         x_hat, latent_mu, latent_logvar, lat, lat_pose = vae(x)
         loss, rloss, kloss, aloss = vae.loss(
-            x_hat, x, latent_mu, latent_logvar, beta,
-            gamma=gamma, ids=batch['aff'],
-            loss_fn=loss_fn, device=device)
+            x_hat,
+            x,
+            latent_mu,
+            latent_logvar,
+            beta,
+            gamma=gamma,
+            ids=batch["aff"],
+            loss_fn=loss_fn,
+            device=device,
+        )
 
         # record loss
         train_loss += loss.item()
         recon_loss += rloss.item()
         kldiv_loss += kloss.item()
         affin_loss += aloss.item()
-        print('Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | KLdiv: %f | Affin: %f' % (
-            epoch + 1, epochs,
-            b + 1, len(trains),
-            loss,
-            rloss,
-            kloss,
-            aloss), end='\r')
+        print(
+            "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | KLdiv: %f | Affin: %f"
+            % (
+                epoch + 1,
+                epochs,
+                b + 1,
+                len(trains),
+                loss,
+                rloss,
+                kloss,
+                aloss,
+            ),
+            end="\r",
+        )
 
         # backpropagate
         loss.backward()
@@ -107,36 +139,71 @@ def run_train(epoch, epochs, vae, optimizer, beta, gamma, loss_fn, device, train
         optimizer.zero_grad()
 
         # save metadata for plots
-        if (vis_emb and (epoch + 1) % freq_emb == 0) or \
-                (vis_dis and (epoch + 1) % freq_dis == 0) or \
-                (vis_int and (epoch + 1) % freq_int == 0) or \
-                (vis_pos and (epoch + 1) % freq_pos == 0) or \
-                (vis_acc and (epoch + 1) % freq_acc == 0):
-            meta = pd.DataFrame(batch['meta'])
-            meta['mode'] = 'train'
-            meta['image'] += format(x_hat)
+        if (
+            (vis_emb and (epoch + 1) % freq_emb == 0)
+            or (vis_dis and (epoch + 1) % freq_dis == 0)
+            or (vis_int and (epoch + 1) % freq_int == 0)
+            or (vis_pos and (epoch + 1) % freq_pos == 0)
+            or (vis_acc and (epoch + 1) % freq_acc == 0)
+        ):
+            meta = pd.DataFrame(batch["meta"])
+            meta["mode"] = "train"
+            meta["image"] += format(x_hat)
             for d in range(latent_mu.shape[-1]):
-                meta[f"lat{d}"] = np.array(latent_mu[:, d].cpu().detach().numpy())
+                meta[f"lat{d}"] = np.array(
+                    latent_mu[:, d].cpu().detach().numpy()
+                )
             for d in range(lat_pose.shape[-1]):
-                meta[f"pos{d}"] = np.array(lat_pose[:, d].cpu().detach().numpy())
-            meta_df = pd.concat([meta_df, meta], ignore_index=False)  # ignore index doesn't overwrite
+                meta[f"pos{d}"] = np.array(
+                    lat_pose[:, d].cpu().detach().numpy()
+                )
+            meta_df = pd.concat(
+                [meta_df, meta], ignore_index=False
+            )  # ignore index doesn't overwrite
 
     # print loss
     train_loss /= len(trains)
     recon_loss /= len(trains)
     kldiv_loss /= len(trains)
     affin_loss /= len(trains)
-    print('Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | KLdiv: %f | Affin: %f' % (
-        epoch + 1, epochs,
-        b + 1, len(trains),
-        train_loss, recon_loss, kldiv_loss, affin_loss))
+    print(
+        "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | KLdiv: %f | Affin: %f"
+        % (
+            epoch + 1,
+            epochs,
+            b + 1,
+            len(trains),
+            train_loss,
+            recon_loss,
+            kldiv_loss,
+            affin_loss,
+        )
+    )
 
     return x, x_hat, meta_df, train_loss, recon_loss, kldiv_loss, affin_loss
 
 
-def run_validate(epoch, epochs, vae, beta, gamma, loss_fn, device, vals, meta_df,
-                 vis_emb, vis_int, vis_pos, vis_dis, vis_acc,
-                 freq_emb, freq_int, freq_pos, freq_dis, freq_acc):
+def run_validate(
+    epoch,
+    epochs,
+    vae,
+    beta,
+    gamma,
+    loss_fn,
+    device,
+    vals,
+    meta_df,
+    vis_emb,
+    vis_int,
+    vis_pos,
+    vis_dis,
+    vis_acc,
+    freq_emb,
+    freq_int,
+    freq_pos,
+    freq_dis,
+    freq_acc,
+):
     """Defines a single epoch validation pass.
 
     Parameters
@@ -204,43 +271,62 @@ def run_validate(epoch, epochs, vae, beta, gamma, loss_fn, device, vals, meta_df
     for b, batch in enumerate(vals):
 
         # forward
-        x = batch['img'].to(device)
+        x = batch["img"].to(device)
         x_hat, latent_mu, latent_logvar, lat, lat_pose = vae(x)
 
         # record loss
         vloss = vae.loss(
-            x_hat, x, latent_mu, latent_logvar, beta,
-            gamma=gamma, ids=batch['aff'],
-            loss_fn=loss_fn, device=device)
+            x_hat,
+            x,
+            latent_mu,
+            latent_logvar,
+            beta,
+            gamma=gamma,
+            ids=batch["aff"],
+            loss_fn=loss_fn,
+            device=device,
+        )
         val_loss += vloss[0].item()
-        print('VAL Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f' % (
-            epoch + 1, epochs, b + 1, len(vals), vloss[0]), end='\r')
+        print(
+            "VAL Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f"
+            % (epoch + 1, epochs, b + 1, len(vals), vloss[0]),
+            end="\r",
+        )
 
         # save metadata TODO make metadata collection optional
-        if (vis_emb and (epoch + 1) % freq_emb == 0) or \
-                (vis_dis and (epoch + 1) % freq_dis == 0) or \
-                (vis_int and (epoch + 1) % freq_int == 0) or \
-                (vis_pos and (epoch + 1) % freq_pos == 0) or \
-                (vis_acc and (epoch + 1) % freq_acc == 0):
-            meta = pd.DataFrame(batch['meta'])
-            meta['mode'] = 'val'
-            meta['image'] += format(x_hat)
+        if (
+            (vis_emb and (epoch + 1) % freq_emb == 0)
+            or (vis_dis and (epoch + 1) % freq_dis == 0)
+            or (vis_int and (epoch + 1) % freq_int == 0)
+            or (vis_pos and (epoch + 1) % freq_pos == 0)
+            or (vis_acc and (epoch + 1) % freq_acc == 0)
+        ):
+            meta = pd.DataFrame(batch["meta"])
+            meta["mode"] = "val"
+            meta["image"] += format(x_hat)
             for d in range(latent_mu.shape[-1]):
-                meta[f"lat{d}"] = np.array(latent_mu[:, d].cpu().detach().numpy())
+                meta[f"lat{d}"] = np.array(
+                    latent_mu[:, d].cpu().detach().numpy()
+                )
             for d in range(lat_pose.shape[-1]):
-                meta[f"pos{d}"] = np.array(lat_pose[:, d].cpu().detach().numpy())
-            meta_df = pd.concat([meta_df, meta], ignore_index=False)  # ignore index doesn't overwrite
-
+                meta[f"pos{d}"] = np.array(
+                    lat_pose[:, d].cpu().detach().numpy()
+                )
+            meta_df = pd.concat(
+                [meta_df, meta], ignore_index=False
+            )  # ignore index doesn't overwrite
 
     val_loss /= len(vals)
 
     # accuracy
-    print('VAL: [%d/%d] | Batch: [%d/%d] | Loss: %f' % (
-        epoch + 1, epochs, b + 1, len(vals), val_loss))
+    print(
+        "VAL: [%d/%d] | Batch: [%d/%d] | Loss: %f"
+        % (epoch + 1, epochs, b + 1, len(vals), val_loss)
+    )
 
     return x, x_hat, meta_df, val_loss
 
 
-if __name__ is "__main__":
+if __name__ == "__main__":
     # TODO write train / val only routine
     pass

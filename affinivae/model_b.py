@@ -1,9 +1,7 @@
 import numpy as np
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 from loss import AffinityLoss
 
 
@@ -26,7 +24,9 @@ class Encoder(nn.Module):
         Number of bottleneck pose dimensions.
     """
 
-    def __init__(self, capacity, depth, bottom_dim, latent_dims, pose=True, pose_dims=1):
+    def __init__(
+        self, capacity, depth, bottom_dim, latent_dims, pose=True, pose_dims=1
+    ):
         super(Encoder, self).__init__()
         c = capacity
         self.pose = pose
@@ -38,20 +38,36 @@ class Encoder(nn.Module):
         prev_sh = 1
         for d in range(depth):
             sh = c * (d + 1)
-            self.conv_enc.append(nn.Conv3d(in_channels=prev_sh, out_channels=sh, kernel_size=3, padding=1,
-                                           stride=2))
+            self.conv_enc.append(
+                nn.Conv3d(
+                    in_channels=prev_sh,
+                    out_channels=sh,
+                    kernel_size=3,
+                    padding=1,
+                    stride=2,
+                )
+            )
             self.norm_enc.append(nn.BatchNorm3d(sh))
             prev_sh = sh
 
         # define fully connected layers
         chf = 1 if depth == 0 else c * depth  # allow for no conv layers
-        self.fc_mu = nn.Linear(in_features=chf * bottom_dim[0] * bottom_dim[1] * bottom_dim[2],
-                               out_features=latent_dims)
-        self.fc_logvar = nn.Linear(in_features=chf * bottom_dim[0] * bottom_dim[1] * bottom_dim[2],
-                                   out_features=latent_dims)
+        self.fc_mu = nn.Linear(
+            in_features=chf * bottom_dim[0] * bottom_dim[1] * bottom_dim[2],
+            out_features=latent_dims,
+        )
+        self.fc_logvar = nn.Linear(
+            in_features=chf * bottom_dim[0] * bottom_dim[1] * bottom_dim[2],
+            out_features=latent_dims,
+        )
         if pose:
-            self.fc_pose = nn.Linear(in_features=chf * bottom_dim[0] * bottom_dim[1] * bottom_dim[2],
-                                     out_features=pose_dims)
+            self.fc_pose = nn.Linear(
+                in_features=chf
+                * bottom_dim[0]
+                * bottom_dim[1]
+                * bottom_dim[2],
+                out_features=pose_dims,
+            )
 
     def forward(self, x):
         """Encoder forward pass.
@@ -105,7 +121,10 @@ class Decoder(nn.Module):
     pose_dims : int
         Number of bottleneck pose dimensions.
     """
-    def __init__(self, capacity, depth, bottom_dim, latent_dims, pose=True, pose_dims=1):
+
+    def __init__(
+        self, capacity, depth, bottom_dim, latent_dims, pose=True, pose_dims=1
+    ):
         super(Decoder, self).__init__()
         self.c = capacity
         self.depth = depth
@@ -119,18 +138,37 @@ class Decoder(nn.Module):
         for d in range(depth, 0, -1):
             sh = self.c * (d - 1) if d != 1 else 1
             self.conv_dec.append(
-                nn.ConvTranspose3d(in_channels=prev_sh, out_channels=sh, kernel_size=4, stride=2, padding=1))
+                nn.ConvTranspose3d(
+                    in_channels=prev_sh,
+                    out_channels=sh,
+                    kernel_size=4,
+                    stride=2,
+                    padding=1,
+                )
+            )
             self.norm_dec.append(nn.BatchNorm3d(sh))
             prev_sh = sh
 
         # define fully connected layers
-        self.chf = 1 if depth == 0 else self.c * depth  # allow for no convolutions
+        self.chf = (
+            1 if depth == 0 else self.c * depth
+        )  # allow for no convolutions
         if self.pose:
-            self.fc = nn.Linear(in_features=pose_dims + latent_dims,
-                                out_features=self.chf * bottom_dim[0] * bottom_dim[1] * bottom_dim[2])
+            self.fc = nn.Linear(
+                in_features=pose_dims + latent_dims,
+                out_features=self.chf
+                * bottom_dim[0]
+                * bottom_dim[1]
+                * bottom_dim[2],
+            )
         else:
-            self.fc = nn.Linear(in_features=latent_dims,
-                                out_features=self.chf * bottom_dim[0] * bottom_dim[1] * bottom_dim[2])
+            self.fc = nn.Linear(
+                in_features=latent_dims,
+                out_features=self.chf
+                * bottom_dim[0]
+                * bottom_dim[1]
+                * bottom_dim[2],
+            )
 
     def forward(self, x, x_pose):
         """Decoder forward pass.
@@ -155,7 +193,13 @@ class Decoder(nn.Module):
             x = self.fc(torch.cat((x, x_pose), -1))
         else:
             x = self.fc(x)
-        x = x.view(x.size(0), self.chf, self.bottom_dim[0], self.bottom_dim[1], self.bottom_dim[2])
+        x = x.view(
+            x.size(0),
+            self.chf,
+            self.bottom_dim[0],
+            self.bottom_dim[1],
+            self.bottom_dim[2],
+        )
         for d in range(self.depth - 1):
             x = self.norm_dec[d](F.relu(self.conv_dec[d](x)))
         x = torch.sigmoid(self.conv_dec[-1](x))
@@ -183,15 +227,42 @@ class AffinityVAE(nn.Module):
     pose_dims : int
         Number of bottleneck pose dimensions.
     """
-    def __init__(self, capacity, depth, input_size, latent_dims, lookup, pose=True, pose_dims=1):
+
+    def __init__(
+        self,
+        capacity,
+        depth,
+        input_size,
+        latent_dims,
+        lookup,
+        pose=True,
+        pose_dims=1,
+    ):
         super(AffinityVAE, self).__init__()
-        assert all([int(x) == x for x in np.array(input_size) / (2 ** depth)]), \
-            "Input size not compatible with --depth. Input must be divisible by {}.".format(2 ** depth)
-        self.bottom_dim = tuple([int(i / (2 ** depth)) for i in input_size])
+        assert all(
+            [int(x) == x for x in np.array(input_size) / (2**depth)]
+        ), "Input size not compatible with --depth. Input must be divisible by {}.".format(
+            2**depth
+        )
+        self.bottom_dim = tuple([int(i / (2**depth)) for i in input_size])
         self.pose = pose
 
-        self.encoder = Encoder(capacity, depth, self.bottom_dim, latent_dims, pose=pose, pose_dims=pose_dims)
-        self.decoder = Decoder(capacity, depth, self.bottom_dim, latent_dims, pose=pose, pose_dims=pose_dims)
+        self.encoder = Encoder(
+            capacity,
+            depth,
+            self.bottom_dim,
+            latent_dims,
+            pose=pose,
+            pose_dims=pose_dims,
+        )
+        self.decoder = Decoder(
+            capacity,
+            depth,
+            self.bottom_dim,
+            latent_dims,
+            pose=pose,
+            pose_dims=pose_dims,
+        )
         self.affinity_loss = AffinityLoss(lookup)
 
     def forward(self, x):
@@ -263,7 +334,18 @@ class AffinityVAE(nn.Module):
         else:
             return mu
 
-    def loss(self, recon_x, x, mu, logvar, beta, gamma=None, ids=None, loss_fn='MSE', device=None):
+    def loss(
+        self,
+        recon_x,
+        x,
+        mu,
+        logvar,
+        beta,
+        gamma=None,
+        ids=None,
+        loss_fn="MSE",
+        device=None,
+    ):
         """AffinityVAE loss consisting of reconstruction loss, beta parametrised latent regularisation loss and
         gamma parametrised affinity regularisation loss. Reconstruction loss should be Mean Squared Error for real
         valued data and Binary Cross-Entropy for binary data. Latent regularisation loss is KL Divergence. Affinity
@@ -311,12 +393,18 @@ class AffinityVAE(nn.Module):
 
         # recon loss
         sh = self.bottom_dim[0] * self.bottom_dim[1] * self.bottom_dim[2]
-        if loss_fn == 'BCE':
-            recon_loss = F.binary_cross_entropy(recon_x.view(-1, sh), x.view(-1, sh), reduction='mean')
-        elif loss_fn == 'MSE':
-            recon_loss = F.mse_loss(recon_x.view(-1, sh), x.view(-1, sh), reduction='mean')
+        if loss_fn == "BCE":
+            recon_loss = F.binary_cross_entropy(
+                recon_x.view(-1, sh), x.view(-1, sh), reduction="mean"
+            )
+        elif loss_fn == "MSE":
+            recon_loss = F.mse_loss(
+                recon_x.view(-1, sh), x.view(-1, sh), reduction="mean"
+            )
         else:
-            raise RuntimeError("AffinityVAE loss requires 'BCE' or 'MSE' for 'loss_fn' parameter.")
+            raise RuntimeError(
+                "AffinityVAE loss requires 'BCE' or 'MSE' for 'loss_fn' parameter."
+            )
 
         # kldiv loss
         kldivergence = -0.5 * torch.mean(1 + logvar - mu.pow(2) - logvar.exp())

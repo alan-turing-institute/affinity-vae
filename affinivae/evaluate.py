@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-
 from vis import format
 
 
@@ -30,25 +29,27 @@ def run_evaluate(vae, device, tests, meta_df):
     vae.eval()
     for b, batch in enumerate(tests):
         # forward
-        x = batch['img'].to(device)
+        x = batch["img"].to(device)
         x_hat, latent_mu, latent_logvar, lat, lat_pose = vae(x)
-        print('EVAL Batch: [%d/%d]' % (b + 1, len(tests)), end='\r')
+        print("EVAL Batch: [%d/%d]" % (b + 1, len(tests)), end="\r")
 
         # save metadata
-        meta = pd.DataFrame(batch['meta'])
-        meta['mode'] = 'test'
-        meta['image'] += format(x_hat)
+        meta = pd.DataFrame(batch["meta"])
+        meta["mode"] = "test"
+        meta["image"] += format(x_hat)
         for d in range(latent_mu.shape[-1]):
             meta[f"lat{d}"] = np.array(latent_mu[:, d].cpu().detach().numpy())
         for d in range(lat_pose.shape[-1]):
             meta[f"pos{d}"] = np.array(lat_pose[:, d].cpu().detach().numpy())
-        meta_df = pd.concat([meta_df, meta], ignore_index=False)  # ignore index doesn't overwrite
+        meta_df = pd.concat(
+            [meta_df, meta], ignore_index=False
+        )  # ignore index doesn't overwrite
 
-    print('EVAL Batch: [%d/%d]' % (b + 1, len(tests)))
+    print("EVAL Batch: [%d/%d]" % (b + 1, len(tests)))
 
     return x, x_hat, meta_df
 
 
-if __name__ is "__main__":
+if __name__ == "__main__":
     # TODO write evaluate only routine
     pass
