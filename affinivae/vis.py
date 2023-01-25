@@ -12,6 +12,7 @@ import umap
 from PIL import Image
 from sklearn import metrics, preprocessing
 from sklearn.manifold import TSNE
+from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.neighbors import KNeighborsClassifier
 
 
@@ -516,12 +517,12 @@ def vis_accuracy(df):
     train_acc = metrics.accuracy_score(y_train, y_pred_train)
     val_acc = metrics.accuracy_score(y_val, y_pred_val)
 
-    metrics.plot_confusion_matrix(neigh, x_train, y_train)
+    ConfusionMatrixDisplay.from_predictions(y_train, y_pred_train)
     if not os.path.exists("plots"):
         os.mkdir("plots")
     plt.savefig("plots/confusion_train.png")
 
-    metrics.plot_confusion_matrix(neigh, x_val, y_val)
+    ConfusionMatrixDisplay.from_predictions(y_val, y_pred_val)
     if not os.path.exists("plots"):
         os.mkdir("plots")
     plt.savefig("plots/confusion_valid.png")
