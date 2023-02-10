@@ -1,6 +1,6 @@
 from torch import nn
 
-from affinivae.model_a import AffinityVAE
+from avae.model_a import AffinityVAE
 
 
 def test_model_instance():

@@ -1,6 +1,6 @@
 import pytest
 
-from affinivae.utils import dims_after_pooling
+from avae.utils import dims_after_pooling
 
 
 @pytest.mark.parametrize(

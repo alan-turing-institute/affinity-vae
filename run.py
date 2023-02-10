@@ -1,8 +1,8 @@
 import click
 
-from affinivae import config
-from affinivae.evaluate import evaluate
-from affinivae.train import train
+from avae import config
+from avae.evaluate import evaluate
+from avae.train import train
 
 
 @click.command(name="Affinity Trainer")
