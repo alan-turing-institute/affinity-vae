@@ -157,6 +157,21 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
         )
 
 
+def accuracy_plot(y_train, ypred_train, y_val, ypred_val):
+    print("\n################################################################")
+    print("Visualising confusion ...\n")
+
+    ConfusionMatrixDisplay.from_predictions(y_train, ypred_train)
+    if not os.path.exists("plots"):
+        os.mkdir("plots")
+    plt.savefig("plots/confusion_train.png")
+
+    ConfusionMatrixDisplay.from_predictions(y_val, ypred_val)
+    if not os.path.exists("plots"):
+        os.mkdir("plots")
+    plt.savefig("plots/confusion_valid.png")
+
+
 def loss_plot(epochs, train_loss, val_loss=None, p=None):
     print("\n################################################################")
     print("Visualising loss ...\n")
@@ -494,18 +509,3 @@ def interpolations_plot(lats, classes, vae, device, poses=None):
         os.mkdir("plots")
     with mrcfile.new("plots/interpolations.mrc", overwrite=True) as mrc:
         mrc.set_data(grid_for_napari)
-
-
-def accuracy_plot(y_train, ypred_train, y_val, ypred_val):
-    print("\n################################################################")
-    print("Visualising confusion ...\n")
-
-    ConfusionMatrixDisplay.from_predictions(y_train, ypred_train)
-    if not os.path.exists("plots"):
-        os.mkdir("plots")
-    plt.savefig("plots/confusion_train.png")
-
-    ConfusionMatrixDisplay.from_predictions(y_val, ypred_val)
-    if not os.path.exists("plots"):
-        os.mkdir("plots")
-    plt.savefig("plots/confusion_valid.png")
