@@ -28,7 +28,7 @@ def load_affinities(datapath):
 
     """
 
-    lookup = [f for f in os.listdir(datapath) if "scores" in f]
+    lookup = [f for f in os.listdir(datapath) if "affinity" in f]
 
     if len(lookup) > 1:
         raise RuntimeError(
@@ -38,9 +38,7 @@ def load_affinities(datapath):
         )
     elif not (len(lookup) == 0):
         lookup = lookup[0]
-        lookup = pd.read_csv(os.path.join(datapath, lookup)).set_index(
-            "Unnamed: 0"
-        )
+        lookup = pd.read_csv(os.path.join(datapath, lookup), header=0)
     else:
         lookup = None
 
