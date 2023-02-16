@@ -314,11 +314,6 @@ def pass_batch(
         # record loss
         for i in range(len(history[-1])):
             history[-1][i] += history_loss[i].item()
-            # print(i)
-            # print(h)
-            # print(h[i])
-            # print(history_loss[i])
-            # h[i] += history_loss[i].item()
         print(
             "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
             "KLdiv: %f | Affin: %f"
@@ -338,7 +333,7 @@ def pass_batch(
 def add_meta(meta_df, batch_meta, x_hat, latent_mu, lat_pose, mode="trn"):
     meta = pd.DataFrame(batch_meta)
     meta["mode"] = mode
-    meta["image"] += format(x_hat)
+    meta["image"] += vis.format(x_hat)
     for d in range(latent_mu.shape[-1]):
         meta[f"lat{d}"] = np.array(latent_mu[:, d].cpu().detach().numpy())
     for d in range(lat_pose.shape[-1]):
