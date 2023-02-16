@@ -23,13 +23,14 @@ class AffinityLoss:
     L2-norm. Not sure what the best one is yet.
     """
 
-    def __init__(self, lookup: torch.Tensor):
-        self.lookup = torch.tensor(lookup)
+    def __init__(self, lookup: torch.Tensor, device: torch.device):
+        self.device = device
+        self.lookup = torch.tensor(lookup).to(device)
         self.cos = nn.CosineSimilarity(dim=1, eps=1e-8)
         self.l1loss = nn.L1Loss()
 
     def __call__(
-        self, y_true: torch.Tensor, y_pred: torch.Tensor, device
+        self, y_true: torch.Tensor, y_pred: torch.Tensor
     ) -> torch.Tensor:
         """Return the affinity loss.
 
@@ -48,8 +49,10 @@ class AffinityLoss:
             The affinity loss.
         """
         # first calculate the affinity ,for the real classes
-        c = torch.combinations(y_true, r=2, with_replacement=False).to(device)
-        affinity = self.lookup[c[:, 0], c[:, 1]].to(device)
+        c = torch.combinations(y_true, r=2, with_replacement=False).to(
+            self.device
+        )
+        affinity = self.lookup[c[:, 0], c[:, 1]].to(self.device)
 
         # now calculate the latent similarity
         z_id = torch.tensor(list(range(y_pred.shape[0])))
@@ -93,7 +96,7 @@ class AVAELoss:
         self.beta = beta
         if lookup_aff is not None:
             self.gamma = gamma
-            self.affinity_loss = AffinityLoss(lookup_aff)
+            self.affinity_loss = AffinityLoss(lookup_aff, device)
 
     def __call__(self, x, recon_x, mu, logvar, batch_aff=None):
         """Return the aVAE loss.
@@ -159,7 +162,7 @@ class AVAELoss:
         # affinity loss
         affin_loss = 0
         if self.affinity_loss is not None:
-            affin_loss = self.affinity_loss(batch_aff, mu, self.device)
+            affin_loss = self.affinity_loss(batch_aff, mu)
 
         # total loss
         total_loss = (
