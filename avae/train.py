@@ -197,7 +197,7 @@ def train(
             )
             torch.save(vae, os.path.join("states", mname))
             if collect_meta:
-                pd.to_pickle(
+                meta_df.to_pickle(
                     os.path.join("states", "meta_" + timestamp + ".pkl")
                 )
 
