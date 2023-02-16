@@ -1,0 +1,13 @@
+altair
+matplotlib
+mrcfile
+numpy
+pandas
+pillow
+requests
+scikit-image
+scikit-learn>=1.2.0
+scipy
+torch
+torchvision
+umap-learn
