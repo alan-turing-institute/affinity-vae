@@ -136,7 +136,7 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
                 title="mode",
             ),
             altair.Tooltip(
-                ["id", "meta", "mode", "avg", "theta", "image"]
+                ["id", "meta", "mode", "avg", "theta:N", "image"]
             ),  # *degrees_of_freedom, 'image']),
             color=color,
         )
