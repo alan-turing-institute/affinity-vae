@@ -79,14 +79,14 @@ def load_data(
         trains = DataLoader(
             train_data,
             batch_size=batch_s,
-            num_workers=8,
+            num_workers=2,
             shuffle=True,
             drop_last=True,
         )
         vals = DataLoader(
             val_data,
             batch_size=batch_s,
-            num_workers=8,
+            num_workers=2,
             shuffle=True,
             drop_last=(not no_val_drop),
         )
