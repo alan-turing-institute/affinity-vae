@@ -28,7 +28,9 @@ def load_affinities(datapath):
 
     """
 
-    lookup = [f for f in os.listdir(datapath) if "affinity" and ".csv" in f]
+    lookup = [
+        f for f in os.listdir(datapath) if "affinity" in f and ".csv" in f
+    ]
 
     if len(lookup) > 1:
         raise RuntimeError(
