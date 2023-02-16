@@ -113,7 +113,7 @@ def load_data(
         )
         print("Eval data size:", len(data))
         tests = DataLoader(
-            data, batch_size=batch_s, num_workers=8, shuffle=True
+            data, batch_size=batch_s, num_workers=2, shuffle=True
         )
         print("Eval batches:", len(tests))
         print()
