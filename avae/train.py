@@ -189,6 +189,8 @@ def train(
             mname = (
                 "avae_"
                 + str(timestamp)
+                + "_E"
+                + str(epoch)
                 + "_"
                 + str(lat_dims)
                 + "_"
