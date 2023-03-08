@@ -1,5 +1,4 @@
 import os
-from csv import reader as csvreader
 
 import mrcfile
 import numpy as np
@@ -10,7 +9,7 @@ from torchvision import transforms
 from .vis import format
 
 
-def load_affinities(datapath):
+def load_affinities(datapath: str) -> pd.DataFrame:
     """Load affinity matrix.
 
     Parameters
@@ -48,7 +47,13 @@ def load_affinities(datapath):
 
 
 def load_data(
-    datapath, lim, splt, batch_s, collect_meta, eval, no_val_drop=False
+    datapath: str,
+    lim: int = None,
+    splt: int = 20,
+    batch_s: int = 64,
+    no_val_drop: bool = False,
+    collect_meta: bool = False,
+    eval: bool = True,
 ):
     if not eval:
         # load affinity matrix
@@ -58,7 +63,7 @@ def load_data(
         data = ProteinDataset(
             datapath, amatrix=lookup, lim=lim, collect_m=collect_meta
         )
-        print("Data size:", len(data))
+        print("\nData size:", len(data))
         # dsize = data[0].shape[:-3]   # first sample, first tuple id (data)
         # print(dsize)
         # exit(1)
@@ -158,10 +163,10 @@ class ProteinDataset(Dataset):
 
         if "classes.csv" in os.listdir(self.root_dir):
             with open(
-                os.path.join(self.root_dir, "classes.csv"), newline=""
+                os.path.join(self.root_dir, "classes.csv"), newline="\n"
             ) as f:
-                reader = csvreader(f)
-                class_list = np.asarray(list(reader)).flatten()
+                class_list = np.asarray(f.readlines()).flatten()
+                class_list = [c.strip() for c in class_list]
             self.paths = sorted(
                 [p for p in self.paths for c in class_list if c in p]
             )

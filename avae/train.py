@@ -38,12 +38,12 @@ def train(
     # ############################### DATA ###############################
     trains, vals, tests, lookup = load_data(
         datapath,
-        lim,
-        splt,
-        batch_s,
-        collect_meta,
-        eval=False,
+        lim=lim,
+        splt=splt,
+        batch_s=batch_s,
         no_val_drop=no_val_drop,
+        collect_meta=collect_meta,
+        eval=False,
     )
 
     dshape = list(trains)[0][0].shape[-3:]
