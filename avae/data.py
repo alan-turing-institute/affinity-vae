@@ -166,7 +166,10 @@ class ProteinDataset(Dataset):
                 os.path.join(self.root_dir, "classes.csv"), newline="\n"
             ) as f:
                 class_list = np.asarray(f.readlines()).flatten()
-                class_list = [c.strip() for c in class_list]
+                class_list = [
+                    c.strip() for c in class_list if len(c.strip()) != 0
+                ]
+
             self.paths = sorted(
                 [p for p in self.paths for c in class_list if c in p]
             )
@@ -226,7 +229,7 @@ class ProteinDataset(Dataset):
 
         if self.collect_meta:
             # file info and metadata
-            meta = filename.split(".")[0].split("_")[1:]
+            meta = "_".join(filename.split(".")[0].split("_")[1:])
             avg = np.around(np.average(x), decimals=4)
             img = format(x)  # used for dynamic preview in Altair
             meta = {
