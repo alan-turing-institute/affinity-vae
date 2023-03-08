@@ -226,7 +226,7 @@ class ProteinDataset(Dataset):
 
         if self.collect_meta:
             # file info and metadata
-            meta = filename.split(".")[0].split("_")[-1]
+            meta = filename.split(".")[0].split("_")[1:]
             avg = np.around(np.average(x), decimals=4)
             img = format(x)  # used for dynamic preview in Altair
             meta = {
