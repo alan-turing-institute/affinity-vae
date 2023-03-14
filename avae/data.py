@@ -1,4 +1,5 @@
 import os
+import random
 
 import mrcfile
 import numpy as np
@@ -157,9 +158,8 @@ class ProteinDataset(Dataset):
         self.collect_meta = collect_m
 
         self.root_dir = root_dir
-        self.paths = sorted([f for f in os.listdir(root_dir) if ".mrc" in f])[
-            :lim
-        ]
+        self.paths = [f for f in os.listdir(root_dir) if ".mrc" in f]
+        random.shuffle(self.paths)
 
         if "classes.csv" in os.listdir(self.root_dir):
             with open(
@@ -173,6 +173,8 @@ class ProteinDataset(Dataset):
             self.paths = sorted(
                 [p for p in self.paths for c in class_list if c in p]
             )
+
+        self.paths = self.paths[:lim]
 
         self.amatrix = amatrix
 
