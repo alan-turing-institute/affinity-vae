@@ -170,7 +170,7 @@ class ProteinDataset(Dataset):
                     c.strip() for c in class_list if len(c.strip()) != 0
                 ]
 
-            self.paths = sorted(
+            self.paths = (
                 [p for p in self.paths for c in class_list if c in p]
             )
 
