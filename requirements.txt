@@ -11,3 +11,4 @@ scipy
 torch
 torchvision
 umap-learn
+click
