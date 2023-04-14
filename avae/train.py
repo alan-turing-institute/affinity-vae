@@ -6,11 +6,13 @@ import pandas as pd
 import torch
 from sklearn import metrics, preprocessing
 from sklearn.neighbors import KNeighborsClassifier
+from torchinfo import summary
 
 from . import config, vis
 from .data import load_data
 from .loss import AVAELoss
-from .model_b import AffinityVAE, set_device
+from .model_b import set_device
+from .model_a import AffinityVAE
 
 
 def train(
@@ -45,7 +47,6 @@ def train(
         collect_meta=collect_meta,
         eval=False,
     )
-
     dshape = list(trains)[0][0].shape[-3:]
     pose = not (pose_dims == 0)
 
@@ -102,6 +103,7 @@ def train(
         # ########################## TRAINING #################################
         vae.train()
         for b, batch in enumerate(trains):
+
             x, x_hat, lat_mu, lat_logvar, lat, lat_pos, t_history = pass_batch(
                 device,
                 vae,
