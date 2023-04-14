@@ -7,19 +7,17 @@ from .base import SpatialDims
 
 class Encoder(nn.Module):
     def __init__(
-        self, depth, filters, latent_dims, pose_dims, unflat_shape, flat_shape
+        self,
+        depth,
+        filters,
+        latent_dims,
+        pose_dims,
+        unflat_shape,
+        flat_shape,
+        conv,
     ):
         super(Encoder, self).__init__()
-
         self.encoder = nn.Sequential()
-
-        ndim = len(unflat_shape[1:])
-        if ndim == SpatialDims.TWO:
-            conv = nn.Conv2d
-            conv_T = nn.ConvTranspose2d
-        elif ndim == SpatialDims.THREE:
-            conv = nn.Conv3d
-            conv_T = nn.ConvTranspose3d
 
         input_channel = 1
         for d in range(len(filters)):
@@ -51,19 +49,18 @@ class Encoder(nn.Module):
 
 class Decoder(nn.Module):
     def __init__(
-        self, depth, filters, latent_dims, pose_dims, unflat_shape, flat_shape
+        self,
+        depth,
+        filters,
+        latent_dims,
+        pose_dims,
+        unflat_shape,
+        flat_shape,
+        conv_T,
     ):
         super(Decoder, self).__init__()
 
         self.decoder = nn.Sequential()
-        ndim = len(unflat_shape[1:])
-
-        if ndim == SpatialDims.TWO:
-            conv = nn.Conv2d
-            conv_T = nn.ConvTranspose2d
-        elif ndim == SpatialDims.THREE:
-            conv = nn.Conv3d
-            conv_T = nn.ConvTranspose3d
 
         self.decoder.append(nn.Linear(latent_dims + pose_dims, flat_shape))
         self.decoder.append(nn.Unflatten(-1, unflat_shape))
@@ -137,6 +134,17 @@ class AffinityVAE(nn.Module):
         )
         self.flat_shape = np.prod(self.unflat_shape)
 
+        ndim = len(self.unflat_shape[1:])
+
+        conv = nn.Conv3d
+        conv_T = nn.ConvTranspose3d
+        if ndim == SpatialDims.TWO:
+            conv = nn.Conv2d
+            conv_T = nn.ConvTranspose2d
+        elif ndim == SpatialDims.THREE:
+            conv = nn.Conv3d
+            conv_T = nn.ConvTranspose3d
+
         self.encoder = Encoder(
             depth,
             self.filters,
@@ -144,6 +152,7 @@ class AffinityVAE(nn.Module):
             pose_dims,
             self.unflat_shape,
             self.flat_shape,
+            conv,
         )
 
         self.decoder = Decoder(
@@ -153,12 +162,12 @@ class AffinityVAE(nn.Module):
             pose_dims,
             self.unflat_shape,
             self.flat_shape,
+            conv_T,
         )
 
     def forward(self, x):
         mu, log_var, pose = self.encoder(x)
         z = self.reparameterise(mu, log_var)
-        z_pose = torch.cat([pose, z], dim=-1)
         x = self.decoder(z, pose)
         return x, mu, log_var, z, pose
 
