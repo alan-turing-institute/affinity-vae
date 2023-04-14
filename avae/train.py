@@ -6,13 +6,11 @@ import pandas as pd
 import torch
 from sklearn import metrics, preprocessing
 from sklearn.neighbors import KNeighborsClassifier
-from torchinfo import summary
-
 from . import config, vis
 from .data import load_data
 from .loss import AVAELoss
-from .model_b import set_device
 from .model_a import AffinityVAE
+from .model_b import set_device
 
 
 def train(

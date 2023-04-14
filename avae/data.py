@@ -32,7 +32,6 @@ def load_affinities(datapath: str) -> pd.DataFrame:
         f for f in os.listdir(datapath) if "affinity" in f and ".csv" in f
     ]
 
-
     if len(lookup) > 1:
         raise RuntimeError(
             "More than 1 affinity matrix in the root directory {}. keep one of {}".format(
@@ -172,7 +171,6 @@ class ProteinDataset(Dataset):
                 ]
 
             self.paths = [p for p in self.paths for c in class_list if c in p]
-            
 
         self.paths = self.paths[:lim]
 
