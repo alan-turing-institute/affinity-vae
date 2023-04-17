@@ -36,5 +36,7 @@ jobs:
       # the files being changed by pre-commit should be just those that are
       # being committed - provided that people are using the pre-commit hook to
       # format their code.
+      - name: make executable
+        run: chmod -x .pre-commit-config.yaml
       - name: run pre-commit
         run: pre-commit run --all-files --color always
