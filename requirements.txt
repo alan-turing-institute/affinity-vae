@@ -1,4 +1,5 @@
 altair
+click
 matplotlib
 mrcfile
 numpy
@@ -11,4 +12,3 @@ scipy
 torch
 torchvision
 umap-learn
-click

@@ -26,10 +26,10 @@ python3 -m venv env
 source env/bin/activate
 pip install -e .
 ```
-> Note: This is the preffered option for running on Turing macOS laptops. 
+> Note: This is the preffered option for running on Turing macOS laptops.
 
 > Warning: M1 macOS can not do [pytorch paralelisation](https://github.com/pytorch/pytorch/issues/70344). A temporary solution for this is to modify the code on the DataLoaders in data.py to `num_workers=0` in order to run the code. Otherwise you will get the error: `AttributeError: Can't pickle local object 'ProteinDataset.__init__.<locals>.<lambda>'`.
- 
+
 ### Installing with conda in Baskerville
 
 The following is the recommended way of installing all libraries in Baskervile.
