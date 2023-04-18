@@ -176,6 +176,14 @@ class ProteinDataset(Dataset):
 
         self.amatrix = amatrix
 
+        class_check = np.in1d(class_list, self.amatrix.columns)
+        if not np.all(class_check):
+            raise RuntimeError(
+                "Not all classes in the training set are present in the affinity matrix"
+                "Missing classes: {}".format(
+                    np.asarray(class_list)[~class_check]
+                )
+            )
         if not transform:
             self.transform = transforms.Compose(
                 [
