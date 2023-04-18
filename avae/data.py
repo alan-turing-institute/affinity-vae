@@ -170,14 +170,20 @@ class ProteinDataset(Dataset):
                     c.strip() for c in class_list if len(c.strip()) != 0
                 ]
 
-            self.paths = sorted(
-                [p for p in self.paths for c in class_list if c in p]
-            )
+            self.paths = [p for p in self.paths for c in class_list if c in p]
 
         self.paths = self.paths[:lim]
 
         self.amatrix = amatrix
 
+        class_check = np.in1d(class_list, self.amatrix.columns)
+        if not np.all(class_check):
+            raise RuntimeError(
+                "Not all classes in the training set are present in the affinity matrix"
+                "Missing classes: {}".format(
+                    np.asarray(class_list)[~class_check]
+                )
+            )
         if not transform:
             self.transform = transforms.Compose(
                 [
