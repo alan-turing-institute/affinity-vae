@@ -6,13 +6,25 @@ from avae.model_b import AffinityVAE as avae_b
 
 def test_model_instance_a():
     """Test instantiation of the model a."""
-    vae = avae_a()
+    vae = avae_a(
+        capacity=8,
+        depth=4,
+        input_size=(1, 64, 64, 64),
+        latent_dims=16,
+        pose_dims=3,
+    )
     assert isinstance(vae, avae_a)
 
 
 def test_model_instance_b():
     """Test instantiation of the model b."""
-    vae = avae_b()
+    vae = avae_b(
+        capacity=8,
+        depth=4,
+        input_size=(1, 64, 64, 64),
+        latent_dims=16,
+        pose_dims=3,
+    )
     assert isinstance(vae, avae_b)
 
 
@@ -21,7 +33,7 @@ def test_model_3D():
     vae = avae_a(
         capacity=8,
         depth=4,
-        input_shape=(1, 64, 64, 64),
+        input_size=(1, 64, 64, 64),
         latent_dims=16,
         pose_dims=3,
     )
@@ -34,7 +46,7 @@ def test_model_2D():
     vae = avae_a(
         capacity=8,
         depth=4,
-        input_shape=(1, 64, 64),
+        input_size=(1, 64, 64),
         latent_dims=16,
         pose_dims=3,
     )

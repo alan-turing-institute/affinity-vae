@@ -28,6 +28,9 @@ jobs:
       - name: install dependencies
         run: pip install pre-commit
 
+      - name: Executable access to .pre-commit-config.yaml
+        run: chmod -x .pre-commit-config.yaml
+
       - name: Install pre-commit hooks
         run: pre-commit install
 
