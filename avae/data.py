@@ -157,9 +157,22 @@ class ProteinDataset(Dataset):
 
         self.collect_meta = collect_m
 
+        self.amatrix = amatrix
+
         self.root_dir = root_dir
         self.paths = [f for f in os.listdir(root_dir) if ".mrc" in f]
         random.shuffle(self.paths)
+        ids = np.unique([f.split("_")[0] for f in self.paths])
+
+        if self.amatrix is not None:
+            class_check = np.in1d(ids, self.amatrix.columns)
+            if not np.all(class_check):
+                raise RuntimeError(
+                    "Not all classes in the training set are present in the "
+                    "affinity matrix. Missing classes: {}".format(
+                        np.asarray(ids)[~class_check]
+                    )
+                )
 
         if "classes.csv" in os.listdir(self.root_dir):
             with open(
@@ -174,16 +187,6 @@ class ProteinDataset(Dataset):
 
         self.paths = self.paths[:lim]
 
-        self.amatrix = amatrix
-
-        class_check = np.in1d(class_list, self.amatrix.columns)
-        if not np.all(class_check):
-            raise RuntimeError(
-                "Not all classes in the training set are present in the affinity matrix"
-                "Missing classes: {}".format(
-                    np.asarray(class_list)[~class_check]
-                )
-            )
         if not transform:
             self.transform = transforms.Compose(
                 [
