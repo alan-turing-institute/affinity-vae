@@ -45,7 +45,6 @@ def train(
         collect_meta=collect_meta,
         eval=False,
     )
-
     dshape = list(trains)[0][0].shape[-3:]
     pose = not (pose_dims == 0)
 
@@ -102,6 +101,7 @@ def train(
         # ########################## TRAINING #################################
         vae.train()
         for b, batch in enumerate(trains):
+
             x, x_hat, lat_mu, lat_logvar, lat, lat_pos, t_history = pass_batch(
                 device,
                 vae,

@@ -34,8 +34,8 @@ def load_affinities(datapath: str) -> pd.DataFrame:
 
     if len(lookup) > 1:
         raise RuntimeError(
-            "More than 1 affinity matrix in the root directory {}.".format(
-                datapath
+            "More than 1 affinity matrix in the root directory {}. keep one of {}".format(
+                datapath, lookup[:]
             )
         )
     elif not (len(lookup) == 0):
