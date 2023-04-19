@@ -9,7 +9,7 @@ def test_model_instance_a():
     vae = avae_a(
         capacity=8,
         depth=4,
-        input_size=(1, 64, 64, 64),
+        input_size=(64, 64, 64),
         latent_dims=16,
         pose_dims=3,
     )
@@ -21,7 +21,7 @@ def test_model_instance_b():
     vae = avae_b(
         capacity=8,
         depth=4,
-        input_size=(1, 64, 64, 64),
+        input_size=(64, 64, 64),
         latent_dims=16,
         pose_dims=3,
     )
@@ -33,7 +33,7 @@ def test_model_3D():
     vae = avae_a(
         capacity=8,
         depth=4,
-        input_size=(1, 64, 64, 64),
+        input_size=(64, 64, 64),
         latent_dims=16,
         pose_dims=3,
     )
@@ -46,7 +46,7 @@ def test_model_2D():
     vae = avae_a(
         capacity=8,
         depth=4,
-        input_size=(1, 64, 64),
+        input_size=(64, 64),
         latent_dims=16,
         pose_dims=3,
     )
