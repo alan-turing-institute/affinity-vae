@@ -97,6 +97,12 @@ class AVAELoss:
         if lookup_aff is not None:
             self.gamma = gamma
             self.affinity_loss = AffinityLoss(lookup_aff, device)
+        elif lookup_aff is None and gamma != 0:
+            raise RuntimeError(
+                "WARNING: Affinity matrix is needed to compute Affinity loss"
+                ". Although you've set gamma, you have not provided --af/"
+                "--affinity parameter."
+            )
 
     def __call__(self, x, recon_x, mu, logvar, batch_aff=None):
         """Return the aVAE loss.

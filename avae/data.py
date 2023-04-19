@@ -10,43 +10,6 @@ from torchvision import transforms
 from .vis import format
 
 
-def load_affinities(datapath: str) -> pd.DataFrame:
-    """Load affinity matrix.
-
-    Parameters
-    ----------
-    datapath : str
-        Path to directory containing affinity matrix denoted as '*scores*.csv'.
-
-    Returns
-    -------
-    affinities : pd.DataFrame
-        A square symmetric matrix where each column and row is the index of an
-        object class from the training set,
-        consisting of M different classes. First row and column contain IDs of
-        the classes.
-
-    """
-
-    lookup = [
-        f for f in os.listdir(datapath) if "affinity" in f and ".csv" in f
-    ]
-
-    if len(lookup) > 1:
-        raise RuntimeError(
-            "More than 1 affinity matrix in the root directory {}.".format(
-                datapath
-            )
-        )
-    elif not (len(lookup) == 0):
-        lookup = lookup[0]
-        lookup = pd.read_csv(os.path.join(datapath, lookup), header=0)
-    else:
-        lookup = None
-
-    return lookup
-
-
 def load_data(
     datapath: str,
     lim: int = None,
@@ -55,14 +18,23 @@ def load_data(
     no_val_drop: bool = False,
     collect_meta: bool = False,
     eval: bool = True,
+    affinity=None,
+    classes=None,
 ):
     if not eval:
-        # load affinity matrix
-        lookup = load_affinities(datapath)
+        if affinity is not None:
+            # load affinity matrix
+            lookup = pd.read_csv(os.path.join(datapath, affinity), header=0)
+        else:
+            lookup = None
 
         # create ProteinDataset
         data = ProteinDataset(
-            datapath, amatrix=lookup, lim=lim, collect_m=collect_meta
+            datapath,
+            amatrix=lookup,
+            classes=classes,
+            lim=lim,
+            collect_m=collect_meta,
         )
         print("\nData size:", len(data))
         # dsize = data[0].shape[:-3]   # first sample, first tuple id (data)
@@ -111,7 +83,10 @@ def load_data(
         print("Train / val batches:", len(trains), len(vals))
         print()
 
-        lookup = lookup.to_numpy(dtype=np.float32)
+        if affinity is not None:
+            lookup = lookup.to_numpy(dtype=np.float32)
+        else:
+            lookup = None
 
     if eval or ("test" in os.listdir(datapath)):
         data = ProteinDataset(
@@ -151,7 +126,13 @@ class ProteinDataset(Dataset):
     """
 
     def __init__(
-        self, root_dir, amatrix=None, transform=None, lim=None, collect_m=False
+        self,
+        root_dir,
+        amatrix=None,
+        classes=None,
+        transform=None,
+        lim=None,
+        collect_m=False,
     ):
         super().__init__()
 
@@ -174,16 +155,13 @@ class ProteinDataset(Dataset):
                     )
                 )
 
-        if "classes.csv" in os.listdir(self.root_dir):
-            with open(
-                os.path.join(self.root_dir, "classes.csv"), newline="\n"
-            ) as f:
-                class_list = np.asarray(f.readlines()).flatten()
-                class_list = [
-                    c.strip() for c in class_list if len(c.strip()) != 0
-                ]
+        if classes is not None:
+            with open(classes, newline="\n") as f:
+                classes = np.asarray(f.read().splitlines()).flatten()
+                classes = [c for c in classes if c != ""]
+                classes = [c.strip() for c in classes if len(c.strip()) != 0]
 
-            self.paths = [p for p in self.paths for c in class_list if c in p]
+            self.paths = [p for p in self.paths for c in classes if c in p]
 
         self.paths = self.paths[:lim]
 

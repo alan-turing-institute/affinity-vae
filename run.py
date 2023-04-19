@@ -34,6 +34,20 @@ from avae.train import train
     "if it is smaller than batch_size.",
 )
 @click.option(
+    "--affinity",
+    "-af",
+    type=str,
+    default=None,
+    help="Path to affinity matrix for training.",
+)
+@click.option(
+    "--classes",
+    "-cl",
+    type=str,
+    default=None,
+    help="Path to a CSV file containing a list of classes for training.",
+)
+@click.option(
     "--epochs",
     "-ep",
     type=int,
@@ -262,6 +276,8 @@ def run(
     limit,
     split,
     no_val_drop,
+    affinity,
+    classes,
     epochs,
     batch,
     depth,
@@ -338,6 +354,8 @@ def run(
             split,
             batch,
             no_val_drop,
+            affinity,
+            classes,
             dynamic,
             epochs,
             channels,

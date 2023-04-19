@@ -19,6 +19,8 @@ def train(
     splt,
     batch_s,
     no_val_drop,
+    affinity,
+    classes,
     collect_meta,
     epochs,
     channels,
@@ -44,6 +46,8 @@ def train(
         no_val_drop=no_val_drop,
         collect_meta=collect_meta,
         eval=False,
+        affinity=affinity,
+        classes=classes,
     )
 
     dshape = list(trains)[0][0].shape[-3:]
