@@ -83,7 +83,8 @@ from avae.train import train
     "-pd",
     type=int,
     default=0,
-    help="If pose on, number of pose dimensions.",
+    help="If pose on, number of pose dimensions. If 0 and gamma=0 it becomes"
+    "a standard beta-VAE.",
 )
 @click.option(
     "--beta",
@@ -98,7 +99,8 @@ from avae.train import train
     type=float,
     default=1.0,
     help="Scale factor for the loss component corresponding "
-    "to shape similarity (default 1).",
+    "to shape similarity (default 1). If 0 and pd=0 it becomes a standard"
+    "beta-VAE.",
 )
 @click.option(
     "--learning",

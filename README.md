@@ -78,15 +78,20 @@ Options:
   -sp, --split INTEGER        Train/val split in %.
   -nd, --no_val_drop          Do not drop last validate batch if if it is
                               smaller than batch_size.
+  -af, --affinity TEXT        Path to affinity matrix for training.
+  -cl, --classes TEXT         Path to a CSV file containing a list of classes
+                              for training.
   -ep, --epochs INTEGER       Number of epochs (default 100).
   -ba, --batch INTEGER        Batch size (default 128).
   -de, --depth INTEGER        Depth of the convolutional layers (default 3).
   -ch, --channels INTEGER     First layer channels (default 64).
   -ld, --latent_dims INTEGER  Latent space dimension (default 10).
-  -pd, --pose_dims INTEGER    If pose on, number of pose dimensions.
+  -pd, --pose_dims INTEGER    If pose on, number of pose dimensions. If 0 and
+                              gamma=0 it becomesa standard beta-VAE.
   -b, --beta FLOAT            Variational beta (default 1).
   -g, --gamma FLOAT           Scale factor for the loss component
                               corresponding to shape similarity (default 1).
+                              If 0 and pd=0 it becomes a standardbeta-VAE.
   -lr, --learning FLOAT       Learning rate (default 1e-4).
   -lf, --loss_fn TEXT         Loss type: 'MSE' or 'BCE' (default 'MSE').
   -fev, --freq_eval INTEGER   Frequency at which to evaluate test set (default
@@ -121,7 +126,10 @@ Options:
   -dn, --dynamic              Enable collecting meta and dynamic latent space
                               plots.
   --help                      Show this message and exit.
+
 ```
+
+Note that setting ```-g/--gamma``` to ```0``` and ```-pd/--pose_dims``` to ```0``` will run a vanilla beta-VAE.
 
 ### Quickstart
 

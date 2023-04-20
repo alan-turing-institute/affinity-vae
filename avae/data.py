@@ -24,7 +24,7 @@ def load_data(
     if not eval:
         if affinity is not None:
             # load affinity matrix
-            lookup = pd.read_csv(os.path.join(datapath, affinity), header=0)
+            lookup = pd.read_csv(affinity, header=0)
         else:
             lookup = None
 
@@ -37,9 +37,7 @@ def load_data(
             collect_m=collect_meta,
         )
         print("\nData size:", len(data))
-        # dsize = data[0].shape[:-3]   # first sample, first tuple id (data)
-        # print(dsize)
-        # exit(1)
+        print("\nClass list:", data.final_classes)
 
         # split into train / val sets
         idx = np.random.permutation(len(data))
@@ -75,7 +73,7 @@ def load_data(
                 "Validation or train set is too small for the current batch "
                 "size. Please edit either split percent '-sp/--split' or batch"
                 " size '-ba/--batch' or set '-nd/--no_val_drop flag' (only if "
-                "val is too small). Batch: {}, train:{}, val: {}, "
+                "val is too small). Batch: {}, train: {}, val: {}, "
                 "split: {}%.".format(
                     batch_s, len(train_data), len(val_data), splt
                 )
@@ -144,6 +142,7 @@ class ProteinDataset(Dataset):
         self.paths = [f for f in os.listdir(root_dir) if ".mrc" in f]
         random.shuffle(self.paths)
         ids = np.unique([f.split("_")[0] for f in self.paths])
+        self.final_classes = ids
 
         if self.amatrix is not None:
             class_check = np.in1d(ids, self.amatrix.columns)
@@ -160,6 +159,7 @@ class ProteinDataset(Dataset):
                 classes = np.asarray(f.read().splitlines()).flatten()
                 classes = [c for c in classes if c != ""]
                 classes = [c.strip() for c in classes if len(c.strip()) != 0]
+                self.final_classes = classes
 
             self.paths = [p for p in self.paths for c in classes if c in p]
 
