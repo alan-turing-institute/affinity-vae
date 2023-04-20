@@ -34,6 +34,20 @@ from avae.train import train
     "if it is smaller than batch_size.",
 )
 @click.option(
+    "--affinity",
+    "-af",
+    type=str,
+    default=None,
+    help="Path to affinity matrix for training.",
+)
+@click.option(
+    "--classes",
+    "-cl",
+    type=str,
+    default=None,
+    help="Path to a CSV file containing a list of classes for training.",
+)
+@click.option(
     "--epochs",
     "-ep",
     type=int,
@@ -69,7 +83,8 @@ from avae.train import train
     "-pd",
     type=int,
     default=0,
-    help="If pose on, number of pose dimensions.",
+    help="If pose on, number of pose dimensions. If 0 and gamma=0 it becomes"
+    "a standard beta-VAE.",
 )
 @click.option(
     "--beta",
@@ -84,7 +99,8 @@ from avae.train import train
     type=float,
     default=1.0,
     help="Scale factor for the loss component corresponding "
-    "to shape similarity (default 1).",
+    "to shape similarity (default 1). If 0 and pd=0 it becomes a standard"
+    "beta-VAE.",
 )
 @click.option(
     "--learning",
@@ -262,6 +278,8 @@ def run(
     limit,
     split,
     no_val_drop,
+    affinity,
+    classes,
     epochs,
     batch,
     depth,
@@ -338,6 +356,8 @@ def run(
             split,
             batch,
             no_val_drop,
+            affinity,
+            classes,
             dynamic,
             epochs,
             channels,
