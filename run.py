@@ -289,6 +289,7 @@ logging.basicConfig(
     help="Enable collecting meta and dynamic latent space plots.",
 )
 def run(
+    config_file,
     datapath,
     limit,
     split,
@@ -326,6 +327,36 @@ def run(
     eval,
     dynamic,
 ):
+    # read config file and command line arguments and assign to local variables that are used in the rest of the code
+    local_vars = locals().copy()
+    if config_file is not None:
+        with open(config_file, "r") as f:
+            logging.info("Reading submission configuration file" + config_file)
+            data = yaml.load(f, Loader=yaml.FullLoader)
+        # returns JSON object as
+        for key, val in local_vars.items():
+            if (
+                val is not None
+                and isinstance(val, (int, float, bool, str))
+                or data.get(key) is None
+            ):
+                logging.warning(
+                    "Command line argument "
+                    + key
+                    + " is overwriting config file value to: "
+                    + str(val)
+                )
+                data[key] = val
+            else:
+                logging.info(
+                    "Setting "
+                    + key
+                    + " to config file value: "
+                    + str(data[key])
+                )
+    else:
+        # if no config file is provided, use command line arguments
+        data = local_vars
 
     print()
     if vis_all:
