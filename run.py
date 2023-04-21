@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 
 import click
+import yaml
 
 from avae import config
 from avae.evaluate import evaluate
@@ -19,6 +20,7 @@ logging.basicConfig(
 
 
 @click.command(name="Affinity Trainer")
+@click.option("--config_file", type=click.Path(exists=True))
 @click.option(
     "--datapath",
     "-d",
