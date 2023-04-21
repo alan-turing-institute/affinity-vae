@@ -1,8 +1,21 @@
+import logging
+from datetime import datetime
+
 import click
 
 from avae import config
 from avae.evaluate import evaluate
 from avae.train import train
+
+dt_name = datetime.now().strftime("%H_%M_%d_%m_%Y")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler("avae_run_log_" + dt_name + ".log"),
+        logging.StreamHandler(),
+    ],
+)
 
 
 @click.command(name="Affinity Trainer")
