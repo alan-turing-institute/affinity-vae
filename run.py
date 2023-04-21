@@ -457,7 +457,6 @@ def run(
             )
             # TODO also make sure image is correct size, maybe in dataloader?
 
-
         logging.info(
             "Saving final submission config file to: "
             + "avae_final_config"
