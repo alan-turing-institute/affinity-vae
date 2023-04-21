@@ -358,67 +358,83 @@ def run(
         # if no config file is provided, use command line arguments
         data = local_vars
 
-    print()
-    if vis_all:
-        config.VIS_LOS = True
-        config.VIS_EMB = True
-        config.VIS_REC = True
-        config.VIS_INT = True
-        config.VIS_DIS = True
-        config.VIS_POS = True
-        config.VIS_ACC = True
-    else:
-        config.VIS_LOS = vis_los
-        config.VIS_EMB = vis_emb
-        config.VIS_REC = vis_rec
-        config.VIS_INT = vis_int
-        config.VIS_DIS = vis_dis
-        config.VIS_POS = vis_pos
-        config.VIS_ACC = vis_acc
+    # Check for missing values
+    for key, val in data.items():
+        if val is None:
+            logging.warning(
+                "No value set for "
+                + key
+                + " in config file or command line arguments."
+            )
 
-    if freq_all is not None:
-        config.FREQ_EVAL = freq_all
-        config.FREQ_EMB = freq_all
-        config.FREQ_REC = freq_all
-        config.FREQ_INT = freq_all
-        config.FREQ_DIS = freq_all
-        config.FREQ_POS = freq_all
-        config.FREQ_ACC = freq_all
-        config.FREQ_STA = freq_all
-    else:
-        config.FREQ_EVAL = freq_eval
-        config.FREQ_EMB = freq_emb
-        config.FREQ_REC = freq_rec
-        config.FREQ_INT = freq_int
-        config.FREQ_DIS = freq_dis
-        config.FREQ_POS = freq_pos
-        config.FREQ_ACC = freq_acc
-        config.FREQ_STA = freq_sta
+    try:
+        if data["vis_all"]:
+            config.VIS_LOS = True
+            config.VIS_EMB = True
+            config.VIS_REC = True
+            config.VIS_INT = True
+            config.VIS_DIS = True
+            config.VIS_POS = True
+            config.VIS_ACC = True
+        else:
+            config.VIS_LOS = data["vis_los"]
+            config.VIS_EMB = data["vis_emb"]
+            config.VIS_REC = data["vis_rec"]
+            config.VIS_INT = data["vis_int"]
+            config.VIS_DIS = data["vis_dis"]
+            config.VIS_POS = data["vis_pos"]
+            config.VIS_ACC = data["vis_acc"]
 
-    if not eval:
-        train(
-            datapath,
-            limit,
-            split,
-            batch,
-            no_val_drop,
-            affinity,
-            classes,
-            dynamic,
-            epochs,
-            channels,
-            depth,
-            latent_dims,
-            pose_dims,
-            learning,
-            beta,
-            gamma,
-            loss_fn,
-            gpu,
-        )
-    else:
-        evaluate(datapath, limit, split, batch, dynamic, gpu)
-        # TODO also make sure image is correct size, maybe in dataloader?
+        if freq_all is not None:
+            config.FREQ_EVAL = data["freq_all"]
+            config.FREQ_EMB = data["freq_all"]
+            config.FREQ_REC = data["freq_all"]
+            config.FREQ_INT = data["freq_all"]
+            config.FREQ_DIS = data["freq_all"]
+            config.FREQ_POS = data["freq_all"]
+            config.FREQ_ACC = data["freq_all"]
+            config.FREQ_STA = data["freq_all"]
+        else:
+            config.FREQ_EVAL = data["freq_eval"]
+            config.FREQ_EMB = data["freq_emb"]
+            config.FREQ_REC = data["freq_rec"]
+            config.FREQ_INT = data["freq_int"]
+            config.FREQ_DIS = data["freq_dis"]
+            config.FREQ_POS = data["freq_pos"]
+            config.FREQ_ACC = data["freq_acc"]
+            config.FREQ_STA = data["freq_sta"]
+
+        if not data["eval"]:
+            train(
+                data["datapath"],
+                data["limit"],
+                data["split"],
+                data["batch"],
+                data["no_val_drop"],
+                data["affinity"],
+                data["classes"],
+                data["dynamic"],
+                data["epochs"],
+                data["channels"],
+                data["depth"],
+                data["latent_dims"],
+                data["pose_dims"],
+                data["learning"],
+                data["beta"],
+                data["gamma"],
+                data["loss_fn"],
+                data["gpu"],
+            )
+        else:
+            evaluate(
+                data["datapath"],
+                data["limit"],
+                data["split"],
+                data["batch"],
+                data["dynamic"],
+                data["gpu"],
+            )
+            # TODO also make sure image is correct size, maybe in dataloader?
 
 
 if __name__ == "__main__":
