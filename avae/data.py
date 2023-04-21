@@ -7,7 +7,7 @@ import pandas as pd
 from torch.utils.data import DataLoader, Dataset, Subset
 from torchvision import transforms
 
-from .vis import format
+from .vis import format, plot_affinity_matrix
 
 
 def load_data(
@@ -38,6 +38,12 @@ def load_data(
         )
         print("\nData size:", len(data))
         print("\nClass list:", data.final_classes)
+
+        plot_affinity_matrix(
+            lookup=lookup,
+            all_classes=lookup.columns.tolist(),
+            selected_classes=data.final_classes,
+        )
 
         # split into train / val sets
         idx = np.random.permutation(len(data))
@@ -144,8 +150,12 @@ class ProteinDataset(Dataset):
         ids = np.unique([f.split("_")[0] for f in self.paths])
         self.final_classes = ids
 
+        if classes is not None:
+            classes_list = pd.read_csv(classes).columns.tolist()
+            self.final_classes = classes_list
+
         if self.amatrix is not None:
-            class_check = np.in1d(ids, self.amatrix.columns)
+            class_check = np.in1d(self.final_classes, self.amatrix.columns)
             if not np.all(class_check):
                 raise RuntimeError(
                     "Not all classes in the training set are present in the "
@@ -154,14 +164,9 @@ class ProteinDataset(Dataset):
                     )
                 )
 
-        if classes is not None:
-            with open(classes, newline="\n") as f:
-                classes = np.asarray(f.read().splitlines()).flatten()
-                classes = [c for c in classes if c != ""]
-                classes = [c.strip() for c in classes if len(c.strip()) != 0]
-                self.final_classes = classes
-
-            self.paths = [p for p in self.paths for c in classes if c in p]
+            self.paths = [
+                p for p in self.paths for c in self.final_classes if c in p
+            ]
 
         self.paths = self.paths[:lim]
 

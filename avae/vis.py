@@ -509,3 +509,35 @@ def interpolations_plot(lats, classes, vae, device, poses=None):
         os.mkdir("plots")
     with mrcfile.new("plots/interpolations.mrc", overwrite=True) as mrc:
         mrc.set_data(grid_for_napari)
+
+
+def plot_affinity_matrix(lookup, all_classes, selected_classes):
+    """
+    This function plots the Affinity matrix and highlights the
+    classes selected for the given calculation.
+
+    Parameters
+    ----------
+    all_classes : All existing classes in the affinity matrix  affinity*.csv
+    lookup :  The affinity matrix
+    selected_classes : All classes selected by the user for training in classes.csv
+    """
+    print("\n################################################################")
+    print("Visualising Affinity_Matrix ...\n")
+
+    fig, ax = plt.subplots(figsize=(9, 9))
+    im = ax.imshow(lookup, vmin=-1, vmax=1, cmap=plt.cm.get_cmap("RdBu"))
+    ax.set_title("Affinity Matrix")
+    ax.set_xticks(np.arange(0, len(all_classes)))
+    ax.set_xticklabels(all_classes)
+    for i, c in enumerate(all_classes):
+        if c in selected_classes:
+            ax.get_xticklabels()[i].set_color("red")
+    ax.set_yticks(np.arange(0, len(all_classes)))
+    ax.set_yticklabels(all_classes)
+    ax.tick_params(axis="x", rotation=90)
+    fig.colorbar(im, ax=ax)
+    if not os.path.exists("plots"):
+        os.mkdir("plots")
+    plt.savefig("plots/Affinity_Matrix.png", dpi=144)
+    print("################################################################\n")
