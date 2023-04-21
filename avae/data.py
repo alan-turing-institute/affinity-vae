@@ -38,12 +38,13 @@ def load_data(
         )
         print("\nData size:", len(data))
         print("\nClass list:", data.final_classes)
-
-        plot_affinity_matrix(
-            lookup=lookup,
-            all_classes=lookup.columns.tolist(),
-            selected_classes=data.final_classes,
-        )
+        
+        if affinity is not None:
+            plot_affinity_matrix(
+                lookup=lookup,
+                all_classes=lookup.columns.tolist(),
+                selected_classes=data.final_classes,
+            )
 
         # split into train / val sets
         idx = np.random.permutation(len(data))
@@ -61,14 +62,14 @@ def load_data(
         trains = DataLoader(
             train_data,
             batch_size=batch_s,
-            num_workers=2,
+            num_workers=0,
             shuffle=True,
             drop_last=True,
         )
         vals = DataLoader(
             val_data,
             batch_size=batch_s,
-            num_workers=2,
+            num_workers=0,
             shuffle=True,
             drop_last=(not no_val_drop),
         )
@@ -98,7 +99,7 @@ def load_data(
         )
         print("Eval data size:", len(data))
         tests = DataLoader(
-            data, batch_size=batch_s, num_workers=2, shuffle=True
+            data, batch_size=batch_s, num_workers=0, shuffle=True
         )
         print("Eval batches:", len(tests))
         print()
