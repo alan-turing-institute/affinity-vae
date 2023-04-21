@@ -94,15 +94,26 @@ class AVAELoss:
         self.device = device
         self.recon_fn = recon_fn
         self.beta = beta
-        if lookup_aff is not None:
+
+        self.gamma = 0
+        self.affinity_loss = None
+
+        if lookup_aff is not None and gamma != 0:
             self.gamma = gamma
             self.affinity_loss = AffinityLoss(lookup_aff, device)
         elif lookup_aff is None and gamma != 0:
             raise RuntimeError(
-                "WARNING: Affinity matrix is needed to compute Affinity loss"
+                "Affinity matrix is needed to compute Affinity loss"
                 ". Although you've set gamma, you have not provided --af/"
                 "--affinity parameter."
             )
+        elif lookup_aff is not None and gamma == 0:
+            print(
+                "\nWARNING: You provided affinity matrix but no gamma. Unless "
+                "you provide gamma, affinity will be ignored and you're "
+                "running a vanilla beta-VAE.\n"
+            )
+            self.affinity_loss = None
 
     def __call__(self, x, recon_x, mu, logvar, batch_aff=None):
         """Return the aVAE loss.
@@ -166,7 +177,7 @@ class AVAELoss:
         kldivergence = -0.5 * torch.mean(1 + logvar - mu.pow(2) - logvar.exp())
 
         # affinity loss
-        affin_loss = 0
+        affin_loss = torch.Tensor([0])
         if self.affinity_loss is not None:
             affin_loss = self.affinity_loss(batch_aff, mu)
 
