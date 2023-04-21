@@ -1,4 +1,5 @@
 import logging
+import os
 from datetime import datetime
 
 import click
@@ -7,7 +8,6 @@ import yaml
 from avae import config
 from avae.evaluate import evaluate
 from avae.train import train
-import os
 
 dt_name = datetime.now().strftime("%H_%M_%d_%m_%Y")
 logging.basicConfig(
@@ -375,7 +375,7 @@ def run(
                     + key
                     + " in config file or command line arguments. Setting to default value."
                 )
-                data[key] = os.path.join(data['datapath'], key+'.csv')
+                data[key] = os.path.join(data["datapath"], key + ".csv")
             else:
                 # set missing variables to default value
                 logging.warning(
