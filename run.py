@@ -352,14 +352,33 @@ def run(
         # if no config file is provided, use command line arguments
         data = local_vars
 
-    # Check for missing values
+    # Check for missing values and set to default values
     for key, val in data.items():
-        if val is None:
-            logging.warning(
-                "No value set for "
-                + key
-                + " in config file or command line arguments."
-            )
+
+        if val is None and key != "config_file":
+            #  make sure data variables are provided
+            if key == "data_path" or key == "affinity" or key == "classes":
+                logging.error(
+                    "No value set for "
+                    + key
+                    + " in config file or command line arguments. Please set a value for this variable."
+                )
+                raise ValueError(
+                    "No value set for "
+                    + key
+                    + " in config file or command line arguments. Please set a value for this variable."
+                )
+            else:
+                # set missing variables to default value
+                logging.warning(
+                    "No value set for "
+                    + key
+                    + " in config file or command line arguments. Setting to default value."
+                )
+                data[key] = config.DEFAULT_RUN_CONFIGS[key]
+                logging.info(
+                    "Setting " + key + " to default value: " + str(data[key])
+                )
 
     try:
         if data["vis_all"]:
