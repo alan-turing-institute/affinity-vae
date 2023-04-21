@@ -11,7 +11,7 @@ from . import config, vis
 from .data import load_data
 from .device_util import set_device
 from .loss import AVAELoss
-from .model_a import AffinityVAE
+from .model_b import AffinityVAE
 
 
 def train(
