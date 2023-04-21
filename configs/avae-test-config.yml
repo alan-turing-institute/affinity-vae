@@ -11,7 +11,7 @@ split: 20
 depth:  3
 channels:  64
 latent_dims:  8
-pose_dims: 0
+pose_dims: 1
 
 #### Training parameters
 
