@@ -457,14 +457,14 @@ def run(
             )
             # TODO also make sure image is correct size, maybe in dataloader?
 
+
         logging.info(
             "Saving final submission config file to: "
-            + config_file
-            + "_final_"
+            + "avae_final_config"
             + dt_name
             + ".yaml"
         )
-        file = open(config_file + "_final_" + dt_name + ".yaml", "w")
+        file = open("avae_final_config" + dt_name + ".yaml", "w")
         yaml.dump(data, file)
         file.close()
         logging.info("YAML File saved!")
