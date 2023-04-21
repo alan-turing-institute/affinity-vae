@@ -70,7 +70,7 @@ logging.basicConfig(
     help="Number of epochs (default 100).",
 )
 @click.option(
-    "--batch", "-ba", type=int, default=128, help="Batch size (default 128)."
+    "--batch", "-ba", type=int, default=None, help="Batch size (default 128)."
 )
 @click.option(
     "--depth",
@@ -279,7 +279,7 @@ logging.basicConfig(
     "--dynamic",
     "-dn",
     type=bool,
-    default=False,
+    default=None,
     is_flag=True,
     help="Enable collecting meta and dynamic latent space plots.",
 )
