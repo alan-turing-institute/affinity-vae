@@ -38,7 +38,7 @@ def load_data(
         )
         print("\nData size:", len(data))
         print("\nClass list:", data.final_classes)
-        
+
         if affinity is not None:
             plot_affinity_matrix(
                 lookup=lookup,
