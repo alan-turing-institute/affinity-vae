@@ -317,10 +317,7 @@ class AffinityVAE(nn.Module):
         # reparametrise
         latent = self.sample(latent_mu, latent_logvar)
         # decode
-        if self.pose:
-            x_recon = self.decoder(latent, latent_pose)
-        else:
-            x_recon = self.decoder(latent, None)
+        x_recon = self.decoder(latent, latent_pose)  # pose set to None if pd=0
         return x_recon, latent_mu, latent_logvar, latent, latent_pose
 
     def sample(self, mu, logvar):
