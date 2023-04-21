@@ -7,6 +7,7 @@ import yaml
 from avae import config
 from avae.evaluate import evaluate
 from avae.train import train
+import os
 
 dt_name = datetime.now().strftime("%H_%M_%d_%m_%Y")
 logging.basicConfig(
@@ -357,7 +358,7 @@ def run(
 
         if val is None and key != "config_file":
             #  make sure data variables are provided
-            if key == "data_path" or key == "affinity" or key == "classes":
+            if key == "data_path":
                 logging.error(
                     "No value set for "
                     + key
@@ -368,6 +369,13 @@ def run(
                     + key
                     + " in config file or command line arguments. Please set a value for this variable."
                 )
+            elif key == "affinity" or key == "classes":
+                logging.warning(
+                    "No value set for "
+                    + key
+                    + " in config file or command line arguments. Setting to default value."
+                )
+                data[key] = os.path.join(data['datapath'], key+'.csv')
             else:
                 # set missing variables to default value
                 logging.warning(
