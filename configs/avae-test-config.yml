@@ -16,7 +16,7 @@ pose_dims: 1
 #### Training parameters
 
 no_val_drop: true
-epochs:  10
+epochs:  1000
 batch:  128
 learning:  0.001
 gpu:  true
