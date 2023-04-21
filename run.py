@@ -26,7 +26,6 @@ logging.basicConfig(
     "-d",
     type=str,
     default=None,
-    required=True,
     help="Path to training data.",
 )
 @click.option(
@@ -37,13 +36,13 @@ logging.basicConfig(
     help="Limit the number of samples loaded (default None).",
 )
 @click.option(
-    "--split", "-sp", type=int, default=10, help="Train/val split in %."
+    "--split", "-sp", type=int, default=None, help="Train/val split in %."
 )
 @click.option(
     "--no_val_drop",
     "-nd",
     type=bool,
-    default=False,
+    default=None,
     is_flag=True,
     help="Do not drop last validate batch if "
     "if it is smaller than batch_size.",
@@ -66,7 +65,7 @@ logging.basicConfig(
     "--epochs",
     "-ep",
     type=int,
-    default=100,
+    default=None,
     help="Number of epochs (default 100).",
 )
 @click.option(
@@ -76,28 +75,28 @@ logging.basicConfig(
     "--depth",
     "-de",
     type=int,
-    default=3,
+    default=None,
     help="Depth of the convolutional layers (default 3).",
 )
 @click.option(
     "--channels",
     "-ch",
     type=int,
-    default=64,
+    default=None,
     help="First layer channels (default 64).",
 )
 @click.option(
     "--latent_dims",
     "-ld",
     type=int,
-    default=10,
+    default=None,
     help="Latent space dimension (default 10).",
 )
 @click.option(
     "--pose_dims",
     "-pd",
     type=int,
-    default=0,
+    default=None,
     help="If pose on, number of pose dimensions. If 0 and gamma=0 it becomes"
     "a standard beta-VAE.",
 )
@@ -105,68 +104,65 @@ logging.basicConfig(
     "--beta",
     "-b",
     type=float,
-    default=1.0,
+    default=None,
     help="Variational beta (default 1).",
 )
 @click.option(
     "--gamma",
     "-g",
     type=float,
-    default=1.0,
+    default=None,
     help="Scale factor for the loss component corresponding "
-    "to shape similarity (default 1). If 0 and pd=0 it becomes a standard"
+    "to shape similarity. If 0 and pd=0 it becomes a standard"
     "beta-VAE.",
 )
 @click.option(
     "--learning",
     "-lr",
     type=float,
-    default=1e-4,
-    help="Learning rate (default 1e-4).",
+    default=None,
+    help="Learning rate.",
 )
 @click.option(
     "--loss_fn",
     "-lf",
     type=str,
-    default="MSE",
+    default=None,
     help="Loss type: 'MSE' or 'BCE' (default 'MSE').",
 )
 @click.option(
     "--freq_eval",
     "-fev",
     type=int,
-    default=10,
-    help="Frequency at which to evaluate test set "
-    "(default every 10 epochs).",
+    default=None,
+    help="Frequency at which to evaluate test set.",
 )
 @click.option(
     "--freq_sta",
     "-fs",
     type=int,
-    default=10,
-    help="Frequency at which to save state " "(default every 10 epochs).",
+    default=None,
+    help="Frequency at which to save state",
 )
 @click.option(
     "--freq_emb",
     "-fe",
     type=int,
-    default=10,
-    help="Frequency at which to visualise the latent "
-    "space embedding (default every 10 epochs).",
+    default=None,
+    help="Frequency at which to visualise the latent " "space embedding.",
 )
 @click.option(
     "--freq_rec",
     "-fr",
     type=int,
-    default=10,
-    help="Frequency at which to visualise reconstructions "
-    "(default every 10 epochs).",
+    default=None,
+    help="Frequency at which to visualise reconstructions ",
 )
 @click.option(
     "--freq_int",
     "-fi",
     type=int,
-    default=10,
+    default=None,
     help="Frequency at which to visualise latent space"
     "interpolations (default every 10 epochs).",
 )
@@ -174,22 +170,21 @@ logging.basicConfig(
     "--freq_dis",
     "-ft",
     type=int,
-    default=10,
-    help="Frequency at which to visualise single transversals "
-    "(default every 10 epochs).",
+    default=None,
+    help="Frequency at which to visualise single transversals.",
 )
 @click.option(
     "--freq_pos",
     "-fp",
     type=int,
-    default=10,
-    help="Frequency at which to visualise pose " "(default every 10 epochs).",
+    default=None,
+    help="Frequency at which to visualise pose.",
 )
 @click.option(
     "--freq_acc",
     "-fac",
     type=int,
-    default=10,
+    default=None,
     help="Frequency at which to visualise confusion matrix.",
 )
 @click.option(
@@ -197,14 +192,13 @@ logging.basicConfig(
     "-fa",
     type=int,
     default=None,
-    help="Frequency at which to visualise all plots except loss "
-    "(default every 10 epochs).",
+    help="Frequency at which to visualise all plots except loss. ",
 )
 @click.option(
     "--vis_emb",
     "-ve",
     type=bool,
-    default=False,
+    default=None,
     is_flag=True,
     help="Visualise latent space embedding.",
 )
@@ -212,7 +206,7 @@ logging.basicConfig(
     "--vis_rec",
     "-vr",
     type=bool,
-    default=False,
+    default=None,
     is_flag=True,
     help="Visualise reconstructions.",
 )
@@ -220,7 +214,7 @@ logging.basicConfig(
     "--vis_los",
     "-vl",
     type=bool,
-    default=False,
+    default=None,
     is_flag=True,
     help="Visualise loss.",
 )
@@ -228,7 +222,7 @@ logging.basicConfig(
     "--vis_int",
     "-vi",
     type=bool,
-    default=False,
+    default=None,
     is_flag=True,
     help="Visualise interpolations.",
 )
@@ -236,7 +230,7 @@ logging.basicConfig(
     "--vis_dis",
     "-vt",
     type=bool,
-    default=False,
+    default=None,
     is_flag=True,
     help="Visualise single transversals.",
 )
@@ -244,15 +238,15 @@ logging.basicConfig(
     "--vis_pos",
     "-vps",
     type=bool,
-    default=False,
+    default=None,
     is_flag=True,
-    help="Visualise pose interpolations in the " "first 2 dimensions",
+    help="Visualise pose interpolations in the first 2 dimensions",
 )
 @click.option(
     "--vis_acc",
     "-vac",
     type=bool,
-    default=False,
+    default=None,
     is_flag=True,
     help="Visualise confusion matrix.",
 )
@@ -260,7 +254,7 @@ logging.basicConfig(
     "--vis_all",
     "-va",
     type=bool,
-    default=False,
+    default=None,
     is_flag=True,
     help="Visualise all above.",
 )
@@ -268,7 +262,7 @@ logging.basicConfig(
     "--gpu",
     "-g",
     type=bool,
-    default=False,
+    default=None,
     is_flag=True,
     help="Use GPU for training.",
 )
@@ -276,7 +270,7 @@ logging.basicConfig(
     "--eval",
     "-ev",
     type=bool,
-    default=False,
+    default=None,
     is_flag=True,
     help="Evaluate test data.",
 )
