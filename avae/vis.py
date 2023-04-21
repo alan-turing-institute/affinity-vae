@@ -530,11 +530,15 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
     ax.set_title("Affinity Matrix")
     ax.set_xticks(np.arange(0, len(all_classes)))
     ax.set_xticklabels(all_classes)
+    ax.set_yticks(np.arange(0, len(all_classes)))
+    ax.set_yticklabels(all_classes)
+
+    ### Colour the label for selected classes 
     for i, c in enumerate(all_classes):
         if c in selected_classes:
             ax.get_xticklabels()[i].set_color("red")
-    ax.set_yticks(np.arange(0, len(all_classes)))
-    ax.set_yticklabels(all_classes)
+            ax.get_yticklabels()[i].set_color("red")
+
     ax.tick_params(axis="x", rotation=90)
     fig.colorbar(im, ax=ax)
     if not os.path.exists("plots"):
