@@ -255,6 +255,8 @@ def train(
 
         # visualise latent disentanglement
         if config.VIS_DIS and (epoch + 1) % config.FREQ_DIS == 0:
+            if not pose:
+                p_train = None
             vis.latent_disentamglement_plot(
                 x_train, vae, device, poses=p_train
             )
@@ -270,11 +272,15 @@ def train(
                 ys = np.r_[y_train, y_val, np.ones(len(x_test))]
                 if pose:
                     ps = np.r_[p_train, p_val, p_test]
+                else:
+                    ps = None
             else:
                 xs = np.r_[x_train, x_val]
                 ys = np.r_[y_train, y_val]
                 if pose:
                     ps = np.r_[p_train, p_val]
+                else:
+                    ps = None
 
             vis.interpolations_plot(
                 xs, ys, vae, device, poses=ps  # do we need val and test here?
@@ -342,8 +348,9 @@ def add_meta(meta_df, batch_meta, x_hat, latent_mu, lat_pose, mode="trn"):
     meta["image"] += vis.format(x_hat)
     for d in range(latent_mu.shape[-1]):
         meta[f"lat{d}"] = np.array(latent_mu[:, d].cpu().detach().numpy())
-    for d in range(lat_pose.shape[-1]):
-        meta[f"pos{d}"] = np.array(lat_pose[:, d].cpu().detach().numpy())
+    if lat_pose is not None:
+        for d in range(lat_pose.shape[-1]):
+            meta[f"pos{d}"] = np.array(lat_pose[:, d].cpu().detach().numpy())
     meta_df = pd.concat(
         [meta_df, meta], ignore_index=False
     )  # ignore index doesn't overwrite
