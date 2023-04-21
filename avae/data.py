@@ -87,9 +87,9 @@ def load_data(
             lookup = None
 
     if eval or ("test" in os.listdir(datapath)):
-        data = ProteinDataset(
-            os.path.join(datapath, "test"), lim=lim, collect_m=collect_meta
-        )
+        if "test" in os.listdir(datapath):
+            datapath = os.path.join(datapath, "test")
+        data = ProteinDataset(datapath, lim=lim, collect_m=collect_meta)
         print("Eval data size:", len(data))
         tests = DataLoader(
             data, batch_size=batch_s, num_workers=2, shuffle=True
