@@ -382,14 +382,16 @@ def run(
                     logging.info(
                         "Setting up "
                         + key
-                        + " in config file to" + str(data[key])
+                        + " in config file to"
+                        + str(data[key])
                     )
                 else:
                     data[key] = None
                     logging.info(
                         "Setting up "
                         + key
-                        + " in config file to" + str(data[key])
+                        + " in config file to"
+                        + str(data[key])
                     )
 
             else:
