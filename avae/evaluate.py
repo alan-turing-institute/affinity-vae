@@ -6,8 +6,8 @@ import torch
 
 from . import config, vis
 from .data import load_data
-from .model_b import set_device
 from .train import add_meta, pass_batch
+from .utils import set_device
 
 
 def evaluate(datapath, lim, splt, batch_s, collect_meta, use_gpu):

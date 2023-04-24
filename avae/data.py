@@ -62,14 +62,14 @@ def load_data(
         trains = DataLoader(
             train_data,
             batch_size=batch_s,
-            num_workers=0,
+            num_workers=2,
             shuffle=True,
             drop_last=True,
         )
         vals = DataLoader(
             val_data,
             batch_size=batch_s,
-            num_workers=0,
+            num_workers=2,
             shuffle=True,
             drop_last=(not no_val_drop),
         )
@@ -99,7 +99,7 @@ def load_data(
         data = ProteinDataset(datapath, lim=lim, collect_m=collect_meta)
         print("Eval data size:", len(data))
         tests = DataLoader(
-            data, batch_size=batch_s, num_workers=0, shuffle=True
+            data, batch_size=batch_s, num_workers=2, shuffle=True
         )
         print("Eval batches:", len(tests))
         print()

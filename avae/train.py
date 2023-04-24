@@ -10,7 +10,8 @@ from sklearn.neighbors import KNeighborsClassifier
 from . import config, vis
 from .data import load_data
 from .loss import AVAELoss
-from .model_b import AffinityVAE, set_device
+from .model_b import AffinityVAE
+from .utils import set_device
 
 
 def train(
