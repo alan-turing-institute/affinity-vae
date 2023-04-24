@@ -379,21 +379,12 @@ def run(
 
                 if os.path.isfile(filename_default):
                     data[key] = filename_default
-                    logging.info(
-                        "Setting up "
-                        + key
-                        + " in config file to"
-                        + str(data[key])
-                    )
                 else:
                     data[key] = None
-                    logging.info(
-                        "Setting up "
-                        + key
-                        + " in config file to"
-                        + str(data[key])
-                    )
 
+                logging.info(
+                    "Setting up " + key + " in config file to" + str(data[key])
+                )
             else:
                 # set missing variables to default value
                 logging.warning(
