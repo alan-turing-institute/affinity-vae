@@ -1,0 +1,51 @@
+#### Data parameters
+
+datapath: data/shrec21_full_dataset/subtomo_files
+affinity: data/shrec21_full_dataset/subtomo_files/affinity.csv
+classes: data/shrec21_full_dataset/subtomo_files/classes.csv
+limit: 1000
+split: 20
+
+#### Network parameters
+
+depth:  3
+channels:  64
+latent_dims:  8
+pose_dims: 1
+
+#### Training parameters
+
+no_val_drop: true
+epochs:  1000
+batch:  128
+learning:  0.001
+gpu:  true
+
+#### Loss parameters
+
+beta:  1
+gamma:  2
+loss_fn:  MSE
+
+#### Evaluation parameters
+freq_eval: true
+freq_sta: true
+freq_emb: true
+freq_rec: true
+freq_int: true
+freq_dis: true
+freq_pos: true
+freq_acc: true
+freq_all: true
+eval:  false
+dynamic: true
+
+#### Visualization parameters
+vis_emb:  true
+vis_rec:  true
+vis_los:  true
+vis_int:  true
+vis_dis:  true
+vis_pos:  true
+vis_acc:  true
+vis_all:  true
