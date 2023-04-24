@@ -133,9 +133,32 @@ Note that setting ```-g/--gamma``` to ```0``` and ```-pd/--pose_dims``` to ```0`
 
 ### Quickstart
 
+#### Configuring from the command line
+
+
 You can run on example data with the following command:
 
 ```
 python affinity-vae/run.py -d data/subtomo_files --split 20 --epochs 10 -ba 128 -lr 0.001 -de 4 -ch 64 -ld 8 -pd 3 --beta 1 --gamma 2 --limit 1000 --freq_all 5 --vis_all --dynamic
 ```
 where the **subtomo_files** is a directory with a number of `.mcr` proteine image files named with the protein keyword such as (`1BXN_m0_156_Th0.mrc`,`5MRC_m8_1347_Th0.mrc`, etc). The **subtomo_files** directory should also have be a `classes.csv` file with a list of the protein names and keywords to be considered (`1BXN`, `5MRC`, etc.) and a `affinity_scores.csv` matrix with the initial values for the proteins named in the `classes.csv`.
+
+#### Using a config submission file
+
+You can also run the code using a submission config file (you can find an example with default values
+on `configs/avae-test-config.yml`). For example, you can run the following command:
+
+```
+python affinity-vae/run.py --config_file affinity-vae/configs/avae-test-config.yml
+```
+
+You can also use a mix of config file and command line arguments. For example, you can run the following command:
+
+```
+python affinity-vae/run.py --config_file affinity-vae/configs/avae-test-config.yml --epochs 10 --affinity /path/to/different_affinity.csv
+```
+
+this will rewrite the values for the epochs and affinity path in the config file.
+
+At the end of the run, the code will save the final config file used for the run in the working directory. This will
+account for any changes made to the config file from the command line. Running the code again with that config file will reproduce the results.
