@@ -375,7 +375,23 @@ def run(
                     + key
                     + " in config file or command line arguments. Setting to default value."
                 )
-                data[key] = os.path.join(data["datapath"], key + ".csv")
+                filename_default = os.path.join(data["datapath"], key + ".csv")
+
+                if os.path.isfile(filename_default):
+                    data[key] = filename_default
+                    logging.info(
+                        "Setting up "
+                        + key
+                        + " in config file to" + str(data[key])
+                    )
+                else:
+                    data[key] = None
+                    logging.info(
+                        "Setting up "
+                        + key
+                        + " in config file to" + str(data[key])
+                    )
+
             else:
                 # set missing variables to default value
                 logging.warning(
