@@ -2,7 +2,10 @@
 [![Tests](https://github.com/alan-turing-institute/affinity-vae/actions/workflows/tests.yml/badge.svg)](https://github.com/alan-turing-institute/affinity-vae/actions/workflows/tests.yml)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 
+> Note: This a development version of the code. The code in the `main` branch is a more stable version of the code.
+
 # Affinity-VAE
+
 
 **Affinity-VAE for disentanglement, clustering and classification of objects in multidimensional image data**  
 Mirecka J, Famili M, Kotanska A, Jurashcko N, Costa-Gomes B, Palmer CM, Thiyagalingam J, Burnley T, Basham M & Lowe AR  
