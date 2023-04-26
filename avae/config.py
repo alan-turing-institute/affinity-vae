@@ -5,6 +5,7 @@ VIS_INT = False
 VIS_DIS = False
 VIS_POS = False
 VIS_ACC = False
+VIS_HIS = False
 
 FREQ_EVAL = False
 FREQ_EMB = False
@@ -48,6 +49,7 @@ DEFAULT_RUN_CONFIGS = {
     "vis_dis": VIS_DIS,
     "vis_pos": VIS_POS,
     "vis_acc": VIS_ACC,
+    "vis_his": VIS_HIS,
     "vis_all": False,
     "model": "a",
 }
