@@ -283,6 +283,13 @@ logging.basicConfig(
     is_flag=True,
     help="Enable collecting meta and dynamic latent space plots.",
 )
+@click.option(
+    "--model",
+    "-m",
+    type=str,
+    default=None,
+    help="Choose model to run.",
+)
 def run(
     config_file,
     datapath,
