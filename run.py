@@ -283,6 +283,13 @@ logging.basicConfig(
     is_flag=True,
     help="Enable collecting meta and dynamic latent space plots.",
 )
+@click.option(
+    "--model",
+    "-m",
+    type=str,
+    default=None,
+    help="Choose model to run.",
+)
 def run(
     config_file,
     datapath,
@@ -321,6 +328,7 @@ def run(
     gpu,
     eval,
     dynamic,
+    model,
 ):
     # read config file and command line arguments and assign to local variables that are used in the rest of the code
     local_vars = locals().copy()
@@ -454,6 +462,7 @@ def run(
                 data["gamma"],
                 data["loss_fn"],
                 data["gpu"],
+                data["model"],
             )
         else:
             evaluate(
