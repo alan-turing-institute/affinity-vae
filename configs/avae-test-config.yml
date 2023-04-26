@@ -12,6 +12,7 @@ depth:  3
 channels:  64
 latent_dims:  8
 pose_dims: 1
+model: a
 
 #### Training parameters
 

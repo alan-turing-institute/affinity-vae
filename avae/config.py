@@ -49,4 +49,5 @@ DEFAULT_RUN_CONFIGS = {
     "vis_pos": VIS_POS,
     "vis_acc": VIS_ACC,
     "vis_all": False,
+    "model": "a",
 }
