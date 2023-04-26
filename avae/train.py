@@ -10,7 +10,8 @@ from sklearn.neighbors import KNeighborsClassifier
 from . import config, vis
 from .data import load_data
 from .loss import AVAELoss
-from .model_b import AffinityVAE
+from .model_a import AffinityVAE as AffinityVAE_A
+from .model_b import AffinityVAE as AffinityVAE_B
 from .utils import set_device
 
 
@@ -33,8 +34,8 @@ def train(
     gamma,
     recon_fn,
     use_gpu,
+    model,
 ):
-
     torch.manual_seed(42)
     timestamp = str(datetime.datetime.now().strftime("%Y%m%d_%H:%M:%S"))
 
@@ -56,7 +57,14 @@ def train(
     # ############################### MODEL ###############################
     device = set_device(use_gpu)
 
-    vae = AffinityVAE(
+    if model == "a":
+        affinityVAE = AffinityVAE_A
+    elif model == "b":
+        affinityVAE = AffinityVAE_B
+    else:
+        raise ValueError("Invalid model type", model, "must be a or b")
+
+    vae = affinityVAE(
         channels,
         depth,
         dshape,
