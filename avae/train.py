@@ -218,6 +218,10 @@ def train(
 
         # ########################## VISUALISE ################################
 
+        if config.VIS_HIS:
+            vis.plot_classes_distribution(y_train, "train")
+            vis.plot_classes_distribution(y_val, "validation")
+
         # visualise accuracy
         if config.VIS_ACC and (epoch + 1) % config.FREQ_ACC == 0:
             train_acc, val_acc, ypred_train, ypred_val = accuracy(
