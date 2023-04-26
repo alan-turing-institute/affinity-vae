@@ -328,6 +328,7 @@ def run(
     gpu,
     eval,
     dynamic,
+    model,
 ):
     # read config file and command line arguments and assign to local variables that are used in the rest of the code
     local_vars = locals().copy()
@@ -461,6 +462,7 @@ def run(
                 data["gamma"],
                 data["loss_fn"],
                 data["gpu"],
+                data["model"],
             )
         else:
             evaluate(
