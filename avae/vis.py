@@ -544,7 +544,6 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
     if not os.path.exists("plots"):
         os.mkdir("plots")
     plt.savefig("plots/Affinity_Matrix.png", dpi=144)
-    print("################################################################\n")
 
 
 def plot_classes_distribution(data, category):
@@ -562,4 +561,3 @@ def plot_classes_distribution(data, category):
     plt.xlabel("Class")
     plt.ylabel("Number of Entries")
     plt.savefig("plots/Classes_Distribution_" + category + ".png", dpi=144)
-    print("################################################################\n")
