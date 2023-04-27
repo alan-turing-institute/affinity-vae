@@ -96,7 +96,8 @@ def latent_embed_plot(xs, ys):
     plt.scatter(
         lats[:, 0], lats[:, 1], c=[list(labs).index(i) for i in ys], label=labs
     )
-    plt.savefig("plots/embedding.png")
+    plt.savefig("plots/embedding_TSNE.png")
+    plt.close()
 
 
 def dyn_latentembed_plot(df, epoch, embedding="umap"):
@@ -165,11 +166,13 @@ def accuracy_plot(y_train, ypred_train, y_val, ypred_val):
     if not os.path.exists("plots"):
         os.mkdir("plots")
     plt.savefig("plots/confusion_train.png")
+    plt.close()
 
     ConfusionMatrixDisplay.from_predictions(y_val, ypred_val)
     if not os.path.exists("plots"):
         os.mkdir("plots")
     plt.savefig("plots/confusion_valid.png")
+    plt.close()
 
 
 def loss_plot(epochs, train_loss, val_loss=None, p=None):
@@ -522,7 +525,6 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
     lookup :  The affinity matrix
     selected_classes : All classes selected by the user for training in classes.csv
     """
-    print("\n################################################################")
     print("Visualising Affinity_Matrix ...\n")
 
     fig, ax = plt.subplots(figsize=(9, 9))
@@ -544,4 +546,4 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
     if not os.path.exists("plots"):
         os.mkdir("plots")
     plt.savefig("plots/Affinity_Matrix.png", dpi=144)
-    print("################################################################\n")
+    plt.close()
