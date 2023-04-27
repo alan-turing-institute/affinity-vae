@@ -173,8 +173,8 @@ def accuracy_plot(y_train, ypred_train, y_val, ypred_val):
 
 
 def loss_plot(epochs, train_loss, val_loss=None, p=None):
-    # print("\n################################################################")
-    # print("Visualising loss ...\n")
+    print("\n################################################################")
+    print("Visualising loss ...\n")
 
     train_loss = np.transpose(np.asarray(train_loss))
     if val_loss is not None:
