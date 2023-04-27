@@ -435,7 +435,7 @@ def run(
             config.VIS_ACC = data["vis_acc"]
             config.VIS_HIS = data["vis_his"]
 
-        if freq_all is not None:
+        if data["freq_all"] is not None:
             config.FREQ_EVAL = data["freq_all"]
             config.FREQ_EMB = data["freq_all"]
             config.FREQ_REC = data["freq_all"]
