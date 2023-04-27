@@ -295,10 +295,6 @@ def train(
                 xs, ys, vae, device, poses=ps  # do we need val and test here?
             )
 
-    if config.VIS_HIS:
-        vis.plot_classes_distribution(y_train, "train")
-        vis.plot_classes_distribution(y_val, "validation")
-
 
 def pass_batch(
     device,
