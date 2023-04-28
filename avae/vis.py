@@ -3,9 +3,8 @@ import os.path
 import random
 
 import altair
-import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-
+import matplotlib.pyplot as plt
 import mrcfile
 import numpy as np
 import torch
@@ -13,7 +12,7 @@ import torchvision
 import umap
 from PIL import Image
 from sklearn.manifold import TSNE
-from sklearn.metrics import ConfusionMatrixDisplay
+from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 
 
 def _encoder(i):
@@ -164,23 +163,29 @@ def accuracy_plot(y_train, ypred_train, y_val, ypred_val):
     print("\n################################################################")
     print("Visualising confusion ...\n")
 
-    ConfusionMatrixDisplay.from_predictions(y_train, ypred_train)
+    cm = confusion_matrix(y_train, ypred_train)
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+    fig, ax = plt.subplots(figsize=(8, 6))
+    disp.plot(cmap=plt.cm.Blues, ax=ax)
+
+    # Modify the font size of the text
+    ax.tick_params(axis="both", which="major", labelsize=16)
+    plt.tight_layout()
+
     if not os.path.exists("plots"):
         os.mkdir("plots")
-
-    plt.xticks(fontsize=16, rotation=90)
-    plt.yticks(fontsize=16)
-    plt.tight_layout()
-    plt.savefig("plots/confusion_train.png", dpi = 300)
+    plt.savefig("plots/confusion_train.png", dpi=300)
     plt.close()
 
-    ConfusionMatrixDisplay.from_predictions(y_val, ypred_val)
-    if not os.path.exists("plots"):
-        os.mkdir("plots")
-    plt.xticks(fontsize=16, rotation=90)
-    plt.yticks(fontsize=16)
+    cm = confusion_matrix(y_val, ypred_val)
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+    fig, ax = plt.subplots(figsize=(8, 6))
+    disp.plot(cmap=plt.cm.Blues, ax=ax)
+
+    # Modify the font size of the text
+    ax.tick_params(axis="both", which="major", labelsize=16)
     plt.tight_layout()
-    plt.savefig("plots/confusion_valid.png", dpi = 300)
+    plt.savefig("plots/confusion_valid.png", dpi=300)
     plt.close()
 
 
@@ -240,10 +245,9 @@ def loss_plot(epochs, train_loss, val_loss=None, p=None):
     else:
         plt.title("Loss")
 
-
     plt.yscale("log")
-    plt.ylabel("Loss", fontsize = 16)  
-    plt.xlabel("Epochs", fontsize = 16)
+    plt.ylabel("Loss", fontsize=16)
+    plt.xlabel("Epochs", fontsize=16)
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
     plt.legend()
@@ -261,12 +265,13 @@ def loss_plot(epochs, train_loss, val_loss=None, p=None):
             range(1, epochs + 1), loss, c=cols[i], linestyle=s, label=labs[i]
         )
     plt.yscale("log")
-    plt.ylabel("Loss", fontsize = 16)  
-    plt.xlabel("Epochs", fontsize = 16)
+    plt.ylabel("Loss", fontsize=16)
+    plt.xlabel("Epochs", fontsize=16)
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
     plt.tight_layout()
-    plt.savefig("plots/loss_train.png", dpi =300)
+    plt.savefig("plots/loss_train.png", dpi=300)
+
 
 def recon_plot(img, rec, name="trn"):
     print("\n################################################################")
@@ -557,17 +562,17 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
     print("\n################################################################")
     print("Visualising Affinity_Matrix ...\n")
 
-    fig=plt.figure()
+    fig = plt.figure()
 
     # Create the figure and gridspec
     gs = gridspec.GridSpec(1, 2, width_ratios=[9, 0.4])
 
     # Plot the data on the left grid
     ax = plt.subplot(gs[0])
-    ax.set_title("Affinity Matrix", fontsize =16)
+    ax.set_title("Affinity Matrix", fontsize=16)
 
     im = ax.imshow(lookup, vmin=-1, vmax=1, cmap=plt.cm.get_cmap("RdBu"))
-    
+
     ax.set_xticks(np.arange(0, len(all_classes)))
     ax.set_xticklabels(all_classes)
     ax.set_yticks(np.arange(0, len(all_classes)))
@@ -579,8 +584,8 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
             ax.get_xticklabels()[i].set_color("red")
             ax.get_yticklabels()[i].set_color("red")
 
-    ax.tick_params(axis="x", rotation=90, labelsize =16)
-    ax.tick_params(axis="y", labelsize =16)
+    ax.tick_params(axis="x", rotation=90, labelsize=16)
+    ax.tick_params(axis="y", labelsize=16)
 
     # Create an empty plot on the right grid
     ax2 = plt.subplot(gs[1])
@@ -591,6 +596,7 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
     fig.tight_layout()
     plt.savefig("plots/Affinity_Matrix.png", dpi=300)
     plt.close()
+
 
 def plot_classes_distribution(data, category):
     """Plot histogram with classes distribution"""
@@ -603,9 +609,9 @@ def plot_classes_distribution(data, category):
     ticks = range(len(counts))
     plt.bar(ticks, counts, align="center", color="blue", alpha=0.5)
     plt.xticks(ticks, labels)
-    plt.title("Classes Distribution", fontsize = 16)
-    plt.xlabel("Class", fontsize = 16)
-    plt.ylabel("Number of Entries", fontsize = 16)
+    plt.title("Classes Distribution", fontsize=16)
+    plt.xlabel("Class", fontsize=16)
+    plt.ylabel("Number of Entries", fontsize=16)
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
     plt.tight_layout()
