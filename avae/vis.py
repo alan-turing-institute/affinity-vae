@@ -3,15 +3,17 @@ import os.path
 import random
 
 import altair
+import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import mrcfile
 import numpy as np
+import pandas as pd
 import torch
 import torchvision
 import umap
 from PIL import Image
 from sklearn.manifold import TSNE
-from sklearn.metrics import ConfusionMatrixDisplay
+from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 
 
 def _encoder(i):
@@ -85,9 +87,10 @@ def merge(im):
     return f"data:image/png;base64,{data}"
 
 
-def latent_embed_plot(xs, ys):
+def latent_embed_plot_tsne(xs, ys):
     print("\n################################################################")
     print("Visualising static TSNE embedding...\n")
+    fig, ax = plt.subplots(figsize=(8, 8))
     xs = np.asarray(xs)
     ys = np.asarray(ys)
     labs = np.unique(ys)
@@ -96,7 +99,37 @@ def latent_embed_plot(xs, ys):
     plt.scatter(
         lats[:, 0], lats[:, 1], c=[list(labs).index(i) for i in ys], label=labs
     )
-    plt.savefig("plots/embedding.png")
+    plt.savefig("plots/embedding_TSNE.png")
+    plt.close()
+
+
+def latent_embed_plot_umap(xs, ys):
+    print("\n################################################################")
+    print("Visualising static UMAP embedding...\n")
+    reducer = umap.UMAP()
+    embedding = reducer.fit_transform(xs)
+
+    fig, ax = plt.subplots(figsize=(8, 8))
+    for mol_id, mol in enumerate(set(ys.tolist())):
+        idx = np.where(np.array(ys.tolist()) == mol)[0]
+
+        cmap = plt.cm.get_cmap("tab20")
+        color = cmap(mol_id % 20)
+
+        ax.scatter(
+            embedding[idx, 0],
+            embedding[idx, 1],
+            s=64,
+            label=mol[:4],
+            facecolor=color,
+            edgecolor=color,
+        )
+
+    #     ax.plot(x_enc[:, 0], x_enc[:, 1], 'ko', markersize=42)
+    ax.legend(fontsize=16)
+    ax.set_title("UMAP projection ", fontsize=16)
+    plt.savefig("plots/embedding_UMAP.png", dpi=300)
+    plt.close()
 
 
 def dyn_latentembed_plot(df, epoch, embedding="umap"):
@@ -157,19 +190,44 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
         )
 
 
-def accuracy_plot(y_train, ypred_train, y_val, ypred_val):
+def accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes):
     print("\n################################################################")
     print("Visualising confusion ...\n")
 
-    ConfusionMatrixDisplay.from_predictions(y_train, ypred_train)
-    if not os.path.exists("plots"):
-        os.mkdir("plots")
-    plt.savefig("plots/confusion_train.png")
+    classes_list = pd.read_csv(classes).columns.tolist()
 
-    ConfusionMatrixDisplay.from_predictions(y_val, ypred_val)
-    if not os.path.exists("plots"):
-        os.mkdir("plots")
-    plt.savefig("plots/confusion_valid.png")
+    cm = confusion_matrix(y_train, ypred_train)
+    disp = ConfusionMatrixDisplay(
+        confusion_matrix=cm, display_labels=classes_list
+    )
+
+    with plt.rc_context({"font.weight": "bold", "font.size": 16}):
+        fig, ax = plt.subplots(figsize=(8, 6))
+        disp.plot(cmap=plt.cm.Blues, ax=ax, xticks_rotation=90)
+        # ax.set_xticklabels(classes_list, rotation=45)
+
+        # Modify the font size of the text
+        plt.tight_layout()
+
+        if not os.path.exists("plots"):
+            os.mkdir("plots")
+
+        plt.savefig("plots/confusion_train.png", dpi=300)
+        plt.close()
+
+    cm = confusion_matrix(y_val, ypred_val)
+    disp = ConfusionMatrixDisplay(
+        confusion_matrix=cm, display_labels=classes_list
+    )
+
+    with plt.rc_context({"font.weight": "bold", "font.size": 16}):
+        fig, ax = plt.subplots(figsize=(8, 6))
+        disp.plot(cmap=plt.cm.Blues, ax=ax, xticks_rotation=90)
+
+        # Modify the font size of the text
+        plt.tight_layout()
+        plt.savefig("plots/confusion_valid.png", dpi=300)
+        plt.close()
 
 
 def loss_plot(epochs, train_loss, val_loss=None, p=None):
@@ -211,10 +269,7 @@ def loss_plot(epochs, train_loss, val_loss=None, p=None):
                 linestyle=s,
                 label=vlabs[i],
             )
-    plt.yscale("log")
-    plt.ylabel("Loss")
-    plt.xlabel("Epochs")
-    plt.legend()
+
     if p is not None:
         if len(p) != 7:
             print(
@@ -230,10 +285,34 @@ def loss_plot(epochs, train_loss, val_loss=None, p=None):
         )
     else:
         plt.title("Loss")
+
+    plt.yscale("log")
+    plt.ylabel("Loss", fontsize=16)
+    plt.xlabel("Epochs", fontsize=16)
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
+    plt.legend()
+
     plt.tight_layout()
     if not os.path.exists("plots"):
         os.mkdir("plots")
-    plt.savefig("plots/loss.png")
+    plt.savefig("plots/loss.png", dpi=300)
+    plt.close()
+
+    # only training loss
+    for i, loss in enumerate(train_loss):
+        s = "-"
+        plt.plot(
+            range(1, epochs + 1), loss, c=cols[i], linestyle=s, label=labs[i]
+        )
+    plt.yscale("log")
+    plt.ylabel("Loss", fontsize=16)
+    plt.xlabel("Epochs", fontsize=16)
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig("plots/loss_train.png", dpi=300)
 
 
 def recon_plot(img, rec, name="trn"):
@@ -525,9 +604,17 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
     print("\n################################################################")
     print("Visualising Affinity_Matrix ...\n")
 
-    fig, ax = plt.subplots(figsize=(9, 9))
+    fig = plt.figure()
+
+    # Create the figure and gridspec
+    gs = gridspec.GridSpec(1, 2, width_ratios=[9, 0.4])
+
+    # Plot the data on the left grid
+    ax = plt.subplot(gs[0])
+    ax.set_title("Affinity Matrix", fontsize=16)
+
     im = ax.imshow(lookup, vmin=-1, vmax=1, cmap=plt.cm.get_cmap("RdBu"))
-    ax.set_title("Affinity Matrix")
+
     ax.set_xticks(np.arange(0, len(all_classes)))
     ax.set_xticklabels(all_classes)
     ax.set_yticks(np.arange(0, len(all_classes)))
@@ -539,11 +626,18 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
             ax.get_xticklabels()[i].set_color("red")
             ax.get_yticklabels()[i].set_color("red")
 
-    ax.tick_params(axis="x", rotation=90)
-    fig.colorbar(im, ax=ax)
-    if not os.path.exists("plots"):
-        os.mkdir("plots")
-    plt.savefig("plots/Affinity_Matrix.png", dpi=144)
+    ax.tick_params(axis="x", rotation=90, labelsize=16)
+    ax.tick_params(axis="y", labelsize=16)
+
+    # Create an empty plot on the right grid
+    ax2 = plt.subplot(gs[1])
+
+    # Set the height of the color bar to match the height of the plot
+    cb = plt.colorbar(im, cax=ax2)
+    cb.ax.set_position([0.96, 0.01, 0.01, 0.01])
+    fig.tight_layout()
+    plt.savefig("plots/Affinity_Matrix.png", dpi=300)
+    plt.close()
 
 
 def plot_classes_distribution(data, category):
@@ -557,7 +651,11 @@ def plot_classes_distribution(data, category):
     ticks = range(len(counts))
     plt.bar(ticks, counts, align="center", color="blue", alpha=0.5)
     plt.xticks(ticks, labels)
-    plt.title("Classes Distribution")
-    plt.xlabel("Class")
-    plt.ylabel("Number of Entries")
-    plt.savefig("plots/Classes_Distribution_" + category + ".png", dpi=144)
+    plt.title("Classes Distribution", fontsize=16)
+    plt.xlabel("Class", fontsize=16)
+    plt.ylabel("Number of Entries", fontsize=16)
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
+    plt.tight_layout()
+    plt.savefig("plots/Classes_Distribution_" + category + ".png", dpi=300)
+    plt.close()
