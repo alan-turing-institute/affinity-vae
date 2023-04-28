@@ -7,7 +7,8 @@ import pandas as pd
 from torch.utils.data import DataLoader, Dataset, Subset
 from torchvision import transforms
 
-from .vis import format, plot_affinity_matrix
+from . import config
+from .vis import format, plot_affinity_matrix, plot_classes_distribution
 
 
 def load_data(
@@ -57,6 +58,15 @@ def load_data(
         train_data = Subset(data, indices=idx[:-s])
         val_data = Subset(data, indices=idx[-s:])
         print("Train / val split:", len(train_data), len(val_data))
+
+        # ############################### Visualising class distribution ###############################
+
+        train_y = [y[1] for _, y in enumerate(train_data)]
+        val_y = [y[1] for _, y in enumerate(val_data)]
+
+        if config.VIS_HIS:
+            plot_classes_distribution(train_y, "train")
+            plot_classes_distribution(val_y, "validation")
 
         # split into batches
         trains = DataLoader(

@@ -625,6 +625,7 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
             ax.get_xticklabels()[i].set_color("red")
             ax.get_yticklabels()[i].set_color("red")
 
+<<<<<<< HEAD
     ax.tick_params(axis="x", rotation=90, labelsize=16)
     ax.tick_params(axis="y", labelsize=16)
 
@@ -637,6 +638,13 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
     fig.tight_layout()
     plt.savefig("plots/Affinity_Matrix.png", dpi=300)
     plt.close()
+=======
+    ax.tick_params(axis="x", rotation=90)
+    fig.colorbar(im, ax=ax)
+    if not os.path.exists("plots"):
+        os.mkdir("plots")
+    plt.savefig("plots/Affinity_Matrix.png", dpi=144)
+>>>>>>> origin/develop
 
 
 def plot_classes_distribution(data, category):
@@ -650,6 +658,7 @@ def plot_classes_distribution(data, category):
     ticks = range(len(counts))
     plt.bar(ticks, counts, align="center", color="blue", alpha=0.5)
     plt.xticks(ticks, labels)
+<<<<<<< HEAD
     plt.title("Classes Distribution", fontsize=16)
     plt.xlabel("Class", fontsize=16)
     plt.ylabel("Number of Entries", fontsize=16)
@@ -658,3 +667,9 @@ def plot_classes_distribution(data, category):
     plt.tight_layout()
     plt.savefig("plots/Classes_Distribution_" + category + ".png", dpi=300)
     plt.close()
+=======
+    plt.title("Classes Distribution")
+    plt.xlabel("Class")
+    plt.ylabel("Number of Entries")
+    plt.savefig("plots/Classes_Distribution_" + category + ".png", dpi=144)
+>>>>>>> origin/develop
