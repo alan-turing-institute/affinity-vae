@@ -227,7 +227,7 @@ def train(
                 "\n------------------->>> Accuracy: Train: %f | Val: %f\n"
                 % (train_acc, val_acc)
             )
-            vis.accuracy_plot(y_train, ypred_train, y_val, ypred_val)
+            vis.accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes)
 
         # visualise loss
         if config.VIS_LOS and epoch > 0:

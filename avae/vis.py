@@ -7,6 +7,7 @@ import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import mrcfile
 import numpy as np
+import pandas as pd
 import torch
 import torchvision
 import umap
@@ -86,9 +87,10 @@ def merge(im):
     return f"data:image/png;base64,{data}"
 
 
-def latent_embed_plot_tsne(xs, ys):
+def latent_embed_plot(xs, ys):
     print("\n################################################################")
     print("Visualising static TSNE embedding...\n")
+    fig, ax = plt.subplots(figsize=(8, 8))
     xs = np.asarray(xs)
     ys = np.asarray(ys)
     labs = np.unique(ys)
@@ -107,7 +109,6 @@ def latent_embed_plot_umap(xs, ys):
     reducer = umap.UMAP()
     embedding = reducer.fit_transform(xs)
 
-    print(embedding.shape)
     fig, ax = plt.subplots(figsize=(8, 8))
     for mol_id, mol in enumerate(set(ys.tolist())):
         idx = np.where(np.array(ys.tolist()) == mol)[0]
@@ -189,34 +190,44 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
         )
 
 
-def accuracy_plot(y_train, ypred_train, y_val, ypred_val):
+def accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes):
     print("\n################################################################")
     print("Visualising confusion ...\n")
 
+    classes_list = pd.read_csv(classes).columns.tolist()
+
     cm = confusion_matrix(y_train, ypred_train)
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm)
-    fig, ax = plt.subplots(figsize=(8, 6))
-    disp.plot(cmap=plt.cm.Blues, ax=ax)
+    disp = ConfusionMatrixDisplay(
+        confusion_matrix=cm, display_labels=classes_list
+    )
 
-    # Modify the font size of the text
-    ax.tick_params(axis="both", which="major", labelsize=16)
-    plt.tight_layout()
+    with plt.rc_context({"font.weight": "bold", "font.size": 16}):
+        fig, ax = plt.subplots(figsize=(8, 6))
+        disp.plot(cmap=plt.cm.Blues, ax=ax, xticks_rotation=90)
+        # ax.set_xticklabels(classes_list, rotation=45)
 
-    if not os.path.exists("plots"):
-        os.mkdir("plots")
-    plt.savefig("plots/confusion_train.png", dpi=300)
-    plt.close()
+        # Modify the font size of the text
+        plt.tight_layout()
+
+        if not os.path.exists("plots"):
+            os.mkdir("plots")
+
+        plt.savefig("plots/confusion_train.png", dpi=300)
+        plt.close()
 
     cm = confusion_matrix(y_val, ypred_val)
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm)
-    fig, ax = plt.subplots(figsize=(8, 6))
-    disp.plot(cmap=plt.cm.Blues, ax=ax)
+    disp = ConfusionMatrixDisplay(
+        confusion_matrix=cm, display_labels=classes_list
+    )
 
-    # Modify the font size of the text
-    ax.tick_params(axis="both", which="major", labelsize=16)
-    plt.tight_layout()
-    plt.savefig("plots/confusion_valid.png", dpi=300)
-    plt.close()
+    with plt.rc_context({"font.weight": "bold", "font.size": 16}):
+        fig, ax = plt.subplots(figsize=(8, 6))
+        disp.plot(cmap=plt.cm.Blues, ax=ax, xticks_rotation=90)
+
+        # Modify the font size of the text
+        plt.tight_layout()
+        plt.savefig("plots/confusion_valid.png", dpi=300)
+        plt.close()
 
 
 def loss_plot(epochs, train_loss, val_loss=None, p=None):
@@ -285,7 +296,7 @@ def loss_plot(epochs, train_loss, val_loss=None, p=None):
     plt.tight_layout()
     if not os.path.exists("plots"):
         os.mkdir("plots")
-    plt.savefig("plots/loss.png")
+    plt.savefig("plots/loss.png", dpi=300)
     plt.close()
 
     # only training loss
