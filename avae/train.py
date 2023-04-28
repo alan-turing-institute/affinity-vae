@@ -255,7 +255,9 @@ def train(
             else:
                 xs = np.r_[x_train, x_val]
                 ys = np.r_[y_train, y_val]
-            vis.latent_embed_plot(xs, ys)
+            vis.latent_embed_plot_tsne(xs, ys)
+            vis.latent_embed_plot_umap(xs, ys)
+
             if collect_meta:
                 # merge img and rec into one image for display in altair
                 meta_df["image"] = meta_df["image"].apply(vis.merge)

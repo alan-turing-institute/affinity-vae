@@ -86,7 +86,7 @@ def merge(im):
     return f"data:image/png;base64,{data}"
 
 
-def latent_embed_plot(xs, ys):
+def latent_embed_plot_tsne(xs, ys):
     print("\n################################################################")
     print("Visualising static TSNE embedding...\n")
     xs = np.asarray(xs)
@@ -98,6 +98,36 @@ def latent_embed_plot(xs, ys):
         lats[:, 0], lats[:, 1], c=[list(labs).index(i) for i in ys], label=labs
     )
     plt.savefig("plots/embedding_TSNE.png")
+    plt.close()
+
+
+def latent_embed_plot_umap(xs, ys):
+    print("\n################################################################")
+    print("Visualising static UMAP embedding...\n")
+    reducer = umap.UMAP()
+    embedding = reducer.fit_transform(xs)
+
+    print(embedding.shape)
+    fig, ax = plt.subplots(figsize=(8, 8))
+    for mol_id, mol in enumerate(set(ys.tolist())):
+        idx = np.where(np.array(ys.tolist()) == mol)[0]
+
+        cmap = plt.cm.get_cmap("tab20")
+        color = cmap(mol_id % 20)
+
+        ax.scatter(
+            embedding[idx, 0],
+            embedding[idx, 1],
+            s=64,
+            label=mol[:4],
+            facecolor=color,
+            edgecolor=color,
+        )
+
+    #     ax.plot(x_enc[:, 0], x_enc[:, 1], 'ko', markersize=42)
+    ax.legend(fontsize=16)
+    ax.set_title("UMAP projection ", fontsize=16)
+    plt.savefig("plots/embedding_UMAP.png", dpi=300)
     plt.close()
 
 
