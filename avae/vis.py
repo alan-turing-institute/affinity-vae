@@ -4,6 +4,8 @@ import random
 
 import altair
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+
 import mrcfile
 import numpy as np
 import torch
@@ -555,9 +557,17 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
     print("\n################################################################")
     print("Visualising Affinity_Matrix ...\n")
 
-    fig, ax = plt.subplots(figsize=(9, 9))
-    im = ax.imshow(lookup, vmin=-1, vmax=1, cmap=plt.cm.get_cmap("RdBu"))
+    fig=plt.figure()
+
+    # Create the figure and gridspec
+    gs = gridspec.GridSpec(1, 2, width_ratios=[9, 0.4])
+
+    # Plot the data on the left grid
+    ax = plt.subplot(gs[0])
     ax.set_title("Affinity Matrix", fontsize =16)
+
+    im = ax.imshow(lookup, vmin=-1, vmax=1, cmap=plt.cm.get_cmap("RdBu"))
+    
     ax.set_xticks(np.arange(0, len(all_classes)))
     ax.set_xticklabels(all_classes)
     ax.set_yticks(np.arange(0, len(all_classes)))
@@ -571,10 +581,14 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
 
     ax.tick_params(axis="x", rotation=90, labelsize =16)
     ax.tick_params(axis="y", labelsize =16)
-    fig.colorbar(im, ax=ax)
-    if not os.path.exists("plots"):
-        os.mkdir("plots")
-    plt.tight_layout()
+
+    # Create an empty plot on the right grid
+    ax2 = plt.subplot(gs[1])
+
+    # Set the height of the color bar to match the height of the plot
+    cb = plt.colorbar(im, cax=ax2)
+    cb.ax.set_position([0.96, 0.01, 0.01, 0.01])
+    fig.tight_layout()
     plt.savefig("plots/Affinity_Matrix.png", dpi=300)
     plt.close()
 
