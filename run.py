@@ -252,6 +252,14 @@ logging.basicConfig(
     help="Visualise confusion matrix.",
 )
 @click.option(
+    "--vis_his",
+    "-his",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise train-val class distribution.",
+)
+@click.option(
     "--vis_all",
     "-va",
     type=bool,
@@ -324,6 +332,7 @@ def run(
     vis_dis,
     vis_pos,
     vis_acc,
+    vis_his,
     vis_all,
     gpu,
     eval,
@@ -414,6 +423,8 @@ def run(
             config.VIS_DIS = True
             config.VIS_POS = True
             config.VIS_ACC = True
+            config.VIS_HIS = True
+
         else:
             config.VIS_LOS = data["vis_los"]
             config.VIS_EMB = data["vis_emb"]
@@ -422,6 +433,7 @@ def run(
             config.VIS_DIS = data["vis_dis"]
             config.VIS_POS = data["vis_pos"]
             config.VIS_ACC = data["vis_acc"]
+            config.VIS_HIS = data["vis_his"]
 
         if freq_all is not None:
             config.FREQ_EVAL = data["freq_all"]

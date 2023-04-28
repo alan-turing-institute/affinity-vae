@@ -544,4 +544,20 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
     if not os.path.exists("plots"):
         os.mkdir("plots")
     plt.savefig("plots/Affinity_Matrix.png", dpi=144)
-    print("################################################################\n")
+
+
+def plot_classes_distribution(data, category):
+    """Plot histogram with classes distribution"""
+
+    print("\n################################################################")
+    print("Visualising Classes Distribution ...\n")
+
+    fig, ax = plt.subplots(figsize=(9, 9))
+    labels, counts = np.unique(data, return_counts=True)
+    ticks = range(len(counts))
+    plt.bar(ticks, counts, align="center", color="blue", alpha=0.5)
+    plt.xticks(ticks, labels)
+    plt.title("Classes Distribution")
+    plt.xlabel("Class")
+    plt.ylabel("Number of Entries")
+    plt.savefig("plots/Classes_Distribution_" + category + ".png", dpi=144)
