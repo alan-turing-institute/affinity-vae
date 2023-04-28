@@ -87,7 +87,7 @@ def merge(im):
     return f"data:image/png;base64,{data}"
 
 
-def latent_embed_plot(xs, ys):
+def latent_embed_plot_tsne(xs, ys):
     print("\n################################################################")
     print("Visualising static TSNE embedding...\n")
     fig, ax = plt.subplots(figsize=(8, 8))
@@ -310,6 +310,7 @@ def loss_plot(epochs, train_loss, val_loss=None, p=None):
     plt.xlabel("Epochs", fontsize=16)
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
+    plt.legend()
     plt.tight_layout()
     plt.savefig("plots/loss_train.png", dpi=300)
 
