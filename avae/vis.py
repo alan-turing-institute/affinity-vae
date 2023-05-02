@@ -202,7 +202,7 @@ def accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes):
     )
 
     with plt.rc_context({"font.weight": "bold", "font.size": 16}):
-        fig, ax = plt.subplots(figsize=(8, 6))
+        fig, ax = plt.subplots(figsize=(9, 8))
         disp.plot(cmap=plt.cm.Blues, ax=ax, xticks_rotation=90)
         # ax.set_xticklabels(classes_list, rotation=45)
 
@@ -221,7 +221,7 @@ def accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes):
     )
 
     with plt.rc_context({"font.weight": "bold", "font.size": 16}):
-        fig, ax = plt.subplots(figsize=(8, 6))
+        fig, ax = plt.subplots(figsize=(9, 8))
         disp.plot(cmap=plt.cm.Blues, ax=ax, xticks_rotation=90)
 
         # Modify the font size of the text
