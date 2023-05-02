@@ -636,6 +636,8 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
     cb = plt.colorbar(im, cax=ax2)
     cb.ax.set_position([0.96, 0.01, 0.01, 0.01])
     fig.tight_layout()
+    if not os.path.exists("plots"):
+        os.mkdir("plots")
     plt.savefig("plots/Affinity_Matrix.png", dpi=300)
     plt.close()
 
