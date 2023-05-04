@@ -1,20 +1,21 @@
 VIS_LOS = False
-VIS_EMB = False
+VIS_ACC = False
 VIS_REC = False
+VIS_EMB = False
 VIS_INT = False
 VIS_DIS = False
 VIS_POS = False
-VIS_ACC = False
 VIS_HIS = False
 
-FREQ_EVAL = False
-FREQ_EMB = False
-FREQ_REC = False
-FREQ_INT = False
-FREQ_DIS = False
-FREQ_POS = False
-FREQ_ACC = False
-FREQ_STA = False
+FREQ_ACC = 10
+FREQ_REC = 10
+FREQ_EMB = 10
+FREQ_INT = 10
+FREQ_DIS = 10
+FREQ_POS = 10
+
+FREQ_EVAL = 10
+FREQ_STA = 10
 
 DEFAULT_RUN_CONFIGS = {
     "limit": 1000,

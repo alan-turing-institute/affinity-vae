@@ -400,7 +400,10 @@ def run(
                     data[key] = None
 
                 logging.info(
-                    "Setting up " + key + " in config file to" + str(data[key])
+                    "Setting up "
+                    + key
+                    + " in config file to "
+                    + str(data[key])
                 )
             else:
                 # set missing variables to default value
