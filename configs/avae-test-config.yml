@@ -34,16 +34,16 @@ eval:  false
 freq_eval: None # frequency of test evaluation (if test present)
 
 #### Visualization parameters
-vis_los:  true  # loss on/off (every epoch from epoch 2)
-vis_acc:  true  # confusion matrices on/off
-vis_rec:  true  # reconstructions on/off
-vis_emb:  true  # latent embeddings on/off
-vis_int:  true  # latent interpolations on/off
-vis_dis:  true  # latent disentanglement on/off
-vis_pos:  true  # pose disentanglement on/off
-vis_his:  true  # class distribution histogram on/off
-vis_all:  true  # sets all above to on/off
-dynamic: true   # dynamic embedding visualisations on/off (freq same as freq_emb)
+vis_los:  false  # loss on/off (every epoch from epoch 2)
+vis_acc:  false  # confusion matrices on/off
+vis_rec:  false  # reconstructions on/off
+vis_emb:  false  # latent embeddings on/off
+vis_int:  false  # latent interpolations on/off
+vis_dis:  false  # latent disentanglement on/off
+vis_pos:  false  # pose disentanglement on/off
+vis_his:  false  # class distribution histogram on/off
+vis_all:  true   # sets all above to on/off
+dynamic: true    # dynamic embedding visualisations on/off (freq same as freq_emb)
 
 freq_acc: None  # frequency of accuracy visualisation
 freq_rec: None  # frequency of reconstruction visualisation
@@ -51,4 +51,4 @@ freq_emb: None  # frequency of latent embedding visualisation
 freq_int: None  # frequency of latent interpolation visualisation
 freq_dis: None  # frequency of latent disentanglement visualisation
 freq_pos: None  # frequency of pose disentanglement visualisation
-freq_all: None  # sets all above to the same value (inc freq_sta and freq_eval)
+freq_all: 10  # sets all above to the same value (inc freq_sta and freq_eval)
