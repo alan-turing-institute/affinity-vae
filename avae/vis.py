@@ -190,11 +190,14 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
         )
 
 
-def accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes):
+def accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes=None):
     print("\n################################################################")
     print("Visualising confusion ...\n")
 
-    classes_list = pd.read_csv(classes).columns.tolist()
+    if classes is not None:
+        classes_list = pd.read_csv(classes).columns.tolist()
+    else:
+        classes_list = np.unique(np.concatenate((y_train, y_val)))
 
     cm = confusion_matrix(y_train, ypred_train)
     disp = ConfusionMatrixDisplay(
