@@ -602,7 +602,7 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
     selected_classes : All classes selected by the user for training in classes.csv
     """
     print("\n################################################################")
-    print("Visualising Affinity_Matrix ...\n")
+    print("Visualising affinity matrix ...\n")
 
     fig = plt.figure()
 
@@ -636,7 +636,9 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
     cb = plt.colorbar(im, cax=ax2)
     cb.ax.set_position([0.96, 0.01, 0.01, 0.01])
     fig.tight_layout()
-    plt.savefig("plots/Affinity_Matrix.png", dpi=300)
+    if not os.path.exists("plots"):
+        os.mkdir("plots")
+    plt.savefig("plots/affinity_matrix.png", dpi=300)
     plt.close()
 
 
@@ -644,7 +646,7 @@ def plot_classes_distribution(data, category):
     """Plot histogram with classes distribution"""
 
     print("\n################################################################")
-    print("Visualising Classes Distribution ...\n")
+    print("Visualising classes distribution ...\n")
 
     fig, ax = plt.subplots(figsize=(9, 9))
     labels, counts = np.unique(data, return_counts=True)
@@ -657,5 +659,5 @@ def plot_classes_distribution(data, category):
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
     plt.tight_layout()
-    plt.savefig("plots/Classes_Distribution_" + category + ".png", dpi=300)
+    plt.savefig("plots/classes_distribution_" + category + ".png", dpi=300)
     plt.close()
