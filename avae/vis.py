@@ -190,11 +190,14 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
         )
 
 
-def accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes):
+def accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes=None):
     print("\n################################################################")
     print("Visualising confusion ...\n")
 
-    classes_list = pd.read_csv(classes).columns.tolist()
+    if classes is not None:
+        classes_list = pd.read_csv(classes).columns.tolist()
+    else:
+        classes_list = np.unique(np.concatenate((y_train, y_val)))
 
     cm = confusion_matrix(y_train, ypred_train)
     disp = ConfusionMatrixDisplay(
@@ -602,7 +605,7 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
     selected_classes : All classes selected by the user for training in classes.csv
     """
     print("\n################################################################")
-    print("Visualising Affinity_Matrix ...\n")
+    print("Visualising affinity matrix ...\n")
 
     fig = plt.figure()
 
@@ -638,7 +641,7 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
     fig.tight_layout()
     if not os.path.exists("plots"):
         os.mkdir("plots")
-    plt.savefig("plots/Affinity_Matrix.png", dpi=300)
+    plt.savefig("plots/affinity_matrix.png", dpi=300)
     plt.close()
 
 
@@ -646,7 +649,7 @@ def plot_classes_distribution(data, category):
     """Plot histogram with classes distribution"""
 
     print("\n################################################################")
-    print("Visualising Classes Distribution ...\n")
+    print("Visualising classes distribution ...\n")
 
     fig, ax = plt.subplots(figsize=(9, 9))
     labels, counts = np.unique(data, return_counts=True)
@@ -659,5 +662,5 @@ def plot_classes_distribution(data, category):
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
     plt.tight_layout()
-    plt.savefig("plots/Classes_Distribution_" + category + ".png", dpi=300)
+    plt.savefig("plots/classes_distribution_" + category + ".png", dpi=300)
     plt.close()
