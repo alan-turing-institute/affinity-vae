@@ -21,6 +21,7 @@ epochs:  1000
 batch:  128
 learning:  0.001
 gpu:  true
+freq_sta: true  # frequency of state saves
 
 #### Loss parameters
 
@@ -29,25 +30,25 @@ gamma:  2
 loss_fn:  MSE
 
 #### Evaluation parameters
-freq_eval: true
-freq_sta: true
-freq_emb: true
-freq_rec: true
-freq_int: true
-freq_dis: true
-freq_pos: true
-freq_acc: true
-freq_all: true
 eval:  false
-dynamic: true
+freq_eval: true # frequency of test evaluation (if test present)
 
 #### Visualization parameters
-vis_emb:  true
-vis_rec:  true
-vis_los:  true
-vis_int:  true
-vis_dis:  true
-vis_pos:  true
-vis_acc:  true
-vis_all:  true
-vis_his:  true
+vis_los:  true  # loss on/off (every epoch from epoch 2)
+vis_acc:  true  # confusion matrices on/off
+vis_rec:  true  # reconstructions on/off
+vis_emb:  true  # latent embeddings on/off
+vis_int:  true  # latent interpolations on/off
+vis_dis:  true  # latent disentanglement on/off
+vis_pos:  true  # pose disentanglement on/off
+vis_his:  true  # class distribution histogram on/off
+vis_all:  true  # sets all above to on/off
+dynamic: true   # dynamic embedding visualisations on/off (freq same as freq_emb)
+
+freq_acc: true  # frequency of accuracy visualisation
+freq_rec: true  # frequency of reconstruction visualisation
+freq_emb: true  # frequency of latent embedding visualisation
+freq_int: true  # frequency of latent interpolation visualisation
+freq_dis: true  # frequency of latent disentanglement visualisation
+freq_pos: true  # frequency of pose disentanglement visualisation
+freq_all: true  # sets all above to the same value
