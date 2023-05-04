@@ -372,8 +372,7 @@ def run(
 
     # Check for missing values and set to default values
     for key, val in data.items():
-
-        if val is None and key != "config_file":
+        if (val is None or val == "None") and key != "config_file":
             #  make sure data variables are provided
             if key == "data_path":
                 logging.error(
