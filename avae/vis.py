@@ -169,7 +169,7 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
                 title="mode",
             ),
             altair.Tooltip(
-                ["id", "meta", "mode", "avg", "theta:N", "image"]
+                ["id", "meta", "mode", "avg", "image"]
             ),  # *degrees_of_freedom, 'image']),
             color=color,
         )
@@ -178,16 +178,12 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
         .add_selection(selection)
     )
 
-    if not os.path.exists("plots/latent_embeds"):
-        os.mkdir("plots/latent_embeds")
+    if not os.path.exists("latents"):
+        os.mkdir("latents")
     if embedding == "umap":
-        chart.save(
-            f"plots/latent_embeds/plt_latent_embed_epoch_{epoch}_umap.html"
-        )
+        chart.save(f"latents/plt_latent_embed_epoch_{epoch}_umap.html")
     elif embedding == "tsne":
-        chart.save(
-            f"plots/latent_embeds/plt_latent_embed_epoch_{epoch}_tsne.html"
-        )
+        chart.save(f"latents/plt_latent_embed_epoch_{epoch}_tsne.html")
 
 
 def accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes):
