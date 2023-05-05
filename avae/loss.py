@@ -90,9 +90,7 @@ class AVAELoss:
 
     """
 
-    def __init__(
-        self, device, beta, epochs, gamma=1, lookup_aff=None, recon_fn="MSE"
-    ):
+    def __init__(self, device, beta, gamma=1, lookup_aff=None, recon_fn="MSE"):
         self.device = device
         self.recon_fn = recon_fn
         self.beta = beta

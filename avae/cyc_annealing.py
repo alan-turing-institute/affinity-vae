@@ -25,8 +25,6 @@ class KLD_weight:
         self.n_cycle = n_cycle
         self.ratio = ratio
 
-        print(kl_weight_method, n_epoch, start, stop, n_cycle, ratio)
-
         if kl_weight_method == "flat":
             self.beta = self._frange_flat()
 
@@ -34,7 +32,6 @@ class KLD_weight:
             self.beta = self._frange_cycle_linear()
 
         elif kl_weight_method == "cycle_sigmoid":
-            print("yes")
             self.beta = self._frange_cycle_sigmoid()
 
         elif kl_weight_method == "cycle_cosine":

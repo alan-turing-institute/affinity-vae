@@ -122,7 +122,7 @@ logging.basicConfig(
     "-bc",
     type=int,
     default=None,
-    help="number of cycles for beta during training in the case of cyclical annealing schedule",
+    help="Number of cycles for beta during training in the case of cyclical annealing schedule",
 )
 @click.option(
     "--beta_ratio",

@@ -95,7 +95,6 @@ def train(
     loss = AVAELoss(
         device,
         beta_arr,
-        epochs,
         gamma=gamma,
         lookup_aff=lookup,
         recon_fn=recon_fn,
