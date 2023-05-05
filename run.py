@@ -9,12 +9,14 @@ from avae import config
 from avae.evaluate import evaluate
 from avae.train import train
 
+if not os.path.exists("logs"):
+    os.mkdir("logs")
 dt_name = datetime.now().strftime("%H_%M_%d_%m_%Y")
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
-        logging.FileHandler("avae_run_log_" + dt_name + ".log"),
+        logging.FileHandler("logs/avae_run_log_" + dt_name + ".log"),
         logging.StreamHandler(),
     ],
 )
