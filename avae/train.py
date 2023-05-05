@@ -8,6 +8,7 @@ from sklearn import metrics, preprocessing
 from sklearn.neighbors import KNeighborsClassifier
 
 from . import config, vis
+from .cyc_annealing import KLD_weight
 from .data import load_data
 from .loss import AVAELoss
 from .model_a import AffinityVAE as AffinityVAE_A
@@ -81,12 +82,23 @@ def train(
         params=vae.parameters(), lr=learning  # , weight_decay=1e-5
     )
 
-
-    beta_arr =  KLD_weight(epochs, kl_weight_method, start = beta_min, stop = beta_max, n_cycle = beta_cycle, ratio = beta_ratio).beta
+    beta_arr = KLD_weight(
+        epochs,
+        kl_weight_method,
+        start=beta_min,
+        stop=beta_max,
+        n_cycle=beta_cycle,
+        ratio=beta_ratio,
+    ).beta
     vis.plot_beta(beta_arr)
-    
+
     loss = AVAELoss(
-        device, beta_arr, epochs, gamma=gamma, lookup_aff=lookup, recon_fn=recon_fn
+        device,
+        beta_arr,
+        epochs,
+        gamma=gamma,
+        lookup_aff=lookup,
+        recon_fn=recon_fn,
     )
 
     t_history = []
@@ -340,7 +352,7 @@ def pass_batch(
     # forward
     x_hat, lat_mu, lat_logvar, lat, lat_pose = vae(x)
     if loss is not None:
-        history_loss = loss(x, x_hat, lat_mu, lat_logvar, batch_aff=aff)
+        history_loss = loss(x, x_hat, lat_mu, lat_logvar, e, batch_aff=aff)
 
         # record loss
         for i in range(len(history[-1])):

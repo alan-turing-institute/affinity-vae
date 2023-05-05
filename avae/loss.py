@@ -90,7 +90,9 @@ class AVAELoss:
 
     """
 
-    def __init__(self, device, beta, gamma=1, lookup_aff=None, recon_fn="MSE"):
+    def __init__(
+        self, device, beta, epochs, gamma=1, lookup_aff=None, recon_fn="MSE"
+    ):
         self.device = device
         self.recon_fn = recon_fn
         self.beta = beta
@@ -115,7 +117,7 @@ class AVAELoss:
             )
             self.affinity_loss = None
 
-    def __call__(self, x, recon_x, mu, logvar, batch_aff=None):
+    def __call__(self, x, recon_x, mu, logvar, epoch, batch_aff=None):
         """Return the aVAE loss.
 
         Parameters
@@ -183,7 +185,9 @@ class AVAELoss:
 
         # total loss
         total_loss = (
-            recon_loss + self.beta[epoch] * kldivergence + self.gamma * affin_loss
+            recon_loss
+            + self.beta[epoch] * kldivergence
+            + self.gamma * affin_loss
         )
 
         return total_loss, recon_loss, kldivergence, affin_loss

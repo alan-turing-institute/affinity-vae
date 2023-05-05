@@ -103,49 +103,41 @@ logging.basicConfig(
     help="If pose on, number of pose dimensions. If 0 and gamma=0 it becomes"
     "a standard beta-VAE.",
 )
-
-
 @click.option(
     "--beta_min",
     "-bs",
     type=float,
-    default= None,
+    default=None,
     help="Beta minimum in the case of cyclical annealing schedule",
 )
-
 @click.option(
     "--beta_max",
     "-be",
     type=float,
-    default= None,
+    default=None,
     help="Beta maximum in the case of cyclical annealing schedule",
 )
-
 @click.option(
     "--beta_cycle",
     "-bc",
     type=int,
-    default= None,
+    default=None,
     help="number of cycles for beta during training in the case of cyclical annealing schedule",
 )
-
 @click.option(
     "--beta_ratio",
     "-br",
     type=float,
-    default= None,
+    default=None,
     help="The ratio for steps in beta",
 )
-
 @click.option(
     "--kl_weight_method",
     "-klm",
     type=str,
-    default=None ,
+    default=None,
     help="The schedule for beta: for constant beta : flat, other options include , cycle_linear, cycle_sigmoid, cycle_cosine, ramp",
 )
-
-
 @click.option(
     "--gamma",
     "-g",

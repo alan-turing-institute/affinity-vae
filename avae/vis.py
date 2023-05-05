@@ -689,12 +689,11 @@ def plot_classes_distribution(data, category):
 def plot_beta(beta_array):
     print("\n################################################################")
     print("Visualising beta ...\n")
-    plt.plot(beta_array, linewidth = 3)
-    plt.ylabel(r"$\beta$", fontsize=16)  
-    plt.xlabel("Epochs",fontsize=16)
+    plt.plot(beta_array, linewidth=3)
+    plt.ylabel(r"$\beta$", fontsize=16)
+    plt.xlabel("Epochs", fontsize=16)
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
     plt.tight_layout()
     plt.savefig("plots/beta_array.png", dpi=300)
     plt.close()
-
