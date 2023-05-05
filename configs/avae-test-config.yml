@@ -25,7 +25,7 @@ freq_sta: 10  # frequency of state saves
 
 #### Loss parameters
 
-beta:  1
+beta_max:  1
 gamma:  2
 loss_fn:  MSE
 
