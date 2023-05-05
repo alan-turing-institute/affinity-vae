@@ -154,7 +154,7 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
     )
     chart = (
         altair.Chart(df)
-        .mark_point(size=50, opacity=0.4)
+        .mark_point(size=100, opacity=0.5, filled=True)
         .encode(
             altair.X("emb-x", title=titlex),
             altair.Y("emb-y", title=titley),
@@ -173,6 +173,8 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
             ),  # *degrees_of_freedom, 'image']),
             color=color,
         )
+        .configure_axis(labelFontSize=20, titleFontSize=20)
+        .configure_legend(titleFontSize=20, labelFontSize=18)
         .interactive()
         .properties(width=800, height=500)
         .add_selection(selection)
