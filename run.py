@@ -103,13 +103,49 @@ logging.basicConfig(
     help="If pose on, number of pose dimensions. If 0 and gamma=0 it becomes"
     "a standard beta-VAE.",
 )
+
+
 @click.option(
-    "--beta",
-    "-b",
+    "--beta_min",
+    "-bs",
     type=float,
-    default=None,
-    help="Variational beta (default 1).",
+    default= None,
+    help="Beta minimum in the case of cyclical annealing schedule",
 )
+
+@click.option(
+    "--beta_max",
+    "-be",
+    type=float,
+    default= None,
+    help="Beta maximum in the case of cyclical annealing schedule",
+)
+
+@click.option(
+    "--beta_cycle",
+    "-bc",
+    type=int,
+    default= None,
+    help="number of cycles for beta during training in the case of cyclical annealing schedule",
+)
+
+@click.option(
+    "--beta_ratio",
+    "-br",
+    type=float,
+    default= None,
+    help="The ratio for steps in beta",
+)
+
+@click.option(
+    "--kl_weight_method",
+    "-klm",
+    type=str,
+    default=None ,
+    help="The schedule for beta: for constant beta : flat, other options include , cycle_linear, cycle_sigmoid, cycle_cosine, ramp",
+)
+
+
 @click.option(
     "--gamma",
     "-g",
@@ -314,7 +350,11 @@ def run(
     channels,
     latent_dims,
     pose_dims,
-    beta,
+    beta_min,
+    beta_max,
+    beta_cycle,
+    beta_ratio,
+    kl_weight_method,
     gamma,
     learning,
     loss_fn,
@@ -474,7 +514,11 @@ def run(
                 data["latent_dims"],
                 data["pose_dims"],
                 data["learning"],
-                data["beta"],
+                data["beta_min"],
+                data["beta_max"],
+                data["beta_cycle"],
+                data["beta_ratio"],
+                data["kl_weight_method"],
                 data["gamma"],
                 data["loss_fn"],
                 data["gpu"],

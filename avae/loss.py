@@ -183,7 +183,7 @@ class AVAELoss:
 
         # total loss
         total_loss = (
-            recon_loss + self.beta * kldivergence + self.gamma * affin_loss
+            recon_loss + self.beta[epoch] * kldivergence + self.gamma * affin_loss
         )
 
         return total_loss, recon_loss, kldivergence, affin_loss

@@ -30,7 +30,11 @@ def train(
     lat_dims,
     pose_dims,
     learning,
-    beta,
+    beta_min,
+    beta_max,
+    beta_cycle,
+    beta_ratio,
+    kl_weight_method,
     gamma,
     recon_fn,
     use_gpu,
@@ -77,8 +81,12 @@ def train(
         params=vae.parameters(), lr=learning  # , weight_decay=1e-5
     )
 
+
+    beta_arr =  KLD_weight(epochs, kl_weight_method, start = beta_min, stop = beta_max, n_cycle = beta_cycle, ratio = beta_ratio).beta
+    vis.plot_beta(beta_arr)
+    
     loss = AVAELoss(
-        device, beta, gamma=gamma, lookup_aff=lookup, recon_fn=recon_fn
+        device, beta_arr, epochs, gamma=gamma, lookup_aff=lookup, recon_fn=recon_fn
     )
 
     t_history = []
@@ -237,7 +245,7 @@ def train(
                 channels,
                 lat_dims,
                 learning,
-                beta,
+                beta_arr[epoch],
                 gamma,
             ]
             vis.loss_plot(epoch + 1, t_history, v_history, p=p)
