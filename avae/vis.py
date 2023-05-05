@@ -90,15 +90,29 @@ def merge(im):
 def latent_embed_plot_tsne(xs, ys):
     print("\n################################################################")
     print("Visualising static TSNE embedding...\n")
-    fig, ax = plt.subplots(figsize=(8, 8))
+
+    fig, ax = plt.subplots()
     xs = np.asarray(xs)
     ys = np.asarray(ys)
-    labs = np.unique(ys)
     lats = TSNE(n_components=2).fit_transform(xs)
     plt.clf()
-    plt.scatter(
-        lats[:, 0], lats[:, 1], c=[list(labs).index(i) for i in ys], label=labs
-    )
+
+    for mol_id, mol in enumerate(set(ys.tolist())):
+        idx = np.where(np.array(ys.tolist()) == mol)[0]
+        cmap = plt.cm.get_cmap("tab20")
+        color = cmap(mol_id % 20)
+        plt.scatter(
+            lats[idx, 0],
+            lats[idx, 1],
+            s=64,
+            label=mol[:4],
+            facecolor=color,
+            edgecolor=color,
+            alpha=0.4,
+        )
+
+    plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=16)
+    plt.tight_layout()
     plt.savefig("plots/embedding_TSNE.png")
     plt.close()
 
@@ -109,7 +123,8 @@ def latent_embed_plot_umap(xs, ys):
     reducer = umap.UMAP()
     embedding = reducer.fit_transform(xs)
 
-    fig, ax = plt.subplots(figsize=(8, 8))
+    fig, ax = plt.subplots()
+
     for mol_id, mol in enumerate(set(ys.tolist())):
         idx = np.where(np.array(ys.tolist()) == mol)[0]
 
@@ -123,12 +138,13 @@ def latent_embed_plot_umap(xs, ys):
             label=mol[:4],
             facecolor=color,
             edgecolor=color,
+            alpha=0.4,
         )
 
-    #     ax.plot(x_enc[:, 0], x_enc[:, 1], 'ko', markersize=42)
-    ax.legend(fontsize=16)
-    ax.set_title("UMAP projection ", fontsize=16)
-    plt.savefig("plots/embedding_UMAP.png", dpi=300)
+    ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=16)
+
+    plt.tight_layout()
+    plt.savefig("plots/embedding_UMAP.png")
     plt.close()
 
 
@@ -188,23 +204,26 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
         chart.save(f"latents/plt_latent_embed_epoch_{epoch}_tsne.html")
 
 
-def accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes):
+def accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes=None):
     print("\n################################################################")
     print("Visualising confusion ...\n")
 
-    classes_list = pd.read_csv(classes).columns.tolist()
+    if classes is not None:
+        classes_list = pd.read_csv(classes).columns.tolist()
+    else:
+        classes_list = np.unique(np.concatenate((y_train, y_val)))
 
     cm = confusion_matrix(y_train, ypred_train)
     disp = ConfusionMatrixDisplay(
         confusion_matrix=cm, display_labels=classes_list
     )
-
-    with plt.rc_context({"font.weight": "bold", "font.size": 16}):
-        fig, ax = plt.subplots(figsize=(8, 6))
+    with plt.rc_context(
+        {"font.weight": "bold", "font.size": int(len(classes_list) / 3) + 3}
+    ):
+        fig, ax = plt.subplots(
+            figsize=(int(len(classes_list)) / 2, int(len(classes_list)) / 2)
+        )
         disp.plot(cmap=plt.cm.Blues, ax=ax, xticks_rotation=90)
-        # ax.set_xticklabels(classes_list, rotation=45)
-
-        # Modify the font size of the text
         plt.tight_layout()
 
         if not os.path.exists("plots"):
@@ -218,11 +237,13 @@ def accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes):
         confusion_matrix=cm, display_labels=classes_list
     )
 
-    with plt.rc_context({"font.weight": "bold", "font.size": 16}):
-        fig, ax = plt.subplots(figsize=(8, 6))
+    with plt.rc_context(
+        {"font.weight": "bold", "font.size": int(len(classes_list) / 3) + 3}
+    ):
+        fig, ax = plt.subplots(
+            figsize=(int(len(classes_list)) / 2, int(len(classes_list)) / 2)
+        )
         disp.plot(cmap=plt.cm.Blues, ax=ax, xticks_rotation=90)
-
-        # Modify the font size of the text
         plt.tight_layout()
         plt.savefig("plots/confusion_valid.png", dpi=300)
         plt.close()
@@ -602,8 +623,12 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
     print("\n################################################################")
     print("Visualising affinity matrix ...\n")
 
-    fig = plt.figure()
-
+    with plt.rc_context(
+        {"font.weight": "bold", "font.size": int(len(all_classes) / 3) + 3}
+    ):
+        fig, ax = plt.subplots(
+            figsize=(int(len(all_classes)) / 2, int(len(all_classes)) / 2)
+        )
     # Create the figure and gridspec
     gs = gridspec.GridSpec(1, 2, width_ratios=[9, 0.4])
 
@@ -630,9 +655,9 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
     # Create an empty plot on the right grid
     ax2 = plt.subplot(gs[1])
 
+    plt.colorbar(im, cax=ax2)
     # Set the height of the color bar to match the height of the plot
-    cb = plt.colorbar(im, cax=ax2)
-    cb.ax.set_position([0.96, 0.01, 0.01, 0.01])
+    # cb.ax.set_position([0.96, 0.01, 0.01, 0.01])
     fig.tight_layout()
     if not os.path.exists("plots"):
         os.mkdir("plots")
@@ -654,7 +679,7 @@ def plot_classes_distribution(data, category):
     plt.title("Classes Distribution", fontsize=16)
     plt.xlabel("Class", fontsize=16)
     plt.ylabel("Number of Entries", fontsize=16)
-    plt.xticks(fontsize=16)
+    plt.xticks(fontsize=16, rotation=90)
     plt.yticks(fontsize=16)
     plt.tight_layout()
     plt.savefig("plots/classes_distribution_" + category + ".png", dpi=300)
