@@ -17,7 +17,7 @@ FREQ_ACC = False
 FREQ_STA = False
 
 DEFAULT_RUN_CONFIGS = {
-    "limit": 1000,
+    "limit": None,
     "split": 20,
     "depth": 3,
     "channels": 64,
