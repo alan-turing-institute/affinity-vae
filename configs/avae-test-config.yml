@@ -29,7 +29,7 @@ beta_min: 0
 beta:  1
 beta_cycle: 5
 beta_ratio: 0.5
-kl_weight_method :  cycle_sigmoid 
+kl_weight_method :  cycle_sigmoid
 gamma:  2
 loss_fn:  MSE
 

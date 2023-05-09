@@ -92,7 +92,7 @@ def train(
     ).beta
 
     print(config.VIS_BET)
-    if config.VIS_BET:    
+    if config.VIS_BET:
         vis.plot_beta(beta_arr)
 
     loss = AVAELoss(
