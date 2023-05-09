@@ -111,7 +111,7 @@ logging.basicConfig(
     help="Beta minimum in the case of cyclical annealing schedule",
 )
 @click.option(
-    "--beta_max",
+    "--beta",
     "-be",
     type=float,
     default=None,
@@ -250,6 +250,14 @@ logging.basicConfig(
     help="Visualise loss.",
 )
 @click.option(
+    "--vis_bet",
+    "-vb",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise beta vs epoch number.",
+)
+@click.option(
     "--vis_int",
     "-vi",
     type=bool,
@@ -343,7 +351,7 @@ def run(
     latent_dims,
     pose_dims,
     beta_min,
-    beta_max,
+    beta,
     beta_cycle,
     beta_ratio,
     kl_weight_method,
@@ -361,6 +369,7 @@ def run(
     freq_all,
     vis_emb,
     vis_rec,
+    vis_bet,
     vis_los,
     vis_int,
     vis_dis,
@@ -452,6 +461,7 @@ def run(
 
     try:
         if data["vis_all"]:
+            config.VIS_BET = True
             config.VIS_LOS = True
             config.VIS_EMB = True
             config.VIS_REC = True
@@ -462,6 +472,7 @@ def run(
             config.VIS_HIS = True
 
         else:
+            config.VIS_BET = data["vis_bet"]
             config.VIS_LOS = data["vis_los"]
             config.VIS_EMB = data["vis_emb"]
             config.VIS_REC = data["vis_rec"]
@@ -507,7 +518,7 @@ def run(
                 data["pose_dims"],
                 data["learning"],
                 data["beta_min"],
-                data["beta_max"],
+                data["beta"],
                 data["beta_cycle"],
                 data["beta_ratio"],
                 data["kl_weight_method"],

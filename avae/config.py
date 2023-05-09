@@ -1,3 +1,4 @@
+VIS_BET = False
 VIS_LOS = False
 VIS_ACC = False
 VIS_REC = False
@@ -50,6 +51,7 @@ DEFAULT_RUN_CONFIGS = {
     "vis_emb": VIS_EMB,
     "vis_rec": VIS_REC,
     "vis_los": VIS_LOS,
+    "vis_bet": VIS_BET,
     "vis_int": VIS_INT,
     "vis_dis": VIS_DIS,
     "vis_pos": VIS_POS,

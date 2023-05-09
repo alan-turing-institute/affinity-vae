@@ -90,7 +90,10 @@ def train(
         n_cycle=beta_cycle,
         ratio=beta_ratio,
     ).beta
-    vis.plot_beta(beta_arr)
+
+    print(config.VIS_BET)
+    if config.VIS_BET:    
+        vis.plot_beta(beta_arr)
 
     loss = AVAELoss(
         device,
