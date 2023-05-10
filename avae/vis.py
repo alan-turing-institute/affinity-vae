@@ -202,6 +202,10 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
 
     if not os.path.exists("latents"):
         os.mkdir("latents")
+        # save latentspace and ids
+        df[[col for col in df if col.startswith(("lat", "id"))]].to_csv(
+            f"latents/latentspace_epoch_{epoch}.csv", index=False
+        )
     if embedding == "umap":
         chart.save(f"latents/plt_latent_embed_epoch_{epoch}_umap.html")
     elif embedding == "tsne":
