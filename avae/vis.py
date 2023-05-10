@@ -164,40 +164,64 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
         titley = "t-SNE-2"
     df["emb-x"], df["emb-y"] = np.array(lat_emb)[:, 0], np.array(lat_emb)[:, 1]
 
-    selection = altair.selection_multi(fields=["id"])
+    selection = altair.selection_multi(fields=["id"], empty="all")
+    selection_mode = altair.selection_multi(fields=["mode"], empty="all")
+
     color = altair.condition(
-        selection, altair.Color("id:N"), altair.value("lightgray")
+        (selection & selection_mode),
+        altair.Color("id:N"),
+        altair.value("lightgray"),
     )
-    chart = (
+
+    scatter = (
         altair.Chart(df)
         .mark_point(size=100, opacity=0.5, filled=True)
         .encode(
             altair.X("emb-x", title=titlex),
             altair.Y("emb-y", title=titley),
-            # altair.Color('id', title='class'),
-            # altair.Opacity('mode', type='nominal',
-            #               scale=altair.Scale(domain=['train', 'val', 'test'],
-            #               range=['0.2', '0.4', '1.0']),
-            #               title='dataset'),
             altair.Shape(
                 "mode",
                 scale=altair.Scale(range=["square", "circle", "triangle"]),
-                title="mode",
             ),
             altair.Tooltip(
                 ["id", "meta", "mode", "avg", "image"]
             ),  # *degrees_of_freedom, 'image']),
             color=color,
         )
-        .configure_axis(labelFontSize=20, titleFontSize=20)
-        .configure_legend(titleFontSize=20, labelFontSize=18)
         .interactive()
         .properties(width=800, height=500)
         .add_selection(selection)
+        .add_selection(selection_mode)
+    )
+
+    # Create interactive model name legend
+    legend_mode = (
+        altair.Chart(df)
+        .mark_point(size=100, opacity=0.5, filled=True)
+        .encode(
+            x=altair.X("mode:N", axis=altair.Axis(orient="bottom")),
+            shape=altair.Shape(
+                "mode",
+                scale=altair.Scale(range=["square", "circle", "triangle"]),
+                title="mode",
+                legend=None,
+            ),
+        )
+        .add_selection(selection_mode)
+    )
+
+    chart = (
+        (legend_mode | scatter)
+        .configure_axis(labelFontSize=20, titleFontSize=20)
+        .configure_legend(labelFontSize=20, titleFontSize=20)
     )
 
     if not os.path.exists("latents"):
         os.mkdir("latents")
+        # save latentspace and ids
+    df[[col for col in df if col.startswith(("lat", "id"))]].to_csv(
+        f"latents/latentspace_epoch_{epoch}.csv", index=False
+    )
     if embedding == "umap":
         chart.save(f"latents/plt_latent_embed_epoch_{epoch}_umap.html")
     elif embedding == "tsne":
