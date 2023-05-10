@@ -25,13 +25,15 @@ freq_sta: 10  # frequency of state saves
 
 #### Loss parameters
 
-beta_min: 0
 beta:  1
+gamma:  2
+loss_fn:  MSE
+
+#### Cyclical annealing parameters
+beta_min: 0
 beta_cycle: 5
 beta_ratio: 0.5
 kl_weight_method :  cycle_sigmoid
-gamma:  2
-loss_fn:  MSE
 
 #### Evaluation parameters
 eval:  false
