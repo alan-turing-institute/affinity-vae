@@ -107,7 +107,7 @@ def train(
 
     print(
         "Epoch: [0/%d] | Batch: [0/%d] | Loss: -- | Recon: -- | "
-        "KLdiv: -- | Affin: --" % (epochs, len(trains)),
+        "KLdiv: -- | Affin: -- | Beta: --" % (epochs, len(trains)),
         end="\r",
     )
 
@@ -162,8 +162,15 @@ def train(
         t_history[-1] /= len(trains)
         print(
             "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
-            "KLdiv: %f | Affin: %f"
-            % (epoch + 1, epochs, b + 1, len(trains), *t_history[-1])
+            "KLdiv: %f | Affin: %f | Beta: %f"
+            % (
+                epoch + 1,
+                epochs,
+                b + 1,
+                len(trains),
+                *t_history[-1],
+                beta_arr[epoch],
+            )
         )
 
         # ########################## VAL ######################################
@@ -194,8 +201,15 @@ def train(
         v_history[-1] /= len(vals)
         print(
             "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
-            "KLdiv: %f | Affin: %f"
-            % (epoch + 1, epochs, b + 1, len(vals), *v_history[-1])
+            "KLdiv: %f | Affin: %f | Beta: %f"
+            % (
+                epoch + 1,
+                epochs,
+                b + 1,
+                len(vals),
+                *v_history[-1],
+                beta_arr[epoch],
+            )
         )
 
         # ########################## TEST #####################################
