@@ -165,10 +165,12 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
     df["emb-x"], df["emb-y"] = np.array(lat_emb)[:, 0], np.array(lat_emb)[:, 1]
 
     selection = altair.selection_multi(fields=["id"], empty="all")
-    selection_mode = altair.selection_multi(fields=["mode"],empty="all")
+    selection_mode = altair.selection_multi(fields=["mode"], empty="all")
 
     color = altair.condition(
-        (selection & selection_mode), altair.Color("id:N"), altair.value("lightgray")
+        (selection & selection_mode),
+        altair.Color("id:N"),
+        altair.value("lightgray"),
     )
 
     scatter = (
@@ -177,7 +179,7 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
         .encode(
             altair.X("emb-x", title=titlex),
             altair.Y("emb-y", title=titley),
-           altair.Shape(
+            altair.Shape(
                 "mode",
                 scale=altair.Scale(range=["square", "circle", "triangle"]),
             ),
@@ -185,20 +187,34 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
                 ["id", "meta", "mode", "avg", "image"]
             ),  # *degrees_of_freedom, 'image']),
             color=color,
-        ).interactive()
+        )
+        .interactive()
         .properties(width=800, height=500)
         .add_selection(selection)
         .add_selection(selection_mode)
-
     )
 
     # Create interactive model name legend
-    legend_mode = altair.Chart(df).mark_point(size=100, opacity=0.5, filled=True).encode(
-        x=altair.X('mode:N', axis=altair.Axis(orient='bottom')),
-        shape=altair.Shape("mode", scale=altair.Scale(range=["square", "circle", "triangle"]), title="mode", legend=None),
-    ).add_selection(selection_mode)
+    legend_mode = (
+        altair.Chart(df)
+        .mark_point(size=100, opacity=0.5, filled=True)
+        .encode(
+            x=altair.X("mode:N", axis=altair.Axis(orient="bottom")),
+            shape=altair.Shape(
+                "mode",
+                scale=altair.Scale(range=["square", "circle", "triangle"]),
+                title="mode",
+                legend=None,
+            ),
+        )
+        .add_selection(selection_mode)
+    )
 
-    chart = (legend_mode | scatter).configure_axis(labelFontSize=20, titleFontSize=20).configure_legend(labelFontSize=20, titleFontSize=20)
+    chart = (
+        (legend_mode | scatter)
+        .configure_axis(labelFontSize=20, titleFontSize=20)
+        .configure_legend(labelFontSize=20, titleFontSize=20)
+    )
 
     if not os.path.exists("latents"):
         os.mkdir("latents")
