@@ -115,7 +115,7 @@ class AVAELoss:
             )
             self.affinity_loss = None
 
-    def __call__(self, x, recon_x, mu, logvar, batch_aff=None):
+    def __call__(self, x, recon_x, mu, logvar, epoch, batch_aff=None):
         """Return the aVAE loss.
 
         Parameters
@@ -183,7 +183,9 @@ class AVAELoss:
 
         # total loss
         total_loss = (
-            recon_loss + self.beta * kldivergence + self.gamma * affin_loss
+            recon_loss
+            + self.beta[epoch] * kldivergence
+            + self.gamma * affin_loss
         )
 
         return total_loss, recon_loss, kldivergence, affin_loss
