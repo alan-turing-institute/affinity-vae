@@ -104,39 +104,11 @@ logging.basicConfig(
     "a standard beta-VAE.",
 )
 @click.option(
-    "--beta_min",
-    "-bs",
-    type=float,
-    default=None,
-    help="Beta minimum in the case of cyclical annealing schedule",
-)
-@click.option(
     "--beta",
     "-be",
     type=float,
     default=None,
     help="Beta maximum in the case of cyclical annealing schedule",
-)
-@click.option(
-    "--beta_cycle",
-    "-bc",
-    type=int,
-    default=None,
-    help="Number of cycles for beta during training in the case of cyclical annealing schedule",
-)
-@click.option(
-    "--beta_ratio",
-    "-br",
-    type=float,
-    default=None,
-    help="The ratio for steps in beta",
-)
-@click.option(
-    "--kl_weight_method",
-    "-klm",
-    type=str,
-    default=None,
-    help="The schedule for beta: for constant beta : flat, other options include , cycle_linear, cycle_sigmoid, cycle_cosine, ramp",
 )
 @click.option(
     "--gamma",
@@ -160,6 +132,34 @@ logging.basicConfig(
     type=str,
     default=None,
     help="Loss type: 'MSE' or 'BCE' (default 'MSE').",
+)
+@click.option(
+    "--beta_min",
+    "-bs",
+    type=float,
+    default=None,
+    help="Beta minimum in the case of cyclical annealing schedule",
+)
+@click.option(
+    "--beta_cycle",
+    "-bc",
+    type=int,
+    default=None,
+    help="Number of cycles for beta during training in the case of cyclical annealing schedule",
+)
+@click.option(
+    "--beta_ratio",
+    "-br",
+    type=float,
+    default=None,
+    help="The ratio for steps in beta",
+)
+@click.option(
+    "--kl_weight_method",
+    "-klm",
+    type=str,
+    default=None,
+    help="The schedule for beta: for constant beta : flat, other options include , cycle_linear, cycle_sigmoid, cycle_cosine, ramp",
 )
 @click.option(
     "--freq_eval",
@@ -350,14 +350,14 @@ def run(
     channels,
     latent_dims,
     pose_dims,
-    beta_min,
     beta,
-    beta_cycle,
-    beta_ratio,
-    kl_weight_method,
     gamma,
     learning,
     loss_fn,
+    beta_min,
+    beta_cycle,
+    beta_ratio,
+    kl_weight_method,
     freq_eval,
     freq_sta,
     freq_emb,

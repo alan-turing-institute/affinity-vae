@@ -107,7 +107,7 @@ def train(
 
     print(
         "Epoch: [0/%d] | Batch: [0/%d] | Loss: -- | Recon: -- | "
-        "KLdiv: -- | Affin: --" % (epochs, len(trains)),
+        "KLdiv: -- | Affin: -- | Beta: --" % (epochs, len(trains)),
         end="\r",
     )
 
@@ -147,6 +147,7 @@ def train(
                 loss=loss,
                 history=t_history,
                 optimizer=optimizer,
+                beta=beta_arr,
             )
             x_train.extend(lat_mu.cpu().detach().numpy())  # store latents
             y_train.extend(batch[1])
@@ -161,8 +162,15 @@ def train(
         t_history[-1] /= len(trains)
         print(
             "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
-            "KLdiv: %f | Affin: %f"
-            % (epoch + 1, epochs, b + 1, len(trains), *t_history[-1])
+            "KLdiv: %f | Affin: %f | Beta: %f"
+            % (
+                epoch + 1,
+                epochs,
+                b + 1,
+                len(trains),
+                *t_history[-1],
+                beta_arr[epoch],
+            )
         )
 
         # ########################## VAL ######################################
@@ -178,6 +186,7 @@ def train(
                 epochs,
                 loss=loss,
                 history=v_history,
+                beta=beta_arr,
             )
             x_val.extend(v_mu.cpu().detach().numpy())  # store latents
             y_val.extend(batch[1])
@@ -192,8 +201,15 @@ def train(
         v_history[-1] /= len(vals)
         print(
             "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
-            "KLdiv: %f | Affin: %f"
-            % (epoch + 1, epochs, b + 1, len(vals), *v_history[-1])
+            "KLdiv: %f | Affin: %f | Beta: %f"
+            % (
+                epoch + 1,
+                epochs,
+                b + 1,
+                len(vals),
+                *v_history[-1],
+                beta_arr[epoch],
+            )
         )
 
         # ########################## TEST #####################################
@@ -330,6 +346,7 @@ def pass_batch(
     history=[],
     loss=None,
     optimizer=None,
+    beta=None,
 ):
     if bool(history == []) ^ bool(loss is None):
         raise RuntimeError(
@@ -355,13 +372,18 @@ def pass_batch(
     if loss is not None:
         history_loss = loss(x, x_hat, lat_mu, lat_logvar, e, batch_aff=aff)
 
+        if beta is None:
+            raise RuntimeError(
+                "Please pass beta value to pass_batch function."
+            )
+
         # record loss
         for i in range(len(history[-1])):
             history[-1][i] += history_loss[i].item()
         print(
             "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
-            "KLdiv: %f | Affin: %f"
-            % (e + 1, epochs, b + 1, batches, *history_loss),
+            "KLdiv: %f | Affin: %f | Beta: %f"
+            % (e + 1, epochs, b + 1, batches, *history_loss, beta[e]),
             end="\r",
         )
 
