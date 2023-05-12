@@ -161,7 +161,7 @@ class ProteinDataset(Dataset):
         random.shuffle(self.paths)
         ids = np.unique([f.split("_")[0] for f in self.paths])
         self.final_classes = ids
-   
+
         if classes is not None:
             classes_list = pd.read_csv(classes).columns.tolist()
             self.final_classes = classes_list
@@ -177,7 +177,8 @@ class ProteinDataset(Dataset):
                 )
 
         self.paths = [
-            p for p in self.paths for c in self.final_classes if c in p]
+            p for p in self.paths for c in self.final_classes if c in p
+        ]
 
         self.paths = self.paths[:lim]
 
