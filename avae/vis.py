@@ -13,8 +13,8 @@ import torchvision
 import umap
 from PIL import Image
 from sklearn.manifold import TSNE
-from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
-from sklearn.metrics import f1_score
+from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix, f1_score
+
 
 def _encoder(i):
     """Encode PIL Image as base64 buffer."""
@@ -282,13 +282,12 @@ def accuracy_plot(
         plt.savefig(f"plots/confusion_valid{title}.png", dpi=300)
         plt.close()
 
-
     train_f1_score = f1_score(y_train, ypred_train, average=None)
-    valid_f1_score= f1_score(y_val, ypred_val, average=None)
-    
-    fig = plt.figure()
-    plt.plot(classes_list, train_f1_score,label = 'train')
-    plt.plot(classes_list, train_f1_score,label = 'valid')
+    valid_f1_score = f1_score(y_val, ypred_val, average=None)
+
+    plt.figure()
+    plt.plot(classes_list, train_f1_score, label="train")
+    plt.plot(classes_list, valid_f1_score, label="valid")
     plt.savefig("plots/f1.png", dpi=150)
     plt.close()
 

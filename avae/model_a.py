@@ -60,7 +60,7 @@ class Decoder(nn.Module):
     ):
         super(Decoder, self).__init__()
 
-        ## create a variable that tells us if pose is activated
+        # create a variable that tells us if pose is activated
         self.pose = not (pose_dims == 0)
 
         self.decoder = nn.Sequential()
@@ -103,7 +103,7 @@ class Decoder(nn.Module):
         )
 
     def forward(self, x, x_pose):
-        if self.pose :
+        if self.pose:
             return self.decoder(torch.cat([x_pose, x], dim=-1))
         else:
             return self.decoder(x)
