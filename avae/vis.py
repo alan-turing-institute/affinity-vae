@@ -251,9 +251,7 @@ def accuracy_plot(
         fig, ax = plt.subplots(
             figsize=(int(len(classes_list)) / 2, int(len(classes_list)) / 2)
         )
-
         disp.plot(cmap=plt.cm.Blues, ax=ax, xticks_rotation=90)
-
         plt.tight_layout()
 
         if not os.path.exists("plots"):
