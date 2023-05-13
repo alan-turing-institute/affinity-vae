@@ -288,6 +288,8 @@ def accuracy_plot(
     plt.figure()
     plt.plot(classes_list, train_f1_score, label="train")
     plt.plot(classes_list, valid_f1_score, label="valid")
+    plt.xticks(rotation=90)
+    plt.ylabel("F1 Score")
     plt.savefig("plots/f1.png", dpi=150)
     plt.close()
 
