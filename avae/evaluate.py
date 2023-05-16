@@ -6,7 +6,7 @@ import torch
 
 from . import config, vis
 from .data import load_data
-from .train import add_meta, pass_batch
+from .train import accuracy, add_meta, pass_batch
 from .utils import set_device
 
 
@@ -101,6 +101,26 @@ def evaluate(datapath, lim, splt, batch_s, collect_meta, use_gpu):
             meta_df["image"] = meta_df["image"].apply(vis.merge)
             vis.dyn_latentembed_plot(meta_df, 0, embedding="umap")
             vis.dyn_latentembed_plot(meta_df, 0, embedding="tsne")
+
+
+    # visualise accuracy
+    train_acc, val_acc, ypred_train, ypred_val = accuracy(
+        latents_training,
+        np.array(latents_training_id),
+        x_test,
+        np.array(y_test),
+    )
+    print(
+        "\n------------------->>> Accuracy: Train: %f | Val: %f\n"
+        % (train_acc, val_acc)
+    )
+    vis.accuracy_plot(
+        np.array(latents_training_id),
+        ypred_train,
+        y_test,
+        ypred_val,
+        title="_eval",
+    )
 
     # visualise latent disentanglement
     if config.VIS_DIS:
