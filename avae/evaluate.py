@@ -73,11 +73,31 @@ def evaluate(datapath, lim, splt, batch_s, collect_meta, use_gpu):
     if config.VIS_REC:
         vis.recon_plot(x, x_hat, name="evl")
 
+    latents = sorted([s for s in os.listdir("latents") if ".csv" in s])[-1]
+    latents = pd.read_csv(
+        os.path.join("latents", latents)
+    )
+
+    latents_training = latents[
+        [col for col in latents if col.startswith("lat")]
+    ].to_numpy()
+    latents_training_id = latents["id"].values
+
     # visualise embeddings
     if config.VIS_EMB:
-        vis.latent_embed_plot(x_test, np.ones(len(x_test)))
+        vis.latent_embed_plot_umap(
+            np.concatenate([x_test, latents_training]),
+            np.concatenate([np.array(y_test), np.array(latents_training_id)]),
+            "_eval",
+        )
+        vis.latent_embed_plot_tsne(
+            np.concatenate([x_test, latents_training]),
+            np.concatenate([np.array(y_test), np.array(latents_training_id)]),
+            "_eval",
+        )
+
         if collect_meta:
-            # merge img and rec into one image for display in altair
+        # merge img and rec into one image for display in altair
             meta_df["image"] = meta_df["image"].apply(vis.merge)
             vis.dyn_latentembed_plot(meta_df, 0, embedding="umap")
             vis.dyn_latentembed_plot(meta_df, 0, embedding="tsne")
