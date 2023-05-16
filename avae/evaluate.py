@@ -37,6 +37,8 @@ def evaluate(datapath, lim, splt, batch_s, collect_meta, use_gpu):
 
     # create holders for latent spaces and labels
     x_test = []
+    y_test = []
+
     if pose_dims != 0:
         p_test = []
 
@@ -47,7 +49,13 @@ def evaluate(datapath, lim, splt, batch_s, collect_meta, use_gpu):
         x, x_hat, lat_mu, lat_logvar, lat, lat_pose, _ = pass_batch(
             device, vae, batch, b, len(tests)
         )
-        x_test.extend(lat_mu.cpu().detach().numpy())  # store latents
+        x_test.extend(lat_mu.cpu().detach().numpy())
+
+        # if labels are present save them otherwise save test
+        try:
+            y_test.extend(batch[1])
+        except IndexError:
+            np.full(shape=len(batch[0]), fill_value="test")
         if pose_dims != 0:
             p_test.extend(lat_pose.cpu().detach().numpy())
 
