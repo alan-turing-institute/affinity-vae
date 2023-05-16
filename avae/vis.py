@@ -239,7 +239,7 @@ def accuracy_plot(
     if classes is not None:
         classes_list = pd.read_csv(classes).columns.tolist()
     else:
-        classes_list = np.unique(np.concatenate((y_train, y_val)))
+        classes_list = np.unique(np.concatenate((y_train, ypred_train)))
 
     cm = confusion_matrix(y_train, ypred_train)
     disp = ConfusionMatrixDisplay(
@@ -260,9 +260,13 @@ def accuracy_plot(
         plt.savefig(f"plots/confusion_train{title}.png", dpi=300)
         plt.close()
 
+    if classes is not None:
+        classes_list_eval = pd.read_csv(classes).columns.tolist()
+    else:
+        classes_list_eval = np.unique(np.concatenate((y_val, ypred_val)))
     cm = confusion_matrix(y_val, ypred_val)
     disp = ConfusionMatrixDisplay(
-        confusion_matrix=cm, display_labels=classes_list
+        confusion_matrix=cm, display_labels=classes_list_eval
     )
 
     with plt.rc_context(
