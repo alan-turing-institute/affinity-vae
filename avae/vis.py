@@ -87,14 +87,16 @@ def merge(im):
     return f"data:image/png;base64,{data}"
 
 
-def latent_embed_plot_tsne(xs, ys):
+def latent_embed_plot_tsne(xs, ys, title=""):
     print("\n################################################################")
     print("Visualising static TSNE embedding...\n")
 
     fig, ax = plt.subplots()
     xs = np.asarray(xs)
     ys = np.asarray(ys)
-    lats = TSNE(n_components=2).fit_transform(xs)
+    lats = TSNE(n_components=2, perplexity=15, random_state=42).fit_transform(
+        xs
+    )
     plt.clf()
 
     for mol_id, mol in enumerate(set(ys.tolist())):
@@ -113,14 +115,14 @@ def latent_embed_plot_tsne(xs, ys):
 
     plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=16)
     plt.tight_layout()
-    plt.savefig("plots/embedding_TSNE.png")
+    plt.savefig(f"plots/embedding_TSNE{title}.png")
     plt.close()
 
 
-def latent_embed_plot_umap(xs, ys):
+def latent_embed_plot_umap(xs, ys, title=""):
     print("\n################################################################")
     print("Visualising static UMAP embedding...\n")
-    reducer = umap.UMAP()
+    reducer = umap.UMAP(n_neighbors=200, min_dist=0.5, random_state=42)
     embedding = reducer.fit_transform(xs)
 
     fig, ax = plt.subplots()
@@ -144,7 +146,7 @@ def latent_embed_plot_umap(xs, ys):
     ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=16)
 
     plt.tight_layout()
-    plt.savefig("plots/embedding_UMAP.png")
+    plt.savefig(f"plots/embedding_UMAP{title}.png")
     plt.close()
 
 
@@ -228,7 +230,9 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
         chart.save(f"latents/plt_latent_embed_epoch_{epoch}_tsne.html")
 
 
-def accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes=None):
+def accuracy_plot(
+    y_train, ypred_train, y_val, ypred_val, classes=None, title=""
+):
     print("\n################################################################")
     print("Visualising confusion ...\n")
 
@@ -253,7 +257,7 @@ def accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes=None):
         if not os.path.exists("plots"):
             os.mkdir("plots")
 
-        plt.savefig("plots/confusion_train.png", dpi=300)
+        plt.savefig(f"plots/confusion_train{title}.png", dpi=300)
         plt.close()
 
     cm = confusion_matrix(y_val, ypred_val)
@@ -269,7 +273,7 @@ def accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes=None):
         )
         disp.plot(cmap=plt.cm.Blues, ax=ax, xticks_rotation=90)
         plt.tight_layout()
-        plt.savefig("plots/confusion_valid.png", dpi=300)
+        plt.savefig(f"plots/confusion_valid{title}.png", dpi=300)
         plt.close()
 
 
