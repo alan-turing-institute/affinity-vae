@@ -74,9 +74,7 @@ def evaluate(datapath, lim, splt, batch_s, collect_meta, use_gpu):
         vis.recon_plot(x, x_hat, name="evl")
 
     latents = sorted([s for s in os.listdir("latents") if ".csv" in s])[-1]
-    latents = pd.read_csv(
-        os.path.join("latents", latents)
-    )
+    latents = pd.read_csv(os.path.join("latents", latents))
 
     latents_training = latents[
         [col for col in latents if col.startswith("lat")]
@@ -97,11 +95,10 @@ def evaluate(datapath, lim, splt, batch_s, collect_meta, use_gpu):
         )
 
         if collect_meta:
-        # merge img and rec into one image for display in altair
+            # merge img and rec into one image for display in altair
             meta_df["image"] = meta_df["image"].apply(vis.merge)
             vis.dyn_latentembed_plot(meta_df, 0, embedding="umap")
             vis.dyn_latentembed_plot(meta_df, 0, embedding="tsne")
-
 
     # visualise accuracy
     train_acc, val_acc, ypred_train, ypred_val = accuracy(
