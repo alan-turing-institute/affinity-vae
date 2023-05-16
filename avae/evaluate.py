@@ -33,7 +33,7 @@ def evaluate(datapath, lim, splt, batch_s, collect_meta, use_gpu):
     # ########################## EVALUATE ################################
     if collect_meta:
         metas = sorted([f for f in os.listdir("states") if ".pkl" in f])[-1]
-        meta_df = pd.read_pickle(metas)
+        meta_df = pd.read_pickle(os.path.join("states", metas))
 
     # create holders for latent spaces and labels
     x_test = []
