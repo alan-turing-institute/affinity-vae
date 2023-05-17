@@ -94,7 +94,7 @@ def latent_embed_plot_tsne(xs, ys, title=""):
     fig, ax = plt.subplots()
     xs = np.asarray(xs)
     ys = np.asarray(ys)
-    lats = TSNE(n_components=2, perplexity=15, random_state=42).fit_transform(
+    lats = TSNE(n_components=2, perplexity=40, random_state=42).fit_transform(
         xs
     )
     plt.clf()
@@ -106,11 +106,11 @@ def latent_embed_plot_tsne(xs, ys, title=""):
         plt.scatter(
             lats[idx, 0],
             lats[idx, 1],
-            s=64,
+            s=14,
             label=mol[:4],
             facecolor=color,
             edgecolor=color,
-            alpha=0.4,
+            alpha=0.2,
         )
 
     plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=16)
@@ -122,7 +122,7 @@ def latent_embed_plot_tsne(xs, ys, title=""):
 def latent_embed_plot_umap(xs, ys, title=""):
     print("\n################################################################")
     print("Visualising static UMAP embedding...\n")
-    reducer = umap.UMAP(n_neighbors=200, min_dist=0.5, random_state=42)
+    reducer = umap.UMAP(n_neighbors=700, min_dist=0.8, random_state=42)
     embedding = reducer.fit_transform(xs)
 
     fig, ax = plt.subplots()
@@ -136,11 +136,11 @@ def latent_embed_plot_umap(xs, ys, title=""):
         ax.scatter(
             embedding[idx, 0],
             embedding[idx, 1],
-            s=64,
+            s=14,
             label=mol[:4],
             facecolor=color,
             edgecolor=color,
-            alpha=0.4,
+            alpha=0.2,
         )
 
     ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=16)
