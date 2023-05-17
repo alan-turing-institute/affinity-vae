@@ -175,9 +175,9 @@ class ProteinDataset(Dataset):
                     )
                 )
 
-            self.paths = [
-                p for p in self.paths for c in self.final_classes if c in p
-            ]
+        self.paths = [
+            p for p in self.paths for c in self.final_classes if c in p
+        ]
 
         self.paths = self.paths[:lim]
 
