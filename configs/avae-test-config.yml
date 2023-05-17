@@ -29,13 +29,13 @@ beta:  1
 gamma:  2
 loss_fn:  MSE
 
-#### Cyclical annealing parameters for beta 
+#### Cyclical annealing parameters for beta
 beta_min: 0
 beta_cycle: 5
 beta_ratio: 0.5
 cyc_method_beta :  cycle_sigmoid
 
-#### Cyclical annealing parameters for gamma 
+#### Cyclical annealing parameters for gamma
 gamma_min: 0
 gamma_cycle: 5
 gamma_ratio: 0.5

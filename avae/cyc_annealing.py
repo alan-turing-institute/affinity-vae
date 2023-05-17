@@ -6,30 +6,30 @@ import numpy as np
 class cyc_annealing:
 
     """
-    This class presents an array which will have a value changing between a minimum 
+    This class presents an array which will have a value changing between a minimum
     and maximum for a defined number of cycles. This is used for gamma and beta in loss term.
 
     Parameters
     ----------
-    n_epochs   : number of epochs in training 
-    cyc_method : The method for constructing the cyclical mixing weight 
+    n_epochs   : number of epochs in training
+    cyc_method : The method for constructing the cyclical mixing weight
                     - Flat : regular beta-vae
                     - Linear
-                    - Sigmoid 
+                    - Sigmoid
                     - Cosine
                     - ramp
                     - delta
     start       :  The starting point (min)
     stop        :  The starting point (min)
-    n_cycle     : Number of cycles of the variable to oscillate between min and max 
+    n_cycle     : Number of cycles of the variable to oscillate between min and max
                 during the epochs
-    ratio       : ratio of increase during ramping 
+    ratio       : ratio of increase during ramping
     """
 
     def __init__(
         self,
         n_epoch,
-        cyc_method = 'flat',
+        cyc_method="flat",
         start=0.0,
         stop=1.0,
         n_cycle=4,
@@ -138,14 +138,13 @@ class cyc_annealing:
             i += 1
         return L
 
-
     def _frange_delta(self):
-        L = np.zeros(self.n_epoch) 
-        period = self.n_epoch / (self.n_cycle+1)  
+        L = np.zeros(self.n_epoch)
+        period = self.n_epoch / (self.n_cycle + 1)
 
-        for n in range(self.n_cycle+1):
-            if n%2 == 1: 
-                L[int(period)*n:int(period)*(n+1)] = self.stop
+        for n in range(self.n_cycle + 1):
+            if n % 2 == 1:
+                L[int(period) * n : int(period) * (n + 1)] = self.stop
             else:
-                L[int(period)*n:int(period)*(n+1)] = self.start
+                L[int(period) * n : int(period) * (n + 1)] = self.start
         return L
