@@ -3,7 +3,7 @@ import math
 import numpy as np
 
 
-class KLD_weight:
+class cyc_annealing:
     """
     Parameters
     ----------
@@ -12,7 +12,7 @@ class KLD_weight:
     def __init__(
         self,
         n_epoch,
-        kl_weight_method,
+        cyc_method,
         start=0.0,
         stop=1.0,
         n_cycle=4,
@@ -25,20 +25,20 @@ class KLD_weight:
         self.n_cycle = n_cycle
         self.ratio = ratio
 
-        if kl_weight_method == "flat":
-            self.beta = self._frange_flat()
+        if cyc_method == "flat":
+            self.var = self._frange_flat()
 
-        elif kl_weight_method == "cycle_linear":
-            self.beta = self._frange_cycle_linear()
+        elif cyc_method == "cycle_linear":
+            self.var = self._frange_cycle_linear()
 
-        elif kl_weight_method == "cycle_sigmoid":
-            self.beta = self._frange_cycle_sigmoid()
+        elif cyc_method == "cycle_sigmoid":
+            self.var = self._frange_cycle_sigmoid()
 
-        elif kl_weight_method == "cycle_cosine":
-            self.beta = self._frange_cycle_cosine()
+        elif cyc_method == "cycle_cosine":
+            self.var = self._frange_cycle_cosine()
 
-        elif kl_weight_method == "ramp":
-            self.beta = self._frange_flat()
+        elif cyc_method == "ramp":
+            self.var = self._frange_flat()
 
         else:
             raise RuntimeError(

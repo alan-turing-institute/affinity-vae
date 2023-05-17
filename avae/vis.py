@@ -719,18 +719,22 @@ def plot_classes_distribution(data, category):
     plt.xticks(fontsize=16, rotation=90)
     plt.yticks(fontsize=16)
     plt.tight_layout()
+    if not os.path.exists("plots"):
+        os.mkdir("plots")
     plt.savefig("plots/classes_distribution_" + category + ".png", dpi=300)
     plt.close()
 
 
-def plot_beta(beta_array):
+def plot_cyc_variable(array : list, variable_name : str):
     print("\n################################################################")
-    print("Visualising beta ...\n")
-    plt.plot(beta_array, linewidth=3)
-    plt.ylabel(r"$\beta$", fontsize=16)
+    print(f"Visualising {variable_name} ...\n")
+    plt.plot(array, linewidth=3)
+    plt.ylabel(rf"$\{variable_name}$", fontsize=16)
     plt.xlabel("Epochs", fontsize=16)
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
     plt.tight_layout()
-    plt.savefig("plots/beta_array.png", dpi=300)
+    if not os.path.exists("plots"):
+        os.mkdir("plots")
+    plt.savefig(f"plots/{variable_name}_array.png", dpi=300)
     plt.close()

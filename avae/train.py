@@ -8,7 +8,7 @@ from sklearn import metrics, preprocessing
 from sklearn.neighbors import KNeighborsClassifier
 
 from . import config, vis
-from .cyc_annealing import KLD_weight
+from .cyc_annealing import cyc_annealing
 from .data import load_data
 from .loss import AVAELoss
 from .model_a import AffinityVAE as AffinityVAE_A
@@ -35,8 +35,12 @@ def train(
     beta_max,
     beta_cycle,
     beta_ratio,
-    kl_weight_method,
-    gamma,
+    cyc_method_beta,
+    gamma_min,
+    gamma_max,
+    gamma_cycle,
+    gamma_ratio,
+    cyc_method_gamma,
     recon_fn,
     use_gpu,
     model,
@@ -82,22 +86,49 @@ def train(
         params=vae.parameters(), lr=learning  # , weight_decay=1e-5
     )
 
-    beta_arr = KLD_weight(
+    print(epochs, cyc_method_beta, beta_min,beta_max,beta_cycle,beta_ratio)
+
+
+    if beta_max == 0  and  cyc_method_beta != 'flat':
+        raise RuntimeError(
+            "The maximum value for beta is set to 0, it is not possible to" 
+            "oscillate between a maximum and minimum. Please choose the flat method for"
+            "cyc_method_beta"
+        )
+    beta_arr = cyc_annealing(
         epochs,
-        kl_weight_method,
+        cyc_method_beta,
         start=beta_min,
         stop=beta_max,
         n_cycle=beta_cycle,
         ratio=beta_ratio,
-    ).beta
+    ).var
+    
+    if gamma_max == 0 and  cyc_method_gamma != 'flat':
+        raise RuntimeError(
+            "The maximum value for gamma is set to 0, it is not possible to" 
+            "oscillate between a maximum and minimum. Please choose the flat method for"
+            "cyc_method_gamma"
+        )
+    gamma_arr = cyc_annealing(
+        epochs,
+        cyc_method_gamma,
+        start=gamma_min,
+        stop=gamma_max,
+        n_cycle=gamma_cycle,
+        ratio=gamma_ratio,
+    ).var
+
+
 
     if config.VIS_BET:
-        vis.plot_beta(beta_arr)
-
+        vis.plot_cyc_variable(beta_arr, 'beta')
+    if config.VIS_BET:
+        vis.plot_cyc_variable(gamma_arr,'gamma')
     loss = AVAELoss(
         device,
         beta_arr,
-        gamma=gamma,
+        gamma=gamma_arr,
         lookup_aff=lookup,
         recon_fn=recon_fn,
     )
@@ -275,7 +306,7 @@ def train(
                 lat_dims,
                 learning,
                 beta_arr[epoch],
-                gamma,
+                gamma_arr[epoch],
             ]
             vis.loss_plot(epoch + 1, t_history, v_history, p=p)
 

@@ -155,12 +155,42 @@ logging.basicConfig(
     help="The ratio for steps in beta",
 )
 @click.option(
-    "--kl_weight_method",
+    "--cyc_method_beta",
     "-klm",
     type=str,
     default=None,
-    help="The schedule for beta: for constant beta : flat, other options include , cycle_linear, cycle_sigmoid, cycle_cosine, ramp",
+    help="The schedule for : for constant beta : flat, other options include , cycle_linear, cycle_sigmoid, cycle_cosine, ramp",
 )
+
+@click.option(
+    "--gamma_min",
+    "-gs",
+    type=float,
+    default=None,
+    help="gamma minimum in the case of cyclical annealing schedule",
+)
+@click.option(
+    "--gamma_cycle",
+    "-gc",
+    type=int,
+    default=None,
+    help="Number of cycles for gamma during training in the case of cyclical annealing schedule",
+)
+@click.option(
+    "--gamma_ratio",
+    "-gr",
+    type=float,
+    default=None,
+    help="The ratio for steps in gamma",
+)
+@click.option(
+    "--cyc_method_gamma",
+    "-klm",
+    type=str,
+    default=None,
+    help="The schedule for gamma: for constant gamma : flat, other options include , cycle_linear, cycle_sigmoid, cycle_cosine, ramp",
+)
+
 @click.option(
     "--freq_eval",
     "-fev",
@@ -357,7 +387,11 @@ def run(
     beta_min,
     beta_cycle,
     beta_ratio,
-    kl_weight_method,
+    cyc_method_beta,
+    gamma_min,
+    gamma_cycle,
+    gamma_ratio,
+    cyc_method_gamma,
     freq_eval,
     freq_sta,
     freq_emb,
@@ -521,8 +555,12 @@ def run(
                 data["beta"],
                 data["beta_cycle"],
                 data["beta_ratio"],
-                data["kl_weight_method"],
+                data["cyc_method_beta"],
+                data["gamma_min"],
                 data["gamma"],
+                data["gamma_cycle"],
+                data["gamma_ratio"],
+                data["cyc_method_gamma"],
                 data["loss_fn"],
                 data["gpu"],
                 data["model"],
