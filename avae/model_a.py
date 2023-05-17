@@ -60,6 +60,9 @@ class Decoder(nn.Module):
     ):
         super(Decoder, self).__init__()
 
+        # create a variable that tells us if pose is activated
+        self.pose = not (pose_dims == 0)
+
         self.decoder = nn.Sequential()
 
         self.decoder.append(nn.Linear(latent_dims + pose_dims, flat_shape))
@@ -99,10 +102,11 @@ class Decoder(nn.Module):
             )
         )
 
-    #        self.decoder.append(nn.Sigmoid())
-
     def forward(self, x, x_pose):
-        return self.decoder(torch.cat([x_pose, x], dim=-1))
+        if self.pose:
+            return self.decoder(torch.cat([x_pose, x], dim=-1))
+        else:
+            return self.decoder(x)
 
 
 class AffinityVAE(nn.Module):

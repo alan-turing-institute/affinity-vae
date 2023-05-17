@@ -13,7 +13,7 @@ import torchvision
 import umap
 from PIL import Image
 from sklearn.manifold import TSNE
-from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
+from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix, f1_score
 
 
 def _encoder(i):
@@ -247,7 +247,9 @@ def accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes=None):
         fig, ax = plt.subplots(
             figsize=(int(len(classes_list)) / 2, int(len(classes_list)) / 2)
         )
+
         disp.plot(cmap=plt.cm.Blues, ax=ax, xticks_rotation=90)
+
         plt.tight_layout()
 
         if not os.path.exists("plots"):
@@ -271,6 +273,17 @@ def accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes=None):
         plt.tight_layout()
         plt.savefig("plots/confusion_valid.png", dpi=300)
         plt.close()
+
+    train_f1_score = f1_score(y_train, ypred_train, average=None)
+    valid_f1_score = f1_score(y_val, ypred_val, average=None)
+
+    plt.figure()
+    plt.plot(classes_list, train_f1_score, label="train")
+    plt.plot(classes_list, valid_f1_score, label="valid")
+    plt.xticks(rotation=90)
+    plt.ylabel("F1 Score")
+    plt.savefig("plots/f1.png", dpi=150)
+    plt.close()
 
 
 def loss_plot(epochs, train_loss, val_loss=None, p=None):
