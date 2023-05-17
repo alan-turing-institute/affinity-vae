@@ -100,14 +100,14 @@ class AVAELoss:
 
         if lookup_aff is not None and max(gamma) != 0:
             self.affinity_loss = AffinityLoss(lookup_aff, device)
-       
-        elif lookup_aff is None and  max(gamma) != 0:
+
+        elif lookup_aff is None and max(gamma) != 0:
             raise RuntimeError(
                 "Affinity matrix is needed to compute Affinity loss"
                 ". Although you've set gamma, you have not provided --af/"
                 "--affinity parameter."
             )
-        elif lookup_aff is not None and  max(gamma) == 0:
+        elif lookup_aff is not None and max(gamma) == 0:
             print(
                 "\nWARNING: You provided affinity matrix but no gamma. Unless "
                 "you provide gamma, affinity will be ignored and you're "

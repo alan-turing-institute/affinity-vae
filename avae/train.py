@@ -86,12 +86,11 @@ def train(
         params=vae.parameters(), lr=learning  # , weight_decay=1e-5
     )
 
-    print(epochs, cyc_method_beta, beta_min,beta_max,beta_cycle,beta_ratio)
+    print(epochs, cyc_method_beta, beta_min, beta_max, beta_cycle, beta_ratio)
 
-
-    if beta_max == 0  and  cyc_method_beta != 'flat':
+    if beta_max == 0 and cyc_method_beta != "flat":
         raise RuntimeError(
-            "The maximum value for beta is set to 0, it is not possible to" 
+            "The maximum value for beta is set to 0, it is not possible to"
             "oscillate between a maximum and minimum. Please choose the flat method for"
             "cyc_method_beta"
         )
@@ -103,10 +102,10 @@ def train(
         n_cycle=beta_cycle,
         ratio=beta_ratio,
     ).var
-    
-    if gamma_max == 0 and  cyc_method_gamma != 'flat':
+
+    if gamma_max == 0 and cyc_method_gamma != "flat":
         raise RuntimeError(
-            "The maximum value for gamma is set to 0, it is not possible to" 
+            "The maximum value for gamma is set to 0, it is not possible to"
             "oscillate between a maximum and minimum. Please choose the flat method for"
             "cyc_method_gamma"
         )
@@ -119,12 +118,10 @@ def train(
         ratio=gamma_ratio,
     ).var
 
-
-
     if config.VIS_BET:
-        vis.plot_cyc_variable(beta_arr, 'beta')
+        vis.plot_cyc_variable(beta_arr, "beta")
     if config.VIS_BET:
-        vis.plot_cyc_variable(gamma_arr,'gamma')
+        vis.plot_cyc_variable(gamma_arr, "gamma")
     loss = AVAELoss(
         device,
         beta_arr,

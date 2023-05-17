@@ -725,7 +725,7 @@ def plot_classes_distribution(data, category):
     plt.close()
 
 
-def plot_cyc_variable(array : list, variable_name : str):
+def plot_cyc_variable(array: list, variable_name: str):
     print("\n################################################################")
     print(f"Visualising {variable_name} ...\n")
     plt.plot(array, linewidth=3)

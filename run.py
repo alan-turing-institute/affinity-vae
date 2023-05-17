@@ -161,7 +161,6 @@ logging.basicConfig(
     default=None,
     help="The schedule for : for constant beta : flat, other options include , cycle_linear, cycle_sigmoid, cycle_cosine, ramp",
 )
-
 @click.option(
     "--gamma_min",
     "-gs",
@@ -190,7 +189,6 @@ logging.basicConfig(
     default=None,
     help="The schedule for gamma: for constant gamma : flat, other options include , cycle_linear, cycle_sigmoid, cycle_cosine, ramp",
 )
-
 @click.option(
     "--freq_eval",
     "-fev",
