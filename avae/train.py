@@ -86,8 +86,6 @@ def train(
         params=vae.parameters(), lr=learning  # , weight_decay=1e-5
     )
 
-    print(epochs, cyc_method_beta, beta_min, beta_max, beta_cycle, beta_ratio)
-
     if beta_max == 0 and cyc_method_beta != "flat":
         raise RuntimeError(
             "The maximum value for beta is set to 0, it is not possible to"
@@ -118,10 +116,10 @@ def train(
         ratio=gamma_ratio,
     ).var
 
-    if config.VIS_BET:
+    if config.VIS_CYC:
         vis.plot_cyc_variable(beta_arr, "beta")
-    if config.VIS_BET:
         vis.plot_cyc_variable(gamma_arr, "gamma")
+
     loss = AVAELoss(
         device,
         beta_arr,

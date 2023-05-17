@@ -29,18 +29,24 @@ beta:  1
 gamma:  2
 loss_fn:  MSE
 
-#### Cyclical annealing parameters
+#### Cyclical annealing parameters for beta 
 beta_min: 0
 beta_cycle: 5
 beta_ratio: 0.5
-kl_weight_method :  cycle_sigmoid
+cyc_method_beta :  cycle_sigmoid
+
+#### Cyclical annealing parameters for gamma 
+gamma_min: 0
+gamma_cycle: 5
+gamma_ratio: 0.5
+cyc_method_gamma :  cycle_sigmoid
 
 #### Evaluation parameters
 eval:  false
 freq_eval: 10 # frequency of test evaluation (if test present)
 
 #### Visualization parameters
-vis_bet:  false  # value of beta for each epoch in case of cyclical annealing
+vis_cyc:  false  # value of beta for each epoch in case of cyclical annealing
 vis_los:  false  # loss on/off (every epoch from epoch 2)
 vis_acc:  false  # confusion matrices on/off
 vis_rec:  false  # reconstructions on/off

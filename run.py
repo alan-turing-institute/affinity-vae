@@ -278,12 +278,12 @@ logging.basicConfig(
     help="Visualise loss.",
 )
 @click.option(
-    "--vis_bet",
-    "-vb",
+    "--vis_cyc",
+    "-vc",
     type=bool,
     default=None,
     is_flag=True,
-    help="Visualise beta vs epoch number.",
+    help="Visualise cyclical parameters which are at the moment beta and gamma vs epoch number.",
 )
 @click.option(
     "--vis_int",
@@ -401,7 +401,7 @@ def run(
     freq_all,
     vis_emb,
     vis_rec,
-    vis_bet,
+    vis_cyc,
     vis_los,
     vis_int,
     vis_dis,
@@ -493,7 +493,7 @@ def run(
 
     try:
         if data["vis_all"]:
-            config.VIS_BET = True
+            config.VIS_CYC = True
             config.VIS_LOS = True
             config.VIS_EMB = True
             config.VIS_REC = True
@@ -504,7 +504,7 @@ def run(
             config.VIS_HIS = True
 
         else:
-            config.VIS_BET = data["vis_bet"]
+            config.VIS_CYC = data["vis_cyc"]
             config.VIS_LOS = data["vis_los"]
             config.VIS_EMB = data["vis_emb"]
             config.VIS_REC = data["vis_rec"]

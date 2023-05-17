@@ -4,15 +4,32 @@ import numpy as np
 
 
 class cyc_annealing:
+
     """
+    This class presents an array which will have a value changing between a minimum 
+    and maximum for a defined number of cycles. This is used for gamma and beta in loss term.
+
     Parameters
     ----------
+    n_epochs   : number of epochs in training 
+    cyc_method : The method for constructing the cyclical mixing weight 
+                    - Flat : regular beta-vae
+                    - Linear
+                    - Sigmoid 
+                    - Cosine
+                    - ramp
+                    - delta
+    start       :  The starting point (min)
+    stop        :  The starting point (min)
+    n_cycle     : Number of cycles of the variable to oscillate between min and max 
+                during the epochs
+    ratio       : ratio of increase during ramping 
     """
 
     def __init__(
         self,
         n_epoch,
-        cyc_method,
+        cyc_method = 'flat',
         start=0.0,
         stop=1.0,
         n_cycle=4,
@@ -38,11 +55,15 @@ class cyc_annealing:
             self.var = self._frange_cycle_cosine()
 
         elif cyc_method == "ramp":
-            self.var = self._frange_flat()
+            self.var = self._frange_ramp()
+
+        elif cyc_method == "delta":
+            self.var = self._frange_delta()
 
         else:
             raise RuntimeError(
-                "Select a valid method for KL_weight. Available options are : flat, cycle_linear, cycle_sigmoid, cycle_cosine, ramp"
+                "Select a valid method for KL_weight. Available options are : "
+                "flat, cycle_linear, cycle_sigmoid, cycle_cosine, ramp, delta"
             )
 
     def _frange_flat(self):
@@ -115,4 +136,16 @@ class cyc_annealing:
             L[i] = v
             v += step
             i += 1
+        return L
+
+
+    def _frange_delta(self):
+        L = np.zeros(self.n_epoch) 
+        period = self.n_epoch / (self.n_cycle+1)  
+
+        for n in range(self.n_cycle+1):
+            if n%2 == 1: 
+                L[int(period)*n:int(period)*(n+1)] = self.stop
+            else:
+                L[int(period)*n:int(period)*(n+1)] = self.start
         return L
