@@ -10,6 +10,8 @@ from torchvision import transforms
 from . import config
 from .vis import format, plot_affinity_matrix, plot_classes_distribution
 
+np.random.seed(42)
+
 
 def load_data(
     datapath: str,
