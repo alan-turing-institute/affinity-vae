@@ -157,11 +157,15 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
     epoch += 1
     latentspace = df[[col for col in df if col.startswith("lat")]].to_numpy()
     if embedding == "umap":
-        lat_emb = np.array(umap.UMAP(random_state=42).fit_transform(latentspace))
+        lat_emb = np.array(
+            umap.UMAP(random_state=42).fit_transform(latentspace)
+        )
         titlex = "UMAP-1"
         titley = "UMAP-2"
     else:
-        lat_emb = np.array(TSNE(n_components=2, random_state=42).fit_transform(latentspace))
+        lat_emb = np.array(
+            TSNE(n_components=2, random_state=42).fit_transform(latentspace)
+        )
         titlex = "t-SNE-1"
         titley = "t-SNE-2"
     df["emb-x"], df["emb-y"] = np.array(lat_emb)[:, 0], np.array(lat_emb)[:, 1]
@@ -260,10 +264,7 @@ def accuracy_plot(
         plt.savefig(f"plots/confusion_train{title}.png", dpi=300)
         plt.close()
 
-    if classes is not None:
-        classes_list_eval = pd.read_csv(classes).columns.tolist()
-    else:
-        classes_list_eval = np.unique(np.concatenate((y_val, ypred_val)))
+    classes_list_eval = np.unique(np.concatenate((y_val, ypred_val)))
     cm = confusion_matrix(y_val, ypred_val)
     disp = ConfusionMatrixDisplay(
         confusion_matrix=cm, display_labels=classes_list_eval
