@@ -156,7 +156,7 @@ logging.basicConfig(
 )
 @click.option(
     "--cyc_method_beta",
-    "-klm",
+    "-cycmb",
     type=str,
     default=None,
     help="The schedule for : for constant beta : flat, other options include , cycle_linear, cycle_sigmoid, cycle_cosine, ramp",
@@ -184,7 +184,7 @@ logging.basicConfig(
 )
 @click.option(
     "--cyc_method_gamma",
-    "-klm",
+    "-cycmg",
     type=str,
     default=None,
     help="The schedule for gamma: for constant gamma : flat, other options include , cycle_linear, cycle_sigmoid, cycle_cosine, ramp",

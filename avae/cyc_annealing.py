@@ -60,9 +60,12 @@ class cyc_annealing:
         elif cyc_method == "delta":
             self.var = self._frange_delta()
 
+        elif cyc_method == "mixed":
+            self.var = self._frange_mixed()
+
         else:
             raise RuntimeError(
-                "Select a valid method for KL_weight. Available options are : "
+                "Select a valid method for cyclical method for your variable. Available options are : "
                 "flat, cycle_linear, cycle_sigmoid, cycle_cosine, ramp, delta"
             )
 
@@ -147,4 +150,29 @@ class cyc_annealing:
                 L[int(period) * n : int(period) * (n + 1)] = self.stop
             else:
                 L[int(period) * n : int(period) * (n + 1)] = self.start
+        return L
+
+    def _frange_mixed(self):
+        
+        L= np.ones(self.n_epoch)
+        on = 300
+        off = 600
+        L[0:on] = 0
+
+        period = off-on/ self.n_cycle
+        step = (self.stop - self.start) / (
+            period * self.ratio
+        )  # step is in [0,1]
+
+        # transform into [-6, 6] for plots: v*12.-6.
+
+        for c in range(self.n_cycle):
+
+            v, i = self.start, on
+            while v <= self.stop:
+                L[int(i + c * period)] = 1.0 / (
+                    1.0 + np.exp(-(v * 12.0 - 6.0))
+                )
+                v += step
+                i += 1
         return L
