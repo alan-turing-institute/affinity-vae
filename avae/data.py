@@ -188,7 +188,6 @@ class ProteinDataset(Dataset):
             ]
             self.amatrix = self.amatrix.iloc[index, index]
 
-
         self.paths = [
             p for p in self.paths for c in self.final_classes if c in p
         ]
