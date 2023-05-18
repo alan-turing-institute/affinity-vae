@@ -111,8 +111,9 @@ class AVAELoss:
             print(
                 "\nWARNING: You provided affinity matrix but no gamma. Unless "
                 "you provide gamma, affinity will be ignored and you're "
-                "running a vanilla beta-VAE.\n"
-            , flush = True)
+                "running a vanilla beta-VAE.\n",
+                flush=True,
+            )
             self.affinity_loss = None
 
     def __call__(self, x, recon_x, mu, logvar, epoch, batch_aff=None):
