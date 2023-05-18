@@ -66,7 +66,7 @@ class cyc_annealing:
         else:
             raise RuntimeError(
                 "Select a valid method for cyclical method for your variable. Available options are : "
-                "flat, cycle_linear, cycle_sigmoid, cycle_cosine, ramp, delta"
+                "flat, cycle_linear, cycle_sigmoid, cycle_cosine, ramp, delta, mixed"
             )
 
     def _frange_flat(self):
@@ -159,7 +159,7 @@ class cyc_annealing:
         off = 600
         L[0:on] = 0
 
-        period = off - on / self.n_cycle
+        period = (off - on) / self.n_cycle
         step = (self.stop - self.start) / (
             period * self.ratio
         )  # step is in [0,1]
@@ -167,7 +167,6 @@ class cyc_annealing:
         # transform into [-6, 6] for plots: v*12.-6.
 
         for c in range(self.n_cycle):
-
             v, i = self.start, on
             while v <= self.stop:
                 L[int(i + c * period)] = 1.0 / (
