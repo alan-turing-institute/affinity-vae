@@ -24,6 +24,7 @@ def load_data(
     affinity=None,
     classes=None,
 ):
+
     if not eval:
         if affinity is not None:
             # load affinity matrix
@@ -186,6 +187,7 @@ class ProteinDataset(Dataset):
                 for columns in self.final_classes
             ]
             self.amatrix = self.amatrix.iloc[index, index]
+
 
         self.paths = [
             p for p in self.paths for c in self.final_classes if c in p
