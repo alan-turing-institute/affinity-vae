@@ -13,7 +13,9 @@ from .utils import set_device
 def evaluate(datapath, lim, splt, batch_s, collect_meta, use_gpu):
 
     # ############################### DATA ###############################
-    tests = load_data(datapath, lim, splt, batch_s, collect_meta, eval=True)
+    tests = load_data(
+        datapath, lim, splt, batch_s, collect_meta=collect_meta, eval=True
+    )
 
     # ############################### MODEL ###############################
     device = set_device(use_gpu)
@@ -74,6 +76,8 @@ def evaluate(datapath, lim, splt, batch_s, collect_meta, use_gpu):
         vis.recon_plot(x, x_hat, name="evl")
 
     latents = sorted([s for s in os.listdir("latents") if ".csv" in s])[-1]
+
+    print("Reading last latent space: ", latents)
     latents = pd.read_csv(os.path.join("latents", latents))
 
     latents_training = latents[
