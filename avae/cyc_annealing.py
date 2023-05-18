@@ -153,13 +153,13 @@ class cyc_annealing:
         return L
 
     def _frange_mixed(self):
-        
-        L= np.ones(self.n_epoch)
+
+        L = np.ones(self.n_epoch)
         on = 300
         off = 600
         L[0:on] = 0
 
-        period = off-on/ self.n_cycle
+        period = off - on / self.n_cycle
         step = (self.stop - self.start) / (
             period * self.ratio
         )  # step is in [0,1]

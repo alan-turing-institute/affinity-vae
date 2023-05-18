@@ -246,7 +246,7 @@ def accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes=None):
         "\n################################################################",
         flush=True,
     )
-    print("Visualising confusion ...\n", flush=True)
+    print("Visualising confusion and F1 scores ...\n", flush=True)
 
     if classes is not None:
         classes_list = pd.read_csv(classes).columns.tolist()
