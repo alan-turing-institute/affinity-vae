@@ -288,7 +288,7 @@ def train(
         if config.VIS_EMB and (epoch + 1) % config.FREQ_EMB == 0:
             if len(tests) != 0:
                 xs = np.r_[x_train, x_val, x_test]
-                ys = np.r_[y_train, y_val, np.ones(len(x_test))]
+                ys = np.r_[y_train, y_val, np.full(shape=len(x_test), fill_value="test")]
             else:
                 xs = np.r_[x_train, x_val]
                 ys = np.r_[y_train, y_val]
