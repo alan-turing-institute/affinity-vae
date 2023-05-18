@@ -38,8 +38,8 @@ def load_data(
             lim=lim,
             collect_m=collect_meta,
         )
-        print("\nData size:", len(data))
-        print("\nClass list:", data.final_classes)
+        print("\nData size:", len(data), flush = True)
+        print("\nClass list:", data.final_classes, flush = True)
 
         if affinity is not None:
             plot_affinity_matrix(
@@ -58,7 +58,7 @@ def load_data(
             )
         train_data = Subset(data, indices=idx[:-s])
         val_data = Subset(data, indices=idx[-s:])
-        print("Train / val split:", len(train_data), len(val_data))
+        print("Train / val split:", len(train_data), len(val_data), flush = True)
 
         # ############################### Visualising class distribution ###############################
 
@@ -96,8 +96,8 @@ def load_data(
                     batch_s, len(train_data), len(val_data), splt
                 )
             )
-        print("Train / val batches:", len(trains), len(vals))
-        print()
+        print("Train / val batches:", len(trains), len(vals), flush = True)
+        print(flush = True)
 
         if affinity is not None:
             lookup = lookup.to_numpy(dtype=np.float32)
@@ -108,12 +108,12 @@ def load_data(
         if "test" in os.listdir(datapath):
             datapath = os.path.join(datapath, "test")
         data = ProteinDataset(datapath, lim=lim, collect_m=collect_meta)
-        print("Eval data size:", len(data))
+        print("Eval data size:", len(data), flush = True)
         tests = DataLoader(
             data, batch_size=batch_s, num_workers=0, shuffle=True
         )
-        print("Eval batches:", len(tests))
-        print()
+        print("Eval batches:", len(tests), flush = True)
+        print(flush = True)
 
     if eval:
         return tests

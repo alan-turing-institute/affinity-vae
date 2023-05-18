@@ -40,7 +40,7 @@ def evaluate(datapath, lim, splt, batch_s, collect_meta, use_gpu):
     if pose_dims != 0:
         p_test = []
 
-    print("Batch: [0/%d]" % (len(tests)), end="\r")
+    print("Batch: [0/%d]" % (len(tests)), end="\r", flush = True)
 
     vae.eval()
     for b, batch in enumerate(tests):
@@ -56,8 +56,8 @@ def evaluate(datapath, lim, splt, batch_s, collect_meta, use_gpu):
                 meta_df, batch[-1], x_hat, lat_mu, lat_pose, mode="evl"
             )
 
-        print("Batch: [%d/%d]" % (b + 1, len(tests)), end="\r")
-    print("Batch: [%d/%d]" % (b + 1, len(tests)))
+        print("Batch: [%d/%d]" % (b + 1, len(tests)), end="\r", flush = True)
+    print("Batch: [%d/%d]" % (b + 1, len(tests)), flush = True)
 
     # ########################## VISUALISE ################################
 

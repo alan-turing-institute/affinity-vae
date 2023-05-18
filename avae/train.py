@@ -135,7 +135,7 @@ def train(
         "Epoch: [0/%d] | Batch: [0/%d] | Loss: -- | Recon: -- | "
         "KLdiv: -- | Affin: -- | Beta: --" % (epochs, len(trains)),
         end="\r",
-    )
+    , flush = True)
 
     # ########################## TRAINING LOOP ################################
     for epoch in range(epochs):
@@ -197,7 +197,7 @@ def train(
                 *t_history[-1],
                 beta_arr[epoch],
             )
-        )
+        , flush = True)
 
         # ########################## VAL ######################################
         vae.eval()
@@ -236,7 +236,7 @@ def train(
                 *v_history[-1],
                 beta_arr[epoch],
             )
-        )
+        , flush = True)
 
         # ########################## TEST #####################################
         if (epoch + 1) % config.FREQ_EVAL == 0:
@@ -289,7 +289,7 @@ def train(
             print(
                 "\n------------------->>> Accuracy: Train: %f | Val: %f\n"
                 % (train_acc, val_acc)
-            )
+            , flush = True)
             vis.accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes)
 
         # visualise loss
@@ -411,7 +411,7 @@ def pass_batch(
             "KLdiv: %f | Affin: %f | Beta: %f"
             % (e + 1, epochs, b + 1, batches, *history_loss, beta[e]),
             end="\r",
-        )
+        , flush = True)
 
     # backwards
     if optimizer is not None:

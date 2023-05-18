@@ -53,7 +53,7 @@ def format(im):
         print(
             "WARNING: Wrong data format, please pass either a single "
             "unsqueezed tensor or a batch to image formatter. Exiting.\n"
-        )
+        , flush = True)
         return
     im *= 255
     im = im.astype(np.uint8)
@@ -73,7 +73,7 @@ def merge(im):
         print(
             "WARNING: Image format corrupt. Number of images in meta_df: {}. "
             "Exiting. \n".format(len(i))
-        )
+        , flush = True)
         return
 
     im1 = _decoder(i[0])
@@ -88,8 +88,8 @@ def merge(im):
 
 
 def latent_embed_plot_tsne(xs, ys):
-    print("\n################################################################")
-    print("Visualising static TSNE embedding...\n")
+    print("\n################################################################", flush = True)
+    print("Visualising static TSNE embedding...\n", flush = True)
 
     fig, ax = plt.subplots()
     xs = np.asarray(xs)
@@ -118,8 +118,8 @@ def latent_embed_plot_tsne(xs, ys):
 
 
 def latent_embed_plot_umap(xs, ys):
-    print("\n################################################################")
-    print("Visualising static UMAP embedding...\n")
+    print("\n################################################################", flush = True)
+    print("Visualising static UMAP embedding...\n", flush = True)
     reducer = umap.UMAP()
     embedding = reducer.fit_transform(xs)
 
@@ -149,8 +149,8 @@ def latent_embed_plot_umap(xs, ys):
 
 
 def dyn_latentembed_plot(df, epoch, embedding="umap"):
-    print("\n################################################################")
-    print("Visualising dynamic embedding {}...\n".format(embedding))
+    print("\n################################################################", flush = True)
+    print("Visualising dynamic embedding {}...\n".format(embedding), flush = True)
 
     epoch += 1
     latentspace = df[[col for col in df if col.startswith("lat")]].to_numpy()
@@ -229,8 +229,8 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
 
 
 def accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes=None):
-    print("\n################################################################")
-    print("Visualising confusion ...\n")
+    print("\n################################################################", flush = True)
+    print("Visualising confusion ...\n", flush = True)
 
     if classes is not None:
         classes_list = pd.read_csv(classes).columns.tolist()
@@ -287,8 +287,8 @@ def accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes=None):
 
 
 def loss_plot(epochs, train_loss, val_loss=None, p=None):
-    print("\n################################################################")
-    print("Visualising loss ...\n")
+    print("\n################################################################", flush = True)
+    print("Visualising loss ...\n", flush = True)
 
     train_loss = np.transpose(np.asarray(train_loss))
     if val_loss is not None:
@@ -333,7 +333,7 @@ def loss_plot(epochs, train_loss, val_loss=None, p=None):
                 "to be a list of 7 hyperparameters: batch size, depth, "
                 "channel init, latent dimension, learning rate, beta, gamma. "
                 "Exiting.\n"
-            )
+            , flush = True)
             return
         plt.title(
             "bs: %d, d: %d, ch: %d, lat: %d, lr: %.3f, beta: %.1f, "
@@ -372,8 +372,8 @@ def loss_plot(epochs, train_loss, val_loss=None, p=None):
 
 
 def recon_plot(img, rec, name="trn"):
-    print("\n################################################################")
-    print("Visualising reconstructions ...\n")
+    print("\n################################################################", flush = True)
+    print("Visualising reconstructions ...\n", flush = True)
 
     fname_in = "plots/" + str(name) + "_recon_in.png"
     fname_out = "plots/" + str(name) + "_recon_out.png"
@@ -399,8 +399,8 @@ def recon_plot(img, rec, name="trn"):
 
 
 def latent_disentamglement_plot(lats, vae, device, poses=None):
-    print("\n################################################################")
-    print("Visualising latent content disentanglement ...\n")
+    print("\n################################################################", flush = True)
+    print("Visualising latent content disentanglement ...\n", flush = True)
 
     lats = np.asarray(lats)
     if poses is not None:
@@ -438,7 +438,7 @@ def latent_disentamglement_plot(lats, vae, device, poses=None):
         print(
             "WARNING: All images need to be the same size to create "
             "interpolation plot. Exiting.\n"
-        )
+        , flush = True)
         return
 
     recon = np.reshape(np.array(recon.cpu()), (lat_dims, 7, *dsize))
@@ -470,8 +470,8 @@ def latent_disentamglement_plot(lats, vae, device, poses=None):
 
 
 def pose_disentanglement_plot(lats, poses, vae, device):
-    print("\n################################################################")
-    print("Visualising pose disentanglement ...\n")
+    print("\n################################################################", flush = True)
+    print("Visualising pose disentanglement ...\n", flush = True)
     lats = np.asarray(lats)
     poses = np.asarray(poses)
 
@@ -503,7 +503,7 @@ def pose_disentanglement_plot(lats, poses, vae, device):
         print(
             "WARNING: All images need to be the same size to create "
             "interpolation plot. Exiting.\n"
-        )
+        , flush = True)
         return
 
     recon = np.reshape(
@@ -536,8 +536,8 @@ def pose_disentanglement_plot(lats, poses, vae, device):
 
 
 def interpolations_plot(lats, classes, vae, device, poses=None):
-    print("\n################################################################")
-    print("Visualising interpolations ...\n")
+    print("\n################################################################", flush = True)
+    print("Visualising interpolations ...\n", flush = True)
     lats = np.asarray(lats)
     classes = np.asarray(classes)
     if poses is not None:
@@ -548,7 +548,7 @@ def interpolations_plot(lats, classes, vae, device, poses=None):
         print(
             "WARNING: Interpolation plot needs at least 4 distinct classes, "
             "cannot visualise interpolations. Exiting.\n"
-        )
+        , flush = True)
         return
 
     class_reps_lats = np.take(
@@ -617,7 +617,7 @@ def interpolations_plot(lats, classes, vae, device, poses=None):
         print(
             "WARNING: All images need to be the same size to create "
             "interpolation plot. Exiting.\n"
-        )
+        , flush = True)
         return
 
     recon = np.reshape(np.array(recon.cpu()), (grid_size, grid_size, *dsize))
@@ -657,8 +657,8 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
     lookup :  The affinity matrix
     selected_classes : All classes selected by the user for training in classes.csv
     """
-    print("\n################################################################")
-    print("Visualising affinity matrix ...\n")
+    print("\n################################################################", flush = True)
+    print("Visualising affinity matrix ...\n", flush = True)
 
     with plt.rc_context(
         {"font.weight": "bold", "font.size": int(len(all_classes) / 3) + 3}
@@ -705,8 +705,8 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
 def plot_classes_distribution(data, category):
     """Plot histogram with classes distribution"""
 
-    print("\n################################################################")
-    print("Visualising classes distribution ...\n")
+    print("\n################################################################", flush = True)
+    print("Visualising classes distribution ...\n", flush = True)
 
     fig, ax = plt.subplots(figsize=(9, 9))
     labels, counts = np.unique(data, return_counts=True)
@@ -726,8 +726,8 @@ def plot_classes_distribution(data, category):
 
 
 def plot_cyc_variable(array: list, variable_name: str):
-    print("\n################################################################")
-    print(f"Visualising {variable_name} ...\n")
+    print("\n################################################################", flush = True)
+    print(f"Visualising {variable_name} ...\n", flush = True)
     plt.plot(array, linewidth=3)
     plt.ylabel(rf"$\{variable_name}$", fontsize=16)
     plt.xlabel("Epochs", fontsize=16)
