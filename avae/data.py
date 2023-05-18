@@ -47,6 +47,9 @@ def load_data(
                 selected_classes=data.final_classes,
             )
 
+        # updating affinity matrix with the final classes
+        lookup = data.amatrix
+
         # split into train / val sets
         idx = np.random.permutation(len(data))
         s = int(np.ceil(len(data) * int(splt) / 100))
@@ -174,6 +177,13 @@ class ProteinDataset(Dataset):
                         np.asarray(ids)[~class_check]
                     )
                 )
+
+            # subset affinity matrix with only the relevant classes
+            index = [
+                self.amatrix.columns.get_loc(f"{columns}")
+                for columns in self.final_classes
+            ]
+            self.amatrix = self.amatrix.iloc[index, index]
 
         self.paths = [
             p for p in self.paths for c in self.final_classes if c in p
