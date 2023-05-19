@@ -49,7 +49,7 @@ DEFAULT_RUN_CONFIGS = {
     "freq_dis": FREQ_DIS,
     "freq_pos": FREQ_POS,
     "freq_acc": FREQ_ACC,
-    "freq_all": False,
+    "freq_all": None,
     "eval": False,
     "dynamic": False,
     "vis_emb": VIS_EMB,
