@@ -33,9 +33,8 @@ def evaluate(datapath, lim, splt, batch_s, collect_meta, use_gpu):
     vae.to(device)
 
     # ########################## EVALUATE ################################
-    if collect_meta:
-        metas = sorted([f for f in os.listdir("states") if ".pkl" in f])[-1]
-        meta_df = pd.read_pickle(os.path.join("states", metas))
+    metas = sorted([f for f in os.listdir("states") if ".pkl" in f])[-1]
+    meta_df = pd.read_pickle(os.path.join("states", metas))
 
     # create holders for latent spaces and labels
     x_test = []
@@ -75,15 +74,18 @@ def evaluate(datapath, lim, splt, batch_s, collect_meta, use_gpu):
     if config.VIS_REC:
         vis.recon_plot(x, x_hat, name="evl")
 
-    latents = sorted([s for s in os.listdir("latents") if ".csv" in s])[-1]
+    # grab last 4 characters of the file name:
 
-    print("Reading last latent space: ", latents)
-    latents = pd.read_csv(os.path.join("latents", latents))
 
-    latents_training = latents[
-        [col for col in latents if col.startswith("lat")]
+    # max_epoch_saved = sorted([int(s[:-4].split("_")[2]) for s in os.listdir("latents") if ".csv" in s])[-1]
+    # latents = sorted([s for s in os.listdir("latents") if ".csv" in s])[-1]
+    #
+    # print("Reading last latent space: ", latents)
+    # latents = pd.read_csv(os.path.join("latents", f"latentspace_epoch_{max_epoch_saved}.csv"))
+    latents_training = meta_df[meta_df['mode'] == 'trn'][
+        [col for col in meta_df if col.startswith("lat")]
     ].to_numpy()
-    latents_training_id = latents["id"].values
+    latents_training_id = meta_df[meta_df['mode'] == 'trn']["id"]
 
     # visualise embeddings
     if config.VIS_EMB:
