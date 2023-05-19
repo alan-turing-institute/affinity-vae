@@ -166,3 +166,8 @@ this will rewrite the values for the epochs and affinity path in the config file
 
 At the end of the run, the code will save the final config file used for the run in the working directory. This will
 account for any changes made to the config file from the command line. Running the code again with that config file will reproduce the results.
+
+
+#### Considerations
+
+##### Test folder : If test folder is present, the program will read the test files regardless of the eval flag

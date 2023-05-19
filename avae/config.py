@@ -1,4 +1,4 @@
-VIS_BET = False
+VIS_CYC = False
 VIS_LOS = False
 VIS_ACC = False
 VIS_REC = False
@@ -36,7 +36,11 @@ DEFAULT_RUN_CONFIGS = {
     "beta_min": 0.0,
     "beta_cycle": 4,
     "beta_ratio": 0.5,
-    "kl_weight_method": "flat",
+    "cyc_method_beta": "flat",
+    "gamma_min": 0.0,
+    "gamma_cycle": 4,
+    "gamma_ratio": 0.5,
+    "cyc_method_gamma": "flat",
     "freq_eval": FREQ_EVAL,
     "freq_sta": FREQ_STA,
     "freq_emb": FREQ_EMB,
@@ -45,13 +49,13 @@ DEFAULT_RUN_CONFIGS = {
     "freq_dis": FREQ_DIS,
     "freq_pos": FREQ_POS,
     "freq_acc": FREQ_ACC,
-    "freq_all": False,
+    "freq_all": None,
     "eval": False,
     "dynamic": False,
     "vis_emb": VIS_EMB,
     "vis_rec": VIS_REC,
     "vis_los": VIS_LOS,
-    "vis_bet": VIS_BET,
+    "vis_cyc": VIS_CYC,
     "vis_int": VIS_INT,
     "vis_dis": VIS_DIS,
     "vis_pos": VIS_POS,

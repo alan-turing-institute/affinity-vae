@@ -155,11 +155,39 @@ logging.basicConfig(
     help="The ratio for steps in beta",
 )
 @click.option(
-    "--kl_weight_method",
-    "-klm",
+    "--cyc_method_beta",
+    "-cycmb",
     type=str,
     default=None,
-    help="The schedule for beta: for constant beta : flat, other options include , cycle_linear, cycle_sigmoid, cycle_cosine, ramp",
+    help="The schedule for : for constant beta : flat, other options include , cycle_linear, cycle_sigmoid, cycle_cosine, ramp",
+)
+@click.option(
+    "--gamma_min",
+    "-gs",
+    type=float,
+    default=None,
+    help="gamma minimum in the case of cyclical annealing schedule",
+)
+@click.option(
+    "--gamma_cycle",
+    "-gc",
+    type=int,
+    default=None,
+    help="Number of cycles for gamma during training in the case of cyclical annealing schedule",
+)
+@click.option(
+    "--gamma_ratio",
+    "-gr",
+    type=float,
+    default=None,
+    help="The ratio for steps in gamma",
+)
+@click.option(
+    "--cyc_method_gamma",
+    "-cycmg",
+    type=str,
+    default=None,
+    help="The schedule for gamma: for constant gamma : flat, other options include , cycle_linear, cycle_sigmoid, cycle_cosine, ramp",
 )
 @click.option(
     "--freq_eval",
@@ -250,12 +278,12 @@ logging.basicConfig(
     help="Visualise loss.",
 )
 @click.option(
-    "--vis_bet",
-    "-vb",
+    "--vis_cyc",
+    "-vc",
     type=bool,
     default=None,
     is_flag=True,
-    help="Visualise beta vs epoch number.",
+    help="Visualise cyclical parameters which are at the moment beta and gamma vs epoch number.",
 )
 @click.option(
     "--vis_int",
@@ -357,7 +385,11 @@ def run(
     beta_min,
     beta_cycle,
     beta_ratio,
-    kl_weight_method,
+    cyc_method_beta,
+    gamma_min,
+    gamma_cycle,
+    gamma_ratio,
+    cyc_method_gamma,
     freq_eval,
     freq_sta,
     freq_emb,
@@ -369,7 +401,7 @@ def run(
     freq_all,
     vis_emb,
     vis_rec,
-    vis_bet,
+    vis_cyc,
     vis_los,
     vis_int,
     vis_dis,
@@ -461,7 +493,7 @@ def run(
 
     try:
         if data["vis_all"]:
-            config.VIS_BET = True
+            config.VIS_CYC = True
             config.VIS_LOS = True
             config.VIS_EMB = True
             config.VIS_REC = True
@@ -472,7 +504,7 @@ def run(
             config.VIS_HIS = True
 
         else:
-            config.VIS_BET = data["vis_bet"]
+            config.VIS_CYC = data["vis_cyc"]
             config.VIS_LOS = data["vis_los"]
             config.VIS_EMB = data["vis_emb"]
             config.VIS_REC = data["vis_rec"]
@@ -504,27 +536,31 @@ def run(
         if not data["eval"]:
             train(
                 datapath=data["datapath"],
-                lim=data["limit"],
-                splt=data["split"],
-                batch_s=data["batch"],
+                limit=data["limit"],
+                split=data["split"],
+                batch=data["batch"],
                 no_val_drop=data["no_val_drop"],
                 affinity=data["affinity"],
                 classes=data["classes"],
-                collect_meta=data["dynamic"],
+                dynamic=data["dynamic"],
                 epochs=data["epochs"],
                 channels=data["channels"],
                 depth=data["depth"],
-                lat_dims=data["latent_dims"],
+                latent_dims=data["latent_dims"],
                 pose_dims=data["pose_dims"],
                 learning=data["learning"],
                 beta_min=data["beta_min"],
-                beta_max=data["beta"],
+                beta=data["beta"],
                 beta_cycle=data["beta_cycle"],
                 beta_ratio=data["beta_ratio"],
-                kl_weight_method=data["kl_weight_method"],
+                cyc_method_beta=data["cyc_method_beta"],
+                gamma_min=data["gamma_min"],
                 gamma=data["gamma"],
-                recon_fn=data["loss_fn"],
-                use_gpu=data["gpu"],
+                gamma_cycle=data["gamma_cycle"],
+                gamma_ratio=data["gamma_ratio"],
+                cyc_method_gamma=data["cyc_method_gamma"],
+                loss_fn=data["loss_fn"],
+                gpu=data["gpu"],
                 model=data["model"],
             )
         else:
