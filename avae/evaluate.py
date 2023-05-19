@@ -74,13 +74,7 @@ def evaluate(datapath, lim, splt, batch_s, collect_meta, use_gpu):
     if config.VIS_REC:
         vis.recon_plot(x, x_hat, name="evl")
 
-    # grab last 4 characters of the file name:
-
-    # max_epoch_saved = sorted([int(s[:-4].split("_")[2]) for s in os.listdir("latents") if ".csv" in s])[-1]
-    # latents = sorted([s for s in os.listdir("latents") if ".csv" in s])[-1]
-    #
-    # print("Reading last latent space: ", latents)
-    # latents = pd.read_csv(os.path.join("latents", f"latentspace_epoch_{max_epoch_saved}.csv"))
+    # get training latent space
     latents_training = meta_df[meta_df["mode"] == "trn"][
         [col for col in meta_df if col.startswith("lat")]
     ].to_numpy()
