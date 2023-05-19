@@ -247,7 +247,9 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
         chart.save(f"latents/plt_latent_embed_epoch_{epoch}_tsne.html")
 
 
-def accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes=None, title=""):
+def accuracy_plot(
+    y_train, ypred_train, y_val, ypred_val, classes=None, title=""
+):
     print(
         "\n################################################################",
         flush=True,
