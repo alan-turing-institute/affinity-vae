@@ -24,6 +24,43 @@ def load_data(
     affinity=None,
     classes=None,
 ):
+    """
+    Loads all data needed for training, testing and evaluation. Loads MRC files from a given path, selects subset of
+    classes if requested, splits it into train / val  and test in batch sets, loads affinity matrix. Returns train,
+    validation and test data as DataLoader objects.
+
+    Parameters
+    ----------
+    datapath: str
+        Path to the data directory.
+    lim: int
+        Limit the number of samples to load.
+    splt: int
+        Percentage of data to be used for validation.
+    batch_s: int
+        Batch size.
+    no_val_drop: bool
+        If True, the last batch of validation data will not be dropped if it is smaller than batch size.
+    collect_meta: bool
+        If True, the meta data for visualisation will be collected and returned.
+    eval: bool
+        If True, the data will be loaded only for evaluation.
+    affinity: str
+        Path to the affinity matrix.
+    classes: list
+        List of classes to be selected from the data.
+
+    Returns
+    -------
+    train_data: DataLoader
+        Train data, returned only if eval is False.
+    val_data: DataLoader
+        Validation data, returned only if eval is False.
+    test_data: DataLoader
+        Test data, if eval is True only test data is returned.
+    lookup: pd.DataFrame
+        Affinity matrix, returned only if eval is False.
+    """
 
     if not eval:
         if affinity is not None:
@@ -127,7 +164,8 @@ def load_data(
 
 
 class ProteinDataset(Dataset):
-    """Protein dataset. Opens MRC files and returns images along with their
+    """
+    Protein dataset. Opens MRC files and returns images along with their
     affinity and associated metadata.
 
     Parameters
@@ -211,7 +249,8 @@ class ProteinDataset(Dataset):
         return len(self.paths)
 
     def __getitem__(self, item):
-        """Load and image, its metadata and optionally, its affinity class
+        """
+        Load and image, its metadata and optionally, its affinity class
         index.
 
         Parameters
