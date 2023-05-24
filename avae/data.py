@@ -24,8 +24,7 @@ def load_data(
     affinity=None,
     classes=None,
 ):
-    """
-    Loads all data needed for training, testing and evaluation. Loads MRC files from a given path, selects subset of
+    """Loads all data needed for training, testing and evaluation. Loads MRC files from a given path, selects subset of
     classes if requested, splits it into train / val  and test in batch sets, loads affinity matrix. Returns train,
     validation and test data as DataLoader objects.
 
@@ -164,8 +163,7 @@ def load_data(
 
 
 class ProteinDataset(Dataset):
-    """
-    Protein dataset. Opens MRC files and returns images along with their
+    """Protein dataset. Opens MRC files and returns images along with their
     affinity and associated metadata.
 
     Parameters

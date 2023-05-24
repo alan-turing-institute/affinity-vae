@@ -12,8 +12,7 @@ from .utils import set_device
 
 def evaluate(datapath, lim, splt, batch_s, collect_meta, use_gpu):
 
-    """
-    Function for evaluating the model. Loads the data, model and runs the evaluation. Saves the results of the
+    """Function for evaluating the model. Loads the data, model and runs the evaluation. Saves the results of the
     evaluation in the plot and latents directories.
 
     Parameters
