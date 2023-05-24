@@ -438,7 +438,7 @@ def recon_plot(img, rec, name="trn"):
         dtype=np.float32,
     )
 
-    # select 10 images at random 
+    # select 10 images at random
     rand_select = np.random.randint(
         0, high=img.shape[0], size=number_of_random_samples, dtype=int
     )  #
