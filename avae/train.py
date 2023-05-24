@@ -541,6 +541,30 @@ def pass_batch(
 
 
 def add_meta(meta_df, batch_meta, x_hat, latent_mu, lat_pose, mode="trn"):
+    """
+    Created meta data about data and training.
+
+    Parameters
+    ----------
+    meta_df: pd.DataFrame
+        Dataframe containing meta data, to which new data is added.
+    batch_meta: dict
+        Meta data about the batch.
+    x_hat: torch.Tensor
+        Reconstructed data.
+    latent_mu: torch.Tensor
+        Latent mean.
+    lat_pose: torch.Tensor
+        Latent pose.
+    mode: str
+        Data category on training (either 'trn', 'val' or 'test').
+
+    Returns
+    -------
+    meta_df: pd.DataFrame
+        Dataframe containing meta data.
+
+    """
     meta = pd.DataFrame(batch_meta)
     meta["mode"] = mode
     meta["image"] += vis.format(x_hat)
@@ -556,6 +580,31 @@ def add_meta(meta_df, batch_meta, x_hat, latent_mu, lat_pose, mode="trn"):
 
 
 def accuracy(x_train, y_train, x_val, y_val):
+    """Computes the accuracy using a KNN classifier.
+
+    Parameters
+    ----------
+    x_train: np.array
+        Training data.
+    y_train: np.array
+        Training labels.
+    x_val: np.array
+        Validation data.
+    y_val: np.array
+        Validation labels.
+
+    Returns
+    -------
+    train_acc: float
+        Training accuracy.
+    val_acc: float
+        Validation accuracy.
+    y_pred_train: np.array
+        Predicted training labels.
+    y_pred_val: np.array
+        Predicted validation labels.
+
+    """
     labs = np.unique(np.concatenate((y_train, y_val)))
     le = preprocessing.LabelEncoder()
     le.fit(labs)
