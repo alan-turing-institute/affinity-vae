@@ -17,7 +17,18 @@ from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix, f1_score
 
 
 def _encoder(i):
-    """Encode PIL Image as base64 buffer."""
+    """Encode PIL Image as base64 buffer.
+    Parameters
+    ----------
+    i: PIL.Image
+        Image to be encoded.
+
+    Returns
+    -------
+    str
+        Encoded image.
+
+    """
     import base64
     from io import BytesIO
 
@@ -30,7 +41,17 @@ def _encoder(i):
 
 
 def _decoder(i):
-    """Decode base64 buffer as PIL Image."""
+    """Decode base64 buffer as PIL Image.
+    Parameters
+    ----------
+    i: str
+        Encoded image.
+
+    Returns
+    -------
+    PIL.Image
+        Decoded image.
+    """
     import base64
     from io import BytesIO
 
@@ -38,7 +59,20 @@ def _decoder(i):
 
 
 def format(im):
-    """Format PIL Image as Pandas compatible Altair image display."""
+    """Format PIL Image as Pandas compatible Altair image display.
+
+    Parameters
+    ----------
+    im: PIL.Image
+        Image to be formatted.
+
+    Returns
+    -------
+    list
+        Formatted images compatible Altair image display is batch is true, as we are adding a reconstruction to an input that already exist.
+    str
+        Formatted image compatible Altair image display if batch is not true.
+    """
     if len(im.shape) == 5:
         batch = True
         im = np.sum(
@@ -68,7 +102,18 @@ def format(im):
 
 def merge(im):
     """Merge 2 base64 buffers as PIL Images and encode back to base64
-    buffers."""
+    buffers.
+
+    Parameters
+    ----------
+    im: str
+        Input PIL Images to be merged.
+
+    Returns
+    -------
+    str
+        Merged image.
+    """
     i = im.split("&")
     if len(i) != 2:
         print(
@@ -90,6 +135,17 @@ def merge(im):
 
 
 def latent_embed_plot_tsne(xs, ys, title=""):
+    """Plot static TSNE embedding.
+
+    Parameters
+    ----------
+    xs: list
+        List of latent vectors.
+    ys: list
+        List of labels.
+    title: str
+        Added title to the name of the saved figure.
+    """
     print(
         "\n################################################################",
         flush=True,
@@ -125,6 +181,17 @@ def latent_embed_plot_tsne(xs, ys, title=""):
 
 
 def latent_embed_plot_umap(xs, ys, title=""):
+    """Plot static UMAP embedding.
+
+    Parameters
+    ----------
+    xs: list
+        List of latent vectors.
+    ys: list
+        List of labels.
+    title: str
+        Added title to the name of the saved figure.
+    """
     print(
         "\n################################################################",
         flush=True,
@@ -159,6 +226,17 @@ def latent_embed_plot_umap(xs, ys, title=""):
 
 
 def dyn_latentembed_plot(df, epoch, embedding="umap"):
+    """Plot dynamic TSNE or UMAP embedding.
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+        Dataframe containing the latent vectors.
+    epoch: int
+        Current epoch.
+    embedding: str
+        Type of embedding to use, either 'umap' or 'tsne'.
+    """
     print(
         "\n################################################################",
         flush=True,
@@ -250,6 +328,23 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
 def accuracy_plot(
     y_train, ypred_train, y_val, ypred_val, classes=None, title=""
 ):
+    """Plot confusion matrix  and F1 values.
+
+    Parameters
+    ----------
+    y_train: np.array
+        Training labels.
+    ypred_train: np.array
+        Predicted training labels.
+    y_val: np.array
+        Validation labels.
+    ypred_val: np.array
+        Predicted validation labels.
+    classes: str
+        Path to csv file containing classes to be used.
+    title: str
+        Added title to the name of the saved figure.
+    """
     print(
         "\n################################################################",
         flush=True,
@@ -312,6 +407,20 @@ def accuracy_plot(
 
 
 def loss_plot(epochs, train_loss, val_loss=None, p=None):
+    """Visualise loss over epochs.
+
+    Parameters
+    ----------
+    epochs: int
+        Number of epochs.
+    train_loss: list
+        Training loss over epochs.
+    val_loss: list
+        Validation loss over epochs.
+    p: list
+        List of 7 hyperparameters: batch size, depth, "
+                "channel init, latent dimension, learning rate, beta, gamma.
+    """
     print(
         "\n################################################################",
         flush=True,
@@ -401,6 +510,18 @@ def loss_plot(epochs, train_loss, val_loss=None, p=None):
 
 
 def recon_plot(img, rec, name="trn"):
+    """Visualise reconstructions.
+
+    Parameters
+    ----------
+    img: torch.Tensor
+        Input images.
+    rec: torch.Tensor
+        Reconstructed images.
+    name: str
+        Type of image in the training set: trn or val.
+
+    """
     print(
         "\n################################################################",
         flush=True,
@@ -431,6 +552,19 @@ def recon_plot(img, rec, name="trn"):
 
 
 def latent_disentamglement_plot(lats, vae, device, poses=None):
+    """Visualise latent content disentanglement.
+
+    Parameters
+    ----------
+    lats: list
+        List of latent vectors.
+    vae: torch.nn.Module
+        Affinity vae model.
+    device: torch.device
+        Device to run the model on.
+    poses: list
+        List of pose vectors.
+    """
     print(
         "\n################################################################",
         flush=True,
@@ -506,6 +640,19 @@ def latent_disentamglement_plot(lats, vae, device, poses=None):
 
 
 def pose_disentanglement_plot(lats, poses, vae, device):
+    """Visualise pose disentanglement.
+
+    Parameters
+    ----------
+    lats: list
+        List of latent vectors.
+    poses: list
+        List of pose vectors.
+    vae: torch.nn.Module
+        Affinity vae model.
+    device: torch.device
+        Device to run the model on.
+    """
     print(
         "\n################################################################",
         flush=True,
@@ -576,6 +723,21 @@ def pose_disentanglement_plot(lats, poses, vae, device):
 
 
 def interpolations_plot(lats, classes, vae, device, poses=None):
+    """Visualise interpolations.
+
+    Parameters
+    ----------
+    lats: list
+        List of latent vectors.
+    classes: list
+        List of class labels.
+    vae: torch.nn.Module
+        Affinity vae model.
+    device: torch.device
+        Device to run the model on.
+    poses: list
+        List of pose vectors.
+    """
     print(
         "\n################################################################",
         flush=True,
@@ -698,9 +860,12 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
 
     Parameters
     ----------
-    all_classes : All existing classes in the affinity matrix  affinity*.csv
-    lookup :  The affinity matrix
-    selected_classes : All classes selected by the user for training in classes.csv
+    all_classes: list
+        All existing classes in the affinity matrix  affinity*.csv
+    lookup: pandas.DataFrame
+        The affinity matrix
+    selected_classes : list
+        All classes selected by the user for training in classes.csv
     """
     print(
         "\n################################################################",
@@ -751,7 +916,15 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
 
 
 def plot_classes_distribution(data, category):
-    """Plot histogram with classes distribution"""
+    """Plot histogram with classes distribution
+
+    Parameters
+    ----------
+    data : list
+        List of classes
+    category : str
+        The category of the data (train, test, val)
+    """
 
     print(
         "\n################################################################",
@@ -777,6 +950,15 @@ def plot_classes_distribution(data, category):
 
 
 def plot_cyc_variable(array: list, variable_name: str):
+    """Plot evolution of variable from the cyclical training
+
+    Parameters
+    ----------
+    array : list
+        List of values for the variable
+    variable_name : str
+        Name of the variable
+    """
     print(
         "\n################################################################",
         flush=True,
