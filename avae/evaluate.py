@@ -12,6 +12,27 @@ from .utils import set_device
 
 def evaluate(datapath, lim, splt, batch_s, collect_meta, use_gpu):
 
+    """
+    Function for evaluating the model. Loads the data, model and runs the evaluation. Saves the results of the
+    evaluation in the plot and latents directories.
+
+    Parameters
+    ----------
+    datapath: str
+        Path to the data directory.
+    lim: int
+        Limit the number of samples to load.
+    splt: int
+        Percentage of data to be used for validation.
+    batch_s: int
+        Batch size.
+    collect_meta: bool
+        If True, the meta data for visualisation will be collected and returned.
+    use_gpu: bool
+        If True, the model will be trained on GPU.
+
+    """
+
     # ############################### DATA ###############################
     tests = load_data(
         datapath, lim, splt, batch_s, collect_meta=collect_meta, eval=True
