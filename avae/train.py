@@ -45,6 +45,69 @@ def train(
     use_gpu,
     model,
 ):
+    """Function to train an AffinityVAE model. The inputs are training configuration parameters. In this function the
+    data is loaded, selected and split into training, validation and test sets, the model is initialised and trained
+    over epochs, the results are evaluated visualised and saved and the epoch level with a frequency configured with
+    input parameters.
+
+    Parameters
+    ----------
+    datapath: str
+        Path to the data directory.
+    lim: int
+        Limit the number of samples to load.
+    splt: int
+        Percentage of data to be used for validation.
+    batch_s: int
+        Batch size.
+    no_val_drop: bool
+        If True, the last batch of validation data will not be dropped if it is smaller than batch size.
+    affinity: str
+        Path to the affinity matrix.
+    classes: list
+        List of classes to be selected from the data for the training and validation set.
+    collect_meta: bool
+        If True, the meta data for visualisation will be collected and returned.
+    epochs: int
+        Number of epochs to train the model.
+    channels: int
+        Number of channels in the input data.
+    depth: int
+        Depth of the model.
+    lat_dims: int
+        Number of latent dimensions.
+    pose_dims: int
+        Number of pose dimensions.
+    learning: float
+        Learning rate.
+    beta_min: float
+        Minimum value of beta.
+    beta_max: float
+        Maximum value of beta.
+    beta_cycle: int
+        Number of epochs for beta to cycle.
+    beta_ratio: float
+        Ratio of beta to gamma.
+    cyc_method_beta: str
+        Method of beta cycle.
+    gamma_min: float
+        Minimum value of gamma.
+    gamma_max: float
+        Maximum value of gamma.
+    gamma_cycle: int
+        Number of epochs for gamma to cycle.
+    gamma_ratio: float
+        Ratio of gamma to beta.
+    cyc_method_gamma: str
+        Method of gamma cycle.
+    recon_fn: str
+        Reconstruction loss function.
+    use_gpu: bool
+        If True, the model will be trained on GPU.
+    model: str
+        Type of model to train. Can be a or b.
+
+    """
     torch.manual_seed(42)
     timestamp = str(datetime.datetime.now().strftime("%Y%m%d_%H:%M:%S"))
 
@@ -382,6 +445,52 @@ def pass_batch(
     optimizer=None,
     beta=None,
 ):
+    """Passes a batch through the affinity VAE model epoch and computes the loss.
+
+    Parameters
+    ----------
+    device: torch.device
+        Device to use for training.
+    vae: torch.nn.Module
+        Affinity VAE model class.
+    batch: list
+        List of batches with data and labels.
+    b: int
+        Batch number.
+    batches: int
+        Total number of batches.
+    e: int
+        Epoch number.
+    epochs: int
+        Total number of epochs.
+    history: list
+        List of training losses.
+    loss: avae.loss.AVAELoss
+        Loss function class.
+    optimizer: torch.optim
+        Optimizer.
+    beta: float
+        Beta parameter for affinity-VAE.
+
+    Returns
+    -------
+    x: torch.Tensor
+        Input data.
+    x_hat: torch.Tensor
+        Reconstructed data.
+    lat_mu: torch.Tensor
+        Latent mean.
+    lat_logvar: torch.Tensor
+        Latent log variance.
+    lat: torch.Tensor
+        Latent representation.
+    lat_pose: torch.Tensor
+        Latent pose.
+    history: list
+        List of training losses.
+
+
+    """
     if bool(history == []) ^ bool(loss is None):
         raise RuntimeError(
             "When validating, both 'loss' and 'history' parameters must be "
