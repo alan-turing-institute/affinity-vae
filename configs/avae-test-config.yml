@@ -3,6 +3,7 @@
 datapath: data/shrec21_full_dataset/subtomo_files
 affinity: data/shrec21_full_dataset/subtomo_files/affinity.csv
 classes: data/shrec21_full_dataset/subtomo_files/classes.csv
+state: states/avae_20230524_13:46:43_E5_16_0.pt
 limit: 1000
 split: 20
 

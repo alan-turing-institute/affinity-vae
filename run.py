@@ -51,6 +51,14 @@ logging.basicConfig(
     "if it is smaller than batch_size.",
 )
 @click.option(
+    "--state",
+    "-st",
+    type=str,
+    default=None,
+    help="The path to the model state used for evaluation/resume run.",
+)
+
+@click.option(
     "--affinity",
     "-af",
     type=str,
@@ -372,6 +380,7 @@ def run(
     no_val_drop,
     affinity,
     classes,
+    state,
     epochs,
     batch,
     depth,
@@ -542,6 +551,7 @@ def run(
                 data["no_val_drop"],
                 data["affinity"],
                 data["classes"],
+                data["state"],
                 data["dynamic"],
                 data["epochs"],
                 data["channels"],
@@ -566,6 +576,7 @@ def run(
         else:
             evaluate(
                 data["datapath"],
+                data["state"],
                 data["limit"],
                 data["split"],
                 data["batch"],

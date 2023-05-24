@@ -10,7 +10,7 @@ from .train import add_meta, pass_batch
 from .utils import set_device
 
 
-def evaluate(datapath, lim, splt, batch_s, collect_meta, use_gpu):
+def evaluate(datapath, state, lim, splt, batch_s, collect_meta, use_gpu):
 
     # ############################### DATA ###############################
     tests = load_data(datapath, lim, splt, batch_s, collect_meta, eval=True)
@@ -18,15 +18,17 @@ def evaluate(datapath, lim, splt, batch_s, collect_meta, use_gpu):
     # ############################### MODEL ###############################
     device = set_device(use_gpu)
 
-    if not os.path.exists("states"):
+    if state == None and not os.path.exists("states"):
         raise RuntimeError(
             "There are no existing model states saved, unable to evaluate."
         )
     # TODO add param to chose model
-    states = sorted([s for s in os.listdir("states") if ".pt" in s])[0]
-    fname = states.split(".")[0].split("_")
-    pose_dims = fname[3]
-    vae = torch.load(os.path.join("states", states))  # make optional param
+    if state == None : 
+        state = sorted([s for s in os.listdir("states") if ".pt" in s])[0]
+        fname = state.split(".")[0].split("_")
+        pose_dims = fname[3]
+        vae = torch.load(os.path.join("states", state))  # make optional param
+
 
     vae.to(device)
 
