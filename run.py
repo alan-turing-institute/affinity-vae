@@ -442,12 +442,6 @@ def run(
                     + str(val)
                 )
                 data[key] = val
-            elif key == "state":
-                logging.warning(
-                    "No value set for "
-                    + key
-                    + " in config file or command line arguments. Loading the latest state if in evaluation mode."
-                )
             else:
                 logging.info(
                     "Setting "
@@ -492,6 +486,13 @@ def run(
                     + key
                     + " in config file to "
                     + str(data[key])
+                )
+
+            elif key == "state":
+                logging.warning(
+                    "No value set for "
+                    + key
+                    + " in config file or command line arguments. Loading the latest state if in evaluation mode."
                 )
             else:
                 # set missing variables to default value
