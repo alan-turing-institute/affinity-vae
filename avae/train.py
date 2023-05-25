@@ -45,6 +45,69 @@ def train(
     use_gpu,
     model,
 ):
+    """Function to train an AffinityVAE model. The inputs are training configuration parameters. In this function the
+    data is loaded, selected and split into training, validation and test sets, the model is initialised and trained
+    over epochs, the results are evaluated visualised and saved and the epoch level with a frequency configured with
+    input parameters.
+
+    Parameters
+    ----------
+    datapath: str
+        Path to the data directory.
+    lim: int
+        Limit the number of samples to load.
+    splt: int
+        Percentage of data to be used for validation.
+    batch_s: int
+        Batch size.
+    no_val_drop: bool
+        If True, the last batch of validation data will not be dropped if it is smaller than batch size.
+    affinity: str
+        Path to the affinity matrix.
+    classes: list
+        List of classes to be selected from the data for the training and validation set.
+    collect_meta: bool
+        If True, the meta data for visualisation will be collected and returned.
+    epochs: int
+        Number of epochs to train the model.
+    channels: int
+        Number of channels in the input data.
+    depth: int
+        Depth of the model.
+    lat_dims: int
+        Number of latent dimensions.
+    pose_dims: int
+        Number of pose dimensions.
+    learning: float
+        Learning rate.
+    beta_min: float
+        Minimum value of beta.
+    beta_max: float
+        Maximum value of beta.
+    beta_cycle: int
+        Number of epochs for beta to cycle.
+    beta_ratio: float
+        Ratio of beta to gamma.
+    cyc_method_beta: str
+        Method of beta cycle.
+    gamma_min: float
+        Minimum value of gamma.
+    gamma_max: float
+        Maximum value of gamma.
+    gamma_cycle: int
+        Number of epochs for gamma to cycle.
+    gamma_ratio: float
+        Ratio of gamma to beta.
+    cyc_method_gamma: str
+        Method of gamma cycle.
+    recon_fn: str
+        Reconstruction loss function.
+    use_gpu: bool
+        If True, the model will be trained on GPU.
+    model: str
+        Type of model to train. Can be a or b.
+
+    """
     torch.manual_seed(42)
     timestamp = str(datetime.datetime.now().strftime("%Y%m%d_%H:%M:%S"))
 
@@ -336,7 +399,11 @@ def train(
         if config.VIS_EMB and (epoch + 1) % config.FREQ_EMB == 0:
             if len(tests) != 0:
                 xs = np.r_[x_train, x_val, x_test]
-                ys = np.r_[y_train, y_val, np.ones(len(x_test))]
+                ys = np.r_[
+                    y_train,
+                    y_val,
+                    np.full(shape=len(x_test), fill_value="test"),
+                ]
             else:
                 xs = np.r_[x_train, x_val]
                 ys = np.r_[y_train, y_val]
@@ -396,6 +463,52 @@ def pass_batch(
     optimizer=None,
     beta=None,
 ):
+    """Passes a batch through the affinity VAE model epoch and computes the loss.
+
+    Parameters
+    ----------
+    device: torch.device
+        Device to use for training.
+    vae: torch.nn.Module
+        Affinity VAE model class.
+    batch: list
+        List of batches with data and labels.
+    b: int
+        Batch number.
+    batches: int
+        Total number of batches.
+    e: int
+        Epoch number.
+    epochs: int
+        Total number of epochs.
+    history: list
+        List of training losses.
+    loss: avae.loss.AVAELoss
+        Loss function class.
+    optimizer: torch.optim
+        Optimizer.
+    beta: float
+        Beta parameter for affinity-VAE.
+
+    Returns
+    -------
+    x: torch.Tensor
+        Input data.
+    x_hat: torch.Tensor
+        Reconstructed data.
+    lat_mu: torch.Tensor
+        Latent mean.
+    lat_logvar: torch.Tensor
+        Latent log variance.
+    lat: torch.Tensor
+        Latent representation.
+    lat_pose: torch.Tensor
+        Latent pose.
+    history: list
+        List of training losses.
+
+
+    """
     if bool(history == []) ^ bool(loss is None):
         raise RuntimeError(
             "When validating, both 'loss' and 'history' parameters must be "
@@ -446,6 +559,30 @@ def pass_batch(
 
 
 def add_meta(meta_df, batch_meta, x_hat, latent_mu, lat_pose, mode="trn"):
+    """
+    Created meta data about data and training.
+
+    Parameters
+    ----------
+    meta_df: pd.DataFrame
+        Dataframe containing meta data, to which new data is added.
+    batch_meta: dict
+        Meta data about the batch.
+    x_hat: torch.Tensor
+        Reconstructed data.
+    latent_mu: torch.Tensor
+        Latent mean.
+    lat_pose: torch.Tensor
+        Latent pose.
+    mode: str
+        Data category on training (either 'trn', 'val' or 'test').
+
+    Returns
+    -------
+    meta_df: pd.DataFrame
+        Dataframe containing meta data.
+
+    """
     meta = pd.DataFrame(batch_meta)
     meta["mode"] = mode
     meta["image"] += vis.format(x_hat)
@@ -461,6 +598,31 @@ def add_meta(meta_df, batch_meta, x_hat, latent_mu, lat_pose, mode="trn"):
 
 
 def accuracy(x_train, y_train, x_val, y_val):
+    """Computes the accuracy using a KNN classifier.
+
+    Parameters
+    ----------
+    x_train: np.array
+        Training data.
+    y_train: np.array
+        Training labels.
+    x_val: np.array
+        Validation data.
+    y_val: np.array
+        Validation labels.
+
+    Returns
+    -------
+    train_acc: float
+        Training accuracy.
+    val_acc: float
+        Validation accuracy.
+    y_pred_train: np.array
+        Predicted training labels.
+    y_pred_val: np.array
+        Predicted validation labels.
+
+    """
     labs = np.unique(np.concatenate((y_train, y_val)))
     le = preprocessing.LabelEncoder()
     le.fit(labs)
