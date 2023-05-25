@@ -57,7 +57,6 @@ logging.basicConfig(
     default=None,
     help="The path to the model state used for evaluation/resume run.",
 )
-
 @click.option(
     "--affinity",
     "-af",
@@ -388,7 +387,6 @@ def run(
     no_val_drop,
     affinity,
     classes,
-    state,
     epochs,
     batch,
     depth,
