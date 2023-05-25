@@ -65,6 +65,13 @@ logging.basicConfig(
     help="Path to a CSV file containing a list of classes for training.",
 )
 @click.option(
+    "--state",
+    "-st",
+    type=str,
+    default=None,
+    help="The saved model state to be loaded for evaluation/resume training.",
+)
+@click.option(
     "--epochs",
     "-ep",
     type=int,
@@ -367,6 +374,7 @@ logging.basicConfig(
 def run(
     config_file,
     datapath,
+    state,
     limit,
     split,
     no_val_drop,
@@ -479,6 +487,12 @@ def run(
                     + " in config file to "
                     + str(data[key])
                 )
+            elif key == "state":
+                logging.warning(
+                    "No value set for "
+                    + key
+                    + " in config file or command line arguments. Loading the latest state if in evaluation mode."
+                )
             else:
                 # set missing variables to default value
                 logging.warning(
@@ -566,6 +580,7 @@ def run(
         else:
             evaluate(
                 datapath=data["datapath"],
+                state=data["state"],
                 lim=data["limit"],
                 splt=data["split"],
                 batch_s=data["batch"],

@@ -406,11 +406,15 @@ def accuracy_plot(
     plt.close()
 
 
-def loss_plot(epochs, train_loss, val_loss=None, p=None):
+def loss_plot(beta, gamma, epochs, train_loss, val_loss=None, p=None):
     """Visualise loss over epochs.
 
     Parameters
     ----------
+    beta: float
+        value of beta at the current epoch
+    gamma: float
+        value of gamma at the current epoch
     epochs: int
         Number of epochs.
     train_loss: list
@@ -447,6 +451,12 @@ def loss_plot(epochs, train_loss, val_loss=None, p=None):
 
     plt.clf()
     plt.ticklabel_format(useOffset=False)
+
+    train_loss[-2] = train_loss[-2] * beta
+    val_loss[-2] = val_loss[-2] * beta
+    val_loss[-1] = val_loss[-1] * gamma
+    train_loss[-1] = train_loss[-1] * gamma
+
     for i, loss in enumerate(train_loss):
         s = "-"
         plt.plot(
@@ -531,24 +541,60 @@ def recon_plot(img, rec, name="trn"):
     fname_in = "plots/" + str(name) + "_recon_in.png"
     fname_out = "plots/" + str(name) + "_recon_out.png"
 
-    img = img[:, :, :, :, img.shape[-1] // 2]
-    rec = rec[:, :, :, :, img.shape[-1] // 2]
+    img_2d = img[:, :, :, :, img.shape[-1] // 2]
+    rec_2d = rec[:, :, :, :, img.shape[-1] // 2]
 
     plt.subplots(figsize=(10, 10))
-    img = torchvision.utils.make_grid(img.cpu(), 10, 2).numpy()
-    plt.imshow(np.transpose(img, (1, 2, 0)))  # channels last
+    img_2d = torchvision.utils.make_grid(img_2d.cpu(), 10, 2).numpy()
+    plt.imshow(np.transpose(img_2d, (1, 2, 0)))  # channels last
     if not os.path.exists("plots"):
         os.mkdir("plots")
     plt.savefig(fname_in)
     plt.close()
 
     plt.subplots(figsize=(10, 10))
-    rec = torchvision.utils.make_grid(rec.detach().cpu(), 10, 2).numpy()
-    plt.imshow(np.transpose(rec, (1, 2, 0)))  # channels last
+    rec_2d = torchvision.utils.make_grid(rec_2d.detach().cpu(), 10, 2).numpy()
+    plt.imshow(np.transpose(rec_2d, (1, 2, 0)))  # channels last
     if not os.path.exists("plots"):
         os.mkdir("plots")
     plt.savefig(fname_out)
     plt.close()
+
+    rec = rec.detach().cpu().numpy()
+    dsize = rec.shape[-3:]
+
+    # The number of reconstruction and input images to be displayed in the .mrc output file
+    number_of_random_samples = 10
+
+    # define the dimensions for the napari grid
+    grid_for_napari = np.zeros(
+        (number_of_random_samples * dsize[0], 2 * dsize[1], dsize[2]),
+        dtype=np.float32,
+    )
+
+    # select 10 images at random
+    rand_select = np.random.randint(
+        0, high=img.shape[0], size=number_of_random_samples, dtype=int
+    )  #
+    img = img[rand_select, :, :, :, :]
+    rec = rec[rand_select, :, :, :, :]
+
+    # stack the images together with their reconstruction
+    rec_img = np.hstack((img, rec))
+
+    # Create and save the mrc file with single transversals
+    for i in range(number_of_random_samples):
+        for j in range(2):
+            grid_for_napari[
+                i * dsize[0] : (i + 1) * dsize[0],
+                j * dsize[1] : (j + 1) * dsize[1],
+                :,
+            ] = rec_img[i, j, :, :, :]
+
+    with mrcfile.new(
+        "plots/" + str(name) + "_recon_in.mrc", overwrite=True
+    ) as mrc:
+        mrc.set_data(grid_for_napari)
 
 
 def latent_disentamglement_plot(lats, vae, device, poses=None):
@@ -624,7 +670,7 @@ def latent_disentamglement_plot(lats, vae, device, poses=None):
 
     # Create and save the mrc file with single transversals
     for i in range(recon.shape[0]):
-        for j in range(recon.shape[1]):
+        for j in range(2):
             grid_for_napari[
                 i * dsize[0] : (i + 1) * dsize[0],
                 j * dsize[1] : (j + 1) * dsize[1],
@@ -684,6 +730,7 @@ def pose_disentanglement_plot(lats, poses, vae, device):
         pos_grid = torch.FloatTensor(np.array(pos_grid))
         pos_grid = pos_grid.to(device)
         recon = vae.decoder(lat_grid, pos_grid)
+
     dsize = recon.shape[-3:]
     if len(dsize) == 0:
         print(

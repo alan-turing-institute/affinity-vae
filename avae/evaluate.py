@@ -10,7 +10,7 @@ from .train import accuracy, add_meta, pass_batch
 from .utils import set_device
 
 
-def evaluate(datapath, lim, splt, batch_s, collect_meta, use_gpu):
+def evaluate(datapath, state, lim, splt, batch_s, collect_meta, use_gpu):
 
     """Function for evaluating the model. Loads the data, model and runs the evaluation. Saves the results of the
     evaluation in the plot and latents directories.
@@ -40,16 +40,18 @@ def evaluate(datapath, lim, splt, batch_s, collect_meta, use_gpu):
     # ############################### MODEL ###############################
     device = set_device(use_gpu)
 
-    if not os.path.exists("states"):
-        raise RuntimeError(
-            "There are no existing model states saved, unable to evaluate."
-        )
-    # TODO add param to chose model
-    states = sorted([s for s in os.listdir("states") if ".pt" in s])[0]
-    fname = states.split(".")[0].split("_")
-    pose_dims = fname[3]
-    vae = torch.load(os.path.join("states", states))  # make optional param
+    if state is None:
+        if not os.path.exists("states"):
+            raise RuntimeError(
+                "There are no existing model states saved or provided via the state flag in config unable to evaluate."
+            )
+        else:
+            state = sorted([s for s in os.listdir("states") if ".pt" in s])[0]
+            state = os.path.join("states", state)
 
+    fname = state.split(".")[0].split("_")
+    pose_dims = fname[3]
+    vae = torch.load(state)  # make optional param
     vae.to(device)
 
     # ########################## EVALUATE ################################
@@ -66,27 +68,28 @@ def evaluate(datapath, lim, splt, batch_s, collect_meta, use_gpu):
     print("Batch: [0/%d]" % (len(tests)), end="\r", flush=True)
 
     vae.eval()
-    for b, batch in enumerate(tests):
-        x, x_hat, lat_mu, lat_logvar, lat, lat_pose, _ = pass_batch(
-            device, vae, batch, b, len(tests)
-        )
-        x_test.extend(lat_mu.cpu().detach().numpy())
-
-        # if labels are present save them otherwise save test
-        try:
-            y_test.extend(batch[1])
-        except IndexError:
-            np.full(shape=len(batch[0]), fill_value="test")
-        if pose_dims != 0:
-            p_test.extend(lat_pose.cpu().detach().numpy())
-
-        if collect_meta:  # store meta for plots
-            meta_df = add_meta(
-                meta_df, batch[-1], x_hat, lat_mu, lat_pose, mode="evl"
+    with torch.no_grad():
+        for b, batch in enumerate(tests):
+            x, x_hat, lat_mu, lat_logvar, lat, lat_pose, _ = pass_batch(
+                device, vae, batch, b, len(tests)
             )
+            x_test.extend(lat_mu.cpu().detach().numpy())
 
-        print("Batch: [%d/%d]" % (b + 1, len(tests)), end="\r", flush=True)
-    print("Batch: [%d/%d]" % (b + 1, len(tests)), flush=True)
+            # if labels are present save them otherwise save test
+            try:
+                y_test.extend(batch[1])
+            except IndexError:
+                np.full(shape=len(batch[0]), fill_value="test")
+            if pose_dims != 0:
+                p_test.extend(lat_pose.cpu().detach().numpy())
+
+            if collect_meta:  # store meta for plots
+                meta_df = add_meta(
+                    meta_df, batch[-1], x_hat, lat_mu, lat_pose, mode="evl"
+                )
+
+            print("Batch: [%d/%d]" % (b + 1, len(tests)), end="\r", flush=True)
+        print("Batch: [%d/%d]" % (b + 1, len(tests)), flush=True)
 
     # ########################## VISUALISE ################################
 

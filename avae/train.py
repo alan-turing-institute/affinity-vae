@@ -266,63 +266,74 @@ def train(
 
         # ########################## VAL ######################################
         vae.eval()
-        for b, batch in enumerate(vals):
-            v, v_hat, v_mu, v_logvar, vlat, vlat_pos, v_history = pass_batch(
-                device,
-                vae,
-                batch,
-                b,
-                len(vals),
-                epoch,
-                epochs,
-                loss=loss,
-                history=v_history,
-                beta=beta_arr,
-            )
-            x_val.extend(v_mu.cpu().detach().numpy())  # store latents
-            y_val.extend(batch[1])
-            if pose:
-                p_val.extend(vlat_pos.cpu().detach().numpy())
-
-            if collect_meta:  # store meta for plots
-                meta_df = add_meta(
-                    meta_df, batch[-1], v_hat, v_mu, vlat_pos, mode="val"
+        with torch.no_grad():
+            for b, batch in enumerate(vals):
+                (
+                    v,
+                    v_hat,
+                    v_mu,
+                    v_logvar,
+                    vlat,
+                    vlat_pos,
+                    v_history,
+                ) = pass_batch(
+                    device,
+                    vae,
+                    batch,
+                    b,
+                    len(vals),
+                    epoch,
+                    epochs,
+                    loss=loss,
+                    history=v_history,
+                    beta=beta_arr,
                 )
-
-        v_history[-1] /= len(vals)
-        print(
-            "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
-            "KLdiv: %f | Affin: %f | Beta: %f"
-            % (
-                epoch + 1,
-                epochs,
-                b + 1,
-                len(vals),
-                *v_history[-1],
-                beta_arr[epoch],
-            ),
-            flush=True,
-        )
-
-        # ########################## TEST #####################################
-        if (epoch + 1) % config.FREQ_EVAL == 0:
-            for b, batch in enumerate(tests):  # tests empty if no 'test' dir
-                t, t_hat, t_mu, t_logvar, tlat, tlat_pose, _ = pass_batch(
-                    device, vae, batch, b, len(tests), epoch, epochs
-                )
-                x_test.extend(t_mu.cpu().detach().numpy())  # store latents
+                x_val.extend(v_mu.cpu().detach().numpy())  # store latents
+                y_val.extend(batch[1])
                 if pose:
-                    p_test.extend(tlat_pose.cpu().detach().numpy())
+                    p_val.extend(vlat_pos.cpu().detach().numpy())
 
                 if collect_meta:  # store meta for plots
                     meta_df = add_meta(
-                        meta_df,
-                        batch[-1],
-                        t_hat,
-                        t_mu,
-                        tlat_pose,
-                        mode="tst",
+                        meta_df, batch[-1], v_hat, v_mu, vlat_pos, mode="val"
                     )
+
+            v_history[-1] /= len(vals)
+            print(
+                "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
+                "KLdiv: %f | Affin: %f | Beta: %f"
+                % (
+                    epoch + 1,
+                    epochs,
+                    b + 1,
+                    len(vals),
+                    *v_history[-1],
+                    beta_arr[epoch],
+                ),
+                flush=True,
+            )
+
+            # ########################## TEST #####################################
+            if (epoch + 1) % config.FREQ_EVAL == 0:
+                for b, batch in enumerate(
+                    tests
+                ):  # tests empty if no 'test' dir
+                    t, t_hat, t_mu, t_logvar, tlat, tlat_pose, _ = pass_batch(
+                        device, vae, batch, b, len(tests), epoch, epochs
+                    )
+                    x_test.extend(t_mu.cpu().detach().numpy())  # store latents
+                    if pose:
+                        p_test.extend(tlat_pose.cpu().detach().numpy())
+
+                    if collect_meta:  # store meta for plots
+                        meta_df = add_meta(
+                            meta_df,
+                            batch[-1],
+                            t_hat,
+                            t_mu,
+                            tlat_pose,
+                            mode="tst",
+                        )
 
         # ########################## SAVE STATE ###############################
         if (epoch + 1) % config.FREQ_STA == 0:
@@ -370,7 +381,14 @@ def train(
                 beta_arr[epoch],
                 gamma_arr[epoch],
             ]
-            vis.loss_plot(epoch + 1, t_history, v_history, p=p)
+            vis.loss_plot(
+                beta_arr[epoch],
+                gamma_arr[epoch],
+                epoch + 1,
+                t_history,
+                v_history,
+                p=p,
+            )
 
         # visualise reconstructions - last batch
         if config.VIS_REC and (epoch + 1) % config.FREQ_REC == 0:
