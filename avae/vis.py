@@ -448,7 +448,6 @@ def loss_plot(epochs, train_loss, val_loss=None, p=None):
     plt.clf()
     plt.ticklabel_format(useOffset=False)
 
-
     beta = p[5]
     gamma = p[6]
     train_loss[-2] = train_loss[-2] * beta
@@ -594,6 +593,7 @@ def recon_plot(img, rec, name="trn"):
         "plots/" + str(name) + "_recon_in.mrc", overwrite=True
     ) as mrc:
         mrc.set_data(grid_for_napari)
+
 
 def latent_disentamglement_plot(lats, vae, device, poses=None):
     """Visualise latent content disentanglement.
