@@ -37,6 +37,7 @@ class DataTest(unittest.TestCase):
         out = load_data(
             "./eval", lim=None, batch_s=32, collect_meta=False, eval=True
         )
+        print(os.getcwd())
 
         # test load_data
         assert len(out) == 1
@@ -47,6 +48,7 @@ class DataTest(unittest.TestCase):
         eval_batch = list(eval_data)[0]
         xs, ys, aff = eval_batch
         assert len(xs) == len(ys) == len(aff)
+        print(aff)
         assert aff[0] == 0  # this is redundant for eval, should fix in future
 
     def test_load_train_data(self):

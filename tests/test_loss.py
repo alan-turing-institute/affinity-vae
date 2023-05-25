@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from avae.loss import AffinityLoss, AVAELoss
+from avae.loss import AVAELoss
 
 
 class LossTest(unittest.TestCase):
