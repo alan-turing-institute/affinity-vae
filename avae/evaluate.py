@@ -60,8 +60,10 @@ def evaluate(datapath, state, lim, splt, batch_s, collect_meta, use_gpu):
     vae.to(device)
 
     # ########################## EVALUATE ################################
-    metas = sorted([f for f in os.listdir("states") if ".pkl" in f])[-1]
-    meta_df = pd.read_pickle(os.path.join("states", metas))
+    if collect_meta:
+        metas = sorted([f for f in os.listdir("states") if ".pkl" in f])[-1]
+        meta_df = pd.read_pickle(os.path.join("states", metas))
+
 
     # create holders for latent spaces and labels
     x_test = []
@@ -101,50 +103,6 @@ def evaluate(datapath, state, lim, splt, batch_s, collect_meta, use_gpu):
     if config.VIS_REC:
         vis.recon_plot(x, x_hat, name="evl")
 
-    # get training latent space
-    latents_training = meta_df[meta_df["mode"] == "trn"][
-        [col for col in meta_df if col.startswith("lat")]
-    ].to_numpy()
-    latents_training_id = meta_df[meta_df["mode"] == "trn"]["id"]
-
-    # visualise embeddings
-    if config.VIS_EMB:
-        vis.latent_embed_plot_umap(
-            np.concatenate([x_test, latents_training]),
-            np.concatenate([np.array(y_test), np.array(latents_training_id)]),
-            "_eval",
-        )
-        vis.latent_embed_plot_tsne(
-            np.concatenate([x_test, latents_training]),
-            np.concatenate([np.array(y_test), np.array(latents_training_id)]),
-            "_eval",
-        )
-
-        if collect_meta:
-            # merge img and rec into one image for display in altair
-            meta_df["image"] = meta_df["image"].apply(vis.merge)
-            vis.dyn_latentembed_plot(meta_df, 0, embedding="umap")
-            vis.dyn_latentembed_plot(meta_df, 0, embedding="tsne")
-
-    # visualise accuracy
-    train_acc, val_acc, ypred_train, ypred_val = accuracy(
-        latents_training,
-        np.array(latents_training_id),
-        x_test,
-        np.array(y_test),
-    )
-    print(
-        "\n------------------->>> Accuracy: Train: %f | Val: %f\n"
-        % (train_acc, val_acc)
-    )
-    vis.accuracy_plot(
-        np.array(latents_training_id),
-        ypred_train,
-        y_test,
-        ypred_val,
-        title="_eval",
-    )
-
     # visualise latent disentanglement
     if config.VIS_DIS:
         vis.latent_disentamglement_plot(x_test, vae, device, poses=p_test)
@@ -158,3 +116,57 @@ def evaluate(datapath, state, lim, splt, batch_s, collect_meta, use_gpu):
         vis.interpolations_plot(
             x_test, np.ones(len(x_test)), vae, device, poses=p_test
         )
+
+    # visualise embeddings
+    if config.VIS_EMB:
+        vis.latent_embed_plot_umap(x_test, np.array(y_test), "_eval")
+        vis.latent_embed_plot_tsne(x_test, np.array(y_test), "_eval")
+
+
+            # ############################# Predict #############################
+
+    if collect_meta:
+        # merge img and rec into one image for display in altair
+        meta_df["image"] = meta_df["image"].apply(vis.merge)
+        vis.dyn_latentembed_plot(meta_df, 0, embedding="umap")
+        vis.dyn_latentembed_plot(meta_df, 0, embedding="tsne")
+
+
+        # get training latent space from metadata for comparison and accuracy estimation
+        latents_training = meta_df[meta_df["mode"] == "trn"][
+            [col for col in meta_df if col.startswith("lat")]
+        ].to_numpy()
+        latents_training_id = meta_df[meta_df["mode"] == "trn"]["id"]
+
+        # visualise embeddings
+        if config.VIS_EMB:
+            vis.latent_embed_plot_umap(
+                np.concatenate([x_test, latents_training]),
+                np.concatenate([np.array(y_test), np.array(latents_training_id)]),
+                "train_eval_comparison",
+            )
+            vis.latent_embed_plot_tsne(
+                np.concatenate([x_test, latents_training]),
+                np.concatenate([np.array(y_test), np.array(latents_training_id)]),
+                "train_eval_comparison",
+            )
+
+        # visualise accuracy
+        train_acc, val_acc, ypred_train, ypred_val = accuracy(
+            latents_training,
+            np.array(latents_training_id),
+            x_test,
+            np.array(y_test),
+        )
+        print(
+            "\n------------------->>> Accuracy: Train: %f | Val: %f\n"
+            % (train_acc, val_acc)
+        )
+        vis.accuracy_plot(
+            np.array(latents_training_id),
+            ypred_train,
+            y_test,
+            ypred_val,
+            title="_eval",
+        )
+
