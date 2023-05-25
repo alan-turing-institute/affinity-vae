@@ -32,6 +32,13 @@ logging.basicConfig(
     help="Path to training data.",
 )
 @click.option(
+    "--state",
+    "-st",
+    type=str,
+    default=None,
+    help="The saved model state to be loaded for evaluation/resume training.",
+)
+@click.option(
     "--limit",
     "-lm",
     type=int,
@@ -367,6 +374,7 @@ logging.basicConfig(
 def run(
     config_file,
     datapath,
+    state,
     limit,
     split,
     no_val_drop,
@@ -434,6 +442,12 @@ def run(
                     + str(val)
                 )
                 data[key] = val
+            elif key == "state":
+                logging.warning(
+                    "No value set for "
+                    + key
+                    + " in config file or command line arguments. Loading the latest state if in evaluation mode."
+                )
             else:
                 logging.info(
                     "Setting "
@@ -566,6 +580,7 @@ def run(
         else:
             evaluate(
                 datapath=data["datapath"],
+                state=data["state"],
                 lim=data["limit"],
                 splt=data["split"],
                 batch_s=data["batch"],
