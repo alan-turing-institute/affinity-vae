@@ -586,6 +586,7 @@ def recon_plot(img, rec, name="trn"):
     plt.close()
 
     rec = rec.detach().cpu().numpy()
+    img = img.detach().cpu().numpy()
     dsize = rec.shape[-3:]
 
     # The number of reconstruction and input images to be displayed in the .mrc output file
