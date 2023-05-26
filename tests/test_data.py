@@ -77,7 +77,7 @@ class DataTest(unittest.TestCase):
         train_batch = list(train_data)[0]
         xs, ys, aff = train_batch
         assert len(xs) == len(ys) == len(aff)
-        assert aff[0] != 0
+        assert aff.numpy()[0] != 0
 
         # test affinity matrix
         assert isinstance(lookup, np.ndarray)
