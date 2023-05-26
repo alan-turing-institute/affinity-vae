@@ -48,8 +48,9 @@ class DataTest(unittest.TestCase):
         eval_batch = list(eval_data)[0]
         xs, ys, aff = eval_batch
         assert len(xs) == len(ys) == len(aff)
-        print(aff)
-        assert aff[0] == 0  # this is redundant for eval, should fix in future
+        assert (
+            aff.numpy()[0] == 0
+        )  # this is redundant for eval, should fix in future
 
     def test_load_train_data(self):
         """Test loading training data."""
