@@ -370,7 +370,7 @@ def train(
                 beta_arr[epoch],
                 gamma_arr[epoch],
             ]
-            vis.loss_plot(epoch + 1, t_history, v_history, p=p)
+            vis.loss_plot(epoch + 1, beta_arr[:epoch+1], gamma_arr[:epoch+1], t_history, v_history, p=p)
 
         # visualise reconstructions - last batch
         if config.VIS_REC and (epoch + 1) % config.FREQ_REC == 0:
