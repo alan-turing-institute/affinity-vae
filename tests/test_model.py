@@ -1,6 +1,6 @@
 import unittest
 
-from torch import Size, nn, randn
+from torch import nn, randn
 
 from avae.model_a import AffinityVAE as avae_a
 from avae.model_b import AffinityVAE as avae_b
