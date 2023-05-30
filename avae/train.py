@@ -151,9 +151,12 @@ def train(
         # create holders for latent spaces and labels
         x_train = []  # 0 x lat_dims
         y_train = []  # 0 x 1
+        c_train = []
         x_val = []
         y_val = []
+        # c_val = []
         x_test = []
+        # c_test = []
         if pose:
             p_train = []  # 0 x pose_dims
             p_val = []
@@ -178,6 +181,7 @@ def train(
             )
             x_train.extend(lat_mu.cpu().detach().numpy())  # store latents
             y_train.extend(batch[1])
+            c_train.extend(lat_logvar.cpu().detach().numpy())
             if pose:
                 p_train.extend(lat_pos.cpu().detach().numpy())
 
@@ -283,6 +287,50 @@ def train(
                 )
 
         # ########################## VISUALISE ################################
+
+        # visualise per-class confidence
+        import matplotlib.pyplot as plt
+
+        cmap = plt.get_cmap("jet")
+        cols = [cmap(i) for i in np.linspace(0, 1, len(x_train[0]))]
+        rows = len(np.unique(y_train)) // 2
+        if len(np.unique(y_train)) % 2 != 0:
+            rows += 1
+        fig, ax = plt.subplots(
+            len(np.unique(y_train)), sharex=True, sharey=True
+        )
+        for c, cl in enumerate(np.unique(y_train)):
+            mu_cl = np.take(
+                x_train, np.where(np.array(y_train) == cl)[0], axis=0
+            )
+            var_cl = np.take(
+                c_train, np.where(np.array(y_train) == cl)[0], axis=0
+            )
+            std_cl = np.exp(0.5 * var_cl)
+            mu_cl = np.mean(mu_cl, axis=0)
+            std_cl = np.mean(std_cl, axis=0)
+            print(std_cl)
+            min_mu = np.min(mu_cl)
+            max_mu = np.max(mu_cl)
+            max_sig = np.max(std_cl)
+            from scipy.stats import norm
+
+            xs = np.arange(
+                min_mu - (4 * max_sig), max_mu + (4 * max_sig), 0.00001
+            )
+            for i in range(len(mu_cl)):
+                ax[c].plot(
+                    xs,
+                    norm.pdf(xs, mu_cl[i], std_cl[i]),
+                    color=cols[i],
+                    label="lat" + str(i + 1),
+                )
+            ax[c].set_title(cl)
+        handles, labels = ax[-1].get_legend_handles_labels()
+        leg = fig.legend(
+            handles, labels, bbox_to_anchor=(1.06, 0.9)
+        )  # , loc="upper left")
+        fig.savefig("tst.png", bbox_extra_artists=(leg,), bbox_inches="tight")
 
         # visualise accuracy
         if config.VIS_ACC and (epoch + 1) % config.FREQ_ACC == 0:
