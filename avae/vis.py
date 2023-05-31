@@ -152,14 +152,15 @@ def latent_embed_plot_tsne(xs, ys, mode=""):
     )
     print("Visualising static TSNE embedding...\n", flush=True)
 
-    fig, ax = plt.subplots()
     xs = np.asarray(xs)
     ys = np.asarray(ys)
     lats = TSNE(n_components=2, perplexity=40, random_state=42).fit_transform(
         xs
     )
-    plt.clf()
-
+    n_classes = len(np.unique(ys))
+    fig, ax = plt.subplots(
+        figsize=(int(n_classes / 2) + 2, int(n_classes / 2))
+    )
     for mol_id, mol in enumerate(set(ys.tolist())):
         idx = np.where(np.array(ys.tolist()) == mol)[0]
         cmap = plt.cm.get_cmap("tab20")
@@ -167,14 +168,16 @@ def latent_embed_plot_tsne(xs, ys, mode=""):
         plt.scatter(
             lats[idx, 0],
             lats[idx, 1],
-            s=14,
+            s=24,
             label=mol[:4],
             facecolor=color,
             edgecolor=color,
             alpha=0.2,
         )
 
-    plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=16)
+    ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=16)
+    plt.xlabel("TSNE-1")
+    plt.ylabel("TSNE-2")
     plt.tight_layout()
     plt.savefig(f"plots/embedding_TSNE{mode}.png")
     plt.close()
@@ -200,7 +203,11 @@ def latent_embed_plot_umap(xs, ys, mode=""):
     reducer = umap.UMAP(random_state=42)
     embedding = reducer.fit_transform(xs)
 
-    fig, ax = plt.subplots()
+    n_classes = len(np.unique(ys))
+
+    fig, ax = plt.subplots(
+        figsize=(int(n_classes / 2) + 2, int(n_classes / 2))
+    )
 
     for mol_id, mol in enumerate(set(ys.tolist())):
         idx = np.where(np.array(ys.tolist()) == mol)[0]
@@ -211,7 +218,7 @@ def latent_embed_plot_umap(xs, ys, mode=""):
         ax.scatter(
             embedding[idx, 0],
             embedding[idx, 1],
-            s=14,
+            s=24,
             label=mol[:4],
             facecolor=color,
             edgecolor=color,
@@ -219,7 +226,8 @@ def latent_embed_plot_umap(xs, ys, mode=""):
         )
 
     ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=16)
-
+    plt.xlabel("UMAP-1")
+    plt.ylabel("UMAP-2")
     plt.tight_layout()
     plt.savefig(f"plots/embedding_UMAP{mode}.png")
     plt.close()
