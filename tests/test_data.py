@@ -49,8 +49,8 @@ class DataTest(unittest.TestCase):
         xs, ys, aff = eval_batch
         assert len(xs) == len(ys) == len(aff)
         assert (
-            aff.numpy()[0] == 0
-        )  # this is redundant for eval, should fix in future
+            np.all(aff.numpy()) == 0
+        )  # this is expected only for eval without affinity
 
     def test_load_train_data(self):
         """Test loading training data."""
@@ -77,8 +77,7 @@ class DataTest(unittest.TestCase):
         train_batch = list(train_data)[0]
         xs, ys, aff = train_batch
         assert len(xs) == len(ys) == len(aff)
-        print(aff.numpy())
-        assert aff.numpy()[0] != 0
+        assert len(np.unique(aff.numpy())) == 4
 
         # test affinity matrix
         assert isinstance(lookup, np.ndarray)
