@@ -17,7 +17,18 @@ from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix, f1_score
 
 
 def _encoder(i):
-    """Encode PIL Image as base64 buffer."""
+    """Encode PIL Image as base64 buffer.
+    Parameters
+    ----------
+    i: PIL.Image
+        Image to be encoded.
+
+    Returns
+    -------
+    str
+        Encoded image.
+
+    """
     import base64
     from io import BytesIO
 
@@ -30,7 +41,17 @@ def _encoder(i):
 
 
 def _decoder(i):
-    """Decode base64 buffer as PIL Image."""
+    """Decode base64 buffer as PIL Image.
+    Parameters
+    ----------
+    i: str
+        Encoded image.
+
+    Returns
+    -------
+    PIL.Image
+        Decoded image.
+    """
     import base64
     from io import BytesIO
 
@@ -38,7 +59,20 @@ def _decoder(i):
 
 
 def format(im):
-    """Format PIL Image as Pandas compatible Altair image display."""
+    """Format PIL Image as Pandas compatible Altair image display.
+
+    Parameters
+    ----------
+    im: PIL.Image
+        Image to be formatted.
+
+    Returns
+    -------
+    list
+        Formatted images compatible Altair image display is batch is true, as we are adding a reconstruction to an input that already exist.
+    str
+        Formatted image compatible Altair image display if batch is not true.
+    """
     if len(im.shape) == 5:
         batch = True
         im = np.sum(
@@ -68,7 +102,18 @@ def format(im):
 
 def merge(im):
     """Merge 2 base64 buffers as PIL Images and encode back to base64
-    buffers."""
+    buffers.
+
+    Parameters
+    ----------
+    im: str
+        Input PIL Images to be merged.
+
+    Returns
+    -------
+    str
+        Merged image.
+    """
     i = im.split("&")
     if len(i) != 2:
         print(
@@ -89,19 +134,33 @@ def merge(im):
     return f"data:image/png;base64,{data}"
 
 
-def latent_embed_plot_tsne(xs, ys):
+def latent_embed_plot_tsne(xs, ys, mode=""):
+    """Plot static TSNE embedding.
+
+    Parameters
+    ----------
+    xs: list
+        List of latent vectors.
+    ys: list
+        List of labels.
+    mode: str
+        Added data mode to the name of the saved figure (e.g train, valid, eval).
+    """
     print(
         "\n################################################################",
         flush=True,
     )
     print("Visualising static TSNE embedding...\n", flush=True)
 
-    fig, ax = plt.subplots()
     xs = np.asarray(xs)
     ys = np.asarray(ys)
-    lats = TSNE(n_components=2).fit_transform(xs)
-    plt.clf()
-
+    lats = TSNE(n_components=2, perplexity=40, random_state=42).fit_transform(
+        xs
+    )
+    n_classes = len(np.unique(ys))
+    fig, ax = plt.subplots(
+        figsize=(int(n_classes / 2) + 2, int(n_classes / 2))
+    )
     for mol_id, mol in enumerate(set(ys.tolist())):
         idx = np.where(np.array(ys.tolist()) == mol)[0]
         cmap = plt.cm.get_cmap("tab20")
@@ -109,29 +168,46 @@ def latent_embed_plot_tsne(xs, ys):
         plt.scatter(
             lats[idx, 0],
             lats[idx, 1],
-            s=64,
+            s=24,
             label=mol[:4],
             facecolor=color,
             edgecolor=color,
-            alpha=0.4,
+            alpha=0.2,
         )
 
-    plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=16)
+    ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=16)
+    plt.xlabel("TSNE-1")
+    plt.ylabel("TSNE-2")
     plt.tight_layout()
-    plt.savefig("plots/embedding_TSNE.png")
+    plt.savefig(f"plots/embedding_TSNE{mode}.png")
     plt.close()
 
 
-def latent_embed_plot_umap(xs, ys):
+def latent_embed_plot_umap(xs, ys, mode=""):
+    """Plot static UMAP embedding.
+
+    Parameters
+    ----------
+    xs: list
+        List of latent vectors.
+    ys: list
+        List of labels.
+    mode: str
+        Added data mode to the name of the saved figure (e.g train, valid, eval).
+    """
     print(
         "\n################################################################",
         flush=True,
     )
     print("Visualising static UMAP embedding...\n", flush=True)
-    reducer = umap.UMAP()
+    reducer = umap.UMAP(random_state=42)
     embedding = reducer.fit_transform(xs)
 
-    fig, ax = plt.subplots()
+    n_classes = len(np.unique(ys))
+
+    fig, ax = plt.subplots(
+        figsize=(int(n_classes / 2) + 2, int(n_classes / 2))
+    )
 
     for mol_id, mol in enumerate(set(ys.tolist())):
         idx = np.where(np.array(ys.tolist()) == mol)[0]
@@ -142,21 +218,35 @@ def latent_embed_plot_umap(xs, ys):
         ax.scatter(
             embedding[idx, 0],
             embedding[idx, 1],
-            s=64,
+            s=24,
             label=mol[:4],
             facecolor=color,
             edgecolor=color,
-            alpha=0.4,
+            alpha=0.2,
         )
 
     ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=16)
-
+    plt.xlabel("UMAP-1")
+    plt.ylabel("UMAP-2")
     plt.tight_layout()
-    plt.savefig("plots/embedding_UMAP.png")
+    plt.savefig(f"plots/embedding_UMAP{mode}.png")
     plt.close()
 
 
-def dyn_latentembed_plot(df, epoch, embedding="umap"):
+def dyn_latentembed_plot(df, epoch, embedding="umap", mode=""):
+    """Plot dynamic TSNE or UMAP embedding.
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+        Dataframe containing the latent vectors.
+    epoch: int
+        Current epoch.
+    embedding: str
+        Type of embedding to use, either 'umap' or 'tsne'.
+    mode: str
+        Added data mode to the name of the saved figure (e.g train, valid, eval).
+    """
     print(
         "\n################################################################",
         flush=True,
@@ -168,11 +258,17 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
     epoch += 1
     latentspace = df[[col for col in df if col.startswith("lat")]].to_numpy()
     if embedding == "umap":
-        lat_emb = np.array(umap.UMAP().fit_transform(latentspace))
+        lat_emb = np.array(
+            umap.UMAP(random_state=42).fit_transform(latentspace)
+        )
         titlex = "UMAP-1"
         titley = "UMAP-2"
     else:
-        lat_emb = np.array(TSNE(n_components=2).fit_transform(latentspace))
+        lat_emb = np.array(
+            TSNE(n_components=2, perplexity=40, random_state=42).fit_transform(
+                latentspace
+            )
+        )
         titlex = "t-SNE-1"
         titley = "t-SNE-2"
     df["emb-x"], df["emb-y"] = np.array(lat_emb)[:, 0], np.array(lat_emb)[:, 1]
@@ -215,7 +311,9 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
             x=altair.X("mode:N", axis=altair.Axis(orient="bottom")),
             shape=altair.Shape(
                 "mode",
-                scale=altair.Scale(range=["square", "circle", "triangle"]),
+                scale=altair.Scale(
+                    range=["square", "circle", "triangle", "diamond"]
+                ),
                 title="mode",
                 legend=None,
             ),
@@ -232,16 +330,32 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
     if not os.path.exists("latents"):
         os.mkdir("latents")
         # save latentspace and ids
-    df[[col for col in df if col.startswith(("lat", "id"))]].to_csv(
-        f"latents/latentspace_epoch_{epoch}.csv", index=False
-    )
     if embedding == "umap":
-        chart.save(f"latents/plt_latent_embed_epoch_{epoch}_umap.html")
+        chart.save(f"latents/plt_latent_embed_epoch_{epoch}_umap{mode}.html")
     elif embedding == "tsne":
-        chart.save(f"latents/plt_latent_embed_epoch_{epoch}_tsne.html")
+        chart.save(f"latents/plt_latent_embed_epoch_{epoch}_tsne{mode}.html")
 
 
-def accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes=None):
+def accuracy_plot(
+    y_train, ypred_train, y_val, ypred_val, classes=None, mode=""
+):
+    """Plot confusion matrix  and F1 values.
+
+    Parameters
+    ----------
+    y_train: np.array
+        Training labels.
+    ypred_train: np.array
+        Predicted training labels.
+    y_val: np.array
+        Validation labels (unseen data).
+    ypred_val: np.array
+        Predicted validation labels (unseen data).
+    classes: str
+        Path to csv file containing classes to be used.
+    mode: str
+        Added data mode to the name of the saved figures (e.g train, valid, eval).
+    """
     print(
         "\n################################################################",
         flush=True,
@@ -251,7 +365,7 @@ def accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes=None):
     if classes is not None:
         classes_list = pd.read_csv(classes).columns.tolist()
     else:
-        classes_list = np.unique(np.concatenate((y_train, y_val)))
+        classes_list = np.unique(np.concatenate((y_train, ypred_train)))
 
     cm = confusion_matrix(y_train, ypred_train)
     disp = ConfusionMatrixDisplay(
@@ -271,13 +385,21 @@ def accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes=None):
         if not os.path.exists("plots"):
             os.mkdir("plots")
 
-        plt.savefig("plots/confusion_train.png", dpi=300)
+        plt.savefig(f"plots/confusion_train{mode}.png", dpi=300)
         plt.close()
 
+    classes_list_eval = np.unique(np.concatenate((y_val, ypred_val)))
     cm = confusion_matrix(y_val, ypred_val)
     disp = ConfusionMatrixDisplay(
-        confusion_matrix=cm, display_labels=classes_list
+        confusion_matrix=cm, display_labels=classes_list_eval
     )
+
+    if mode == "_eval":
+        figure_name = "plots/confusion_eval.png"
+    elif mode == "":
+        figure_name = "plots/confusion_valid.png"
+    else:
+        figure_name = f"plots/confusion_{mode}.png"
 
     with plt.rc_context(
         {"font.weight": "bold", "font.size": int(len(classes_list) / 3) + 3}
@@ -287,22 +409,41 @@ def accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes=None):
         )
         disp.plot(cmap=plt.cm.Blues, ax=ax, xticks_rotation=90)
         plt.tight_layout()
-        plt.savefig("plots/confusion_valid.png", dpi=300)
+        plt.savefig(figure_name, dpi=300)
         plt.close()
 
     train_f1_score = f1_score(y_train, ypred_train, average=None)
     valid_f1_score = f1_score(y_val, ypred_val, average=None)
 
+    if mode == "_eval":
+        label = "eval"
+    else:
+        label = "valid"
+
     plt.figure()
     plt.plot(classes_list, train_f1_score, label="train")
-    plt.plot(classes_list, valid_f1_score, label="valid")
+    plt.plot(classes_list_eval, valid_f1_score, label=label)
     plt.xticks(rotation=90)
     plt.ylabel("F1 Score")
-    plt.savefig("plots/f1.png", dpi=150)
+    plt.savefig(f"plots/f1{mode}.png", dpi=150)
     plt.close()
 
 
 def loss_plot(epochs, train_loss, val_loss=None, p=None):
+    """Visualise loss over epochs.
+
+    Parameters
+    ----------
+    epochs: int
+        Number of epochs.
+    train_loss: list
+        Training loss over epochs.
+    val_loss: list
+        Validation loss over epochs.
+    p: list
+        List of 7 hyperparameters: batch size, depth, "
+                "channel init, latent dimension, learning rate, beta, gamma.
+    """
     print(
         "\n################################################################",
         flush=True,
@@ -392,6 +533,18 @@ def loss_plot(epochs, train_loss, val_loss=None, p=None):
 
 
 def recon_plot(img, rec, name="trn"):
+    """Visualise reconstructions.
+
+    Parameters
+    ----------
+    img: torch.Tensor
+        Input images.
+    rec: torch.Tensor
+        Reconstructed images.
+    name: str
+        Type of image in the training set: trn or val.
+
+    """
     print(
         "\n################################################################",
         flush=True,
@@ -422,6 +575,19 @@ def recon_plot(img, rec, name="trn"):
 
 
 def latent_disentamglement_plot(lats, vae, device, poses=None):
+    """Visualise latent content disentanglement.
+
+    Parameters
+    ----------
+    lats: list
+        List of latent vectors.
+    vae: torch.nn.Module
+        Affinity vae model.
+    device: torch.device
+        Device to run the model on.
+    poses: list
+        List of pose vectors.
+    """
     print(
         "\n################################################################",
         flush=True,
@@ -497,6 +663,19 @@ def latent_disentamglement_plot(lats, vae, device, poses=None):
 
 
 def pose_disentanglement_plot(lats, poses, vae, device):
+    """Visualise pose disentanglement.
+
+    Parameters
+    ----------
+    lats: list
+        List of latent vectors.
+    poses: list
+        List of pose vectors.
+    vae: torch.nn.Module
+        Affinity vae model.
+    device: torch.device
+        Device to run the model on.
+    """
     print(
         "\n################################################################",
         flush=True,
@@ -567,6 +746,21 @@ def pose_disentanglement_plot(lats, poses, vae, device):
 
 
 def interpolations_plot(lats, classes, vae, device, poses=None):
+    """Visualise interpolations.
+
+    Parameters
+    ----------
+    lats: list
+        List of latent vectors.
+    classes: list
+        List of class labels.
+    vae: torch.nn.Module
+        Affinity vae model.
+    device: torch.device
+        Device to run the model on.
+    poses: list
+        List of pose vectors.
+    """
     print(
         "\n################################################################",
         flush=True,
@@ -689,9 +883,12 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
 
     Parameters
     ----------
-    all_classes : All existing classes in the affinity matrix  affinity*.csv
-    lookup :  The affinity matrix
-    selected_classes : All classes selected by the user for training in classes.csv
+    all_classes: list
+        All existing classes in the affinity matrix  affinity*.csv
+    lookup: pandas.DataFrame
+        The affinity matrix
+    selected_classes : list
+        All classes selected by the user for training in classes.csv
     """
     print(
         "\n################################################################",
@@ -742,7 +939,15 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
 
 
 def plot_classes_distribution(data, category):
-    """Plot histogram with classes distribution"""
+    """Plot histogram with classes distribution
+
+    Parameters
+    ----------
+    data : list
+        List of classes
+    category : str
+        The category of the data (train, test, val)
+    """
 
     print(
         "\n################################################################",
@@ -768,6 +973,15 @@ def plot_classes_distribution(data, category):
 
 
 def plot_cyc_variable(array: list, variable_name: str):
+    """Plot evolution of variable from the cyclical training
+
+    Parameters
+    ----------
+    array : list
+        List of values for the variable
+    variable_name : str
+        Name of the variable
+    """
     print(
         "\n################################################################",
         flush=True,

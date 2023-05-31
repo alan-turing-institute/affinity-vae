@@ -2,6 +2,18 @@ import torch
 
 
 def set_device(gpu):
+    """Set the torch device to use for training and inference.
+
+    Parameters
+    ----------
+    gpu: bool
+        If True, the model will be trained on GPU.
+
+    Returns
+    -------
+    device: torch.device
+
+    """
     device = torch.device(
         "cuda:0" if gpu and torch.cuda.is_available() else "cpu"
     )
@@ -14,5 +26,20 @@ def set_device(gpu):
 
 
 def dims_after_pooling(start: int, n_pools: int) -> int:
-    """Calculate the size of a layer after n pooling ops."""
+    """Calculate the size of a layer after n pooling ops.
+
+    Parameters
+    ----------
+    start: int
+        The size of the layer before pooling.
+    n_pools: int
+        The number of pooling operations.
+
+    Returns
+    -------
+    int
+        The size of the layer after pooling.
+
+
+    """
     return start // (2**n_pools)

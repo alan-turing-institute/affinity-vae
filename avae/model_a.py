@@ -6,6 +6,26 @@ from .base import SpatialDims
 
 
 class Encoder(nn.Module):
+    """Affinity encoder. Includes optional pose component in the architecture.
+
+    Parameters
+    ----------
+    depth : int
+        The depth of the network - number of downsampling layers.
+    filters: list
+        List of filters sizes for each layer.
+    latent_dims: int
+        Number of  latent dimensions.
+    pose_dims: int
+        Number of pose dimensions.
+    unflat_shape : tuple
+           Shape of the input tensor.
+    flat_shape : int
+           Size of the flattened tensor.
+    conv : nn.Module
+        Convolutional layer to use.
+    """
+
     def __init__(
         self,
         depth,
@@ -39,6 +59,33 @@ class Encoder(nn.Module):
         self.pose = nn.Linear(flat_shape, pose_dims)
 
     def forward(self, x):
+        """Encoder forward pass.
+
+        Parameters
+        ----------
+        x : torch.Tensor (N, CH, Z, Y, X)
+            Mini-batch of inputs, where N stands for the number of samples in
+            the mini-batch, CH stands for number of
+            channels and X, Y, Z define input dimensions.
+
+        Returns
+        -------
+        mu : torch.Tensor (N, latent_dims)
+            Mini-batch of outputs representing latent means, where N stands
+            for the number of samples in the mini-batch
+            and 'latent_dims' defines the number of latent dimensions.
+        logvar : torch.Tensor (N, latent_dims)
+            Mini-batch of outputs representing latent log of the variance,
+            where N stands for the number of samples in
+            the mini-batch and 'latent_dims' defines the number of latent
+            dimensions.
+        pose : torch.Tensor (N, pose_dims)
+            Optional return if pose is True. Mini-batch of outputs
+            representing pose capturing the within-class
+            variance, where N stands for the number of samples in the
+            mini-batch and 'pose_dims' defines the number of
+            pose dimensions.
+        """
         encoded = self.encoder(x)
         mu = self.mu(encoded)
 
@@ -48,6 +95,26 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
+    """Affinity decoder. Includes optional pose component merge.
+
+    Parameters
+    ----------
+    depth : int
+        The depth of the network - number of downsampling layers.
+    filters: list
+        List of filters sizes for each layer.
+    latent_dims: int
+        Number of  latent dimensions.
+    pose_dims: int
+        Number of pose dimensions.
+    unflat_shape : tuple
+        Shape of the input tensor.
+    flat_shape : int
+        Size of the flattened tensor.
+    conv_T : nn.Module
+        Transposed Convolutional layer to use.
+    """
+
     def __init__(
         self,
         depth,
@@ -103,6 +170,29 @@ class Decoder(nn.Module):
         )
 
     def forward(self, x, x_pose):
+        """Decoder forward pass.
+
+        Parameters
+        ----------
+        x : torch.Tensor (N, latent_dims)
+            Mini-batch of reparametrised encoder outputs, where N stands for
+            the number of samples in the mini-batch and
+            'latent_dims' defines the number of latent dimensions.
+        x_pose : torch.Tensor (N, pose_dims)
+            Mini-batch of outputs representing pose capturing the within-class
+            variance, where N stands for the number
+            of samples in the mini-batch and 'pose_dims' defines the number of
+            pose dimensions.
+
+        Returns
+        -------
+        x : torch.Tensor (N, CH, Z, Y, X)
+            Mini-batch of outputs, where N stands for the number of samples in
+            the mini-batch, CH stands for number of
+            channels and X, Y, Z define input dimensions.
+
+        """
+
         if self.pose:
             return self.decoder(torch.cat([x_pose, x], dim=-1))
         else:
@@ -110,6 +200,27 @@ class Decoder(nn.Module):
 
 
 class AffinityVAE(nn.Module):
+    """Affinity regularised Variational Autoencoder with an optional
+    within-class variance encoding pose component.
+
+    Parameters
+    ----------
+    capacity : int
+        The capacity of the network - initial number of nodes doubled at each
+        depth.
+    depth : int
+        The depth of the network - number of downsampling layers.
+    input_size: tuple (X, Y) or tuple (X, Y, Z)
+        Tuple representing the size of the input for each dimension  X, Y and
+        Z.
+    latent_dims: int
+        Number of bottleneck latent dimensions.
+    pose: bool
+        Determines whether pose component is on or off.
+    pose_dims : int
+        Number of bottleneck pose dimensions.
+    """
+
     def __init__(
         self,
         capacity,
@@ -170,6 +281,43 @@ class AffinityVAE(nn.Module):
         )
 
     def forward(self, x):
+        """AffinityVAE forward pass.
+
+        Parameters
+        ----------
+        x : torch.Tensor (N, CH, Z, Y, X)
+            Mini-batch of inputs, where N stands for the number of samples in
+            the mini-batch, CH stands for number of
+            channels and X, Y, Z define input dimensions.
+
+        Returns
+        -------
+        x : torch.Tensor (N, CH, Z, Y, X)
+            Mini-batch of outputs, where N stands for the number of samples in
+            the mini-batch, CH stands for number of
+            channels and X, Y, Z define input dimensions.
+        mu : torch.Tensor (N, latent_dims)
+            Mini-batch of encoder outputs representing latent means, where N
+            stands for the number of samples in the
+            mini-batch and 'latent_dims' defines the number of latent
+            dimensions.
+        logvar : torch.Tensor (N, latent_dims)
+            Mini-batch of encoder outputs representing latent log of the
+            variance, where N stands for the number of
+            samples in the mini-batch and 'latent_dims' defines the number of
+            latent dimensions.
+        z : torch.Tensor (N, latent_dims)
+            Mini-batch of reparametrised encoder outputs, where N stands for
+            the number of samples in the mini-batch
+            and 'latent_dims' defines the number of latent dimensions.
+        pose : torch.Tensor (N, pose_dims)
+            Optional return if pose is True. Mini-batch of encoder outputs
+            representing pose capturing the within-class
+            variance, where N stands for the number of samples in the
+            mini-batch and 'pose_dims' defines the number of
+            pose dimensions.
+
+        """
         mu, log_var, pose = self.encoder(x)
         z = self.reparameterise(mu, log_var)
         x = self.decoder(z, pose)
@@ -188,6 +336,18 @@ class AffinityVAE(nn.Module):
 
 
 def set_device(gpu):
+    """Set the torch device to use for training and inference.
+
+    Parameters
+    ----------
+    gpu: bool
+        If True, the model will be trained on GPU.
+
+    Returns
+    -------
+    device: torch.device
+
+    """
     device = torch.device(
         "cuda:0" if gpu and torch.cuda.is_available() else "cpu"
     )
@@ -200,5 +360,20 @@ def set_device(gpu):
 
 
 def dims_after_pooling(start: int, n_pools: int) -> int:
-    """Calculate the size of a layer after n pooling ops."""
+    """Calculate the size of a layer after n pooling ops.
+
+    Parameters
+    ----------
+    start: int
+        The size of the layer before pooling.
+    n_pools: int
+        The number of pooling operations.
+
+    Returns
+    -------
+    int
+        The size of the layer after pooling.
+
+
+    """
     return start // (2**n_pools)
