@@ -126,8 +126,8 @@ def evaluate(datapath, state, lim, splt, batch_s, collect_meta, use_gpu):
     if collect_meta:
         # merge img and rec into one image for display in altair
         meta_df["image"] = meta_df["image"].apply(vis.merge)
-        vis.dyn_latentembed_plot(meta_df, 0, embedding="umap")
-        vis.dyn_latentembed_plot(meta_df, 0, embedding="tsne")
+        vis.dyn_latentembed_plot(meta_df, 0, embedding="umap", mode="_eval")
+        vis.dyn_latentembed_plot(meta_df, 0, embedding="tsne", mode="_eval")
 
         # get training latent space from metadata for comparison and accuracy estimation
         latents_training = meta_df[meta_df["mode"] == "trn"][
@@ -142,14 +142,14 @@ def evaluate(datapath, state, lim, splt, batch_s, collect_meta, use_gpu):
                 np.concatenate(
                     [np.array(y_test), np.array(latents_training_id)]
                 ),
-                "train_eval_comparison",
+                "_train_eval_comparison",
             )
             vis.latent_embed_plot_tsne(
                 np.concatenate([x_test, latents_training]),
                 np.concatenate(
                     [np.array(y_test), np.array(latents_training_id)]
                 ),
-                "train_eval_comparison",
+                "_train_eval_comparison",
             )
 
         # visualise accuracy
@@ -168,5 +168,5 @@ def evaluate(datapath, state, lim, splt, batch_s, collect_meta, use_gpu):
             ypred_train,
             y_test,
             ypred_val,
-            title="_eval",
+            mode="_eval",
         )
