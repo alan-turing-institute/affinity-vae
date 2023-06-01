@@ -63,3 +63,14 @@ class ModelTest(unittest.TestCase):
         self.assertEqual(randn(14, 16).shape, y[2].shape)
         self.assertEqual(randn(14, 16).shape, y[3].shape)
         self.assertEqual(randn(14, 3).shape, y[4].shape)
+
+    def test_model_b_eval(self):
+
+        x = randn(14, 1, 64, 64, 64)
+        y = self.vae_a(x)
+
+        self.assertEqual(x.shape, y[0].shape)
+        self.assertEqual(randn(14, 16).shape, y[1].shape)
+        self.assertEqual(randn(14, 16).shape, y[2].shape)
+        self.assertEqual(randn(14, 16).shape, y[3].shape)
+        self.assertEqual(randn(14, 3).shape, y[4].shape)
