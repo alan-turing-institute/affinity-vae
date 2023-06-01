@@ -160,9 +160,9 @@ def latent_embed_plot_tsne(xs, ys, title=""):
     if len(ys) < perplexity:
         perplexity = len(ys) - 1
 
-    lats = TSNE(n_components=2, perplexity=perplexity, random_state=42).fit_transform(
-        xs
-    )
+    lats = TSNE(
+        n_components=2, perplexity=perplexity, random_state=42
+    ).fit_transform(xs)
     plt.clf()
 
     for mol_id, mol in enumerate(set(ys.tolist())):
