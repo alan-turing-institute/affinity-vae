@@ -107,7 +107,7 @@ class TrainEvalTest(unittest.TestCase):
 
         self.assertEqual(n_dir_train, 3)
         self.assertEqual(n_plots_train, 19)
-        self.assertEqual(n_latent_train, 3)
+        self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
 
         evaluate(
@@ -124,7 +124,7 @@ class TrainEvalTest(unittest.TestCase):
         n_states_eval = len(os.listdir(os.path.join(temp_dir.name, "states")))
 
         self.assertEqual(n_plots_eval, 28)
-        self.assertEqual(n_latent_eval, 6)
+        self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 2)
 
         shutil.rmtree(temp_dir.name)
@@ -173,7 +173,7 @@ class TrainEvalTest(unittest.TestCase):
 
         self.assertEqual(n_dir_train, 3)
         self.assertEqual(n_plots_train, 19)
-        self.assertEqual(n_latent_train, 3)
+        self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
 
         evaluate(
@@ -190,7 +190,7 @@ class TrainEvalTest(unittest.TestCase):
         n_states_eval = len(os.listdir(os.path.join(temp_dir.name, "states")))
 
         self.assertEqual(n_plots_eval, 28)
-        self.assertEqual(n_latent_eval, 6)
+        self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 2)
 
         shutil.rmtree(temp_dir.name)
