@@ -20,6 +20,7 @@ FREQ_STA = 10
 
 DEFAULT_RUN_CONFIGS = {
     "limit": None,
+    "restart": False,
     "split": 20,
     "depth": 3,
     "channels": 64,

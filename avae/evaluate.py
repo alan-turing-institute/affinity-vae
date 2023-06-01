@@ -51,11 +51,12 @@ def evaluate(datapath, state, lim, splt, batch_s, collect_meta, use_gpu):
             state = sorted([s for s in os.listdir("states") if ".pt" in s])[0]
             state = os.path.join("states", state)
 
-    # TODO add param to chose model
     fname = state.split(".")[0].split("_")
     pose_dims = fname[3]
-    vae = torch.load(state)  # make optional param
 
+    vae = []
+    checkpoint = torch.load(state)
+    vae.load_state_dict(checkpoint["model_state_dict"])
     vae.to(device)
 
     # ########################## EVALUATE ################################

@@ -1,5 +1,6 @@
 import logging
 import os
+import warnings
 from datetime import datetime
 
 import click
@@ -32,10 +33,18 @@ logging.basicConfig(
     help="Path to training data.",
 )
 @click.option(
+    "--restart",
+    "-res",
+    type=bool,
+    default=None,
+    help="Is the calculation restarting from a checkpoint.",
+)
+@click.option(
     "--state",
     "-st",
     type=str,
     default=None,
+    is_flag=True,
     help="The saved model state to be loaded for evaluation/resume training.",
 )
 @click.option(
@@ -374,6 +383,7 @@ logging.basicConfig(
 def run(
     config_file,
     datapath,
+    restart,
     state,
     limit,
     split,
@@ -422,6 +432,9 @@ def run(
     dynamic,
     model,
 ):
+
+    warnings.simplefilter("ignore", FutureWarning)
+
     # read config file and command line arguments and assign to local variables that are used in the rest of the code
     local_vars = locals().copy()
     if config_file is not None:
@@ -429,6 +442,7 @@ def run(
             logging.info("Reading submission configuration file" + config_file)
             data = yaml.load(f, Loader=yaml.FullLoader)
         # returns JSON object as
+
         for key, val in local_vars.items():
             if (
                 val is not None
@@ -551,6 +565,8 @@ def run(
         if not data["eval"]:
             train(
                 datapath=data["datapath"],
+                restart=data["restart"],
+                state=data["state"],
                 lim=data["limit"],
                 splt=data["split"],
                 batch_s=data["batch"],
