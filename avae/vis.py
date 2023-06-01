@@ -155,7 +155,12 @@ def latent_embed_plot_tsne(xs, ys, title=""):
     fig, ax = plt.subplots()
     xs = np.asarray(xs)
     ys = np.asarray(ys)
-    lats = TSNE(n_components=2, perplexity=40, random_state=42).fit_transform(
+
+    perplexity = 40
+    if len(ys) < perplexity:
+        perplexity = len(ys) - 1
+
+    lats = TSNE(n_components=2, perplexity=perplexity, random_state=42).fit_transform(
         xs
     )
     plt.clf()
