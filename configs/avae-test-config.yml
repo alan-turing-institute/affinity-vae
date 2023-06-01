@@ -4,7 +4,7 @@ datapath: data/shrec21_full_dataset/subtomo_files
 affinity: data/shrec21_full_dataset/subtomo_files/affinity.csv
 classes: data/shrec21_full_dataset/subtomo_files/classes.csv
 state : /your_path_to_saved_state/state.pt
-
+restart: True
 limit: 1000
 split: 20
 
