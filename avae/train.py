@@ -18,6 +18,8 @@ from .utils import set_device
 
 def train(
     datapath,
+    restart,
+    state,
     lim,
     splt,
     batch_s,
@@ -143,11 +145,28 @@ def train(
         lat_dims,
         pose_dims=pose_dims,
     )
+
     vae.to(device)
 
     optimizer = torch.optim.Adam(
         params=vae.parameters(), lr=learning  # , weight_decay=1e-5
     )
+    t_history = []
+    v_history = []
+    e_start = 0
+
+    if restart and state is None:
+        raise RuntimeError(
+            "The restart flag is true however a path to a model state is not provided"
+        )
+
+    if restart:
+        checkpoint = torch.load(state)
+        vae.load_state_dict(checkpoint["model_state_dict"])
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        e_start = checkpoint["epoch"]
+        t_history = checkpoint["t_loss_history"]
+        v_history = checkpoint["v_loss_history"]
 
     if beta_max == 0 and cyc_method_beta != "flat":
         raise RuntimeError(
@@ -155,6 +174,7 @@ def train(
             "oscillate between a maximum and minimum. Please choose the flat method for"
             "cyc_method_beta"
         )
+
     beta_arr = cyc_annealing(
         epochs,
         cyc_method_beta,
@@ -191,9 +211,6 @@ def train(
         recon_fn=recon_fn,
     )
 
-    t_history = []
-    v_history = []
-
     print(
         "Epoch: [0/%d] | Batch: [0/%d] | Loss: -- | Recon: -- | "
         "KLdiv: -- | Affin: -- | Beta: --" % (epochs, len(trains)),
@@ -202,7 +219,7 @@ def train(
     )
 
     # ########################## TRAINING LOOP ################################
-    for epoch in range(epochs):
+    for epoch in range(e_start, epochs):
 
         if collect_meta:
             meta_df = pd.DataFrame()
@@ -339,7 +356,27 @@ def train(
                 + str(pose_dims)
                 + ".pt"
             )
-            torch.save(vae, os.path.join("states", mname))
+
+            print(
+                "\n################################################################",
+                flush=True,
+            )
+            print(
+                "Saving model state for restarting and evaluation ...\n",
+                flush=True,
+            )
+
+            torch.save(
+                {
+                    "epoch": epoch + 1,
+                    "model_state_dict": vae.state_dict(),
+                    "optimizer_state_dict": optimizer.state_dict(),
+                    "t_loss_history": t_history,
+                    "v_loss_history": v_history,
+                },
+                os.path.join("states", mname),
+            )
+
             if collect_meta:
                 meta_df.to_pickle(
                     os.path.join("states", "meta_" + timestamp + ".pkl")
