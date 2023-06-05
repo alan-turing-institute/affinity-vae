@@ -370,6 +370,7 @@ def train(
                 {
                     "epoch": epoch + 1,
                     "model_state_dict": vae.state_dict(),
+                    "model_class_object": vae,
                     "optimizer_state_dict": optimizer.state_dict(),
                     "t_loss_history": t_history,
                     "v_loss_history": v_history,
