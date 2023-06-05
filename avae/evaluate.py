@@ -54,8 +54,8 @@ def evaluate(datapath, state, lim, splt, batch_s, collect_meta, use_gpu):
     fname = state.split(".")[0].split("_")
     pose_dims = fname[3]
 
-    vae = []
     checkpoint = torch.load(state)
+    vae = checkpoint["model_class_object"]
     vae.load_state_dict(checkpoint["model_state_dict"])
     vae.to(device)
 
