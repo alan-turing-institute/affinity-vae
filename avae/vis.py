@@ -134,7 +134,7 @@ def merge(im):
     return f"data:image/png;base64,{data}"
 
 
-def latent_embed_plot_tsne(xs, ys, title=""):
+def latent_embed_plot_tsne(xs, ys, mode=""):
     """Plot static TSNE embedding.
 
     Parameters
@@ -143,8 +143,8 @@ def latent_embed_plot_tsne(xs, ys, title=""):
         List of latent vectors.
     ys: list
         List of labels.
-    title: str
-        Added title to the name of the saved figure.
+    mode: str
+        Added data mode to the name of the saved figure (e.g train, valid, eval).
     """
     print(
         "\n################################################################",
@@ -152,14 +152,15 @@ def latent_embed_plot_tsne(xs, ys, title=""):
     )
     print("Visualising static TSNE embedding...\n", flush=True)
 
-    fig, ax = plt.subplots()
     xs = np.asarray(xs)
     ys = np.asarray(ys)
     lats = TSNE(n_components=2, perplexity=40, random_state=42).fit_transform(
         xs
     )
-    plt.clf()
-
+    n_classes = len(np.unique(ys))
+    fig, ax = plt.subplots(
+        figsize=(int(n_classes / 2) + 2, int(n_classes / 2))
+    )
     for mol_id, mol in enumerate(set(ys.tolist())):
         idx = np.where(np.array(ys.tolist()) == mol)[0]
         cmap = plt.cm.get_cmap("tab20")
@@ -167,20 +168,22 @@ def latent_embed_plot_tsne(xs, ys, title=""):
         plt.scatter(
             lats[idx, 0],
             lats[idx, 1],
-            s=14,
+            s=24,
             label=mol[:4],
             facecolor=color,
             edgecolor=color,
             alpha=0.2,
         )
 
-    plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=16)
+    ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=16)
+    plt.xlabel("TSNE-1")
+    plt.ylabel("TSNE-2")
     plt.tight_layout()
-    plt.savefig(f"plots/embedding_TSNE{title}.png")
+    plt.savefig(f"plots/embedding_TSNE{mode}.png")
     plt.close()
 
 
-def latent_embed_plot_umap(xs, ys, title=""):
+def latent_embed_plot_umap(xs, ys, mode=""):
     """Plot static UMAP embedding.
 
     Parameters
@@ -189,8 +192,8 @@ def latent_embed_plot_umap(xs, ys, title=""):
         List of latent vectors.
     ys: list
         List of labels.
-    title: str
-        Added title to the name of the saved figure.
+    mode: str
+        Added data mode to the name of the saved figure (e.g train, valid, eval).
     """
     print(
         "\n################################################################",
@@ -200,7 +203,11 @@ def latent_embed_plot_umap(xs, ys, title=""):
     reducer = umap.UMAP(random_state=42)
     embedding = reducer.fit_transform(xs)
 
-    fig, ax = plt.subplots()
+    n_classes = len(np.unique(ys))
+
+    fig, ax = plt.subplots(
+        figsize=(int(n_classes / 2) + 2, int(n_classes / 2))
+    )
 
     for mol_id, mol in enumerate(set(ys.tolist())):
         idx = np.where(np.array(ys.tolist()) == mol)[0]
@@ -211,7 +218,7 @@ def latent_embed_plot_umap(xs, ys, title=""):
         ax.scatter(
             embedding[idx, 0],
             embedding[idx, 1],
-            s=14,
+            s=24,
             label=mol[:4],
             facecolor=color,
             edgecolor=color,
@@ -219,13 +226,14 @@ def latent_embed_plot_umap(xs, ys, title=""):
         )
 
     ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=16)
-
+    plt.xlabel("UMAP-1")
+    plt.ylabel("UMAP-2")
     plt.tight_layout()
-    plt.savefig(f"plots/embedding_UMAP{title}.png")
+    plt.savefig(f"plots/embedding_UMAP{mode}.png")
     plt.close()
 
 
-def dyn_latentembed_plot(df, epoch, embedding="umap"):
+def dyn_latentembed_plot(df, epoch, embedding="umap", mode=""):
     """Plot dynamic TSNE or UMAP embedding.
 
     Parameters
@@ -236,6 +244,8 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
         Current epoch.
     embedding: str
         Type of embedding to use, either 'umap' or 'tsne'.
+    mode: str
+        Added data mode to the name of the saved figure (e.g train, valid, eval).
     """
     print(
         "\n################################################################",
@@ -255,7 +265,9 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
         titley = "UMAP-2"
     else:
         lat_emb = np.array(
-            TSNE(n_components=2, random_state=42).fit_transform(latentspace)
+            TSNE(n_components=2, perplexity=40, random_state=42).fit_transform(
+                latentspace
+            )
         )
         titlex = "t-SNE-1"
         titley = "t-SNE-2"
@@ -299,7 +311,9 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
             x=altair.X("mode:N", axis=altair.Axis(orient="bottom")),
             shape=altair.Shape(
                 "mode",
-                scale=altair.Scale(range=["square", "circle", "triangle"]),
+                scale=altair.Scale(
+                    range=["square", "circle", "triangle", "diamond"]
+                ),
                 title="mode",
                 legend=None,
             ),
@@ -316,17 +330,14 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
     if not os.path.exists("latents"):
         os.mkdir("latents")
         # save latentspace and ids
-    df[[col for col in df if col.startswith(("lat", "id"))]].to_csv(
-        f"latents/latentspace_epoch_{epoch}.csv", index=False
-    )
     if embedding == "umap":
-        chart.save(f"latents/plt_latent_embed_epoch_{epoch}_umap.html")
+        chart.save(f"latents/plt_latent_embed_epoch_{epoch}_umap{mode}.html")
     elif embedding == "tsne":
-        chart.save(f"latents/plt_latent_embed_epoch_{epoch}_tsne.html")
+        chart.save(f"latents/plt_latent_embed_epoch_{epoch}_tsne{mode}.html")
 
 
 def accuracy_plot(
-    y_train, ypred_train, y_val, ypred_val, classes=None, title=""
+    y_train, ypred_train, y_val, ypred_val, classes=None, mode=""
 ):
     """Plot confusion matrix  and F1 values.
 
@@ -337,13 +348,13 @@ def accuracy_plot(
     ypred_train: np.array
         Predicted training labels.
     y_val: np.array
-        Validation labels.
+        Validation labels (unseen data).
     ypred_val: np.array
-        Predicted validation labels.
+        Predicted validation labels (unseen data).
     classes: str
         Path to csv file containing classes to be used.
-    title: str
-        Added title to the name of the saved figure.
+    mode: str
+        Added data mode to the name of the saved figures (e.g train, valid, eval).
     """
     print(
         "\n################################################################",
@@ -374,7 +385,7 @@ def accuracy_plot(
         if not os.path.exists("plots"):
             os.mkdir("plots")
 
-        plt.savefig(f"plots/confusion_train{title}.png", dpi=300)
+        plt.savefig(f"plots/confusion_train{mode}.png", dpi=300)
         plt.close()
 
     classes_list_eval = np.unique(np.concatenate((y_val, ypred_val)))
@@ -382,6 +393,13 @@ def accuracy_plot(
     disp = ConfusionMatrixDisplay(
         confusion_matrix=cm, display_labels=classes_list_eval
     )
+
+    if mode == "_eval":
+        figure_name = "plots/confusion_eval.png"
+    elif mode == "":
+        figure_name = "plots/confusion_valid.png"
+    else:
+        figure_name = f"plots/confusion_{mode}.png"
 
     with plt.rc_context(
         {"font.weight": "bold", "font.size": int(len(classes_list) / 3) + 3}
@@ -391,18 +409,23 @@ def accuracy_plot(
         )
         disp.plot(cmap=plt.cm.Blues, ax=ax, xticks_rotation=90)
         plt.tight_layout()
-        plt.savefig(f"plots/confusion_valid{title}.png", dpi=300)
+        plt.savefig(figure_name, dpi=300)
         plt.close()
 
     train_f1_score = f1_score(y_train, ypred_train, average=None)
     valid_f1_score = f1_score(y_val, ypred_val, average=None)
 
+    if mode == "_eval":
+        label = "eval"
+    else:
+        label = "valid"
+
     plt.figure()
     plt.plot(classes_list, train_f1_score, label="train")
-    plt.plot(classes_list_eval, valid_f1_score, label="valid")
+    plt.plot(classes_list_eval, valid_f1_score, label=label)
     plt.xticks(rotation=90)
     plt.ylabel("F1 Score")
-    plt.savefig(f"plots/f1{title}.png", dpi=150)
+    plt.savefig(f"plots/f1{mode}.png", dpi=150)
     plt.close()
 
 
