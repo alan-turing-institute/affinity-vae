@@ -42,6 +42,8 @@ class TrainEvalTest(unittest.TestCase):
             "cyc_method_gamma": "flat",
             "recon_fn": "MSE",
             "use_gpu": False,
+            "restart": False,
+            "state": None,
         }
 
         config.FREQ_ACC = 5
@@ -96,6 +98,8 @@ class TrainEvalTest(unittest.TestCase):
             recon_fn=self.data["recon_fn"],
             use_gpu=self.data["recon_fn"],
             model="b",
+            restart=self.data["restart"],
+            state=self.data["state"],
         )
 
         n_dir_train = len(next(os.walk(temp_dir.name))[1])
@@ -106,7 +110,7 @@ class TrainEvalTest(unittest.TestCase):
         n_states_train = len(os.listdir(os.path.join(temp_dir.name, "states")))
 
         self.assertEqual(n_dir_train, 3)
-        self.assertEqual(n_plots_train, 19)
+        self.assertEqual(n_plots_train, 21)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
 
@@ -117,13 +121,14 @@ class TrainEvalTest(unittest.TestCase):
             batch_s=self.data["batch_s"],
             collect_meta=True,
             use_gpu=self.data["use_gpu"],
+            state=self.data["state"],
         )
 
         n_plots_eval = len(os.listdir(os.path.join(temp_dir.name, "plots")))
         n_latent_eval = len(os.listdir(os.path.join(temp_dir.name, "latents")))
         n_states_eval = len(os.listdir(os.path.join(temp_dir.name, "states")))
 
-        self.assertEqual(n_plots_eval, 28)
+        self.assertEqual(n_plots_eval, 31)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 2)
 
@@ -162,6 +167,8 @@ class TrainEvalTest(unittest.TestCase):
             recon_fn=self.data["recon_fn"],
             use_gpu=self.data["recon_fn"],
             model="b",
+            restart=self.data["restart"],
+            state=self.data["state"],
         )
 
         n_dir_train = len(next(os.walk(temp_dir.name))[1])
@@ -172,7 +179,7 @@ class TrainEvalTest(unittest.TestCase):
         n_states_train = len(os.listdir(os.path.join(temp_dir.name, "states")))
 
         self.assertEqual(n_dir_train, 3)
-        self.assertEqual(n_plots_train, 19)
+        self.assertEqual(n_plots_train, 21)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
 
@@ -183,13 +190,14 @@ class TrainEvalTest(unittest.TestCase):
             batch_s=self.data["batch_s"],
             collect_meta=True,
             use_gpu=self.data["use_gpu"],
+            state=self.data["state"],
         )
 
         n_plots_eval = len(os.listdir(os.path.join(temp_dir.name, "plots")))
         n_latent_eval = len(os.listdir(os.path.join(temp_dir.name, "latents")))
         n_states_eval = len(os.listdir(os.path.join(temp_dir.name, "states")))
 
-        self.assertEqual(n_plots_eval, 28)
+        self.assertEqual(n_plots_eval, 31)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 2)
 
