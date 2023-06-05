@@ -111,7 +111,12 @@ def train(
 
     """
     torch.manual_seed(42)
-    timestamp = str(datetime.datetime.now().strftime("%Y%m%d_%H:%M:%S"))
+
+    # This time stamp is  commented out because it doesnt work the same on all devices
+    # timestamp = str(datetime.datetime.now().strftime("%Y-%m-%d_T%H:%M:%S.%f"))
+
+    curr_dt = datetime.datetime.now()
+    timestamp = str(int(round(curr_dt.timestamp())))
 
     # ############################### DATA ###############################
     trains, vals, tests, lookup = load_data(
@@ -175,14 +180,16 @@ def train(
             "cyc_method_beta"
         )
 
-    beta_arr = cyc_annealing(
-        epochs,
-        cyc_method_beta,
-        start=beta_min,
-        stop=beta_max,
-        n_cycle=beta_cycle,
-        ratio=beta_ratio,
-    ).var
+    beta_arr = (
+        cyc_annealing(
+            epochs,
+            cyc_method_beta,
+            n_cycle=beta_cycle,
+            ratio=beta_ratio,
+        ).var
+        * (beta_max - beta_min)
+        + beta_min
+    )
 
     if gamma_max == 0 and cyc_method_gamma != "flat":
         raise RuntimeError(
@@ -190,14 +197,16 @@ def train(
             "oscillate between a maximum and minimum. Please choose the flat method for"
             "cyc_method_gamma"
         )
-    gamma_arr = cyc_annealing(
-        epochs,
-        cyc_method_gamma,
-        start=gamma_min,
-        stop=gamma_max,
-        n_cycle=gamma_cycle,
-        ratio=gamma_ratio,
-    ).var
+    gamma_arr = (
+        cyc_annealing(
+            epochs,
+            cyc_method_gamma,
+            n_cycle=gamma_cycle,
+            ratio=gamma_ratio,
+        ).var
+        * (gamma_max - gamma_min)
+        + gamma_min
+    )
 
     if config.VIS_CYC:
         vis.plot_cyc_variable(beta_arr, "beta")
