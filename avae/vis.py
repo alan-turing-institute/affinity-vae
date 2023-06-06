@@ -389,6 +389,9 @@ def accuracy_plot(
         plt.close()
 
     classes_list_eval = np.unique(np.concatenate((y_val, ypred_val)))
+    classes_list_eval = sorted(
+        classes_list_eval, key={k: v for v, k in enumerate(classes_list)}.get
+    )
     cm = confusion_matrix(y_val, ypred_val)
     disp = ConfusionMatrixDisplay(
         confusion_matrix=cm, display_labels=classes_list_eval
