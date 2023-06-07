@@ -235,7 +235,7 @@ class ProteinDataset(Dataset):
                 [
                     transforms.ToTensor(),
                     transforms.Lambda(lambda x: x.unsqueeze(0)),
-                    transforms.Normalize(0, 1, inplace=True)
+                    # transforms.Normalize(0, 1, inplace=True)
                     # transforms.Resize(64),
                     # transforms.Lambda(lambda x: \
                     # (x - x.min()) / (x.max() - x.min()))
