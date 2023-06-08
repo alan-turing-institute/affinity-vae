@@ -129,31 +129,12 @@ def evaluate(datapath, state, lim, splt, batch_s, collect_meta, use_gpu):
     if collect_meta:
         # merge img and rec into one image for display in altair
         meta_df["image"] = meta_df["image"].apply(vis.merge)
-        vis.dyn_latentembed_plot(meta_df, 0, embedding="umap", mode="_eval")
-        vis.dyn_latentembed_plot(meta_df, 0, embedding="tsne", mode="_eval")
 
         # get training latent space from metadata for comparison and accuracy estimation
         latents_training = meta_df[meta_df["mode"] == "trn"][
             [col for col in meta_df if col.startswith("lat")]
         ].to_numpy()
         latents_training_id = meta_df[meta_df["mode"] == "trn"]["id"]
-
-        # visualise embeddings
-        if config.VIS_EMB:
-            vis.latent_embed_plot_umap(
-                np.concatenate([x_test, latents_training]),
-                np.concatenate(
-                    [np.array(y_test), np.array(latents_training_id)]
-                ),
-                "_train_eval_comparison",
-            )
-            vis.latent_embed_plot_tsne(
-                np.concatenate([x_test, latents_training]),
-                np.concatenate(
-                    [np.array(y_test), np.array(latents_training_id)]
-                ),
-                "_train_eval_comparison",
-            )
 
         # visualise accuracy
         train_acc, val_acc, ypred_train, ypred_val = accuracy(
@@ -173,3 +154,23 @@ def evaluate(datapath, state, lim, splt, batch_s, collect_meta, use_gpu):
             ypred_val,
             mode="_eval",
         )
+
+        vis.dyn_latentembed_plot(meta_df, 0, embedding="umap", mode="_eval")
+        vis.dyn_latentembed_plot(meta_df, 0, embedding="tsne", mode="_eval")
+
+        # visualise embeddings
+        if config.VIS_EMB:
+            vis.latent_embed_plot_umap(
+                np.concatenate([x_test, latents_training]),
+                np.concatenate(
+                    [np.array(y_test), np.array(latents_training_id)]
+                ),
+                "_train_eval_comparison",
+            )
+            vis.latent_embed_plot_tsne(
+                np.concatenate([x_test, latents_training]),
+                np.concatenate(
+                    [np.array(y_test), np.array(latents_training_id)]
+                ),
+                "_train_eval_comparison",
+            )

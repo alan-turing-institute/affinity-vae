@@ -367,7 +367,7 @@ def accuracy_plot(
     else:
         classes_list = np.unique(np.concatenate((y_train, ypred_train)))
 
-    cm = confusion_matrix(y_train, ypred_train)
+    cm = confusion_matrix(y_train, ypred_train, labels=classes_list)
     disp = ConfusionMatrixDisplay(
         confusion_matrix=cm, display_labels=classes_list
     )
@@ -389,12 +389,14 @@ def accuracy_plot(
         plt.close()
 
     classes_list_eval = np.unique(np.concatenate((y_val, ypred_val)))
-    classes_list_eval = sorted(
-        classes_list_eval, key={k: v for v, k in enumerate(classes_list)}.get
+    common_elements = np.intersect1d(classes_list, classes_list_eval)
+    ordered_class_eval = np.concatenate(
+        (common_elements, np.setdiff1d(classes_list_eval, common_elements))
     )
-    cm = confusion_matrix(y_val, ypred_val)
-    disp = ConfusionMatrixDisplay(
-        confusion_matrix=cm, display_labels=classes_list_eval
+
+    cm_eval = confusion_matrix(y_val, ypred_val, labels=ordered_class_eval)
+    disp_eval = ConfusionMatrixDisplay(
+        confusion_matrix=cm_eval, display_labels=ordered_class_eval
     )
 
     if mode == "_eval":
@@ -405,12 +407,18 @@ def accuracy_plot(
         figure_name = f"plots/confusion_{mode}.png"
 
     with plt.rc_context(
-        {"font.weight": "bold", "font.size": int(len(classes_list) / 3) + 3}
+        {
+            "font.weight": "bold",
+            "font.size": int(len(ordered_class_eval) / 3) + 3,
+        }
     ):
         fig, ax = plt.subplots(
-            figsize=(int(len(classes_list)) / 2, int(len(classes_list)) / 2)
+            figsize=(
+                int(len(ordered_class_eval)) / 2,
+                int(len(ordered_class_eval)) / 2,
+            )
         )
-        disp.plot(cmap=plt.cm.Blues, ax=ax, xticks_rotation=90)
+        disp_eval.plot(cmap=plt.cm.Blues, ax=ax, xticks_rotation=90)
         plt.tight_layout()
         plt.savefig(figure_name, dpi=300)
         plt.close()
