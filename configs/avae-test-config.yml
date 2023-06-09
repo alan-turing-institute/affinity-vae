@@ -57,6 +57,7 @@ vis_int:  false  # latent interpolations on/off
 vis_dis:  false  # latent disentanglement on/off
 vis_pos:  false  # pose disentanglement on/off
 vis_his:  false  # class distribution histogram on/off
+vis_sim:  false  # latent space similarity matrix on/off
 vis_all:  true   # sets all above to on/off
 dynamic: true    # dynamic embedding visualisations on/off (freq same as freq_emb)
 

@@ -7,6 +7,7 @@ VIS_INT = False
 VIS_DIS = False
 VIS_POS = False
 VIS_HIS = False
+VIS_SIM = False
 
 FREQ_ACC = 10
 FREQ_REC = 10
@@ -62,6 +63,7 @@ DEFAULT_RUN_CONFIGS = {
     "vis_pos": VIS_POS,
     "vis_acc": VIS_ACC,
     "vis_his": VIS_HIS,
+    "vis_sim": VIS_SIM,
     "vis_all": False,
     "model": "a",
 }

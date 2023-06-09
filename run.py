@@ -342,6 +342,14 @@ logging.basicConfig(
     help="Visualise train-val class distribution.",
 )
 @click.option(
+    "--vis_sim",
+    "-similarity",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise train-val model similarity matrix.",
+)
+@click.option(
     "--vis_all",
     "-va",
     type=bool,
@@ -426,6 +434,7 @@ def run(
     vis_pos,
     vis_acc,
     vis_his,
+    vis_sim,
     vis_all,
     gpu,
     eval,
@@ -531,6 +540,7 @@ def run(
             config.VIS_POS = True
             config.VIS_ACC = True
             config.VIS_HIS = True
+            config.VIS_SIM = True
 
         else:
             config.VIS_CYC = data["vis_cyc"]
@@ -542,6 +552,7 @@ def run(
             config.VIS_POS = data["vis_pos"]
             config.VIS_ACC = data["vis_acc"]
             config.VIS_HIS = data["vis_his"]
+            config.VIS_SIM = data["vis_sim"]
 
         if data["freq_all"] is not None:
             config.FREQ_EVAL = data["freq_all"]
