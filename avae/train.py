@@ -575,6 +575,7 @@ def pass_batch(
     aff = aff.to(device)
 
     # forward
+    x = x.to(torch.float32)
     x_hat, lat_mu, lat_logvar, lat, lat_pose = vae(x)
     if loss is not None:
         history_loss = loss(x, x_hat, lat_mu, lat_logvar, e, batch_aff=aff)
