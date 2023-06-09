@@ -394,6 +394,10 @@ def train(
 
         # ########################## VISUALISE ################################
 
+        if config.VIS_SIM and epoch > 0:
+            vis.latent_space_similarity(x_train, np.array(y_train), "_train")
+            vis.latent_space_similarity(x_val, np.array(y_val), "_valid")
+
         # visualise accuracy
         if config.VIS_ACC and (epoch + 1) % config.FREQ_ACC == 0:
             train_acc, val_acc, ypred_train, ypred_val = accuracy(
