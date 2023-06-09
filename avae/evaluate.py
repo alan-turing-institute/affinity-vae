@@ -56,7 +56,6 @@ def evaluate(datapath, state, lim, splt, batch_s, collect_meta, use_gpu):
     fname = state.split(".")[0].split("_")
     pose_dims = fname[3]
 
-
     print("Loading model from: ", state, flush=True)
     checkpoint = torch.load(state)
     vae = checkpoint["model_class_object"]
