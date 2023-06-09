@@ -37,6 +37,7 @@ class DataTest(unittest.TestCase):
         out = load_data(
             "./eval", lim=None, batch_s=32, collect_meta=False, eval=True
         )
+        print(os.getcwd())
 
         # test load_data
         assert len(out) == 1
