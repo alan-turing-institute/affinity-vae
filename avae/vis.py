@@ -373,7 +373,7 @@ def accuracy_plot(
     else:
         classes_list = np.unique(np.concatenate((y_train, ypred_train)))
 
-    cm = confusion_matrix(y_train, ypred_train)
+    cm = confusion_matrix(y_train, ypred_train, labels=classes_list)
     disp = ConfusionMatrixDisplay(
         confusion_matrix=cm, display_labels=classes_list
     )
@@ -395,9 +395,14 @@ def accuracy_plot(
         plt.close()
 
     classes_list_eval = np.unique(np.concatenate((y_val, ypred_val)))
-    cm = confusion_matrix(y_val, ypred_val)
-    disp = ConfusionMatrixDisplay(
-        confusion_matrix=cm, display_labels=classes_list_eval
+    common_elements = np.intersect1d(classes_list, classes_list_eval)
+    ordered_class_eval = np.concatenate(
+        (common_elements, np.setdiff1d(classes_list_eval, common_elements))
+    )
+
+    cm_eval = confusion_matrix(y_val, ypred_val, labels=ordered_class_eval)
+    disp_eval = ConfusionMatrixDisplay(
+        confusion_matrix=cm_eval, display_labels=ordered_class_eval
     )
 
     if mode == "_eval":
@@ -408,12 +413,18 @@ def accuracy_plot(
         figure_name = f"plots/confusion_{mode}.png"
 
     with plt.rc_context(
-        {"font.weight": "bold", "font.size": int(len(classes_list) / 3) + 3}
+        {
+            "font.weight": "bold",
+            "font.size": int(len(ordered_class_eval) / 3) + 3,
+        }
     ):
         fig, ax = plt.subplots(
-            figsize=(int(len(classes_list)) / 2, int(len(classes_list)) / 2)
+            figsize=(
+                int(len(ordered_class_eval)) / 2,
+                int(len(ordered_class_eval)) / 2,
+            )
         )
-        disp.plot(cmap=plt.cm.Blues, ax=ax, xticks_rotation=90)
+        disp_eval.plot(cmap=plt.cm.Blues, ax=ax, xticks_rotation=90)
         plt.tight_layout()
         plt.savefig(figure_name, dpi=300)
         plt.close()
@@ -534,6 +545,7 @@ def loss_plot(epochs, beta, gamma, train_loss, val_loss=None, p=None):
         plt.plot(
             range(1, epochs + 1), loss, c=cols[i], linestyle=s, label=labs[i]
         )
+
     plt.yscale("log")
     plt.ylabel("Loss", fontsize=16)
     plt.xlabel("Epochs", fontsize=16)
@@ -542,6 +554,32 @@ def loss_plot(epochs, beta, gamma, train_loss, val_loss=None, p=None):
     plt.legend()
     plt.tight_layout()
     plt.savefig("plots/loss_train.png", dpi=300)
+    plt.close()
+
+    # plotting only the total loss as it sometimes is a few order of magnitude higher than KLD and affinity losses
+    plt.plot(
+        range(1, epochs + 1),
+        train_loss[0],
+        c=cols[0],
+        linestyle="-",
+        label=labs[0],
+    )
+    plt.plot(
+        range(1, epochs + 1),
+        val_loss[0],
+        c=cols[0],
+        linestyle="--",
+        label=vlabs[0],
+    )
+    plt.yscale("log")
+    plt.ylabel("Loss", fontsize=16)
+    plt.xlabel("Epochs", fontsize=16)
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig("plots/loss_total.png", dpi=300)
+    plt.close()
 
 
 def recon_plot(img, rec, name="trn"):

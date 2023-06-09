@@ -11,7 +11,6 @@ from .utils import set_device
 
 
 def evaluate(datapath, state, lim, splt, batch_s, collect_meta, use_gpu):
-
     """Function for evaluating the model. Loads the data, model and runs the evaluation. Saves the results of the
     evaluation in the plot and latents directories.
 
@@ -48,12 +47,17 @@ def evaluate(datapath, state, lim, splt, batch_s, collect_meta, use_gpu):
                 "There are no existing model states saved or provided via the state flag in config unable to evaluate."
             )
         else:
-            state = sorted([s for s in os.listdir("states") if ".pt" in s])[0]
+            state = sorted(
+                [s for s in os.listdir("states") if ".pt" in s],
+                key=lambda x: int(x.split("_")[2][1:]),
+            )[-1]
             state = os.path.join("states", state)
 
     fname = state.split(".")[0].split("_")
     pose_dims = fname[3]
 
+
+    print("Loading model from: ", state, flush=True)
     checkpoint = torch.load(state)
     vae = checkpoint["model_class_object"]
     vae.load_state_dict(checkpoint["model_state_dict"])

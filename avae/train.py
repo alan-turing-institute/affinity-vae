@@ -400,6 +400,16 @@ def train(
                 x_train, y_train, x_val, y_val
             )
             print(
+                "Epoch: [%d/%d] |   Gamma: %f | Beta: %f"
+                % (
+                    epoch + 1,
+                    epochs,
+                    gamma_arr[epoch],
+                    beta_arr[epoch],
+                )
+            )
+
+            print(
                 "\n------------------->>> Accuracy: Train: %f | Val: %f\n"
                 % (train_acc, val_acc),
                 flush=True,
