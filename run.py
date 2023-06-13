@@ -48,6 +48,14 @@ logging.basicConfig(
     help="The saved model state to be loaded for evaluation/resume training.",
 )
 @click.option(
+    "--meta",
+    "-mt",
+    type=str,
+    default=None,
+    is_flag=True,
+    help="The saved meta file to be loaded for regenerating dynamic plots.",
+)
+@click.option(
     "--limit",
     "-lm",
     type=int,
@@ -127,6 +135,15 @@ logging.basicConfig(
     help="Beta maximum in the case of cyclical annealing schedule",
 )
 @click.option(
+    "--beta_load",
+    "-bl",
+    type=str,
+    default=None,
+    is_flag=True,
+    help="The path to the saved beta array file to be loaded "
+    "if this file is provided, all other beta related variables would be ignored",
+)
+@click.option(
     "--gamma",
     "-g",
     type=float,
@@ -134,6 +151,15 @@ logging.basicConfig(
     help="Scale factor for the loss component corresponding "
     "to shape similarity. If 0 and pd=0 it becomes a standard"
     "beta-VAE.",
+)
+@click.option(
+    "--gamma_load",
+    "-gl",
+    type=str,
+    default=None,
+    is_flag=True,
+    help="The path to the saved gamma array file to be loaded"
+    "if this file is provided, all other gamma related variables would be ignored",
 )
 @click.option(
     "--learning",
@@ -385,6 +411,7 @@ def run(
     datapath,
     restart,
     state,
+    meta,
     limit,
     split,
     no_val_drop,
@@ -397,6 +424,8 @@ def run(
     latent_dims,
     pose_dims,
     beta,
+    beta_load,
+    gamma_load,
     gamma,
     learning,
     loss_fn,
@@ -508,6 +537,12 @@ def run(
                     + key
                     + " in config file or command line arguments. Loading the latest state if in evaluation mode."
                 )
+            elif key == "meta":
+                logging.warning(
+                    "No value set for "
+                    + key
+                    + " in config file or command line arguments. Loading the latest meta if in evaluation mode."
+                )
             else:
                 # set missing variables to default value
                 logging.warning(
@@ -580,11 +615,13 @@ def run(
                 lat_dims=data["latent_dims"],
                 pose_dims=data["pose_dims"],
                 learning=data["learning"],
+                beta_load=data["beta_load"],
                 beta_min=data["beta_min"],
                 beta_max=data["beta"],
                 beta_cycle=data["beta_cycle"],
                 beta_ratio=data["beta_ratio"],
                 cyc_method_beta=data["cyc_method_beta"],
+                gamma_load=data["gamma_load"],
                 gamma_min=data["gamma_min"],
                 gamma_max=data["gamma"],
                 gamma_cycle=data["gamma_cycle"],
@@ -598,6 +635,7 @@ def run(
             evaluate(
                 datapath=data["datapath"],
                 state=data["state"],
+                meta=data["meta"],
                 lim=data["limit"],
                 splt=data["split"],
                 batch_s=data["batch"],

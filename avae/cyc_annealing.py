@@ -71,7 +71,7 @@ class cyc_annealing:
             )
 
     def _frange_flat(self):
-        L = np.ones(self.n_epoch) * self.stop
+        L = np.ones(self.n_epoch)
         return L
 
     def _frange_cycle_linear(self):

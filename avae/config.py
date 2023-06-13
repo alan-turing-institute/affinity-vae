@@ -33,6 +33,8 @@ DEFAULT_RUN_CONFIGS = {
     "gpu": True,
     "beta": 1.0,
     "gamma": 2,
+    "beta_load": None,
+    "gamma_load": None,
     "loss_fn": "MSE",
     "beta_min": 0.0,
     "beta_cycle": 4,

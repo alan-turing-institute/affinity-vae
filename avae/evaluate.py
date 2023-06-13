@@ -10,7 +10,7 @@ from .train import accuracy, add_meta, pass_batch
 from .utils import set_device
 
 
-def evaluate(datapath, state, lim, splt, batch_s, collect_meta, use_gpu):
+def evaluate(datapath, state, meta, lim, splt, batch_s, collect_meta, use_gpu):
     """Function for evaluating the model. Loads the data, model and runs the evaluation. Saves the results of the
     evaluation in the plot and latents directories.
 
@@ -20,6 +20,8 @@ def evaluate(datapath, state, lim, splt, batch_s, collect_meta, use_gpu):
         Path to the data directory.
     state: str
         Path to the model state file to be used for evaluation/resume.
+    meta: str
+        Path to the meta file to be used for evaluation/resume.
     lim: int
         Limit the number of samples to load.
     splt: int
@@ -63,9 +65,15 @@ def evaluate(datapath, state, lim, splt, batch_s, collect_meta, use_gpu):
     vae.to(device)
 
     # ########################## EVALUATE ################################
-    if collect_meta:
-        metas = sorted([f for f in os.listdir("states") if ".pkl" in f])[-1]
-        meta_df = pd.read_pickle(os.path.join("states", metas))
+
+    if meta is None:
+        if collect_meta:
+            metas = sorted([f for f in os.listdir("states") if ".pkl" in f])[
+                -1
+            ]
+            meta = os.path.join("states", metas)
+
+    meta_df = pd.read_pickle(meta)
 
     # create holders for latent spaces and labels
     x_test = []

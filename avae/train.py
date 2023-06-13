@@ -33,11 +33,13 @@ def train(
     lat_dims,
     pose_dims,
     learning,
+    beta_load,
     beta_min,
     beta_max,
     beta_cycle,
     beta_ratio,
     cyc_method_beta,
+    gamma_load,
     gamma_min,
     gamma_max,
     gamma_cycle,
@@ -173,40 +175,55 @@ def train(
         t_history = checkpoint["t_loss_history"]
         v_history = checkpoint["v_loss_history"]
 
-    if beta_max == 0 and cyc_method_beta != "flat":
+    if beta_max == 0 and cyc_method_beta != "flat" and beta_load is not None:
         raise RuntimeError(
             "The maximum value for beta is set to 0, it is not possible to"
             "oscillate between a maximum and minimum. Please choose the flat method for"
             "cyc_method_beta"
         )
 
-    beta_arr = (
-        cyc_annealing(
-            epochs,
-            cyc_method_beta,
-            n_cycle=beta_cycle,
-            ratio=beta_ratio,
-        ).var
-        * (beta_max - beta_min)
-        + beta_min
-    )
+    if beta_load is None:
+        # If a path for loading the beta array is not provided,
+        # create it given the input
+        beta_arr = (
+            cyc_annealing(
+                epochs,
+                cyc_method_beta,
+                n_cycle=beta_cycle,
+                ratio=beta_ratio,
+            ).var
+            * (beta_max - beta_min)
+            + beta_min
+        )
+    else:
+        beta_arr = np.load(beta_load)
 
-    if gamma_max == 0 and cyc_method_gamma != "flat":
+    if (
+        gamma_max == 0
+        and cyc_method_gamma != "flat"
+        and gamma_load is not None
+    ):
         raise RuntimeError(
             "The maximum value for gamma is set to 0, it is not possible to"
             "oscillate between a maximum and minimum. Please choose the flat method for"
             "cyc_method_gamma"
         )
-    gamma_arr = (
-        cyc_annealing(
-            epochs,
-            cyc_method_gamma,
-            n_cycle=gamma_cycle,
-            ratio=gamma_ratio,
-        ).var
-        * (gamma_max - gamma_min)
-        + gamma_min
-    )
+
+    if gamma_load is None:
+        # If a path for loading the gamma array is not provided,
+        # create it given the input
+        gamma_arr = (
+            cyc_annealing(
+                epochs,
+                cyc_method_gamma,
+                n_cycle=gamma_cycle,
+                ratio=gamma_ratio,
+            ).var
+            * (gamma_max - gamma_min)
+            + gamma_min
+        )
+    else:
+        gamma_arr = np.load(gamma_load)
 
     if config.VIS_CYC:
         vis.plot_cyc_variable(beta_arr, "beta")
