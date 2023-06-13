@@ -47,7 +47,7 @@ class TrainEvalTest(unittest.TestCase):
             "restart": False,
             "state": None,
             "gpu": None,
-            "meta": None
+            "meta": None,
         }
 
         config.FREQ_ACC = 5
@@ -195,7 +195,7 @@ class TrainEvalTest(unittest.TestCase):
         evaluate(
             datapath=os.path.join(self.testdata, "test"),
             state=self.data["state"],
-            meta=self.data["meta"],        
+            meta=self.data["meta"],
             lim=self.data["limit"],
             splt=self.data["split"],
             batch_s=self.data["batch"],
