@@ -200,7 +200,7 @@ def train(
         if len(beta_arr) != epochs:
             raise RuntimeError(
                 f"The length of the beta array loaded from file is {len(beta_arr)} but the number of Epochs specified in the input are {epochs}.\n"
-                 "These two values should be the same."
+                "These two values should be the same."
             )
 
     if (
