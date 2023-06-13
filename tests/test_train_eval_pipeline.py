@@ -17,9 +17,9 @@ class TrainEvalTest(unittest.TestCase):
 
         self.data = {
             "datapath": self.testdata,
-            "lim": 100,
-            "splt": 10,
-            "batch_s": 25,
+            "limit": 100,
+            "split": 10,
+            "batch": 25,
             "no_val_drop": True,
             "affinity": os.path.join(self.testdata, "affinity_fsc_10.csv"),
             "classes": os.path.join(self.testdata, "classes.csv"),
@@ -27,14 +27,16 @@ class TrainEvalTest(unittest.TestCase):
             "epochs": 5,
             "channels": 3,
             "depth": 4,
-            "lat_dims": 8,
+            "latent_dims": 8,
             "pose_dims": 3,
             "learning": 0.03,
+            "beta_load": None,
             "beta_min": 0,
             "beta_max": 1,
             "beta_cycle": "flat",
             "beta_ratio": None,
             "cyc_method_beta": "flat",
+            "gamma_load": None,
             "gamma_min": 0,
             "gamma_max": 1,
             "gamma_cycle": None,
@@ -44,6 +46,8 @@ class TrainEvalTest(unittest.TestCase):
             "use_gpu": False,
             "restart": False,
             "state": None,
+            "gpu": None,
+            "meta": None
         }
 
         config.FREQ_ACC = 5
@@ -72,9 +76,11 @@ class TrainEvalTest(unittest.TestCase):
 
         train(
             datapath=self.data["datapath"],
-            lim=self.data["lim"],
-            splt=self.data["splt"],
-            batch_s=self.data["batch_s"],
+            restart=self.data["restart"],
+            state=self.data["state"],
+            lim=self.data["limit"],
+            splt=self.data["split"],
+            batch_s=self.data["batch"],
             no_val_drop=self.data["no_val_drop"],
             affinity=self.data["affinity"],
             classes=self.data["classes"],
@@ -82,24 +88,24 @@ class TrainEvalTest(unittest.TestCase):
             epochs=self.data["epochs"],
             channels=self.data["channels"],
             depth=self.data["depth"],
-            lat_dims=self.data["lat_dims"],
+            lat_dims=self.data["latent_dims"],
             pose_dims=self.data["pose_dims"],
             learning=self.data["learning"],
+            beta_load=self.data["beta_load"],
             beta_min=self.data["beta_min"],
             beta_max=self.data["beta_max"],
             beta_cycle=self.data["beta_cycle"],
             beta_ratio=self.data["beta_ratio"],
             cyc_method_beta=self.data["cyc_method_beta"],
+            gamma_load=self.data["gamma_load"],
             gamma_min=self.data["gamma_min"],
             gamma_max=self.data["gamma_max"],
             gamma_cycle=self.data["gamma_cycle"],
             gamma_ratio=self.data["gamma_ratio"],
             cyc_method_gamma=self.data["cyc_method_gamma"],
             recon_fn=self.data["recon_fn"],
-            use_gpu=self.data["recon_fn"],
-            model="b",
-            restart=self.data["restart"],
-            state=self.data["state"],
+            use_gpu=self.data["gpu"],
+            model="a",
         )
 
         n_dir_train = len(next(os.walk(temp_dir.name))[1])
@@ -116,12 +122,13 @@ class TrainEvalTest(unittest.TestCase):
 
         evaluate(
             datapath=os.path.join(self.testdata, "test"),
-            lim=self.data["lim"],
-            splt=self.data["splt"],
-            batch_s=self.data["batch_s"],
+            state=self.data["state"],
+            meta=self.data["meta"],
+            lim=self.data["limit"],
+            splt=self.data["split"],
+            batch_s=self.data["batch"],
             collect_meta=True,
             use_gpu=self.data["use_gpu"],
-            state=self.data["state"],
         )
 
         n_plots_eval = len(os.listdir(os.path.join(temp_dir.name, "plots")))
@@ -141,9 +148,11 @@ class TrainEvalTest(unittest.TestCase):
 
         train(
             datapath=self.data["datapath"],
-            lim=self.data["lim"],
-            splt=self.data["splt"],
-            batch_s=self.data["batch_s"],
+            restart=self.data["restart"],
+            state=self.data["state"],
+            lim=self.data["limit"],
+            splt=self.data["split"],
+            batch_s=self.data["batch"],
             no_val_drop=self.data["no_val_drop"],
             affinity=self.data["affinity"],
             classes=self.data["classes"],
@@ -151,24 +160,24 @@ class TrainEvalTest(unittest.TestCase):
             epochs=self.data["epochs"],
             channels=self.data["channels"],
             depth=self.data["depth"],
-            lat_dims=self.data["lat_dims"],
+            lat_dims=self.data["latent_dims"],
             pose_dims=self.data["pose_dims"],
             learning=self.data["learning"],
+            beta_load=self.data["beta_load"],
             beta_min=self.data["beta_min"],
             beta_max=self.data["beta_max"],
             beta_cycle=self.data["beta_cycle"],
             beta_ratio=self.data["beta_ratio"],
             cyc_method_beta=self.data["cyc_method_beta"],
+            gamma_load=self.data["gamma_load"],
             gamma_min=self.data["gamma_min"],
             gamma_max=self.data["gamma_max"],
             gamma_cycle=self.data["gamma_cycle"],
             gamma_ratio=self.data["gamma_ratio"],
             cyc_method_gamma=self.data["cyc_method_gamma"],
             recon_fn=self.data["recon_fn"],
-            use_gpu=self.data["recon_fn"],
+            use_gpu=self.data["gpu"],
             model="b",
-            restart=self.data["restart"],
-            state=self.data["state"],
         )
 
         n_dir_train = len(next(os.walk(temp_dir.name))[1])
@@ -185,12 +194,13 @@ class TrainEvalTest(unittest.TestCase):
 
         evaluate(
             datapath=os.path.join(self.testdata, "test"),
-            lim=self.data["lim"],
-            splt=self.data["splt"],
-            batch_s=self.data["batch_s"],
+            state=self.data["state"],
+            meta=self.data["meta"],        
+            lim=self.data["limit"],
+            splt=self.data["split"],
+            batch_s=self.data["batch"],
             collect_meta=True,
             use_gpu=self.data["use_gpu"],
-            state=self.data["state"],
         )
 
         n_plots_eval = len(os.listdir(os.path.join(temp_dir.name, "plots")))
