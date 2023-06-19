@@ -1087,7 +1087,7 @@ def plot_cyc_variable(array: list, variable_name: str):
     plt.close()
 
 
-def latent_space_similarity(latent_space, class_labels, mode=""):
+def latent_space_similarity(latent_space, class_labels, mode="", epoch=0):
     """
     This function calculates the similarity (affinity) between classes in the latent space and builds a matrix.
     Parameters
@@ -1096,8 +1096,15 @@ def latent_space_similarity(latent_space, class_labels, mode=""):
         The latent space
     class_labels: np.array
         The labels of the latent space
+    epoch: int
+        Epoch number for title
 
     """
+    print(
+        "\n################################################################",
+        flush=True,
+    )
+    print("Visualising the latent space similarity matrix ...\n", flush=True)
     # Calculate cosine similarity matrix
     cosine_sim_matrix = cosine_similarity(latent_space)
 
@@ -1122,11 +1129,11 @@ def latent_space_similarity(latent_space, class_labels, mode=""):
 
     # Visualize average cosine similarity matrix
     plt.figure(figsize=(8, 6))
-    plt.imshow(avg_cosine_sim, cmap="YlGnBu")
+    plt.imshow(avg_cosine_sim, cmap="RdBu",vmin=-1, vmax=1)
     plt.colorbar(label="Average Cosine Similarity")
     plt.xticks(ticks=np.arange(num_classes), labels=unique_classes)
     plt.yticks(ticks=np.arange(num_classes), labels=unique_classes)
-    plt.title("Average Cosine Similarity Matrix")
+    plt.title(f"Average Cosine Similarity Matrix at epoch :{epoch}")
     plt.xlabel("Class Labels")
     plt.ylabel("Class Labels")
     if not os.path.exists("plots"):
@@ -1136,11 +1143,11 @@ def latent_space_similarity(latent_space, class_labels, mode=""):
 
     # Visualize average cosine similarity matrix
     plt.figure(figsize=(8, 6))
-    plt.imshow(std_cosine_sim, cmap="YlGnBu")
+    plt.imshow(std_cosine_sim, cmap="RdBu")
     plt.colorbar(label="Average Cosine Similarity")
     plt.xticks(ticks=np.arange(num_classes), labels=unique_classes)
     plt.yticks(ticks=np.arange(num_classes), labels=unique_classes)
-    plt.title("Cosine Similarity Matrix Standard Deviation")
+    plt.title(f"Cosine Similarity Matrix Standard Deviation at epoch :{epoch}")
     plt.xlabel("Class Labels")
     plt.ylabel("Class Labels")
     if not os.path.exists("plots"):
