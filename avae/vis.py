@@ -1096,6 +1096,8 @@ def latent_space_similarity(latent_space, class_labels, mode="", epoch=0):
         The latent space
     class_labels: np.array
         The labels of the latent space
+    mode: str
+        Mode of the calculation (train, test, val)
     epoch: int
         Epoch number for title
 
