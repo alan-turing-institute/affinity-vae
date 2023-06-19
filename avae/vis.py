@@ -1128,21 +1128,23 @@ def latent_space_similarity(latent_space, class_labels, mode="", epoch=0):
             std_cosine_sim[j, i] = std_cosine_sim[i, j]  # symmetrical matrix
 
     # Visualize average cosine similarity matrix
-    plt.figure(figsize=(8, 6))
-    plt.imshow(avg_cosine_sim, cmap="RdBu",vmin=-1, vmax=1)
+    plt.figure(figsize=(8, 8))
+    plt.imshow(avg_cosine_sim, cmap="RdBu", vmin=-1, vmax=1)
     plt.colorbar(label="Average Cosine Similarity")
     plt.xticks(ticks=np.arange(num_classes), labels=unique_classes)
     plt.yticks(ticks=np.arange(num_classes), labels=unique_classes)
     plt.title(f"Average Cosine Similarity Matrix at epoch :{epoch}")
     plt.xlabel("Class Labels")
     plt.ylabel("Class Labels")
+    plt.tick_params(axis="x", rotation=90, labelsize=12)
+    plt.tick_params(axis="y", labelsize=12)
     if not os.path.exists("plots"):
         os.mkdir("plots")
     plt.savefig(f"plots/similarity_mean{mode}.png", dpi=300)
     plt.close()
 
     # Visualize average cosine similarity matrix
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(8, 8))
     plt.imshow(std_cosine_sim, cmap="RdBu")
     plt.colorbar(label="Average Cosine Similarity")
     plt.xticks(ticks=np.arange(num_classes), labels=unique_classes)
@@ -1150,6 +1152,9 @@ def latent_space_similarity(latent_space, class_labels, mode="", epoch=0):
     plt.title(f"Cosine Similarity Matrix Standard Deviation at epoch :{epoch}")
     plt.xlabel("Class Labels")
     plt.ylabel("Class Labels")
+    plt.tick_params(axis="x", rotation=90, labelsize=12)
+    plt.tick_params(axis="y", labelsize=12)
+
     if not os.path.exists("plots"):
         os.mkdir("plots")
     plt.savefig(f"plots/similarity_std{mode}.png", dpi=300)
