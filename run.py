@@ -263,6 +263,13 @@ logging.basicConfig(
     help="Frequency at which to visualise confusion matrix.",
 )
 @click.option(
+    "--freq_sim",
+    "-fsim",
+    type=int,
+    default=None,
+    help="Frequency at which to visualise similarity matrix.",
+)
+@click.option(
     "--freq_all",
     "-fa",
     type=int,
@@ -424,6 +431,7 @@ def run(
     freq_dis,
     freq_pos,
     freq_acc,
+    freq_sim,
     freq_all,
     vis_emb,
     vis_rec,
@@ -563,6 +571,8 @@ def run(
             config.FREQ_POS = data["freq_all"]
             config.FREQ_ACC = data["freq_all"]
             config.FREQ_STA = data["freq_all"]
+            config.FREQ_SIM = data["freq_all"]
+
         else:
             config.FREQ_EVAL = data["freq_eval"]
             config.FREQ_EMB = data["freq_emb"]
@@ -572,6 +582,7 @@ def run(
             config.FREQ_POS = data["freq_pos"]
             config.FREQ_ACC = data["freq_acc"]
             config.FREQ_STA = data["freq_sta"]
+            config.FREQ_SIM = data["freq_sim"]
 
         if not data["eval"]:
             train(

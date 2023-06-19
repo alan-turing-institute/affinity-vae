@@ -15,6 +15,7 @@ FREQ_EMB = 10
 FREQ_INT = 10
 FREQ_DIS = 10
 FREQ_POS = 10
+FREQ_SIM = 10
 
 FREQ_EVAL = 10
 FREQ_STA = 10
@@ -51,6 +52,7 @@ DEFAULT_RUN_CONFIGS = {
     "freq_dis": FREQ_DIS,
     "freq_pos": FREQ_POS,
     "freq_acc": FREQ_ACC,
+    "freq_sim": FREQ_SIM,
     "freq_all": None,
     "eval": False,
     "dynamic": False,
