@@ -1105,8 +1105,12 @@ def latent_space_similarity(latent_space, class_labels, mode="", epoch=0):
         flush=True,
     )
     print("Visualising the latent space similarity matrix ...\n", flush=True)
+
+    print (latent_space)
     # Calculate cosine similarity matrix
     cosine_sim_matrix = cosine_similarity(latent_space)
+
+    print (cosine_sim_matrix)
 
     # Calculate average cosine similarity for each pair of classes
     unique_classes = np.unique(class_labels)
