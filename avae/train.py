@@ -48,6 +48,8 @@ def train(
     recon_fn,
     use_gpu,
     model,
+    gaussian_blur,
+    normalise,
 ):
     """Function to train an AffinityVAE model. The inputs are training configuration parameters. In this function the
     data is loaded, selected and split into training, validation and test sets, the model is initialised and trained
@@ -131,6 +133,8 @@ def train(
         eval=False,
         affinity=affinity,
         classes=classes,
+        gaussian_blur=gaussian_blur,
+        normalise=normalise,
     )
     dshape = list(trains)[0][0].shape[-3:]
     pose = not (pose_dims == 0)
@@ -464,8 +468,8 @@ def train(
 
         # visualise reconstructions - last batch
         if config.VIS_REC and (epoch + 1) % config.FREQ_REC == 0:
-            vis.recon_plot(x, x_hat, name="trn")
-            vis.recon_plot(v, v_hat, name="val")
+            vis.recon_plot(x, x_hat, y_train, name="trn")
+            vis.recon_plot(v, v_hat, y_val, name="val")
 
         # visualise embeddings
         if config.VIS_EMB and (epoch + 1) % config.FREQ_EMB == 0:

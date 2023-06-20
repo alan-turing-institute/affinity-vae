@@ -35,7 +35,13 @@ class DataTest(unittest.TestCase):
         )
 
         out = load_data(
-            "./eval", lim=None, batch_s=32, collect_meta=False, eval=True
+            "./eval",
+            lim=None,
+            batch_s=32,
+            collect_meta=False,
+            eval=True,
+            gaussian_blur=True,
+            normalise=True,
         )
         print(os.getcwd())
 
@@ -65,6 +71,8 @@ class DataTest(unittest.TestCase):
             collect_meta=False,
             eval=False,
             affinity="./train/affinity_fsc_10.csv",
+            gaussian_blur=True,
+            normalise=True,
         )
 
         # test load_data

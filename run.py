@@ -406,6 +406,22 @@ logging.basicConfig(
     default=None,
     help="Choose model to run.",
 )
+@click.option(
+    "--gaussian_blur",
+    "-gb",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Applying gaussian bluring to the image data which should help removing noise. The minimum and maximum for this is hardcoded.",
+)
+@click.option(
+    "--normalise",
+    "-nrm",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Normalise data",
+)
 def run(
     config_file,
     datapath,
@@ -460,17 +476,21 @@ def run(
     eval,
     dynamic,
     model,
+    gaussian_blur,
+    normalise,
 ):
 
     warnings.simplefilter("ignore", FutureWarning)
-
     # read config file and command line arguments and assign to local variables that are used in the rest of the code
     local_vars = locals().copy()
+    print(local_vars)
+
     if config_file is not None:
         with open(config_file, "r") as f:
             logging.info("Reading submission configuration file" + config_file)
             data = yaml.load(f, Loader=yaml.FullLoader)
         # returns JSON object as
+        print(data.get("gaussian_blur"))
 
         for key, val in local_vars.items():
             if (
@@ -630,6 +650,8 @@ def run(
                 recon_fn=data["loss_fn"],
                 use_gpu=data["gpu"],
                 model=data["model"],
+                gaussian_blur=data["gaussian_blur"],
+                normalise=data["normalise"],
             )
         else:
             evaluate(
@@ -641,6 +663,8 @@ def run(
                 batch_s=data["batch"],
                 collect_meta=data["dynamic"],
                 use_gpu=data["gpu"],
+                gaussian_blur=data["gaussian_blur"],
+                normalise=data["normalise"],
             )
             # TODO also make sure image is correct size, maybe in dataloader?
 

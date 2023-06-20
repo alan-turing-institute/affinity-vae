@@ -4,6 +4,8 @@ import random
 import mrcfile
 import numpy as np
 import pandas as pd
+import torch
+import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset, Subset
 from torchvision import transforms
 
@@ -23,6 +25,8 @@ def load_data(
     eval: bool = True,
     affinity=None,
     classes=None,
+    gaussian_blur=False,
+    normalise=False,
 ):
     """Loads all data needed for training, testing and evaluation. Loads MRC files from a given path, selects subset of
     classes if requested, splits it into train / val  and test in batch sets, loads affinity matrix. Returns train,
@@ -73,6 +77,8 @@ def load_data(
             datapath,
             amatrix=lookup,
             classes=classes,
+            gaussian_blur=gaussian_blur,
+            normalise=normalise,
             lim=lim,
             collect_m=collect_meta,
         )
@@ -188,6 +194,8 @@ class ProteinDataset(Dataset):
         amatrix=None,
         classes=None,
         transform=None,
+        gaussian_blur=False,
+        normalise=False,
         lim=None,
         collect_m=False,
     ):
@@ -230,19 +238,29 @@ class ProteinDataset(Dataset):
 
         self.paths = self.paths[:lim]
 
+        self.transform = []
+        print("we are here")
         if not transform:
-            self.transform = transforms.Compose(
-                [
-                    transforms.ToTensor(),
-                    transforms.Lambda(lambda x: x.unsqueeze(0)),
-                    # transforms.Normalize(0, 1, inplace=True)
-                    # transforms.Resize(64),
-                    # transforms.Lambda(lambda x: \
-                    # (x - x.min()) / (x.max() - x.min()))
-                ]
-            )
+            if gaussian_blur:
+                print(
+                    "Data Transformation : GaussianBlur is applied to the images",
+                    flush=True,
+                )
+                self.transform.append(
+                    transforms.GaussianBlur(3, sigma=(0.08, 10.0))
+                )
+            if normalise:
+                print(
+                    "Data Transformation : Normalisation is applied to the images",
+                    flush=True,
+                )
+                self.transform.append(
+                    transforms.Normalize(0, 1, inplace=False)
+                )
         else:
-            self.transform = transform
+            self.transform.append(transform)
+
+        self.transform = nn.Sequential(*self.transform)
 
     def __len__(self):
         return len(self.paths)
@@ -271,8 +289,11 @@ class ProteinDataset(Dataset):
         filename = self.paths[item]
         with mrcfile.open(os.path.join(self.root_dir, filename)) as f:
             data = np.array(f.data)
-        x = self.transform(data)
 
+        # convert the data o torch tensor : torch.from_numpy()
+        # Add a dimension to the tensor for batch processing
+        x = (torch.from_numpy(data)).unsqueeze(0)
+        x = self.transform(x)
         # ground truth
         y = filename.split("_")[0]
 
