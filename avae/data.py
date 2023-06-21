@@ -4,8 +4,6 @@ import random
 import mrcfile
 import numpy as np
 import pandas as pd
-import torch
-import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset, Subset
 from torchvision import transforms
 
@@ -239,7 +237,9 @@ class ProteinDataset(Dataset):
         self.paths = self.paths[:lim]
 
         self.transform = []
-        print("we are here")
+        self.transform.append(transforms.ToTensor())
+        self.transform.append(transforms.Lambda(lambda x: x.unsqueeze(0)))
+
         if not transform:
             if gaussian_blur:
                 print(
@@ -260,7 +260,7 @@ class ProteinDataset(Dataset):
         else:
             self.transform.append(transform)
 
-        self.transform = nn.Sequential(*self.transform)
+        self.transform = transforms.Compose(self.transform)
 
     def __len__(self):
         return len(self.paths)
@@ -290,10 +290,7 @@ class ProteinDataset(Dataset):
         with mrcfile.open(os.path.join(self.root_dir, filename)) as f:
             data = np.array(f.data)
 
-        # convert the data o torch tensor : torch.from_numpy()
-        # Add a dimension to the tensor for batch processing
-        x = (torch.from_numpy(data)).unsqueeze(0)
-        x = self.transform(x)
+        x = self.transform(data)
         # ground truth
         y = filename.split("_")[0]
 

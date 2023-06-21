@@ -165,9 +165,14 @@ def latent_embed_plot_tsne(xs, ys, mode=""):
     ).fit_transform(xs)
 
     n_classes = len(np.unique(ys))
-    fig, ax = plt.subplots(
-        figsize=(int(n_classes / 2) + 2, int(n_classes / 2))
-    )
+    if n_classes < 3:
+        fig, ax = plt.subplots(figsize=(6, 6))
+    else:
+        fig, ax = plt.subplots(
+            figsize=(int(n_classes / 2) + 2, int(n_classes / 2))
+        )
+    # When the number of classes is less than 3 the image becomes two small
+
     for mol_id, mol in enumerate(set(ys.tolist())):
         idx = np.where(np.array(ys.tolist()) == mol)[0]
         cmap = plt.cm.get_cmap("tab20")
@@ -211,11 +216,12 @@ def latent_embed_plot_umap(xs, ys, mode=""):
     embedding = reducer.fit_transform(xs)
 
     n_classes = len(np.unique(ys))
-
-    fig, ax = plt.subplots(
-        figsize=(int(n_classes / 2) + 2, int(n_classes / 2))
-    )
-
+    if n_classes < 3:
+        fig, ax = plt.subplots(figsize=(6, 6))
+    else:
+        fig, ax = plt.subplots(
+            figsize=(int(n_classes / 2) + 2, int(n_classes / 2))
+        )
     for mol_id, mol in enumerate(set(ys.tolist())):
         idx = np.where(np.array(ys.tolist()) == mol)[0]
 
