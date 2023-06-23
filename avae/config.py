@@ -7,6 +7,7 @@ VIS_INT = False
 VIS_DIS = False
 VIS_POS = False
 VIS_HIS = False
+VIS_SIM = False
 
 FREQ_ACC = 10
 FREQ_REC = 10
@@ -14,6 +15,7 @@ FREQ_EMB = 10
 FREQ_INT = 10
 FREQ_DIS = 10
 FREQ_POS = 10
+FREQ_SIM = 10
 
 FREQ_EVAL = 10
 FREQ_STA = 10
@@ -52,6 +54,7 @@ DEFAULT_RUN_CONFIGS = {
     "freq_dis": FREQ_DIS,
     "freq_pos": FREQ_POS,
     "freq_acc": FREQ_ACC,
+    "freq_sim": FREQ_SIM,
     "freq_all": None,
     "eval": False,
     "dynamic": False,
@@ -64,6 +67,7 @@ DEFAULT_RUN_CONFIGS = {
     "vis_pos": VIS_POS,
     "vis_acc": VIS_ACC,
     "vis_his": VIS_HIS,
+    "vis_sim": VIS_SIM,
     "vis_all": False,
     "model": "a",
 }
