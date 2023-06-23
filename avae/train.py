@@ -392,7 +392,7 @@ def train(
                     device, vae, batch, b, len(tests), epoch, epochs
                 )
                 x_test.extend(t_mu.cpu().detach().numpy())  # store latents
-                c_test.extend(t_logvar.cpu().detach().numpy())
+                c_test.extend(t_logvar.cpu().detach().nupmy())
                 if pose:
                     p_test.extend(tlat_pose.cpu().detach().numpy())
 

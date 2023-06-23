@@ -339,6 +339,8 @@ def dyn_latentembed_plot(df, epoch, embedding="umap", mode=""):
                     range=["circle", "square", "triangle", "diamond"]
                 ),
                 legend=None,
+                scale=altair.Scale(range=["circle", "square", "triangle"]),
+                legend=None,
             ),
             altair.Tooltip(tooltip),
             color=color,
