@@ -177,58 +177,114 @@ def dyn_latentembed_plot(df, epoch, embedding="umap"):
         titley = "t-SNE-2"
     df["emb-x"], df["emb-y"] = np.array(lat_emb)[:, 0], np.array(lat_emb)[:, 1]
 
-    selection = altair.selection_multi(fields=["id"], empty="all")
-    selection_mode = altair.selection_multi(fields=["mode"], empty="all")
+    # create column select options for radio buttons
+    # add no std to radio select options - change value here for marker size!
+    if "std-off" not in df.columns:
+        df.insert(loc=0, column="std-off", value=np.zeros(len(lat_emb)) + 0.5)
+    opts = [col for col in df.columns if col.startswith("std")]
 
+    # create radio buttons and bind to a folded column select
+    bind_checkbox = altair.binding_radio(
+        options=opts,
+        labels=[
+            str(int(i.split("-")[-1]) + 1)
+            if "off" not in i
+            else i.split("-")[-1]
+            for i in opts
+        ],
+        name="Certainty of prediction per dimension:",
+    )
+    column_select = altair.selection_point(
+        fields=["column"], bind=bind_checkbox, name="certainty"
+    )
+
+    # mode, class and in-chart selections (also work with shft+click for multi)
+    selection = altair.selection_point(fields=["id"], on="mouseover")
+    selection_mode = altair.selection_point(fields=["mode"])
+    selection_class = altair.selection_point(fields=["id"])
+
+    # in-chart color condition
     color = altair.condition(
-        (selection & selection_mode),
-        altair.Color("id:N"),
+        (selection & selection_mode & selection_class),
+        altair.Color("id:N", legend=None),
         altair.value("lightgray"),
     )
 
+    # tooltip disla on-mouseover
+    tooltip = ["id", "meta", "mode", "avg", "image"]  # .append(opts)
+
+    # main scatter plot
     scatter = (
-        altair.Chart(df)
+        altair.Chart(df, title="shift+click for multi-select")
         .mark_point(size=100, opacity=0.5, filled=True)
+        .transform_fold(fold=opts, as_=["column", "value"])
+        .transform_filter(column_select)
         .encode(
             altair.X("emb-x", title=titlex),
             altair.Y("emb-y", title=titley),
             altair.Shape(
                 "mode",
-                scale=altair.Scale(range=["square", "circle", "triangle"]),
+                scale=altair.Scale(range=["circle", "square", "triangle"]),
+                legend=None,
             ),
-            altair.Tooltip(
-                ["id", "meta", "mode", "avg", "image"]
-            ),  # *degrees_of_freedom, 'image']),
+            altair.Tooltip(tooltip),
             color=color,
+            size=altair.Size("value:Q", legend=None, aggregate="mean").scale(
+                type="log"
+            ),
         )
         .interactive()
         .properties(width=800, height=500)
-        .add_selection(selection)
-        .add_selection(selection_mode)
+        .add_params(selection)
+        .add_params(selection_class)
+        .add_params(selection_mode)
+        .add_params(column_select)
     )
 
-    # Create interactive model name legend
-    legend_mode = (
-        altair.Chart(df)
+    # interactive class legend
+    legend_class = (
+        altair.Chart(df, title="Class")
         .mark_point(size=100, opacity=0.5, filled=True)
         .encode(
-            x=altair.X("mode:N", axis=altair.Axis(orient="bottom")),
-            shape=altair.Shape(
-                "mode",
-                scale=altair.Scale(range=["square", "circle", "triangle"]),
-                title="mode",
-                legend=None,
+            y=altair.Y("id:N", axis=altair.Axis(title=None, orient="right")),
+            color=altair.condition(
+                selection_class,
+                altair.Color("id:N"),
+                altair.value("lightgrey"),
             ),
         )
-        .add_selection(selection_mode)
+        .add_params(selection_class)
     )
 
+    # interactive mode legend
+    legend_mode = (
+        altair.Chart(df, title="Mode")
+        .mark_point(size=100, opacity=0.5, filled=True)
+        .encode(
+            y=altair.Y("mode:N", axis=altair.Axis(title=None, orient="right")),
+            shape=altair.Shape(
+                "mode",
+                scale=altair.Scale(range=["circle", "triangle", "square"]),
+                legend=None,
+            ),
+            color=altair.condition(
+                selection_mode,
+                altair.value("steelblue"),
+                altair.value("lightgrey"),
+            ),
+        )
+        .add_params(selection_mode)
+    )
+
+    # organise charts in window and configure fonts
     chart = (
-        (legend_mode | scatter)
+        (scatter | altair.vconcat(legend_class, legend_mode))
         .configure_axis(labelFontSize=20, titleFontSize=20)
         .configure_legend(labelFontSize=20, titleFontSize=20)
+        .configure_title(fontSize=20)
     )
 
+    # save charts and latent embedding
     if not os.path.exists("latents"):
         os.mkdir("latents")
         # save latentspace and ids

@@ -154,9 +154,9 @@ def train(
         c_train = []
         x_val = []
         y_val = []
-        # c_val = []
+        c_val = []
         x_test = []
-        # c_test = []
+        c_test = []
         if pose:
             p_train = []  # 0 x pose_dims
             p_val = []
@@ -187,7 +187,13 @@ def train(
 
             if collect_meta:  # store meta for plots
                 meta_df = add_meta(
-                    meta_df, batch[-1], x_hat, lat_mu, lat_pos, mode="trn"
+                    meta_df,
+                    batch[-1],
+                    x_hat,
+                    lat_mu,
+                    lat_pos,
+                    lat_logvar,
+                    mode="trn",
                 )
 
         t_history[-1] /= len(trains)
@@ -222,12 +228,19 @@ def train(
             )
             x_val.extend(v_mu.cpu().detach().numpy())  # store latents
             y_val.extend(batch[1])
+            c_val.extend(v_logvar.cpu().detach().numpy())
             if pose:
                 p_val.extend(vlat_pos.cpu().detach().numpy())
 
             if collect_meta:  # store meta for plots
                 meta_df = add_meta(
-                    meta_df, batch[-1], v_hat, v_mu, vlat_pos, mode="val"
+                    meta_df,
+                    batch[-1],
+                    v_hat,
+                    v_mu,
+                    vlat_pos,
+                    v_logvar,
+                    mode="val",
                 )
 
         v_history[-1] /= len(vals)
@@ -252,6 +265,7 @@ def train(
                     device, vae, batch, b, len(tests), epoch, epochs
                 )
                 x_test.extend(t_mu.cpu().detach().numpy())  # store latents
+                c_test.extend(t_logvar.cpu().detach().nupmy())
                 if pose:
                     p_test.extend(tlat_pose.cpu().detach().numpy())
 
@@ -262,6 +276,7 @@ def train(
                         t_hat,
                         t_mu,
                         tlat_pose,
+                        t_logvar,
                         mode="tst",
                     )
 
@@ -287,50 +302,6 @@ def train(
                 )
 
         # ########################## VISUALISE ################################
-
-        # visualise per-class confidence
-        import matplotlib.pyplot as plt
-
-        cmap = plt.get_cmap("jet")
-        cols = [cmap(i) for i in np.linspace(0, 1, len(x_train[0]))]
-        rows = len(np.unique(y_train)) // 2
-        if len(np.unique(y_train)) % 2 != 0:
-            rows += 1
-        fig, ax = plt.subplots(
-            len(np.unique(y_train)), sharex=True, sharey=True
-        )
-        for c, cl in enumerate(np.unique(y_train)):
-            mu_cl = np.take(
-                x_train, np.where(np.array(y_train) == cl)[0], axis=0
-            )
-            var_cl = np.take(
-                c_train, np.where(np.array(y_train) == cl)[0], axis=0
-            )
-            std_cl = np.exp(0.5 * var_cl)
-            mu_cl = np.mean(mu_cl, axis=0)
-            std_cl = np.mean(std_cl, axis=0)
-            print(std_cl)
-            min_mu = np.min(mu_cl)
-            max_mu = np.max(mu_cl)
-            max_sig = np.max(std_cl)
-            from scipy.stats import norm
-
-            xs = np.arange(
-                min_mu - (4 * max_sig), max_mu + (4 * max_sig), 0.00001
-            )
-            for i in range(len(mu_cl)):
-                ax[c].plot(
-                    xs,
-                    norm.pdf(xs, mu_cl[i], std_cl[i]),
-                    color=cols[i],
-                    label="lat" + str(i + 1),
-                )
-            ax[c].set_title(cl)
-        handles, labels = ax[-1].get_legend_handles_labels()
-        leg = fig.legend(
-            handles, labels, bbox_to_anchor=(1.06, 0.9)
-        )  # , loc="upper left")
-        fig.savefig("tst.png", bbox_extra_artists=(leg,), bbox_inches="tight")
 
         # visualise accuracy
         if config.VIS_ACC and (epoch + 1) % config.FREQ_ACC == 0:
@@ -475,12 +446,17 @@ def pass_batch(
     return x, x_hat, lat_mu, lat_logvar, lat, lat_pose, history
 
 
-def add_meta(meta_df, batch_meta, x_hat, latent_mu, lat_pose, mode="trn"):
+def add_meta(
+    meta_df, batch_meta, x_hat, latent_mu, lat_pose, latent_logvar, mode="trn"
+):
     meta = pd.DataFrame(batch_meta)
     meta["mode"] = mode
     meta["image"] += vis.format(x_hat)
     for d in range(latent_mu.shape[-1]):
         meta[f"lat{d}"] = np.array(latent_mu[:, d].cpu().detach().numpy())
+    for d in range(latent_logvar.shape[-1]):
+        lat_std = np.exp(0.5 * latent_logvar[:, d].cpu().detach().numpy())
+        meta[f"std-{d}"] = np.array(lat_std)
     if lat_pose is not None:
         for d in range(lat_pose.shape[-1]):
             meta[f"pos{d}"] = np.array(lat_pose[:, d].cpu().detach().numpy())
