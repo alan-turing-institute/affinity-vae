@@ -274,7 +274,6 @@ class ProteinDataset(Dataset):
 
         if transform:
             self.transform.append(transform)
-        
 
         self.transform = transforms.Compose(self.transform)
 
