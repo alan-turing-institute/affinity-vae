@@ -21,6 +21,7 @@ def evaluate(
     use_gpu,
     gaussian_blur,
     normalise,
+    shift_min,
 ):
     """Function for evaluating the model. Loads the data, model and runs the evaluation. Saves the results of the
     evaluation in the plot and latents directories.
@@ -56,6 +57,7 @@ def evaluate(
         eval=True,
         gaussian_blur=gaussian_blur,
         normalise=normalise,
+        shift_min=shift_min,
     )
 
     # ############################### MODEL ###############################

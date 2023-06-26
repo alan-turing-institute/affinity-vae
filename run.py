@@ -437,6 +437,14 @@ logging.basicConfig(
     is_flag=True,
     help="Normalise data",
 )
+@click.option(
+    "--shift_min",
+    "-sftm",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Shift the minimum of the data to one zero and the maximum to one",
+)
 def run(
     config_file,
     datapath,
@@ -495,6 +503,7 @@ def run(
     model,
     gaussian_blur,
     normalise,
+    shift_min,
 ):
 
     warnings.simplefilter("ignore", FutureWarning)
@@ -674,6 +683,7 @@ def run(
                 model=data["model"],
                 gaussian_blur=data["gaussian_blur"],
                 normalise=data["normalise"],
+                shift_min=data["shift_min"],
             )
         else:
             evaluate(
@@ -687,6 +697,7 @@ def run(
                 use_gpu=data["gpu"],
                 gaussian_blur=data["gaussian_blur"],
                 normalise=data["normalise"],
+                shift_min=data["shift_min"],
             )
             # TODO also make sure image is correct size, maybe in dataloader?
 

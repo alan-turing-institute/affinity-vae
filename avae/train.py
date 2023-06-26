@@ -50,6 +50,7 @@ def train(
     model,
     gaussian_blur,
     normalise,
+    shift_min,
 ):
     """Function to train an AffinityVAE model. The inputs are training configuration parameters. In this function the
     data is loaded, selected and split into training, validation and test sets, the model is initialised and trained
@@ -135,6 +136,7 @@ def train(
         classes=classes,
         gaussian_blur=gaussian_blur,
         normalise=normalise,
+        shift_min=shift_min,
     )
     dshape = list(trains)[0][0].shape[-3:]
     pose = not (pose_dims == 0)

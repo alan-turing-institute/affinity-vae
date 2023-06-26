@@ -72,4 +72,5 @@ DEFAULT_RUN_CONFIGS = {
     "model": "a",
     "gaussian_blur": False,
     "normalise": False,
+    "shift_min": False,
 }
