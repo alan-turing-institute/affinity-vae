@@ -360,7 +360,9 @@ def dyn_latentembed_plot(df, epoch, embedding="umap", mode=""):
             y=altair.Y("mode:N", axis=altair.Axis(title=None, orient="right")),
             shape=altair.Shape(
                 "mode",
-                scale=altair.Scale(range=["circle", "square", "triangle, "diamond"]),
+                scale=altair.Scale(
+                    range=["circle", "square", "triangle", "diamond"]
+                ),
                 legend=None,
             ),
             color=altair.condition(
@@ -439,9 +441,11 @@ def confidence_plot(x, y, s, suffix=None):
     plt.close()
 
 
-def accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes=None):
+def accuracy_plot(
+    y_train, ypred_train, y_val, ypred_val, classes=None, mode=""
+):
     """Plot confusion matrix  and F1 values.
-                                          
+
     Parameters
     ----------
     y_train: np.array
