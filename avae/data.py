@@ -10,6 +10,8 @@ from torchvision import transforms
 from . import config
 from .vis import format, plot_affinity_matrix, plot_classes_distribution
 
+np.random.seed(42)
+
 
 def load_data(
     datapath: str,
@@ -22,6 +24,42 @@ def load_data(
     affinity=None,
     classes=None,
 ):
+    """Loads all data needed for training, testing and evaluation. Loads MRC files from a given path, selects subset of
+    classes if requested, splits it into train / val  and test in batch sets, loads affinity matrix. Returns train,
+    validation and test data as DataLoader objects.
+
+    Parameters
+    ----------
+    datapath: str
+        Path to the data directory.
+    lim: int
+        Limit the number of samples to load.
+    splt: int
+        Percentage of data to be used for validation.
+    batch_s: int
+        Batch size.
+    no_val_drop: bool
+        If True, the last batch of validation data will not be dropped if it is smaller than batch size.
+    collect_meta: bool
+        If True, the meta data for visualisation will be collected and returned.
+    eval: bool
+        If True, the data will be loaded only for evaluation.
+    affinity: str
+        Path to the affinity matrix.
+    classes: list
+        List of classes to be selected from the data.
+
+    Returns
+    -------
+    train_data: DataLoader
+        Train data, returned only if eval is False.
+    val_data: DataLoader
+        Validation data, returned only if eval is False.
+    test_data: DataLoader
+        Test data, if eval is True only test data is returned.
+    lookup: pd.DataFrame
+        Affinity matrix, returned only if eval is False.
+    """
 
     if not eval:
         if affinity is not None:
@@ -46,6 +84,9 @@ def load_data(
                 all_classes=lookup.columns.tolist(),
                 selected_classes=data.final_classes,
             )
+
+        # updating affinity matrix with the final classes
+        lookup = data.amatrix
 
         # split into train / val sets
         idx = np.random.permutation(len(data))
@@ -177,6 +218,13 @@ class ProteinDataset(Dataset):
                     )
                 )
 
+            # subset affinity matrix with only the relevant classes
+            index = [
+                self.amatrix.columns.get_loc(f"{columns}")
+                for columns in self.final_classes
+            ]
+            self.amatrix = self.amatrix.iloc[index, index]
+
         self.paths = [
             p for p in self.paths for c in self.final_classes if c in p
         ]
@@ -200,7 +248,8 @@ class ProteinDataset(Dataset):
         return len(self.paths)
 
     def __getitem__(self, item):
-        """Load and image, its metadata and optionally, its affinity class
+        """
+        Load and image, its metadata and optionally, its affinity class
         index.
 
         Parameters
