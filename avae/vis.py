@@ -410,6 +410,51 @@ def dyn_latentembed_plot(df, epoch, embedding="umap", mode=""):
     elif embedding == "tsne":
         chart.save(f"latents/plt_latent_embed_epoch_{epoch}_tsne{mode}.html")
 
+def confidence_plot(x, y, s, suffix=None):
+    print(
+        "\n################################################################",
+        flush=True,
+    )
+    print("Visualising class-average confidence metrics ...\n", flush=True)
+    cmap = plt.get_cmap("jet")
+    cols = [cmap(i) for i in np.linspace(0, 1, len(x[0]))]
+    rows = len(np.unique(y)) // 2
+    if len(np.unique(y)) % 2 != 0:
+        rows += 1
+    fig, ax = plt.subplots(len(np.unique(y)), sharex=True, sharey=True)
+    for c, cl in enumerate(np.unique(y)):
+        mu_cl = np.take(x, np.where(np.array(y) == cl)[0], axis=0)
+        var_cl = np.take(s, np.where(np.array(y) == cl)[0], axis=0)
+        std_cl = np.exp(0.5 * var_cl)
+        mu_cl = np.mean(mu_cl, axis=0)
+        std_cl = np.mean(std_cl, axis=0)
+
+        min_mu = np.min(mu_cl)
+        max_mu = np.max(mu_cl)
+        max_sig = np.max(std_cl)
+
+        from scipy.stats import norm
+
+        xs = np.arange(min_mu - (4 * max_sig), max_mu + (4 * max_sig), 0.001)
+
+        for i in range(len(mu_cl)):
+            ax[c].plot(
+                xs,
+                norm.pdf(xs, mu_cl[i], std_cl[i]),
+                color=cols[i],
+                label="lat" + str(i + 1),
+            )
+        ax[c].set_title(cl)
+    name = "plots/confidence.png"
+    if suffix is not None:
+        name = name[:-4] + "_" + suffix + name[-4:]
+    handles, labels = ax[-1].get_legend_handles_labels()
+    leg = fig.legend(
+        handles, labels, bbox_to_anchor=(1.06, 0.9)
+    )  # , loc="upper left")
+    fig.savefig(name, bbox_extra_artists=(leg,), bbox_inches="tight")
+    plt.close()
+
 
 def confidence_plot(x, y, s, suffix=None):
     print(

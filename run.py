@@ -231,6 +231,181 @@ logging.basicConfig(
     help="The schedule for gamma: for constant gamma : flat, other options include , cycle_linear, cycle_sigmoid, cycle_cosine, ramp",
 )
 @click.option(
+    "--freq_eval",
+    "-fev",
+    type=int,
+    default=None,
+    help="Frequency at which to evaluate test set.",
+)
+@click.option(
+    "--freq_sta",
+    "-fs",
+    type=int,
+    default=None,
+    help="Frequency at which to save state",
+)
+@click.option(
+    "--freq_emb",
+    "-fe",
+    type=int,
+    default=None,
+    help="Frequency at which to visualise the latent " "space embedding.",
+)
+@click.option(
+    "--freq_rec",
+    "-fr",
+    type=int,
+    default=None,
+    help="Frequency at which to visualise reconstructions ",
+)
+@click.option(
+    "--freq_int",
+    "-fi",
+    type=int,
+    default=None,
+    help="Frequency at which to visualise latent space"
+    "interpolations (default every 10 epochs).",
+)
+@click.option(
+    "--freq_dis",
+    "-ft",
+    type=int,
+    default=None,
+    help="Frequency at which to visualise single transversals.",
+)
+@click.option(
+    "--freq_pos",
+    "-fp",
+    type=int,
+    default=None,
+    help="Frequency at which to visualise pose.",
+)
+@click.option(
+    "--freq_acc",
+    "-fac",
+    type=int,
+    default=None,
+    help="Frequency at which to visualise confusion matrix.",
+)
+@click.option(
+    "--freq_sim",
+    "-fsim",
+    type=int,
+    default=None,
+    help="Frequency at which to visualise similarity matrix.",
+)
+@click.option(
+    "--freq_all",
+    "-fa",
+    type=int,
+    default=None,
+    help="Frequency at which to visualise all plots except loss. ",
+)
+@click.option(
+    "--vis_emb",
+    "-ve",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise latent space embedding.",
+)
+@click.option(
+    "--vis_rec",
+    "-vr",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise reconstructions (frequency controlled).",
+)
+@click.option(
+    "--vis_con",
+    "-vcn",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise per-class confidence metrics",
+)
+@click.option(
+    "--vis_los",
+    "-vl",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise loss.",
+)
+@click.option(
+    "--vis_cyc",
+    "-vc",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise cyclical parameters which are at the moment beta and gamma vs epoch number.",
+)
+@click.option(
+    "--vis_emb",
+    "-ve",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise latent space embedding.",
+)
+@click.option(
+    "--vis_int",
+    "-vi",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise interpolations (frequency controlled).",
+)
+@click.option(
+    "--vis_dis",
+    "-vt",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise latent disentanglement (frequency controlled).",
+)
+@click.option(
+    "--vis_pos",
+    "-vps",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise pose disentanglement (frequency controlled).",
+)
+@click.option(
+    "--vis_acc",
+    "-vac",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise confusion matrix.",
+)
+@click.option(
+    "--vis_his",
+    "-his",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise train-val class distribution (once per run).",
+)
+@click.option(
+    "--vis_sim",
+    "-similarity",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise train-val model similarity matrix.",
+)
+@click.option(
+    "--vis_all",
+    "-va",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise all above.",
+)
+@click.option(
     "--gpu",
     "-g",
     type=bool,
@@ -260,196 +435,6 @@ logging.basicConfig(
     type=str,
     default=None,
     help="Choose model to run.",
-)
-@click.option(
-    "--vis_los",
-    "-vl",
-    type=bool,
-    default=None,
-    is_flag=True,
-    help="Visualise loss (every epoch starting at epoch 2).",
-)
-@click.option(
-    "--freq_sim",
-    "-fsim",
-    type=int,
-    default=None,
-    help="Frequency at which to visualise similarity matrix.",
-)
-@click.option(
-    "--freq_all",
-    "-fa",
-    type=int,
-    default=None,
-    is_flag=True,
-    help="Visualise loss (every epoch starting at epoch 2).",
-)
-@click.option(
-    "--vis_acc",
-    "-vac",
-    type=bool,
-    default=None,
-    is_flag=True,
-    help="Visualise confusion matrix and F1 scores (frequency controlled).",
-)
-@click.option(
-    "--vis_rec",
-    "-vr",
-    type=bool,
-    default=None,
-    is_flag=True,
-    help="Visualise reconstructions (frequency controlled).",
-)
-@click.option(
-    "--vis_con",
-    "-vcn",
-    type=bool,
-    default=None,
-    is_flag=True,
-    help="Visualise per-class confidence metrics (frequency controlled).",
-)
-@click.option(
-    "--vis_emb",
-    "-ve",
-    type=bool,
-    default=None,
-    is_flag=True,
-    help="Visualise latent space embedding (frequency controlled).",
-)
-@click.option(
-    "--vis_int",
-    "-vi",
-    type=bool,
-    default=None,
-    is_flag=True,
-    help="Visualise interpolations (frequency controlled).",
-)
-@click.option(
-    "--vis_dis",
-    "-vt",
-    type=bool,
-    default=None,
-    is_flag=True,
-    help="Visualise latent disentanglement (frequency controlled).",
-)
-@click.option(
-    "--vis_pos",
-    "-vps",
-    type=bool,
-    default=None,
-    is_flag=True,
-    help="Visualise pose disentanglement (frequency controlled).",
-)
-@click.option(
-    "--vis_cyc",
-    "-vc",
-    type=bool,
-    default=None,
-    is_flag=True,
-    help="Visualise cyclical parameters (once per run).",
-)
-@click.option(
-    "--vis_aff",
-    "-va",
-    type=bool,
-    default=None,
-    is_flag=True,
-    help="Visualise affinity matrix (once per run).",
-)
-@click.option(
-    "--vis_his",
-    "-his",
-    type=bool,
-    default=None,
-    is_flag=True,
-    help="Visualise train-val class distribution (once per run).",
-)
-@click.option(
-    "--vis_sim",
-    "-similarity",
-    type=bool,
-    default=None,
-    is_flag=True,
-    help="Visualise train-val model similarity matrix.",
-)
-@click.option(
-    "--vis_all",
-    "-va",
-    type=bool,
-    default=None,
-    is_flag=True,
-    help="Visualise all above.",
-)
-@click.option(
-    "--freq_eval",
-    "-fev",
-    type=int,
-    default=None,
-    help="Frequency at which to evaluate test set.",
-)
-@click.option(
-    "--freq_sta",
-    "-fs",
-    type=int,
-    default=None,
-    help="Frequency at which to save state",
-)
-@click.option(
-    "--freq_acc",
-    "-fac",
-    type=int,
-    default=None,
-    help="Frequency at which to visualise confusion matrix.",
-)
-@click.option(
-    "--freq_rec",
-    "-fr",
-    type=int,
-    default=None,
-    help="Frequency at which to visualise reconstructions ",
-)
-@click.option(
-    "--freq_con",
-    "-fr",
-    type=int,
-    default=None,
-    help="Frequency at which to visualise per-class confidence metrics ",
-)
-@click.option(
-    "--freq_emb",
-    "-fe",
-    type=int,
-    default=None,
-    help="Frequency at which to visualise the latent " "space embedding.",
-)
-@click.option(
-    "--freq_int",
-    "-fi",
-    type=int,
-    default=None,
-    help="Frequency at which to visualise latent space"
-    "interpolations (default every 10 epochs).",
-)
-@click.option(
-    "--freq_dis",
-    "-ft",
-    type=int,
-    default=None,
-    help="Frequency at which to visualise single transversals.",
-)
-@click.option(
-    "--freq_pos",
-    "-fp",
-    type=int,
-    default=None,
-    help="Frequency at which to visualise pose.",
-)
-@click.option(
-    "--freq_all",
-    "-fa",
-    type=int,
-    default=None,
-    help="Frequency at which to visualise all plots except loss. ",
 )
 @click.option(
     "--gaussian_blur",
@@ -673,8 +658,6 @@ def run(
             config.FREQ_INT = data["freq_all"]
             config.FREQ_DIS = data["freq_all"]
             config.FREQ_POS = data["freq_all"]
-            config.FREQ_ACC = data["freq_all"]
-            config.FREQ_STA = data["freq_all"]
             config.FREQ_SIM = data["freq_all"]
         else:
             config.FREQ_EVAL = data["freq_eval"]
