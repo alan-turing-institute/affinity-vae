@@ -190,150 +190,6 @@ logging.basicConfig(
     help="The schedule for gamma: for constant gamma : flat, other options include , cycle_linear, cycle_sigmoid, cycle_cosine, ramp",
 )
 @click.option(
-    "--freq_eval",
-    "-fev",
-    type=int,
-    default=None,
-    help="Frequency at which to evaluate test set.",
-)
-@click.option(
-    "--freq_sta",
-    "-fs",
-    type=int,
-    default=None,
-    help="Frequency at which to save state",
-)
-@click.option(
-    "--freq_emb",
-    "-fe",
-    type=int,
-    default=None,
-    help="Frequency at which to visualise the latent " "space embedding.",
-)
-@click.option(
-    "--freq_rec",
-    "-fr",
-    type=int,
-    default=None,
-    help="Frequency at which to visualise reconstructions ",
-)
-@click.option(
-    "--freq_int",
-    "-fi",
-    type=int,
-    default=None,
-    help="Frequency at which to visualise latent space"
-    "interpolations (default every 10 epochs).",
-)
-@click.option(
-    "--freq_dis",
-    "-ft",
-    type=int,
-    default=None,
-    help="Frequency at which to visualise single transversals.",
-)
-@click.option(
-    "--freq_pos",
-    "-fp",
-    type=int,
-    default=None,
-    help="Frequency at which to visualise pose.",
-)
-@click.option(
-    "--freq_acc",
-    "-fac",
-    type=int,
-    default=None,
-    help="Frequency at which to visualise confusion matrix.",
-)
-@click.option(
-    "--freq_all",
-    "-fa",
-    type=int,
-    default=None,
-    help="Frequency at which to visualise all plots except loss. ",
-)
-@click.option(
-    "--vis_emb",
-    "-ve",
-    type=bool,
-    default=None,
-    is_flag=True,
-    help="Visualise latent space embedding.",
-)
-@click.option(
-    "--vis_rec",
-    "-vr",
-    type=bool,
-    default=None,
-    is_flag=True,
-    help="Visualise reconstructions.",
-)
-@click.option(
-    "--vis_los",
-    "-vl",
-    type=bool,
-    default=None,
-    is_flag=True,
-    help="Visualise loss.",
-)
-@click.option(
-    "--vis_cyc",
-    "-vc",
-    type=bool,
-    default=None,
-    is_flag=True,
-    help="Visualise cyclical parameters which are at the moment beta and gamma vs epoch number.",
-)
-@click.option(
-    "--vis_int",
-    "-vi",
-    type=bool,
-    default=None,
-    is_flag=True,
-    help="Visualise interpolations.",
-)
-@click.option(
-    "--vis_dis",
-    "-vt",
-    type=bool,
-    default=None,
-    is_flag=True,
-    help="Visualise single transversals.",
-)
-@click.option(
-    "--vis_pos",
-    "-vps",
-    type=bool,
-    default=None,
-    is_flag=True,
-    help="Visualise pose interpolations in the first 2 dimensions",
-)
-@click.option(
-    "--vis_acc",
-    "-vac",
-    type=bool,
-    default=None,
-    is_flag=True,
-    help="Visualise confusion matrix.",
-)
-@click.option(
-    "--vis_his",
-    "-his",
-    type=bool,
-    default=None,
-    is_flag=True,
-    help="Visualise train-val class distribution.",
-)
-@click.option(
-    "--vis_all",
-    "-va",
-    type=bool,
-    default=None,
-    is_flag=True,
-    help="Visualise all above.",
-)
-@click.option(
     "--gpu",
     "-g",
     type=bool,
@@ -364,6 +220,165 @@ logging.basicConfig(
     default=None,
     help="Choose model to run.",
 )
+@click.option(
+    "--vis_los",
+    "-vl",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise loss.",
+)
+@click.option(
+    "--vis_acc",
+    "-vac",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise confusion matrix.",
+)
+@click.option(
+    "--vis_rec",
+    "-vr",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise reconstructions.",
+)
+@click.option(
+    "--vis_con",
+    "-vcn",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise per-class confidence metrics",
+)
+@click.option(
+    "--vis_cyc",
+    "-vc",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise cyclical parameters which are at the moment beta and gamma vs epoch number.",
+)
+@click.option(
+    "--vis_emb",
+    "-ve",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise latent space embedding.",
+)
+@click.option(
+    "--vis_int",
+    "-vi",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise interpolations.",
+)
+@click.option(
+    "--vis_dis",
+    "-vt",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise single transversals.",
+)
+@click.option(
+    "--vis_pos",
+    "-vps",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise pose interpolations in the first 2 dimensions",
+)
+@click.option(
+    "--vis_his",
+    "-his",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise train-val class distribution.",
+)
+@click.option(
+    "--vis_all",
+    "-va",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise all above.",
+)
+@click.option(
+    "--freq_eval",
+    "-fev",
+    type=int,
+    default=None,
+    help="Frequency at which to evaluate test set.",
+)
+@click.option(
+    "--freq_sta",
+    "-fs",
+    type=int,
+    default=None,
+    help="Frequency at which to save state",
+)
+@click.option(
+    "--freq_acc",
+    "-fac",
+    type=int,
+    default=None,
+    help="Frequency at which to visualise confusion matrix.",
+)
+@click.option(
+    "--freq_rec",
+    "-fr",
+    type=int,
+    default=None,
+    help="Frequency at which to visualise reconstructions ",
+)
+@click.option(
+    "--freq_con",
+    "-fr",
+    type=int,
+    default=None,
+    help="Frequency at which to visualise per-class confidence metrics ",
+)
+@click.option(
+    "--freq_emb",
+    "-fe",
+    type=int,
+    default=None,
+    help="Frequency at which to visualise the latent " "space embedding.",
+)
+@click.option(
+    "--freq_int",
+    "-fi",
+    type=int,
+    default=None,
+    help="Frequency at which to visualise latent space"
+    "interpolations (default every 10 epochs).",
+)
+@click.option(
+    "--freq_dis",
+    "-ft",
+    type=int,
+    default=None,
+    help="Frequency at which to visualise single transversals.",
+)
+@click.option(
+    "--freq_pos",
+    "-fp",
+    type=int,
+    default=None,
+    help="Frequency at which to visualise pose.",
+)
+@click.option(
+    "--freq_all",
+    "-fa",
+    type=int,
+    default=None,
+    help="Frequency at which to visualise all plots except loss. ",
+)
 def run(
     config_file,
     datapath,
@@ -390,29 +405,31 @@ def run(
     gamma_cycle,
     gamma_ratio,
     cyc_method_gamma,
-    freq_eval,
-    freq_sta,
-    freq_emb,
-    freq_rec,
-    freq_int,
-    freq_dis,
-    freq_pos,
-    freq_acc,
-    freq_all,
-    vis_emb,
-    vis_rec,
-    vis_cyc,
-    vis_los,
-    vis_int,
-    vis_dis,
-    vis_pos,
-    vis_acc,
-    vis_his,
-    vis_all,
     gpu,
     eval,
     dynamic,
     model,
+    vis_los,
+    vis_acc,
+    vis_rec,
+    vis_con,
+    vis_cyc,
+    vis_emb,
+    vis_int,
+    vis_dis,
+    vis_pos,
+    vis_his,
+    vis_all,
+    freq_eval,
+    freq_sta,
+    freq_acc,
+    freq_rec,
+    freq_con,
+    freq_emb,
+    freq_int,
+    freq_dis,
+    freq_pos,
+    freq_all,
 ):
     # read config file and command line arguments and assign to local variables that are used in the rest of the code
     local_vars = locals().copy()
@@ -493,45 +510,49 @@ def run(
 
     try:
         if data["vis_all"]:
-            config.VIS_CYC = True
             config.VIS_LOS = True
-            config.VIS_EMB = True
+            config.VIS_ACC = True
             config.VIS_REC = True
+            config.VIS_CON = True
+            config.VIS_CYC = True
+            config.VIS_EMB = True
             config.VIS_INT = True
             config.VIS_DIS = True
             config.VIS_POS = True
-            config.VIS_ACC = True
             config.VIS_HIS = True
 
         else:
-            config.VIS_CYC = data["vis_cyc"]
             config.VIS_LOS = data["vis_los"]
-            config.VIS_EMB = data["vis_emb"]
+            config.VIS_ACC = data["vis_acc"]
             config.VIS_REC = data["vis_rec"]
+            config.VIS_CON = data["vis_con"]
+            config.VIS_CYC = data["vis_cyc"]
+            config.VIS_EMB = data["vis_emb"]
             config.VIS_INT = data["vis_int"]
             config.VIS_DIS = data["vis_dis"]
             config.VIS_POS = data["vis_pos"]
-            config.VIS_ACC = data["vis_acc"]
             config.VIS_HIS = data["vis_his"]
 
         if data["freq_all"] is not None:
             config.FREQ_EVAL = data["freq_all"]
-            config.FREQ_EMB = data["freq_all"]
+            config.FREQ_STA = data["freq_all"]
+            config.FREQ_ACC = data["freq_all"]
             config.FREQ_REC = data["freq_all"]
+            config.FREQ_CON = data["freq_all"]
+            config.FREQ_EMB = data["freq_all"]
             config.FREQ_INT = data["freq_all"]
             config.FREQ_DIS = data["freq_all"]
             config.FREQ_POS = data["freq_all"]
-            config.FREQ_ACC = data["freq_all"]
-            config.FREQ_STA = data["freq_all"]
         else:
             config.FREQ_EVAL = data["freq_eval"]
-            config.FREQ_EMB = data["freq_emb"]
+            config.FREQ_STA = data["freq_sta"]
+            config.FREQ_ACC = data["freq_acc"]
             config.FREQ_REC = data["freq_rec"]
+            config.FREQ_CON = data["freq_all"]
+            config.FREQ_EMB = data["freq_emb"]
             config.FREQ_INT = data["freq_int"]
             config.FREQ_DIS = data["freq_dis"]
             config.FREQ_POS = data["freq_pos"]
-            config.FREQ_ACC = data["freq_acc"]
-            config.FREQ_STA = data["freq_sta"]
 
         if not data["eval"]:
             train(

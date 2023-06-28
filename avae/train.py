@@ -303,7 +303,7 @@ def train(
 
         # ########################## VISUALISE ################################
 
-        # visualise accuracy
+        # visualise accuracy: confusion and F1 scores
         if config.VIS_ACC and (epoch + 1) % config.FREQ_ACC == 0:
             train_acc, val_acc, ypred_train, ypred_val = accuracy(
                 x_train, y_train, x_val, y_val
@@ -332,6 +332,10 @@ def train(
         if config.VIS_REC and (epoch + 1) % config.FREQ_REC == 0:
             vis.recon_plot(x, x_hat, name="trn")
             vis.recon_plot(v, v_hat, name="val")
+
+        if config.VIS_CON and (epoch + 1) % config.FREQ_CON == 0:
+            vis.confidence_plot(x_train, y_train, c_train, suffix="trn")
+            vis.confidence_plot(x_val, y_val, c_val, suffix="val")
 
         # visualise embeddings
         if config.VIS_EMB and (epoch + 1) % config.FREQ_EMB == 0:
