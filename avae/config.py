@@ -2,11 +2,12 @@ VIS_LOS = False
 VIS_ACC = False
 VIS_REC = False
 VIS_CON = False
-VIS_CYC = False
 VIS_EMB = False
 VIS_INT = False
 VIS_DIS = False
 VIS_POS = False
+VIS_CYC = False
+VIS_AFF = False
 VIS_HIS = False
 
 FREQ_ACC = 10
@@ -49,11 +50,12 @@ DEFAULT_RUN_CONFIGS = {
     "vis_acc": VIS_ACC,
     "vis_rec": VIS_REC,
     "vis_con": VIS_CON,
-    "vis_cyc": VIS_CYC,
     "vis_emb": VIS_EMB,
     "vis_int": VIS_INT,
     "vis_dis": VIS_DIS,
     "vis_pos": VIS_POS,
+    "vis_cyc": VIS_CYC,
+    "vis_aff": VIS_AFF,
     "vis_his": VIS_HIS,
     "vis_all": False,
     "model": "a",

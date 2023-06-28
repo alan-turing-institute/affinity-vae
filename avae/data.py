@@ -38,10 +38,9 @@ def load_data(
             lim=lim,
             collect_m=collect_meta,
         )
-        print("\nData size:", len(data), flush=True)
-        print("\nClass list:", data.final_classes, flush=True)
 
-        if affinity is not None:
+        # ################# Visualising affinity matrix ###################
+        if affinity is not None and config.VIS_AFF:
             plot_affinity_matrix(
                 lookup=lookup,
                 all_classes=lookup.columns.tolist(),
@@ -58,9 +57,8 @@ def load_data(
             )
         train_data = Subset(data, indices=idx[:-s])
         val_data = Subset(data, indices=idx[-s:])
-        print("Train / val split:", len(train_data), len(val_data), flush=True)
 
-        # ############################### Visualising class distribution ###############################
+        # ################# Visualising class distribution ###################
 
         train_y = [y[1] for _, y in enumerate(train_data)]
         val_y = [y[1] for _, y in enumerate(val_data)]
@@ -96,6 +94,9 @@ def load_data(
                     batch_s, len(train_data), len(val_data), splt
                 )
             )
+        print("\nData size:", len(data), flush=True)
+        print("\nClass list:", data.final_classes, flush=True)
+        print("Train / val split:", len(train_data), len(val_data), flush=True)
         print("Train / val batches:", len(trains), len(vals), flush=True)
         print(flush=True)
 

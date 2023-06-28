@@ -302,7 +302,10 @@ def confidence_plot(x, y, s, suffix=None):
         "\n################################################################",
         flush=True,
     )
-    print("Visualising class-average confidence metrics ...\n", flush=True)
+    print(
+        "Visualising class-average confidence metrics " + suffix + "...\n",
+        flush=True,
+    )
     cmap = plt.get_cmap("jet")
     cols = [cmap(i) for i in np.linspace(0, 1, len(x[0]))]
     rows = len(np.unique(y)) // 2
@@ -322,7 +325,7 @@ def confidence_plot(x, y, s, suffix=None):
 
         from scipy.stats import norm
 
-        xs = np.arange(min_mu - (4 * max_sig), max_mu + (4 * max_sig), 0.001)
+        xs = np.arange(min_mu - (4 * max_sig), max_mu + (4 * max_sig), 0.01)
 
         for i in range(len(mu_cl)):
             ax[c].plot(
@@ -348,7 +351,7 @@ def accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes=None):
         "\n################################################################",
         flush=True,
     )
-    print("Visualising confusion and F1 scores ...\n", flush=True)
+    print("Visualising accuracy: confusion and F1 scores ...\n", flush=True)
 
     if classes is not None:
         classes_list = pd.read_csv(classes).columns.tolist()
@@ -498,7 +501,7 @@ def recon_plot(img, rec, name="trn"):
         "\n################################################################",
         flush=True,
     )
-    print("Visualising reconstructions ...\n", flush=True)
+    print("Visualising reconstructions " + name + "...\n", flush=True)
 
     fname_in = "plots/" + str(name) + "_recon_in.png"
     fname_out = "plots/" + str(name) + "_recon_out.png"
@@ -850,7 +853,7 @@ def plot_classes_distribution(data, category):
         "\n################################################################",
         flush=True,
     )
-    print("Visualising classes distribution ...\n", flush=True)
+    print("Visualising classes distribution " + category + "...\n", flush=True)
 
     fig, ax = plt.subplots(figsize=(9, 9))
     labels, counts = np.unique(data, return_counts=True)

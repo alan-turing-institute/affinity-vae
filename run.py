@@ -226,7 +226,7 @@ logging.basicConfig(
     type=bool,
     default=None,
     is_flag=True,
-    help="Visualise loss.",
+    help="Visualise loss (every epoch starting at epoch 2).",
 )
 @click.option(
     "--vis_acc",
@@ -234,7 +234,7 @@ logging.basicConfig(
     type=bool,
     default=None,
     is_flag=True,
-    help="Visualise confusion matrix.",
+    help="Visualise confusion matrix and F1 scores (frequency controlled).",
 )
 @click.option(
     "--vis_rec",
@@ -242,7 +242,7 @@ logging.basicConfig(
     type=bool,
     default=None,
     is_flag=True,
-    help="Visualise reconstructions.",
+    help="Visualise reconstructions (frequency controlled).",
 )
 @click.option(
     "--vis_con",
@@ -250,15 +250,7 @@ logging.basicConfig(
     type=bool,
     default=None,
     is_flag=True,
-    help="Visualise per-class confidence metrics",
-)
-@click.option(
-    "--vis_cyc",
-    "-vc",
-    type=bool,
-    default=None,
-    is_flag=True,
-    help="Visualise cyclical parameters which are at the moment beta and gamma vs epoch number.",
+    help="Visualise per-class confidence metrics (frequency controlled).",
 )
 @click.option(
     "--vis_emb",
@@ -266,7 +258,7 @@ logging.basicConfig(
     type=bool,
     default=None,
     is_flag=True,
-    help="Visualise latent space embedding.",
+    help="Visualise latent space embedding (frequency controlled).",
 )
 @click.option(
     "--vis_int",
@@ -274,7 +266,7 @@ logging.basicConfig(
     type=bool,
     default=None,
     is_flag=True,
-    help="Visualise interpolations.",
+    help="Visualise interpolations (frequency controlled).",
 )
 @click.option(
     "--vis_dis",
@@ -282,7 +274,7 @@ logging.basicConfig(
     type=bool,
     default=None,
     is_flag=True,
-    help="Visualise single transversals.",
+    help="Visualise latent disentanglement (frequency controlled).",
 )
 @click.option(
     "--vis_pos",
@@ -290,7 +282,23 @@ logging.basicConfig(
     type=bool,
     default=None,
     is_flag=True,
-    help="Visualise pose interpolations in the first 2 dimensions",
+    help="Visualise pose disentanglement (frequency controlled).",
+)
+@click.option(
+    "--vis_cyc",
+    "-vc",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise cyclical parameters (once per run).",
+)
+@click.option(
+    "--vis_aff",
+    "-va",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise affinity matrix (once per run).",
 )
 @click.option(
     "--vis_his",
@@ -298,7 +306,7 @@ logging.basicConfig(
     type=bool,
     default=None,
     is_flag=True,
-    help="Visualise train-val class distribution.",
+    help="Visualise train-val class distribution (once per run).",
 )
 @click.option(
     "--vis_all",
@@ -413,11 +421,12 @@ def run(
     vis_acc,
     vis_rec,
     vis_con,
-    vis_cyc,
     vis_emb,
     vis_int,
     vis_dis,
     vis_pos,
+    vis_cyc,
+    vis_aff,
     vis_his,
     vis_all,
     freq_eval,
@@ -514,11 +523,12 @@ def run(
             config.VIS_ACC = True
             config.VIS_REC = True
             config.VIS_CON = True
-            config.VIS_CYC = True
             config.VIS_EMB = True
             config.VIS_INT = True
             config.VIS_DIS = True
             config.VIS_POS = True
+            config.VIS_CYC = True
+            config.VIS_AFF = True
             config.VIS_HIS = True
 
         else:
@@ -526,11 +536,12 @@ def run(
             config.VIS_ACC = data["vis_acc"]
             config.VIS_REC = data["vis_rec"]
             config.VIS_CON = data["vis_con"]
-            config.VIS_CYC = data["vis_cyc"]
             config.VIS_EMB = data["vis_emb"]
             config.VIS_INT = data["vis_int"]
             config.VIS_DIS = data["vis_dis"]
             config.VIS_POS = data["vis_pos"]
+            config.VIS_CYC = data["vis_cyc"]
+            config.VIS_AFF = data["vis_aff"]
             config.VIS_HIS = data["vis_his"]
 
         if data["freq_all"] is not None:
