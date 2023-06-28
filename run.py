@@ -347,7 +347,7 @@ logging.basicConfig(
     type=bool,
     default=None,
     is_flag=True,
-    help="Visualise latent space embedding.",
+    help="Visualise latent space embedding (frequency controlled).",
 )
 @click.option(
     "--vis_int",
@@ -491,15 +491,21 @@ def run(
     gamma_cycle,
     gamma_ratio,
     cyc_method_gamma,
-    gpu,
-    eval,
-    dynamic,
-    model,
-    vis_los,
-    vis_acc,
+    freq_eval,
+    freq_sta,
+    freq_emb,
+    freq_rec,
+    freq_con,
+    freq_int,
+    freq_dis,
+    freq_pos,
+    freq_acc,
+    freq_sim,
+    freq_all,
+    vis_emb,
     vis_rec,
     vis_con,
-    vis_emb,
+    vis_los,
     vis_int,
     vis_dis,
     vis_pos,
@@ -508,17 +514,10 @@ def run(
     vis_his,
     vis_sim,
     vis_all,
-    freq_eval,
-    freq_sta,
-    freq_acc,
-    freq_rec,
-    freq_con,
-    freq_emb,
-    freq_int,
-    freq_dis,
-    freq_pos,
-    freq_sim,
-    freq_all,
+    gpu,
+    eval,
+    dynamic,
+    model,
     gaussian_blur,
     normalise,
     shift_min,
@@ -621,11 +620,10 @@ def run(
 
     try:
         if data["vis_all"]:
-            config.VIS_LOS = True
-            config.VIS_ACC = True
-            config.VIS_REC = True
             config.VIS_CON = True
+            config.VIS_LOS = True
             config.VIS_EMB = True
+            config.VIS_REC = True
             config.VIS_INT = True
             config.VIS_DIS = True
             config.VIS_POS = True
@@ -635,11 +633,11 @@ def run(
             config.VIS_SIM = True
 
         else:
+            config.VIS_CON = data["vis_con"]
             config.VIS_LOS = data["vis_los"]
             config.VIS_ACC = data["vis_acc"]
-            config.VIS_REC = data["vis_rec"]
-            config.VIS_CON = data["vis_con"]
             config.VIS_EMB = data["vis_emb"]
+            config.VIS_REC = data["vis_rec"]
             config.VIS_INT = data["vis_int"]
             config.VIS_DIS = data["vis_dis"]
             config.VIS_POS = data["vis_pos"]
@@ -649,16 +647,17 @@ def run(
             config.VIS_SIM = data["vis_sim"]
 
         if data["freq_all"] is not None:
-            config.FREQ_EVAL = data["freq_all"]
-            config.FREQ_STA = data["freq_all"]
-            config.FREQ_ACC = data["freq_all"]
-            config.FREQ_REC = data["freq_all"]
             config.FREQ_CON = data["freq_all"]
+            config.FREQ_EVAL = data["freq_all"]
             config.FREQ_EMB = data["freq_all"]
+            config.FREQ_REC = data["freq_all"]
             config.FREQ_INT = data["freq_all"]
             config.FREQ_DIS = data["freq_all"]
             config.FREQ_POS = data["freq_all"]
+            config.FREQ_ACC = data["freq_all"]
+            config.FREQ_STA = data["freq_all"]
             config.FREQ_SIM = data["freq_all"]
+
         else:
             config.FREQ_EVAL = data["freq_eval"]
             config.FREQ_STA = data["freq_sta"]
