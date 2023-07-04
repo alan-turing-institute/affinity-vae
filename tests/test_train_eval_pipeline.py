@@ -2,17 +2,19 @@ import os
 import shutil
 import tempfile
 import unittest
-
+import torch
 from avae import config
 from avae.evaluate import evaluate
 from avae.train import train
 from tests import testdata
-
+import random
 
 class TrainEvalTest(unittest.TestCase):
     def setUp(self) -> None:
         """Test instantiation of the pipeline."""
 
+        torch.random.manual_seed(0)
+        random.seed(10)
         self.testdata = os.path.dirname(testdata.__file__)
 
         self.data = {
