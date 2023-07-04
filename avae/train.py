@@ -112,7 +112,11 @@ def train(
         If True, the model will be trained on GPU.
     model: str
         Type of model to train. Can be a or b.
-
+    gaussian_blur: bool
+        if True, Gaussian bluring is applied to the input before being passed to the model.
+        This is added as a way to remove noise from the input data.
+    normalise:
+        In True, the input data is normalised before being passed to the model.
     """
     torch.manual_seed(42)
 

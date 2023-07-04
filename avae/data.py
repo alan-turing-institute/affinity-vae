@@ -50,6 +50,11 @@ def load_data(
         Path to the affinity matrix.
     classes: list
         List of classes to be selected from the data.
+    gaussian_blur: bool
+        if True, Gaussian bluring is applied to the input before being passed to the model.
+        This is added as a way to remove noise from the input data.
+    normalise:
+        In True, the input data is normalised before being passed to the model.
 
     Returns
     -------

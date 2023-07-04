@@ -43,6 +43,11 @@ def evaluate(
         If True, the meta data for visualisation will be collected and returned.
     use_gpu: bool
         If True, the model will be trained on GPU.
+    gaussian_blur: bool
+        if True, Gaussian bluring is applied to the input before being passed to the model.
+        This is added as a way to remove noise from the input data.
+    normalise:
+        In True, the input data is normalised before being passed to the model.
 
     """
 
