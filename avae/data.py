@@ -56,6 +56,9 @@ def load_data(
         This is added as a way to remove noise from the input data.
     normalise:
         In True, the input data is normalised before being passed to the model.
+    shift_min: bool
+        If True, the minimum value of the input data is shifted to 0 and maximum to 1.
+
 
     Returns
     -------
