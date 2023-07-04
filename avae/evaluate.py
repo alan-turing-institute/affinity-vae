@@ -132,7 +132,10 @@ def evaluate(datapath, state, meta, lim, splt, batch_s, collect_meta, use_gpu):
         vis.latent_embed_plot_umap(x_test, np.array(y_test), "_eval")
         vis.latent_embed_plot_tsne(x_test, np.array(y_test), "_eval")
 
-        # ############################# Predict #############################
+    if config.VIS_SIM:
+        vis.latent_space_similarity(x_test, np.array(y_test), mode="_eval")
+
+    # ############################# Predict #############################
 
     if collect_meta:
         # merge img and rec into one image for display in altair
