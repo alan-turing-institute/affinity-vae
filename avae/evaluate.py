@@ -49,6 +49,9 @@ def evaluate(
         This is added as a way to remove noise from the input data.
     normalise:
         In True, the input data is normalised before being passed to the model.
+    shift_min: bool
+        If True, the input data is shifted to have a minimum value of 0 and max 1.
+
 
     """
 
