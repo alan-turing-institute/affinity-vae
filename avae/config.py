@@ -70,4 +70,6 @@ DEFAULT_RUN_CONFIGS = {
     "vis_sim": VIS_SIM,
     "vis_all": False,
     "model": "a",
+    "gaussian_blur": False,
+    "normalise": False,
 }

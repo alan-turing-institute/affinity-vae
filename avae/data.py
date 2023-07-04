@@ -23,6 +23,8 @@ def load_data(
     eval: bool = True,
     affinity=None,
     classes=None,
+    gaussian_blur=False,
+    normalise=False,
 ):
     """Loads all data needed for training, testing and evaluation. Loads MRC files from a given path, selects subset of
     classes if requested, splits it into train / val  and test in batch sets, loads affinity matrix. Returns train,
@@ -48,6 +50,11 @@ def load_data(
         Path to the affinity matrix.
     classes: list
         List of classes to be selected from the data.
+    gaussian_blur: bool
+        if True, Gaussian bluring is applied to the input before being passed to the model.
+        This is added as a way to remove noise from the input data.
+    normalise:
+        In True, the input data is normalised before being passed to the model.
 
     Returns
     -------
@@ -73,6 +80,8 @@ def load_data(
             datapath,
             amatrix=lookup,
             classes=classes,
+            gaussian_blur=gaussian_blur,
+            normalise=normalise,
             lim=lim,
             collect_m=collect_meta,
         )
@@ -188,6 +197,8 @@ class ProteinDataset(Dataset):
         amatrix=None,
         classes=None,
         transform=None,
+        gaussian_blur=False,
+        normalise=False,
         lim=None,
         collect_m=False,
     ):
@@ -230,19 +241,31 @@ class ProteinDataset(Dataset):
 
         self.paths = self.paths[:lim]
 
+        self.transform = []
+        self.transform.append(transforms.ToTensor())
+        self.transform.append(transforms.Lambda(lambda x: x.unsqueeze(0)))
+
         if not transform:
-            self.transform = transforms.Compose(
-                [
-                    transforms.ToTensor(),
-                    transforms.Lambda(lambda x: x.unsqueeze(0)),
-                    # transforms.Normalize(0, 1, inplace=True)
-                    # transforms.Resize(64),
-                    # transforms.Lambda(lambda x: \
-                    # (x - x.min()) / (x.max() - x.min()))
-                ]
-            )
+            if gaussian_blur:
+                print(
+                    "Data Transformation : GaussianBlur is applied to the images",
+                    flush=True,
+                )
+                self.transform.append(
+                    transforms.GaussianBlur(3, sigma=(0.08, 10.0))
+                )
+            if normalise:
+                print(
+                    "Data Transformation : Normalisation is applied to the images",
+                    flush=True,
+                )
+                self.transform.append(
+                    transforms.Normalize(0, 1, inplace=False)
+                )
         else:
-            self.transform = transform
+            self.transform.append(transform)
+
+        self.transform = transforms.Compose(self.transform)
 
     def __len__(self):
         return len(self.paths)
@@ -271,8 +294,8 @@ class ProteinDataset(Dataset):
         filename = self.paths[item]
         with mrcfile.open(os.path.join(self.root_dir, filename)) as f:
             data = np.array(f.data)
-        x = self.transform(data)
 
+        x = self.transform(data)
         # ground truth
         y = filename.split("_")[0]
 

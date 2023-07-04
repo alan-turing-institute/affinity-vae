@@ -165,9 +165,14 @@ def latent_embed_plot_tsne(xs, ys, mode=""):
     ).fit_transform(xs)
 
     n_classes = len(np.unique(ys))
-    fig, ax = plt.subplots(
-        figsize=(int(n_classes / 2) + 2, int(n_classes / 2))
-    )
+    if n_classes < 3:
+        fig, ax = plt.subplots(figsize=(6, 6))
+    else:
+        fig, ax = plt.subplots(
+            figsize=(int(n_classes / 2) + 2, int(n_classes / 2))
+        )
+    # When the number of classes is less than 3 the image becomes two small
+
     for mol_id, mol in enumerate(set(ys.tolist())):
         idx = np.where(np.array(ys.tolist()) == mol)[0]
         cmap = plt.cm.get_cmap("tab20")
@@ -211,11 +216,12 @@ def latent_embed_plot_umap(xs, ys, mode=""):
     embedding = reducer.fit_transform(xs)
 
     n_classes = len(np.unique(ys))
-
-    fig, ax = plt.subplots(
-        figsize=(int(n_classes / 2) + 2, int(n_classes / 2))
-    )
-
+    if n_classes < 3:
+        fig, ax = plt.subplots(figsize=(6, 6))
+    else:
+        fig, ax = plt.subplots(
+            figsize=(int(n_classes / 2) + 2, int(n_classes / 2))
+        )
     for mol_id, mol in enumerate(set(ys.tolist())):
         idx = np.where(np.array(ys.tolist()) == mol)[0]
 
@@ -368,7 +374,6 @@ def accuracy_plot(
         flush=True,
     )
     print("Visualising confusion and F1 scores ...\n", flush=True)
-
     if classes is not None:
         classes_list = pd.read_csv(classes).columns.tolist()
     else:
@@ -583,7 +588,7 @@ def loss_plot(epochs, beta, gamma, train_loss, val_loss=None, p=None):
     plt.close()
 
 
-def recon_plot(img, rec, name="trn"):
+def recon_plot(img, rec, label, name="trn"):
     """Visualise reconstructions.
 
     Parameters
@@ -626,35 +631,49 @@ def recon_plot(img, rec, name="trn"):
 
     rec = rec.detach().cpu().numpy()
     img = img.detach().cpu().numpy()
+    label = np.array(label)
     dsize = rec.shape[-3:]
 
     # The number of reconstruction and input images to be displayed in the .mrc output file
     number_of_random_samples = 10
+    number_of_columns = 3
+    padding = 5
+    if len(label) < number_of_random_samples * number_of_columns:
+        number_of_random_samples = len(label)
+        number_of_columns = 0
 
     # define the dimensions for the napari grid
     grid_for_napari = np.zeros(
-        (number_of_random_samples * dsize[0], 2 * dsize[1], dsize[2]),
+        (
+            number_of_random_samples * dsize[0],
+            2 * dsize[1] * number_of_columns + padding * number_of_columns,
+            dsize[2],
+        ),
         dtype=np.float32,
     )
+    print("Molecules in the reconstructions are  ...", flush=True)
+    for k in range(number_of_columns):
+        # select 10 images at random
+        rand_select = np.random.randint(
+            0, high=img.shape[0], size=number_of_random_samples, dtype=int
+        )  #
+        img = img[rand_select, :, :, :, :]
+        rec = rec[rand_select, :, :, :, :]
+        print(f"column {k} : {label[rand_select]}", flush=True)
 
-    # select 10 images at random
-    rand_select = np.random.randint(
-        0, high=img.shape[0], size=number_of_random_samples, dtype=int
-    )  #
-    img = img[rand_select, :, :, :, :]
-    rec = rec[rand_select, :, :, :, :]
+        # stack the images together with their reconstruction
+        rec_img = np.hstack((img, rec))
 
-    # stack the images together with their reconstruction
-    rec_img = np.hstack((img, rec))
-
-    # Create and save the mrc file with single transversals
-    for i in range(number_of_random_samples):
+        # Create and save the mrc file with single transversals
         for j in range(2):
-            grid_for_napari[
-                i * dsize[0] : (i + 1) * dsize[0],
-                j * dsize[1] : (j + 1) * dsize[1],
-                :,
-            ] = rec_img[i, j, :, :, :]
+            for i in range(number_of_random_samples):
+                grid_for_napari[
+                    i * dsize[0] : (i + 1) * dsize[0],
+                    j * dsize[1]
+                    + (dsize[1] * 2 + padding) * k : (j + 1) * dsize[1]
+                    + (dsize[1] * 2 + padding) * k,
+                    :,
+                ] = rec_img[i, j, :, :, :]
 
     with mrcfile.new(
         "plots/" + str(name) + "_recon_in.mrc", overwrite=True

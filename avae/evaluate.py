@@ -10,7 +10,18 @@ from .train import accuracy, add_meta, pass_batch
 from .utils import set_device
 
 
-def evaluate(datapath, state, meta, lim, splt, batch_s, collect_meta, use_gpu):
+def evaluate(
+    datapath,
+    state,
+    meta,
+    lim,
+    splt,
+    batch_s,
+    collect_meta,
+    use_gpu,
+    gaussian_blur,
+    normalise,
+):
     """Function for evaluating the model. Loads the data, model and runs the evaluation. Saves the results of the
     evaluation in the plot and latents directories.
 
@@ -32,12 +43,24 @@ def evaluate(datapath, state, meta, lim, splt, batch_s, collect_meta, use_gpu):
         If True, the meta data for visualisation will be collected and returned.
     use_gpu: bool
         If True, the model will be trained on GPU.
+    gaussian_blur: bool
+        if True, Gaussian bluring is applied to the input before being passed to the model.
+        This is added as a way to remove noise from the input data.
+    normalise:
+        In True, the input data is normalised before being passed to the model.
 
     """
 
     # ############################### DATA ###############################
     tests = load_data(
-        datapath, lim, splt, batch_s, collect_meta=collect_meta, eval=True
+        datapath,
+        lim,
+        splt,
+        batch_s,
+        collect_meta=collect_meta,
+        eval=True,
+        gaussian_blur=gaussian_blur,
+        normalise=normalise,
     )
 
     # ############################### MODEL ###############################
@@ -111,7 +134,7 @@ def evaluate(datapath, state, meta, lim, splt, batch_s, collect_meta, use_gpu):
 
     # visualise reconstructions - last batch
     if config.VIS_REC:
-        vis.recon_plot(x, x_hat, name="evl")
+        vis.recon_plot(x, x_hat, y_test, name="evl")
 
     # visualise latent disentanglement
     if config.VIS_DIS:
