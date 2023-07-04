@@ -1,13 +1,16 @@
 import os
+import random
 import shutil
 import tempfile
 import unittest
+
 import torch
+
 from avae import config
 from avae.evaluate import evaluate
 from avae.train import train
 from tests import testdata
-import random
+
 
 class TrainEvalTest(unittest.TestCase):
     def setUp(self) -> None:
