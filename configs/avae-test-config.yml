@@ -8,6 +8,11 @@ restart: True
 limit: 1000
 split: 20
 
+#### Data processing parameters
+shift_mean: False
+gaussian_blur: False
+normalise: False
+
 #### Network parameters
 
 depth:  3
