@@ -191,9 +191,18 @@ class ProteinDataset(Dataset):
         the classes.
     transform: torchvision.transforms.Transform
         List of transforms to be applied to the images.
+    gaussian_blur: bool
+        if True, Gaussian bluring is applied to the input before being passed to the model.
+        This is added as a way to remove noise from the input data.
+    normalise:
+        In True, the input data is normalised before being passed to the model.
+    shift_min: bool
+        If True, the minimum value of the input data is shifted to 0 and maximum to 1.
     lim : int
         Limit the dataset size to the given number; useful for debugging
         purposes.
+    collect_meta: bool
+        If True, the meta data for visualisation will be collected and returned.
     """
 
     def __init__(
