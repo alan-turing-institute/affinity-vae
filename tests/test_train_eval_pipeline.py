@@ -137,7 +137,7 @@ class TrainEvalTest(unittest.TestCase):
         n_latent_eval = len(os.listdir(os.path.join(temp_dir.name, "latents")))
         n_states_eval = len(os.listdir(os.path.join(temp_dir.name, "states")))
 
-        self.assertEqual(n_plots_eval, 34)
+        self.assertEqual(n_plots_eval, 32)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 2)
 
@@ -209,7 +209,7 @@ class TrainEvalTest(unittest.TestCase):
         n_latent_eval = len(os.listdir(os.path.join(temp_dir.name, "latents")))
         n_states_eval = len(os.listdir(os.path.join(temp_dir.name, "states")))
 
-        self.assertEqual(n_plots_eval, 34)
+        self.assertEqual(n_plots_eval, 32)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 2)
 
