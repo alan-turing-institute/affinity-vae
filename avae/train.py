@@ -18,6 +18,8 @@ from .utils import set_device
 
 def train(
     datapath,
+    restart,
+    state,
     lim,
     splt,
     batch_s,
@@ -31,11 +33,13 @@ def train(
     lat_dims,
     pose_dims,
     learning,
+    beta_load,
     beta_min,
     beta_max,
     beta_cycle,
     beta_ratio,
     cyc_method_beta,
+    gamma_load,
     gamma_min,
     gamma_max,
     gamma_cycle,
@@ -109,7 +113,12 @@ def train(
 
     """
     torch.manual_seed(42)
-    timestamp = str(datetime.datetime.now().strftime("%Y%m%d_%H:%M:%S"))
+
+    # This time stamp is  commented out because it doesnt work the same on all devices
+    # timestamp = str(datetime.datetime.now().strftime("%Y-%m-%d_T%H:%M:%S.%f"))
+
+    curr_dt = datetime.datetime.now()
+    timestamp = str(int(round(curr_dt.timestamp())))
 
     # ############################### DATA ###############################
     trains, vals, tests, lookup = load_data(
@@ -143,42 +152,88 @@ def train(
         lat_dims,
         pose_dims=pose_dims,
     )
+
     vae.to(device)
 
     optimizer = torch.optim.Adam(
         params=vae.parameters(), lr=learning  # , weight_decay=1e-5
     )
+    t_history = []
+    v_history = []
+    e_start = 0
 
-    if beta_max == 0 and cyc_method_beta != "flat":
+    if restart and state is None:
+        raise RuntimeError(
+            "The restart flag is true however a path to a model state is not provided"
+        )
+
+    if restart:
+        checkpoint = torch.load(state)
+        vae.load_state_dict(checkpoint["model_state_dict"])
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        e_start = checkpoint["epoch"]
+        t_history = checkpoint["t_loss_history"]
+        v_history = checkpoint["v_loss_history"]
+
+    if beta_max == 0 and cyc_method_beta != "flat" and beta_load is not None:
         raise RuntimeError(
             "The maximum value for beta is set to 0, it is not possible to"
             "oscillate between a maximum and minimum. Please choose the flat method for"
             "cyc_method_beta"
         )
-    beta_arr = cyc_annealing(
-        epochs,
-        cyc_method_beta,
-        start=beta_min,
-        stop=beta_max,
-        n_cycle=beta_cycle,
-        ratio=beta_ratio,
-    ).var
 
-    if gamma_max == 0 and cyc_method_gamma != "flat":
+    if beta_load is None:
+        # If a path for loading the beta array is not provided,
+        # create it given the input
+        beta_arr = (
+            cyc_annealing(
+                epochs,
+                cyc_method_beta,
+                n_cycle=beta_cycle,
+                ratio=beta_ratio,
+            ).var
+            * (beta_max - beta_min)
+            + beta_min
+        )
+    else:
+        beta_arr = np.load(beta_load)
+        if len(beta_arr) != epochs:
+            raise RuntimeError(
+                f"The length of the beta array loaded from file is {len(beta_arr)} but the number of Epochs specified in the input are {epochs}.\n"
+                "These two values should be the same."
+            )
+
+    if (
+        gamma_max == 0
+        and cyc_method_gamma != "flat"
+        and gamma_load is not None
+    ):
         raise RuntimeError(
             "The maximum value for gamma is set to 0, it is not possible to"
             "oscillate between a maximum and minimum. Please choose the flat method for"
             "cyc_method_gamma"
         )
-    gamma_arr = cyc_annealing(
-        epochs,
-        cyc_method_gamma,
-        start=gamma_min,
-        stop=gamma_max,
-        n_cycle=gamma_cycle,
-        ratio=gamma_ratio,
-    ).var
 
+    if gamma_load is None:
+        # If a path for loading the gamma array is not provided,
+        # create it given the input
+        gamma_arr = (
+            cyc_annealing(
+                epochs,
+                cyc_method_gamma,
+                n_cycle=gamma_cycle,
+                ratio=gamma_ratio,
+            ).var
+            * (gamma_max - gamma_min)
+            + gamma_min
+        )
+    else:
+        gamma_arr = np.load(gamma_load)
+        if len(gamma_arr) != epochs:
+            raise RuntimeError(
+                f"The length of the gamma array loaded from file is {len(gamma_arr)} but the number of Epochs specified in the input are {epochs}.\n"
+                "These two values should be the same."
+            )
     if config.VIS_CYC:
         vis.plot_cyc_variable(beta_arr, "beta")
         vis.plot_cyc_variable(gamma_arr, "gamma")
@@ -191,9 +246,6 @@ def train(
         recon_fn=recon_fn,
     )
 
-    t_history = []
-    v_history = []
-
     print(
         "Epoch: [0/%d] | Batch: [0/%d] | Loss: -- | Recon: -- | "
         "KLdiv: -- | Affin: -- | Beta: --" % (epochs, len(trains)),
@@ -202,7 +254,7 @@ def train(
     )
 
     # ########################## TRAINING LOOP ################################
-    for epoch in range(epochs):
+    for epoch in range(e_start, epochs):
 
         if collect_meta:
             meta_df = pd.DataFrame()
@@ -339,7 +391,28 @@ def train(
                 + str(pose_dims)
                 + ".pt"
             )
-            torch.save(vae, os.path.join("states", mname))
+
+            print(
+                "\n################################################################",
+                flush=True,
+            )
+            print(
+                "Saving model state for restarting and evaluation ...\n",
+                flush=True,
+            )
+
+            torch.save(
+                {
+                    "epoch": epoch + 1,
+                    "model_state_dict": vae.state_dict(),
+                    "model_class_object": vae,
+                    "optimizer_state_dict": optimizer.state_dict(),
+                    "t_loss_history": t_history,
+                    "v_loss_history": v_history,
+                },
+                os.path.join("states", mname),
+            )
+
             if collect_meta:
                 meta_df.to_pickle(
                     os.path.join("states", "meta_" + timestamp + ".pkl")
@@ -347,11 +420,29 @@ def train(
 
         # ########################## VISUALISE ################################
 
+        if config.VIS_SIM and (epoch + 1) % config.FREQ_SIM == 0:
+            vis.latent_space_similarity(
+                x_train, np.array(y_train), mode="_train", epoch=epoch
+            )
+            vis.latent_space_similarity(
+                x_val, np.array(y_val), mode="_valid", epoch=epoch
+            )
+
         # visualise accuracy
         if config.VIS_ACC and (epoch + 1) % config.FREQ_ACC == 0:
             train_acc, val_acc, ypred_train, ypred_val = accuracy(
                 x_train, y_train, x_val, y_val
             )
+            print(
+                "Epoch: [%d/%d] |   Gamma: %f | Beta: %f"
+                % (
+                    epoch + 1,
+                    epochs,
+                    gamma_arr[epoch],
+                    beta_arr[epoch],
+                )
+            )
+
             print(
                 "\n------------------->>> Accuracy: Train: %f | Val: %f\n"
                 % (train_acc, val_acc),
@@ -370,7 +461,14 @@ def train(
                 beta_arr[epoch],
                 gamma_arr[epoch],
             ]
-            vis.loss_plot(epoch + 1, t_history, v_history, p=p)
+            vis.loss_plot(
+                epoch + 1,
+                beta_arr[: epoch + 1],
+                gamma_arr[: epoch + 1],
+                t_history,
+                v_history,
+                p=p,
+            )
 
         # visualise reconstructions - last batch
         if config.VIS_REC and (epoch + 1) % config.FREQ_REC == 0:
@@ -511,6 +609,7 @@ def pass_batch(
     aff = aff.to(device)
 
     # forward
+    x = x.to(torch.float32)
     x_hat, lat_mu, lat_logvar, lat, lat_pose = vae(x)
     if loss is not None:
         history_loss = loss(x, x_hat, lat_mu, lat_logvar, e, batch_aff=aff)

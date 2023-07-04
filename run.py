@@ -1,5 +1,6 @@
 import logging
 import os
+import warnings
 from datetime import datetime
 
 import click
@@ -30,6 +31,29 @@ logging.basicConfig(
     type=str,
     default=None,
     help="Path to training data.",
+)
+@click.option(
+    "--restart",
+    "-res",
+    type=bool,
+    default=None,
+    help="Is the calculation restarting from a checkpoint.",
+)
+@click.option(
+    "--state",
+    "-st",
+    type=str,
+    default=None,
+    is_flag=True,
+    help="The saved model state to be loaded for evaluation/resume training.",
+)
+@click.option(
+    "--meta",
+    "-mt",
+    type=str,
+    default=None,
+    is_flag=True,
+    help="The saved meta file to be loaded for regenerating dynamic plots.",
 )
 @click.option(
     "--limit",
@@ -111,6 +135,15 @@ logging.basicConfig(
     help="Beta maximum in the case of cyclical annealing schedule",
 )
 @click.option(
+    "--beta_load",
+    "-bl",
+    type=str,
+    default=None,
+    is_flag=True,
+    help="The path to the saved beta array file to be loaded "
+    "if this file is provided, all other beta related variables would be ignored",
+)
+@click.option(
     "--gamma",
     "-g",
     type=float,
@@ -118,6 +151,15 @@ logging.basicConfig(
     help="Scale factor for the loss component corresponding "
     "to shape similarity. If 0 and pd=0 it becomes a standard"
     "beta-VAE.",
+)
+@click.option(
+    "--gamma_load",
+    "-gl",
+    type=str,
+    default=None,
+    is_flag=True,
+    help="The path to the saved gamma array file to be loaded"
+    "if this file is provided, all other gamma related variables would be ignored",
 )
 @click.option(
     "--learning",
@@ -247,6 +289,13 @@ logging.basicConfig(
     help="Frequency at which to visualise confusion matrix.",
 )
 @click.option(
+    "--freq_sim",
+    "-fsim",
+    type=int,
+    default=None,
+    help="Frequency at which to visualise similarity matrix.",
+)
+@click.option(
     "--freq_all",
     "-fa",
     type=int,
@@ -326,6 +375,14 @@ logging.basicConfig(
     help="Visualise train-val class distribution.",
 )
 @click.option(
+    "--vis_sim",
+    "-similarity",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise train-val model similarity matrix.",
+)
+@click.option(
     "--vis_all",
     "-va",
     type=bool,
@@ -367,6 +424,9 @@ logging.basicConfig(
 def run(
     config_file,
     datapath,
+    restart,
+    state,
+    meta,
     limit,
     split,
     no_val_drop,
@@ -379,6 +439,8 @@ def run(
     latent_dims,
     pose_dims,
     beta,
+    beta_load,
+    gamma_load,
     gamma,
     learning,
     loss_fn,
@@ -398,6 +460,7 @@ def run(
     freq_dis,
     freq_pos,
     freq_acc,
+    freq_sim,
     freq_all,
     vis_emb,
     vis_rec,
@@ -408,12 +471,16 @@ def run(
     vis_pos,
     vis_acc,
     vis_his,
+    vis_sim,
     vis_all,
     gpu,
     eval,
     dynamic,
     model,
 ):
+
+    warnings.simplefilter("ignore", FutureWarning)
+
     # read config file and command line arguments and assign to local variables that are used in the rest of the code
     local_vars = locals().copy()
     if config_file is not None:
@@ -421,6 +488,7 @@ def run(
             logging.info("Reading submission configuration file" + config_file)
             data = yaml.load(f, Loader=yaml.FullLoader)
         # returns JSON object as
+
         for key, val in local_vars.items():
             if (
                 val is not None
@@ -479,6 +547,19 @@ def run(
                     + " in config file to "
                     + str(data[key])
                 )
+
+            elif key == "state":
+                logging.warning(
+                    "No value set for "
+                    + key
+                    + " in config file or command line arguments. Loading the latest state if in evaluation mode."
+                )
+            elif key == "meta":
+                logging.warning(
+                    "No value set for "
+                    + key
+                    + " in config file or command line arguments. Loading the latest meta if in evaluation mode."
+                )
             else:
                 # set missing variables to default value
                 logging.warning(
@@ -502,6 +583,7 @@ def run(
             config.VIS_POS = True
             config.VIS_ACC = True
             config.VIS_HIS = True
+            config.VIS_SIM = True
 
         else:
             config.VIS_CYC = data["vis_cyc"]
@@ -513,6 +595,7 @@ def run(
             config.VIS_POS = data["vis_pos"]
             config.VIS_ACC = data["vis_acc"]
             config.VIS_HIS = data["vis_his"]
+            config.VIS_SIM = data["vis_sim"]
 
         if data["freq_all"] is not None:
             config.FREQ_EVAL = data["freq_all"]
@@ -523,6 +606,8 @@ def run(
             config.FREQ_POS = data["freq_all"]
             config.FREQ_ACC = data["freq_all"]
             config.FREQ_STA = data["freq_all"]
+            config.FREQ_SIM = data["freq_all"]
+
         else:
             config.FREQ_EVAL = data["freq_eval"]
             config.FREQ_EMB = data["freq_emb"]
@@ -532,10 +617,13 @@ def run(
             config.FREQ_POS = data["freq_pos"]
             config.FREQ_ACC = data["freq_acc"]
             config.FREQ_STA = data["freq_sta"]
+            config.FREQ_SIM = data["freq_sim"]
 
         if not data["eval"]:
             train(
                 datapath=data["datapath"],
+                restart=data["restart"],
+                state=data["state"],
                 lim=data["limit"],
                 splt=data["split"],
                 batch_s=data["batch"],
@@ -549,11 +637,13 @@ def run(
                 lat_dims=data["latent_dims"],
                 pose_dims=data["pose_dims"],
                 learning=data["learning"],
+                beta_load=data["beta_load"],
                 beta_min=data["beta_min"],
                 beta_max=data["beta"],
                 beta_cycle=data["beta_cycle"],
                 beta_ratio=data["beta_ratio"],
                 cyc_method_beta=data["cyc_method_beta"],
+                gamma_load=data["gamma_load"],
                 gamma_min=data["gamma_min"],
                 gamma_max=data["gamma"],
                 gamma_cycle=data["gamma_cycle"],
@@ -566,6 +656,8 @@ def run(
         else:
             evaluate(
                 datapath=data["datapath"],
+                state=data["state"],
+                meta=data["meta"],
                 lim=data["limit"],
                 splt=data["split"],
                 batch_s=data["batch"],

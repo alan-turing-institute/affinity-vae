@@ -30,15 +30,16 @@ class cyc_annealing:
         self,
         n_epoch,
         cyc_method="flat",
-        start=0.0,
-        stop=1.0,
         n_cycle=4,
         ratio=0.5,
     ):
 
         self.n_epoch = n_epoch
-        self.start = start
-        self.stop = stop
+
+        # The start and stop control where in each the cycle, the sigmoid function starts and stops
+        # This is for the moment hard coded in, as the feature does not contribute to the outcome of the model for our purpose
+        self.start = 0
+        self.stop = 1
         self.n_cycle = n_cycle
         self.ratio = ratio
 
@@ -70,7 +71,7 @@ class cyc_annealing:
             )
 
     def _frange_flat(self):
-        L = np.ones(self.n_epoch) * self.stop
+        L = np.ones(self.n_epoch)
         return L
 
     def _frange_cycle_linear(self):

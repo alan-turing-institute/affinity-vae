@@ -75,10 +75,10 @@ class AVAELoss:
     ----------
     device : torch.device
         Device used to calculate the loss.
-    beta: float
-        Beta parameter defining weight on latent regularisation term.
-    gamma : float
-        Gamma parameter defining weight on affinity regularisation term,
+    beta: list
+        Beta parameter list defining weight on latent regularisation term.
+    gamma : list
+        Gamma parameter list defining weight on affinity regularisation term,
         default = 1. Only used if lookup_aff is present.
     lookup_aff : np.ndarray [M, M]
         A square symmetric matrix where each column and row is the index of an

@@ -10,8 +10,7 @@ from .train import accuracy, add_meta, pass_batch
 from .utils import set_device
 
 
-def evaluate(datapath, lim, splt, batch_s, collect_meta, use_gpu):
-
+def evaluate(datapath, state, meta, lim, splt, batch_s, collect_meta, use_gpu):
     """Function for evaluating the model. Loads the data, model and runs the evaluation. Saves the results of the
     evaluation in the plot and latents directories.
 
@@ -19,6 +18,10 @@ def evaluate(datapath, lim, splt, batch_s, collect_meta, use_gpu):
     ----------
     datapath: str
         Path to the data directory.
+    state: str
+        Path to the model state file to be used for evaluation/resume.
+    meta: str
+        Path to the meta file to be used for evaluation/resume.
     lim: int
         Limit the number of samples to load.
     splt: int
@@ -40,22 +43,37 @@ def evaluate(datapath, lim, splt, batch_s, collect_meta, use_gpu):
     # ############################### MODEL ###############################
     device = set_device(use_gpu)
 
-    if not os.path.exists("states"):
-        raise RuntimeError(
-            "There are no existing model states saved, unable to evaluate."
-        )
-    # TODO add param to chose model
-    states = sorted([s for s in os.listdir("states") if ".pt" in s])[0]
-    fname = states.split(".")[0].split("_")
-    pose_dims = fname[3]
-    vae = torch.load(os.path.join("states", states))  # make optional param
+    if state is None:
+        if not os.path.exists("states"):
+            raise RuntimeError(
+                "There are no existing model states saved or provided via the state flag in config unable to evaluate."
+            )
+        else:
+            state = sorted(
+                [s for s in os.listdir("states") if ".pt" in s],
+                key=lambda x: int(x.split("_")[2][1:]),
+            )[-1]
+            state = os.path.join("states", state)
 
+    fname = state.split(".")[0].split("_")
+    pose_dims = fname[3]
+
+    print("Loading model from: ", state, flush=True)
+    checkpoint = torch.load(state)
+    vae = checkpoint["model_class_object"]
+    vae.load_state_dict(checkpoint["model_state_dict"])
     vae.to(device)
 
     # ########################## EVALUATE ################################
-    if collect_meta:
-        metas = sorted([f for f in os.listdir("states") if ".pkl" in f])[-1]
-        meta_df = pd.read_pickle(os.path.join("states", metas))
+
+    if meta is None:
+        if collect_meta:
+            metas = sorted([f for f in os.listdir("states") if ".pkl" in f])[
+                -1
+            ]
+            meta = os.path.join("states", metas)
+
+    meta_df = pd.read_pickle(meta)
 
     # create holders for latent spaces and labels
     x_test = []
@@ -114,7 +132,10 @@ def evaluate(datapath, lim, splt, batch_s, collect_meta, use_gpu):
         vis.latent_embed_plot_umap(x_test, np.array(y_test), "_eval")
         vis.latent_embed_plot_tsne(x_test, np.array(y_test), "_eval")
 
-        # ############################# Predict #############################
+    if config.VIS_SIM:
+        vis.latent_space_similarity(x_test, np.array(y_test), mode="_eval")
+
+    # ############################# Predict #############################
 
     if collect_meta:
         # merge img and rec into one image for display in altair

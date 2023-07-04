@@ -14,6 +14,7 @@ import umap
 from PIL import Image
 from sklearn.manifold import TSNE
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix, f1_score
+from sklearn.metrics.pairwise import cosine_similarity
 
 
 def _encoder(i):
@@ -154,9 +155,15 @@ def latent_embed_plot_tsne(xs, ys, mode=""):
 
     xs = np.asarray(xs)
     ys = np.asarray(ys)
-    lats = TSNE(n_components=2, perplexity=40, random_state=42).fit_transform(
-        xs
-    )
+
+    perplexity = 40
+    if len(ys) < perplexity:
+        perplexity = len(ys) - 1
+
+    lats = TSNE(
+        n_components=2, perplexity=perplexity, random_state=42
+    ).fit_transform(xs)
+
     n_classes = len(np.unique(ys))
     fig, ax = plt.subplots(
         figsize=(int(n_classes / 2) + 2, int(n_classes / 2))
@@ -367,7 +374,7 @@ def accuracy_plot(
     else:
         classes_list = np.unique(np.concatenate((y_train, ypred_train)))
 
-    cm = confusion_matrix(y_train, ypred_train)
+    cm = confusion_matrix(y_train, ypred_train, labels=classes_list)
     disp = ConfusionMatrixDisplay(
         confusion_matrix=cm, display_labels=classes_list
     )
@@ -389,9 +396,14 @@ def accuracy_plot(
         plt.close()
 
     classes_list_eval = np.unique(np.concatenate((y_val, ypred_val)))
-    cm = confusion_matrix(y_val, ypred_val)
-    disp = ConfusionMatrixDisplay(
-        confusion_matrix=cm, display_labels=classes_list_eval
+    common_elements = np.intersect1d(classes_list, classes_list_eval)
+    ordered_class_eval = np.concatenate(
+        (common_elements, np.setdiff1d(classes_list_eval, common_elements))
+    )
+
+    cm_eval = confusion_matrix(y_val, ypred_val, labels=ordered_class_eval)
+    disp_eval = ConfusionMatrixDisplay(
+        confusion_matrix=cm_eval, display_labels=ordered_class_eval
     )
 
     if mode == "_eval":
@@ -402,12 +414,18 @@ def accuracy_plot(
         figure_name = f"plots/confusion_{mode}.png"
 
     with plt.rc_context(
-        {"font.weight": "bold", "font.size": int(len(classes_list) / 3) + 3}
+        {
+            "font.weight": "bold",
+            "font.size": int(len(ordered_class_eval) / 3) + 3,
+        }
     ):
         fig, ax = plt.subplots(
-            figsize=(int(len(classes_list)) / 2, int(len(classes_list)) / 2)
+            figsize=(
+                int(len(ordered_class_eval)) / 2,
+                int(len(ordered_class_eval)) / 2,
+            )
         )
-        disp.plot(cmap=plt.cm.Blues, ax=ax, xticks_rotation=90)
+        disp_eval.plot(cmap=plt.cm.Blues, ax=ax, xticks_rotation=90)
         plt.tight_layout()
         plt.savefig(figure_name, dpi=300)
         plt.close()
@@ -429,7 +447,7 @@ def accuracy_plot(
     plt.close()
 
 
-def loss_plot(epochs, train_loss, val_loss=None, p=None):
+def loss_plot(epochs, beta, gamma, train_loss, val_loss=None, p=None):
     """Visualise loss over epochs.
 
     Parameters
@@ -470,6 +488,12 @@ def loss_plot(epochs, train_loss, val_loss=None, p=None):
 
     plt.clf()
     plt.ticklabel_format(useOffset=False)
+
+    train_loss[-2] = train_loss[-2] * beta
+    val_loss[-2] = val_loss[-2] * beta
+    val_loss[-1] = val_loss[-1] * gamma
+    train_loss[-1] = train_loss[-1] * gamma
+
     for i, loss in enumerate(train_loss):
         s = "-"
         plt.plot(
@@ -522,6 +546,7 @@ def loss_plot(epochs, train_loss, val_loss=None, p=None):
         plt.plot(
             range(1, epochs + 1), loss, c=cols[i], linestyle=s, label=labs[i]
         )
+
     plt.yscale("log")
     plt.ylabel("Loss", fontsize=16)
     plt.xlabel("Epochs", fontsize=16)
@@ -530,6 +555,32 @@ def loss_plot(epochs, train_loss, val_loss=None, p=None):
     plt.legend()
     plt.tight_layout()
     plt.savefig("plots/loss_train.png", dpi=300)
+    plt.close()
+
+    # plotting only the total loss as it sometimes is a few order of magnitude higher than KLD and affinity losses
+    plt.plot(
+        range(1, epochs + 1),
+        train_loss[0],
+        c=cols[0],
+        linestyle="-",
+        label=labs[0],
+    )
+    plt.plot(
+        range(1, epochs + 1),
+        val_loss[0],
+        c=cols[0],
+        linestyle="--",
+        label=vlabs[0],
+    )
+    plt.yscale("log")
+    plt.ylabel("Loss", fontsize=16)
+    plt.xlabel("Epochs", fontsize=16)
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig("plots/loss_total.png", dpi=300)
+    plt.close()
 
 
 def recon_plot(img, rec, name="trn"):
@@ -554,24 +605,61 @@ def recon_plot(img, rec, name="trn"):
     fname_in = "plots/" + str(name) + "_recon_in.png"
     fname_out = "plots/" + str(name) + "_recon_out.png"
 
-    img = img[:, :, :, :, img.shape[-1] // 2]
-    rec = rec[:, :, :, :, img.shape[-1] // 2]
+    img_2d = img[:, :, :, :, img.shape[-1] // 2]
+    rec_2d = rec[:, :, :, :, img.shape[-1] // 2]
 
     plt.subplots(figsize=(10, 10))
-    img = torchvision.utils.make_grid(img.cpu(), 10, 2).numpy()
-    plt.imshow(np.transpose(img, (1, 2, 0)))  # channels last
+    img_2d = torchvision.utils.make_grid(img_2d.cpu(), 10, 2).numpy()
+    plt.imshow(np.transpose(img_2d, (1, 2, 0)))  # channels last
     if not os.path.exists("plots"):
         os.mkdir("plots")
     plt.savefig(fname_in)
     plt.close()
 
     plt.subplots(figsize=(10, 10))
-    rec = torchvision.utils.make_grid(rec.detach().cpu(), 10, 2).numpy()
-    plt.imshow(np.transpose(rec, (1, 2, 0)))  # channels last
+    rec_2d = torchvision.utils.make_grid(rec_2d.detach().cpu(), 10, 2).numpy()
+    plt.imshow(np.transpose(rec_2d, (1, 2, 0)))  # channels last
     if not os.path.exists("plots"):
         os.mkdir("plots")
     plt.savefig(fname_out)
     plt.close()
+
+    rec = rec.detach().cpu().numpy()
+    img = img.detach().cpu().numpy()
+    dsize = rec.shape[-3:]
+
+    # The number of reconstruction and input images to be displayed in the .mrc output file
+    number_of_random_samples = 10
+
+    # define the dimensions for the napari grid
+    grid_for_napari = np.zeros(
+        (number_of_random_samples * dsize[0], 2 * dsize[1], dsize[2]),
+        dtype=np.float32,
+    )
+
+    # select 10 images at random
+    rand_select = np.random.randint(
+        0, high=img.shape[0], size=number_of_random_samples, dtype=int
+    )  #
+    img = img[rand_select, :, :, :, :]
+    rec = rec[rand_select, :, :, :, :]
+
+    # stack the images together with their reconstruction
+    rec_img = np.hstack((img, rec))
+
+    # Create and save the mrc file with single transversals
+    for i in range(number_of_random_samples):
+        for j in range(2):
+            grid_for_napari[
+                i * dsize[0] : (i + 1) * dsize[0],
+                j * dsize[1] : (j + 1) * dsize[1],
+                :,
+            ] = rec_img[i, j, :, :, :]
+
+    with mrcfile.new(
+        "plots/" + str(name) + "_recon_in.mrc", overwrite=True
+    ) as mrc:
+        mrc.set_data(grid_for_napari)
 
 
 def latent_disentamglement_plot(lats, vae, device, poses=None):
@@ -996,4 +1084,81 @@ def plot_cyc_variable(array: list, variable_name: str):
     if not os.path.exists("plots"):
         os.mkdir("plots")
     plt.savefig(f"plots/{variable_name}_array.png", dpi=300)
+    plt.close()
+
+
+def latent_space_similarity(latent_space, class_labels, mode="", epoch=0):
+    """
+    This function calculates the similarity (affinity) between classes in the latent space and builds a matrix.
+    Parameters
+    ----------
+    latent_space: np.ndarray
+        The latent space
+    class_labels: np.array
+        The labels of the latent space
+    mode: str
+        Mode of the calculation (train, test, val)
+    epoch: int
+        Epoch number for title
+
+    """
+    print(
+        "\n################################################################",
+        flush=True,
+    )
+    print("Visualising the latent space similarity matrix ...\n", flush=True)
+
+    # Calculate cosine similarity matrix
+    cosine_sim_matrix = cosine_similarity(latent_space)
+    # Calculate average cosine similarity for each pair of classes
+    unique_classes = np.unique(class_labels)
+    num_classes = len(unique_classes)
+    avg_cosine_sim = np.zeros((num_classes, num_classes))
+    std_cosine_sim = np.zeros((num_classes, num_classes))
+
+    for i in range(num_classes):
+        for j in range(i, num_classes):
+            class_i_indices = np.where(class_labels == unique_classes[i])[0]
+            class_j_indices = np.where(class_labels == unique_classes[j])[0]
+            cosine_sims = cosine_sim_matrix[class_i_indices][
+                :, class_j_indices
+            ]
+            avg_cosine_sim[i, j] = np.mean(cosine_sims)
+            avg_cosine_sim[j, i] = avg_cosine_sim[i, j]  # symmetrical matrix
+
+            std_cosine_sim[i, j] = np.std(cosine_sims)
+            std_cosine_sim[j, i] = std_cosine_sim[i, j]  # symmetrical matrix
+
+    # Visualize average cosine similarity matrix
+    fig, ax = plt.subplots(figsize=(8, 8))
+    fig.tight_layout(pad=3)
+    plt.imshow(avg_cosine_sim, cmap="RdBu", vmin=-1, vmax=1)
+    plt.colorbar(label="Average Cosine Similarity")
+    plt.xticks(ticks=np.arange(num_classes), labels=unique_classes)
+    plt.yticks(ticks=np.arange(num_classes), labels=unique_classes)
+    plt.title(f"Average Cosine Similarity Matrix at epoch :{epoch}")
+    plt.xlabel("Class Labels")
+    plt.ylabel("Class Labels")
+    ax.tick_params(axis="x", rotation=90, labelsize=12)
+    ax.tick_params(axis="y", labelsize=12)
+    if not os.path.exists("plots"):
+        os.mkdir("plots")
+    plt.savefig(f"plots/similarity_mean{mode}.png", dpi=300)
+    plt.close()
+
+    # Visualize average cosine similarity matrix
+    fig, ax = plt.subplots(figsize=(8, 8))
+    fig.tight_layout(pad=3)
+    plt.imshow(std_cosine_sim, cmap="RdBu")
+    plt.colorbar(label="Average Cosine Similarity")
+    plt.xticks(ticks=np.arange(num_classes), labels=unique_classes)
+    plt.yticks(ticks=np.arange(num_classes), labels=unique_classes)
+    plt.title(f"Cosine Similarity Matrix Standard Deviation at epoch :{epoch}")
+    plt.xlabel("Class Labels")
+    plt.ylabel("Class Labels")
+    ax.tick_params(axis="x", rotation=90, labelsize=12)
+    ax.tick_params(axis="y", labelsize=12)
+    if not os.path.exists("plots"):
+        os.mkdir("plots")
+    plt.savefig(f"plots/similarity_std{mode}.png", dpi=300)
     plt.close()
