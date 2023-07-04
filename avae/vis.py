@@ -166,6 +166,8 @@ def latent_embed_plot_tsne(xs, ys, mode=""):
 
     n_classes = len(np.unique(ys))
     if n_classes < 3:
+        # If the number of classes are not moe than 3 the size of the figure would be too
+        # small and matplotlib would through a singularity error
         fig, ax = plt.subplots(figsize=(6, 6))
     else:
         fig, ax = plt.subplots(
@@ -639,6 +641,7 @@ def recon_plot(img, rec, label, name="trn"):
     number_of_columns = 3
     padding = 5
     if len(label) < number_of_random_samples * number_of_columns:
+        # In there are not enough images for the stack, do one column only
         number_of_random_samples = len(label)
         number_of_columns = 0
 

@@ -42,6 +42,7 @@ class DataTest(unittest.TestCase):
             eval=True,
             gaussian_blur=True,
             normalise=True,
+            shift_min=True,
         )
         print(os.getcwd())
 
@@ -73,6 +74,7 @@ class DataTest(unittest.TestCase):
             affinity="./train/affinity_fsc_10.csv",
             gaussian_blur=True,
             normalise=True,
+            shift_min=True,
         )
 
         # test load_data

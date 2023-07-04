@@ -50,6 +50,7 @@ def train(
     model,
     gaussian_blur,
     normalise,
+    shift_min,
 ):
     """Function to train an AffinityVAE model. The inputs are training configuration parameters. In this function the
     data is loaded, selected and split into training, validation and test sets, the model is initialised and trained
@@ -117,6 +118,8 @@ def train(
         This is added as a way to remove noise from the input data.
     normalise:
         In True, the input data is normalised before being passed to the model.
+    shift_min: bool
+        If True, the input data is shifted to have a minimum value of 0 and max of 1.
     """
     torch.manual_seed(42)
 
@@ -139,6 +142,7 @@ def train(
         classes=classes,
         gaussian_blur=gaussian_blur,
         normalise=normalise,
+        shift_min=shift_min,
     )
     dshape = list(trains)[0][0].shape[-3:]
     pose = not (pose_dims == 0)

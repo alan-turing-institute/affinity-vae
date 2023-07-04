@@ -21,6 +21,7 @@ def evaluate(
     use_gpu,
     gaussian_blur,
     normalise,
+    shift_min,
 ):
     """Function for evaluating the model. Loads the data, model and runs the evaluation. Saves the results of the
     evaluation in the plot and latents directories.
@@ -48,6 +49,9 @@ def evaluate(
         This is added as a way to remove noise from the input data.
     normalise:
         In True, the input data is normalised before being passed to the model.
+    shift_min: bool
+        If True, the input data is shifted to have a minimum value of 0 and max 1.
+
 
     """
 
@@ -61,6 +65,7 @@ def evaluate(
         eval=True,
         gaussian_blur=gaussian_blur,
         normalise=normalise,
+        shift_min=shift_min,
     )
 
     # ############################### MODEL ###############################
