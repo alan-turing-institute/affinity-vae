@@ -384,57 +384,7 @@ def train(
                         mode="tst",
                     )
 
-        # ########################## SAVE STATE ###############################
-        if (epoch + 1) % config.FREQ_STA == 0:
-            if not os.path.exists("states"):
-                os.mkdir("states")
-            mname = (
-                "avae_"
-                + str(timestamp)
-                + "_E"
-                + str(epoch)
-                + "_"
-                + str(lat_dims)
-                + "_"
-                + str(pose_dims)
-                + ".pt"
-            )
-
-            print(
-                "\n################################################################",
-                flush=True,
-            )
-            print(
-                "Saving model state for restarting and evaluation ...\n",
-                flush=True,
-            )
-
-            torch.save(
-                {
-                    "epoch": epoch + 1,
-                    "model_state_dict": vae.state_dict(),
-                    "model_class_object": vae,
-                    "optimizer_state_dict": optimizer.state_dict(),
-                    "t_loss_history": t_history,
-                    "v_loss_history": v_history,
-                },
-                os.path.join("states", mname),
-            )
-
-            if collect_meta:
-                meta_df.to_pickle(
-                    os.path.join("states", "meta_" + timestamp + ".pkl")
-                )
-
         # ########################## VISUALISE ################################
-
-        if config.VIS_SIM and (epoch + 1) % config.FREQ_SIM == 0:
-            vis.latent_space_similarity(
-                x_train, np.array(y_train), mode="_train", epoch=epoch
-            )
-            vis.latent_space_similarity(
-                x_val, np.array(y_val), mode="_valid", epoch=epoch
-            )
 
         # visualise accuracy
         if config.VIS_ACC and (epoch + 1) % config.FREQ_ACC == 0:
@@ -482,6 +432,15 @@ def train(
         if config.VIS_REC and (epoch + 1) % config.FREQ_REC == 0:
             vis.recon_plot(x, x_hat, y_train, name="trn")
             vis.recon_plot(v, v_hat, y_val, name="val")
+
+        # visualise mean and logvar similarity matrix
+        if config.VIS_SIM and (epoch + 1) % config.FREQ_SIM == 0:
+            vis.latent_space_similarity(
+                x_train, np.array(y_train), mode="_train", epoch=epoch
+            )
+            vis.latent_space_similarity(
+                x_val, np.array(y_val), mode="_valid", epoch=epoch
+            )
 
         # visualise embeddings
         if config.VIS_EMB and (epoch + 1) % config.FREQ_EMB == 0:
@@ -536,6 +495,48 @@ def train(
             vis.interpolations_plot(
                 xs, ys, vae, device, poses=ps  # do we need val and test here?
             )
+
+        # ########################## SAVE STATE ###############################
+        if (epoch + 1) % config.FREQ_STA == 0:
+            if not os.path.exists("states"):
+                os.mkdir("states")
+            mname = (
+                "avae_"
+                + str(timestamp)
+                + "_E"
+                + str(epoch)
+                + "_"
+                + str(lat_dims)
+                + "_"
+                + str(pose_dims)
+                + ".pt"
+            )
+
+            print(
+                "\n################################################################",
+                flush=True,
+            )
+            print(
+                "Saving model state for restarting and evaluation ...\n",
+                flush=True,
+            )
+
+            torch.save(
+                {
+                    "epoch": epoch + 1,
+                    "model_state_dict": vae.state_dict(),
+                    "model_class_object": vae,
+                    "optimizer_state_dict": optimizer.state_dict(),
+                    "t_loss_history": t_history,
+                    "v_loss_history": v_history,
+                },
+                os.path.join("states", mname),
+            )
+
+            if collect_meta:
+                meta_df.to_pickle(
+                    os.path.join("states", "meta_" + timestamp + ".pkl")
+                )
 
 
 def pass_batch(
