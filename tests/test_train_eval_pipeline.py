@@ -1,7 +1,10 @@
 import os
+import random
 import shutil
 import tempfile
 import unittest
+
+import torch
 
 from avae import config
 from avae.evaluate import evaluate
@@ -13,6 +16,8 @@ class TrainEvalTest(unittest.TestCase):
     def setUp(self) -> None:
         """Test instantiation of the pipeline."""
 
+        torch.random.manual_seed(0)
+        random.seed(10)
         self.testdata = os.path.dirname(testdata.__file__)
 
         self.data = {
@@ -109,7 +114,7 @@ class TrainEvalTest(unittest.TestCase):
             model="a",
             gaussian_blur=self.data["gaussian_blur"],
             normalise=self.data["normalise"],
-        )
+ )
         n_dir_train = len(next(os.walk(temp_dir.name))[1])
         n_plots_train = len(os.listdir(os.path.join(temp_dir.name, "plots")))
         n_latent_train = len(
