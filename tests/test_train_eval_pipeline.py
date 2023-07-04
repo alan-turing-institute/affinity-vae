@@ -69,7 +69,7 @@ class TrainEvalTest(unittest.TestCase):
         config.VIS_DIS = True
         config.VIS_POS = True
         config.VIS_HIS = True
-        config.VIS_SIM = True
+        config.VIS_SIM = False
 
     def test_train_eval_a(self):
 
