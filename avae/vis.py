@@ -403,10 +403,13 @@ def accuracy_plot(
         plt.close()
 
     classes_list_eval = np.unique(np.concatenate((y_val, ypred_val)))
-    common_elements = np.intersect1d(classes_list, classes_list_eval)
-    ordered_class_eval = np.concatenate(
-        (common_elements, np.setdiff1d(classes_list_eval, common_elements))
-    )
+
+    if np.setdiff1d(classes_list_eval, classes_list).size > 0:
+        ordered_class_eval = np.concatenate(
+            (classes_list, np.setdiff1d(classes_list_eval, classes_list))
+        )
+    else:
+        ordered_class_eval = classes_list
 
     cm_eval = confusion_matrix(y_val, ypred_val, labels=ordered_class_eval)
     disp_eval = ConfusionMatrixDisplay(
