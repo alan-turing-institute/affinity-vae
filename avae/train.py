@@ -445,10 +445,18 @@ def train(
                 classes_list = []
 
             vis.latent_space_similarity(
-                x_train, np.array(y_train), mode="_train", epoch=epoch, classes_order=classes_list
+                x_train,
+                np.array(y_train),
+                mode="_train",
+                epoch=epoch,
+                classes_order=classes_list,
             )
             vis.latent_space_similarity(
-                x_val, np.array(y_val), mode="_valid", epoch=epoch, classes_order=classes_list
+                x_val,
+                np.array(y_val),
+                mode="_valid",
+                epoch=epoch,
+                classes_order=classes_list,
             )
 
         # visualise embeddings
