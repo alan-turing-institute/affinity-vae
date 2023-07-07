@@ -1112,7 +1112,7 @@ def plot_cyc_variable(array: list, variable_name: str):
     plt.close()
 
 
-def latent_space_similarity(latent_space, class_labels, mode="", epoch=0):
+def latent_space_similarity(latent_space, class_labels, mode="", epoch=0, classes_order=[]):
     """
     This function calculates the similarity (affinity) between classes in the latent space and builds a matrix.
     Parameters
@@ -1125,6 +1125,8 @@ def latent_space_similarity(latent_space, class_labels, mode="", epoch=0):
         Mode of the calculation (train, test, val)
     epoch: int
         Epoch number for title
+    classes_order: list
+        Order of the classes in the matrix
 
     """
     print(
@@ -1133,10 +1135,20 @@ def latent_space_similarity(latent_space, class_labels, mode="", epoch=0):
     )
     print("Visualising the latent space similarity matrix ...\n", flush=True)
 
-    # Calculate cosine similarity matrix
+    # get same label order as affinity matrix
     cosine_sim_matrix = cosine_similarity(latent_space)
+    if len(classes_order)==0:
+        unique_classes = np.unique(class_labels)
+    else:
+        unique_classes_in_data = np.unique(class_labels)
+        if np.setdiff1d(unique_classes_in_data, classes_order).size > 0:
+            unique_classes = np.concatenate(
+                (classes_order, np.setdiff1d(unique_classes_in_data, classes_order))
+            )
+        else:
+            unique_classes = classes_order
+
     # Calculate average cosine similarity for each pair of classes
-    unique_classes = np.unique(class_labels)
     num_classes = len(unique_classes)
     avg_cosine_sim = np.zeros((num_classes, num_classes))
     std_cosine_sim = np.zeros((num_classes, num_classes))
