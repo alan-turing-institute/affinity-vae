@@ -652,7 +652,7 @@ def run(
         yaml.dump(data, file)
         file.close()
         logging.info("YAML File saved!")
-        
+
         if not data["eval"]:
             train(
                 datapath=data["datapath"],
@@ -712,7 +712,6 @@ def run(
             + dt_name
             + ".yaml"
         )
-
 
     except Exception:
         logging.exception("An exception was thrown!")
