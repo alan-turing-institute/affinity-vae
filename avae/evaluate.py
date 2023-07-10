@@ -143,16 +143,16 @@ def evaluate(
 
     # visualise latent disentanglement
     if config.VIS_DIS:
-        vis.latent_disentamglement_plot(x_test, vae, device, poses=p_test)
+        vis.latent_disentamglement_plot(x_test, vae, device, poses=p_test, mode="_eval")
 
     # visualise pose disentanglement
     if pose_dims != 0 and config.VIS_POS:
-        vis.pose_disentanglement_plot(x_test, p_test, vae, device)
+        vis.pose_disentanglement_plot(x_test, p_test, vae, device, mode="_eval")
 
     # visualise interpolations
     if config.VIS_INT:
         vis.interpolations_plot(
-            x_test, np.ones(len(x_test)), vae, device, poses=p_test
+            x_test, np.ones(len(x_test)), vae, device, poses=p_test, mode="_eval"
         )
 
     # visualise embeddings

@@ -701,7 +701,7 @@ def loss_plot(epochs, beta, gamma, train_loss, val_loss=None, p=None):
     plt.close()
 
 
-def recon_plot(img, rec, label, name="trn"):
+def recon_plot(img, rec, label, mode="trn"):
     """Visualise reconstructions.
 
     Parameters
@@ -710,7 +710,7 @@ def recon_plot(img, rec, label, name="trn"):
         Input images.
     rec: torch.Tensor
         Reconstructed images.
-    name: str
+    mode: str
         Type of image in the training set: trn or val.
 
     """
@@ -718,10 +718,10 @@ def recon_plot(img, rec, label, name="trn"):
         "\n################################################################",
         flush=True,
     )
-    print("Visualising reconstructions " + name + "...\n", flush=True)
+    print("Visualising reconstructions " + mode + "...\n", flush=True)
 
-    fname_in = "plots/" + str(name) + "_recon_in.png"
-    fname_out = "plots/" + str(name) + "_recon_out.png"
+    fname_in = "plots/" + str(mode) + "_recon_in.png"
+    fname_out = "plots/" + str(mode) + "_recon_out.png"
 
     img_2d = img[:, :, :, :, img.shape[-1] // 2]
     rec_2d = rec[:, :, :, :, img.shape[-1] // 2]
@@ -790,12 +790,12 @@ def recon_plot(img, rec, label, name="trn"):
                 ] = rec_img[i, j, :, :, :]
 
     with mrcfile.new(
-        "plots/" + str(name) + "_recon_in.mrc", overwrite=True
+        "plots/" + str(mode) + "_recon_in.mrc", overwrite=True
     ) as mrc:
         mrc.set_data(grid_for_napari)
 
 
-def latent_disentamglement_plot(lats, vae, device, poses=None):
+def latent_disentamglement_plot(lats, vae, device, poses=None, mode="trn"):
     """Visualise latent content disentanglement.
 
     Parameters
@@ -878,12 +878,12 @@ def latent_disentamglement_plot(lats, vae, device, poses=None):
     if not os.path.exists("plots"):
         os.mkdir("plots")
     with mrcfile.new(
-        "plots/disentanglement-latent.mrc", overwrite=True
+        f"plots/disentanglement-latent{mode}.mrc", overwrite=True
     ) as mrc:
         mrc.set_data(grid_for_napari)
 
 
-def pose_disentanglement_plot(lats, poses, vae, device):
+def pose_disentanglement_plot(lats, poses, vae, device, mode="trn"):
     """Visualise pose disentanglement.
 
     Parameters
@@ -962,11 +962,13 @@ def pose_disentanglement_plot(lats, poses, vae, device):
 
     if not os.path.exists("plots"):
         os.mkdir("plots")
-    with mrcfile.new("plots/disentanglement-pose.mrc", overwrite=True) as mrc:
+    with mrcfile.new(
+        f"plots/disentanglement-pose{mode}.mrc", overwrite=True
+    ) as mrc:
         mrc.set_data(grid_for_napari)
 
 
-def interpolations_plot(lats, classes, vae, device, poses=None):
+def interpolations_plot(lats, classes, vae, device, poses=None, mode="trn"):
     """Visualise interpolations.
 
     Parameters
@@ -1093,7 +1095,7 @@ def interpolations_plot(lats, classes, vae, device, poses=None):
 
     if not os.path.exists("plots"):
         os.mkdir("plots")
-    with mrcfile.new("plots/interpolations.mrc", overwrite=True) as mrc:
+    with mrcfile.new(f"plots/interpolations{mode}.mrc", overwrite=True) as mrc:
         mrc.set_data(grid_for_napari)
 
 
