@@ -3,8 +3,15 @@
 datapath: data/shrec21_full_dataset/subtomo_files
 affinity: data/shrec21_full_dataset/subtomo_files/affinity.csv
 classes: data/shrec21_full_dataset/subtomo_files/classes.csv
+state : /your_path_to_saved_state/state.pt
+restart: True
 limit: 1000
 split: 20
+
+#### Data processing parameters
+shift_mean: False
+gaussian_blur: False
+normalise: False
 
 #### Network parameters
 
@@ -57,6 +64,7 @@ vis_pos:  false  # pose disentanglement on/off (frequency controlled)
 vis_cyc:  false  # beta for cyclic anealing on/off (once per run)
 vis_aff: false   # affinity matrix on/off (once per run)
 vis_his:  false  # class distribution histogram on/off (once per run)
+vis_sim:  false  # latent space similarity matrix on/off
 vis_all:  true   # sets all above to on/off
 dynamic: true    # dynamic embedding visualisations on/off (freq same as freq_emb)
 
@@ -67,4 +75,5 @@ freq_emb: 10  # frequency of latent embedding visualisation
 freq_int: 10  # frequency of latent interpolation visualisation
 freq_dis: 10  # frequency of latent disentanglement visualisation
 freq_pos: 10  # frequency of pose disentanglement visualisation
+freq_sim: 10  # frequency of similarity matrix visualisation
 freq_all: 10  # sets all above to the same value (inc freq_sta and freq_eval)

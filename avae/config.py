@@ -9,6 +9,7 @@ VIS_POS = False
 VIS_CYC = False
 VIS_AFF = False
 VIS_HIS = False
+VIS_SIM = False
 
 FREQ_ACC = 10
 FREQ_REC = 10
@@ -17,12 +18,14 @@ FREQ_EMB = 10
 FREQ_INT = 10
 FREQ_DIS = 10
 FREQ_POS = 10
+FREQ_SIM = 10
 
 FREQ_EVAL = 10
 FREQ_STA = 10
 
 DEFAULT_RUN_CONFIGS = {
     "limit": None,
+    "restart": False,
     "split": 20,
     "depth": 3,
     "channels": 64,
@@ -35,6 +38,8 @@ DEFAULT_RUN_CONFIGS = {
     "gpu": True,
     "beta": 1.0,
     "gamma": 2,
+    "beta_load": None,
+    "gamma_load": None,
     "loss_fn": "MSE",
     "beta_min": 0.0,
     "beta_cycle": 4,
@@ -57,6 +62,7 @@ DEFAULT_RUN_CONFIGS = {
     "vis_cyc": VIS_CYC,
     "vis_aff": VIS_AFF,
     "vis_his": VIS_HIS,
+    "vis_sim": VIS_SIM,
     "vis_all": False,
     "model": "a",
     "freq_eval": FREQ_EVAL,
@@ -68,5 +74,9 @@ DEFAULT_RUN_CONFIGS = {
     "freq_int": FREQ_INT,
     "freq_dis": FREQ_DIS,
     "freq_pos": FREQ_POS,
+    "freq_sim": FREQ_SIM,
     "freq_all": None,
+    "gaussian_blur": False,
+    "normalise": False,
+    "shift_min": False,
 }

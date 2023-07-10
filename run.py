@@ -1,5 +1,6 @@
 import logging
 import os
+import warnings
 from datetime import datetime
 
 import click
@@ -30,6 +31,29 @@ logging.basicConfig(
     type=str,
     default=None,
     help="Path to training data.",
+)
+@click.option(
+    "--restart",
+    "-res",
+    type=bool,
+    default=None,
+    help="Is the calculation restarting from a checkpoint.",
+)
+@click.option(
+    "--state",
+    "-st",
+    type=str,
+    default=None,
+    is_flag=True,
+    help="The saved model state to be loaded for evaluation/resume training.",
+)
+@click.option(
+    "--meta",
+    "-mt",
+    type=str,
+    default=None,
+    is_flag=True,
+    help="The saved meta file to be loaded for regenerating dynamic plots.",
 )
 @click.option(
     "--limit",
@@ -111,6 +135,15 @@ logging.basicConfig(
     help="Beta maximum in the case of cyclical annealing schedule",
 )
 @click.option(
+    "--beta_load",
+    "-bl",
+    type=str,
+    default=None,
+    is_flag=True,
+    help="The path to the saved beta array file to be loaded "
+    "if this file is provided, all other beta related variables would be ignored",
+)
+@click.option(
     "--gamma",
     "-g",
     type=float,
@@ -118,6 +151,15 @@ logging.basicConfig(
     help="Scale factor for the loss component corresponding "
     "to shape similarity. If 0 and pd=0 it becomes a standard"
     "beta-VAE.",
+)
+@click.option(
+    "--gamma_load",
+    "-gl",
+    type=str,
+    default=None,
+    is_flag=True,
+    help="The path to the saved gamma array file to be loaded"
+    "if this file is provided, all other gamma related variables would be ignored",
 )
 @click.option(
     "--learning",
@@ -224,6 +266,16 @@ logging.basicConfig(
     "--vis_los",
     "-vl",
     type=bool,
+    "--freq_sim",
+    "-fsim",
+    type=int,
+    default=None,
+    help="Frequency at which to visualise similarity matrix.",
+)
+@click.option(
+    "--freq_all",
+    "-fa",
+    type=int,
     default=None,
     is_flag=True,
     help="Visualise loss (every epoch starting at epoch 2).",
@@ -309,6 +361,14 @@ logging.basicConfig(
     help="Visualise train-val class distribution (once per run).",
 )
 @click.option(
+    "--vis_sim",
+    "-similarity",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise train-val model similarity matrix.",
+)
+@click.option(
     "--vis_all",
     "-va",
     type=bool,
@@ -387,9 +447,36 @@ logging.basicConfig(
     default=None,
     help="Frequency at which to visualise all plots except loss. ",
 )
+@click.option(
+    "--gaussian_blur",
+    "-gb",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Applying gaussian bluring to the image data which should help removing noise. The minimum and maximum for this is hardcoded.",
+)
+@click.option(
+    "--normalise",
+    "-nrm",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Normalise data",
+)
+@click.option(
+    "--shift_min",
+    "-sftm",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Shift the minimum of the data to one zero and the maximum to one",
+)
 def run(
     config_file,
     datapath,
+    restart,
+    state,
+    meta,
     limit,
     split,
     no_val_drop,
@@ -402,6 +489,8 @@ def run(
     latent_dims,
     pose_dims,
     beta,
+    beta_load,
+    gamma_load,
     gamma,
     learning,
     loss_fn,
@@ -438,15 +527,40 @@ def run(
     freq_int,
     freq_dis,
     freq_pos,
+    freq_sim,
     freq_all,
+    vis_emb,
+    vis_rec,
+    vis_cyc,
+    vis_los,
+    vis_int,
+    vis_dis,
+    vis_pos,
+    vis_acc,
+    vis_his,
+    vis_sim,
+    vis_all,
+    gpu,
+    eval,
+    dynamic,
+    model,
+    gaussian_blur,
+    normalise,
+    shift_min,
 ):
+
+    warnings.simplefilter("ignore", FutureWarning)
     # read config file and command line arguments and assign to local variables that are used in the rest of the code
     local_vars = locals().copy()
+    print(local_vars)
+
     if config_file is not None:
         with open(config_file, "r") as f:
             logging.info("Reading submission configuration file" + config_file)
             data = yaml.load(f, Loader=yaml.FullLoader)
         # returns JSON object as
+        print(data.get("gaussian_blur"))
+
         for key, val in local_vars.items():
             if (
                 val is not None
@@ -505,6 +619,19 @@ def run(
                     + " in config file to "
                     + str(data[key])
                 )
+
+            elif key == "state":
+                logging.warning(
+                    "No value set for "
+                    + key
+                    + " in config file or command line arguments. Loading the latest state if in evaluation mode."
+                )
+            elif key == "meta":
+                logging.warning(
+                    "No value set for "
+                    + key
+                    + " in config file or command line arguments. Loading the latest meta if in evaluation mode."
+                )
             else:
                 # set missing variables to default value
                 logging.warning(
@@ -530,6 +657,7 @@ def run(
             config.VIS_CYC = True
             config.VIS_AFF = True
             config.VIS_HIS = True
+            config.VIS_SIM = True
 
         else:
             config.VIS_LOS = data["vis_los"]
@@ -543,8 +671,10 @@ def run(
             config.VIS_CYC = data["vis_cyc"]
             config.VIS_AFF = data["vis_aff"]
             config.VIS_HIS = data["vis_his"]
+            config.VIS_SIM = data["vis_sim"]
 
-        if data["freq_all"] is not None:
+        if data["
+                "] is not None:
             config.FREQ_EVAL = data["freq_all"]
             config.FREQ_STA = data["freq_all"]
             config.FREQ_ACC = data["freq_all"]
@@ -554,6 +684,9 @@ def run(
             config.FREQ_INT = data["freq_all"]
             config.FREQ_DIS = data["freq_all"]
             config.FREQ_POS = data["freq_all"]
+            config.FREQ_ACC = data["freq_all"]
+            config.FREQ_STA = data["freq_all"]
+            config.FREQ_SIM = data["freq_all"]
         else:
             config.FREQ_EVAL = data["freq_eval"]
             config.FREQ_STA = data["freq_sta"]
@@ -564,10 +697,18 @@ def run(
             config.FREQ_INT = data["freq_int"]
             config.FREQ_DIS = data["freq_dis"]
             config.FREQ_POS = data["freq_pos"]
+            config.FREQ_SIM = data["freq_sim"]
+
+        file = open("avae_final_config" + dt_name + ".yaml", "w")
+        yaml.dump(data, file)
+        file.close()
+        logging.info("YAML File saved!")
 
         if not data["eval"]:
             train(
                 datapath=data["datapath"],
+                restart=data["restart"],
+                state=data["state"],
                 lim=data["limit"],
                 splt=data["split"],
                 batch_s=data["batch"],
@@ -581,11 +722,13 @@ def run(
                 lat_dims=data["latent_dims"],
                 pose_dims=data["pose_dims"],
                 learning=data["learning"],
+                beta_load=data["beta_load"],
                 beta_min=data["beta_min"],
                 beta_max=data["beta"],
                 beta_cycle=data["beta_cycle"],
                 beta_ratio=data["beta_ratio"],
                 cyc_method_beta=data["cyc_method_beta"],
+                gamma_load=data["gamma_load"],
                 gamma_min=data["gamma_min"],
                 gamma_max=data["gamma"],
                 gamma_cycle=data["gamma_cycle"],
@@ -594,15 +737,23 @@ def run(
                 recon_fn=data["loss_fn"],
                 use_gpu=data["gpu"],
                 model=data["model"],
+                gaussian_blur=data["gaussian_blur"],
+                normalise=data["normalise"],
+                shift_min=data["shift_min"],
             )
         else:
             evaluate(
                 datapath=data["datapath"],
+                state=data["state"],
+                meta=data["meta"],
                 lim=data["limit"],
                 splt=data["split"],
                 batch_s=data["batch"],
                 collect_meta=data["dynamic"],
                 use_gpu=data["gpu"],
+                gaussian_blur=data["gaussian_blur"],
+                normalise=data["normalise"],
+                shift_min=data["shift_min"],
             )
             # TODO also make sure image is correct size, maybe in dataloader?
 
@@ -612,10 +763,6 @@ def run(
             + dt_name
             + ".yaml"
         )
-        file = open("avae_final_config" + dt_name + ".yaml", "w")
-        yaml.dump(data, file)
-        file.close()
-        logging.info("YAML File saved!")
 
     except Exception:
         logging.exception("An exception was thrown!")

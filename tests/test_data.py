@@ -35,8 +35,16 @@ class DataTest(unittest.TestCase):
         )
 
         out = load_data(
-            "./eval", lim=None, batch_s=32, collect_meta=False, eval=True
+            "./eval",
+            lim=None,
+            batch_s=32,
+            collect_meta=False,
+            eval=True,
+            gaussian_blur=True,
+            normalise=True,
+            shift_min=True,
         )
+        print(os.getcwd())
 
         # test load_data
         assert len(out) == 1
@@ -64,6 +72,9 @@ class DataTest(unittest.TestCase):
             collect_meta=False,
             eval=False,
             affinity="./train/affinity_fsc_10.csv",
+            gaussian_blur=True,
+            normalise=True,
+            shift_min=True,
         )
 
         # test load_data

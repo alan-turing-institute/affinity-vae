@@ -168,8 +168,12 @@ At the end of the run, the code will save the final config file used for the run
 account for any changes made to the config file from the command line. Running the code again with that config file will reproduce the results.
 
 
+In the tools folder you can find notebooks which will assist you in creating the input files for Affinity-VAE or analyse teh output of the model.
+
 #### Considerations
 
 ##### Test folder : If test folder is present, the program will read the test files regardless of the eval flag
 
 ##### Evaluation: To run evaluation on a trained model you can turn the `eval` flag to True. This will load the last model present on the `states` directory (within the working directory path where you run the code) and run the evaluation on data set by the `datapath` flag. The evaluation will be saved in the `plots` and `latents` directory with the `eval` suffix on the names.
+
+##### The name of the state file consist of avae_date_time_Epoch_latent_pose.pt
