@@ -266,6 +266,11 @@ logging.basicConfig(
     "--vis_los",
     "-vl",
     type=bool,
+    default=None,
+    is_flag=True,
+    help="Visualise loss (every epoch starting at epoch 2).",
+)
+@click.option(
     "--freq_sim",
     "-fsim",
     type=int,
@@ -517,6 +522,7 @@ def run(
     vis_cyc,
     vis_aff,
     vis_his,
+    vis_sim,
     vis_all,
     freq_eval,
     freq_sta,
@@ -529,21 +535,6 @@ def run(
     freq_pos,
     freq_sim,
     freq_all,
-    vis_emb,
-    vis_rec,
-    vis_cyc,
-    vis_los,
-    vis_int,
-    vis_dis,
-    vis_pos,
-    vis_acc,
-    vis_his,
-    vis_sim,
-    vis_all,
-    gpu,
-    eval,
-    dynamic,
-    model,
     gaussian_blur,
     normalise,
     shift_min,
@@ -673,8 +664,7 @@ def run(
             config.VIS_HIS = data["vis_his"]
             config.VIS_SIM = data["vis_sim"]
 
-        if data["
-                "] is not None:
+        if data["freq_all"] is not None:
             config.FREQ_EVAL = data["freq_all"]
             config.FREQ_STA = data["freq_all"]
             config.FREQ_ACC = data["freq_all"]
