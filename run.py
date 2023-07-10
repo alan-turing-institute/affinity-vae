@@ -648,6 +648,11 @@ def run(
             config.FREQ_STA = data["freq_sta"]
             config.FREQ_SIM = data["freq_sim"]
 
+        file = open("avae_final_config" + dt_name + ".yaml", "w")
+        yaml.dump(data, file)
+        file.close()
+        logging.info("YAML File saved!")
+
         if not data["eval"]:
             train(
                 datapath=data["datapath"],
@@ -707,10 +712,6 @@ def run(
             + dt_name
             + ".yaml"
         )
-        file = open("avae_final_config" + dt_name + ".yaml", "w")
-        yaml.dump(data, file)
-        file.close()
-        logging.info("YAML File saved!")
 
     except Exception:
         logging.exception("An exception was thrown!")

@@ -439,11 +439,24 @@ def train(
 
         # visualise mean and logvar similarity matrix
         if config.VIS_SIM and (epoch + 1) % config.FREQ_SIM == 0:
+            if classes is not None:
+                classes_list = pd.read_csv(classes).columns.tolist()
+            else:
+                classes_list = []
+
             vis.latent_space_similarity(
-                x_train, np.array(y_train), mode="_train", epoch=epoch
+                x_train,
+                np.array(y_train),
+                mode="_train",
+                epoch=epoch,
+                classes_order=classes_list,
             )
             vis.latent_space_similarity(
-                x_val, np.array(y_val), mode="_valid", epoch=epoch
+                x_val,
+                np.array(y_val),
+                mode="_valid",
+                epoch=epoch,
+                classes_order=classes_list,
             )
 
         # visualise embeddings
