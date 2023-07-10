@@ -392,7 +392,7 @@ def train(
                     device, vae, batch, b, len(tests), epoch, epochs
                 )
                 x_test.extend(t_mu.cpu().detach().numpy())  # store latents
-                c_test.extend(t_logvar.cpu().detach().nupmy())
+                c_test.extend(t_logvar.cpu().detach().numpy())
                 if pose:
                     p_test.extend(tlat_pose.cpu().detach().numpy())
 
@@ -453,8 +453,8 @@ def train(
 
         # visualise reconstructions - last batch
         if config.VIS_REC and (epoch + 1) % config.FREQ_REC == 0:
-            vis.recon_plot(x, x_hat, y_train, name="trn")
-            vis.recon_plot(v, v_hat, y_val, name="val")
+            vis.recon_plot(x, x_hat, y_train, mode="trn")
+            vis.recon_plot(v, v_hat, y_val, mode="val")
 
         # visualise mean and logvar similarity matrix
         if config.VIS_SIM and (epoch + 1) % config.FREQ_SIM == 0:
