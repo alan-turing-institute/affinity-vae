@@ -451,7 +451,7 @@ logging.basicConfig(
     type=bool,
     default=None,
     is_flag=True,
-    help="Applies the band pass filter. For this, you must specify the lower and upper frequency band in (Hz). ",
+    help="If True, a band pass filter is applied to the data before it is used for training. For this, you must specify the lower and upper frequency band in (Hz). ",
 )
 @click.option(
     "--bp_low",
