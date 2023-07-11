@@ -261,7 +261,7 @@ class ProteinDataset(Dataset):
             )
         if self.bandpass:
             print(
-                "Data Transformation :BandPasss filter is applied to input with lower threshhold of {bp_low} and higher threshhold of {bp_high}",
+                f"Data Transformation :BandPasss filter is applied to input with lower threshhold of {bp_low} and higher threshhold of {bp_high}",
                 flush=True,
             )
 
@@ -311,25 +311,13 @@ class ProteinDataset(Dataset):
         x = x.unsqueeze(0)
 
         if self.shift_min:
-            print(
-                "Data Transformation : Shift the minimum of the data to one zero and the maximum to one",
-                flush=True,
-            )
             x = (x - x.min()) / (x.max() - x.min())
 
         if self.gaussian_blur:
-            print(
-                "Data Transformation : GaussianBlur is applied to the images",
-                flush=True,
-            )
             T = transforms.GaussianBlur(3, sigma=(0.08, 10.0))
             x = T(x)
 
         if self.normalise:
-            print(
-                "Data Transformation : Normalisation is applied to the images",
-                flush=True,
-            )
             T = transforms.Normalize(0, 1, inplace=False)
             x = T(x)
 
