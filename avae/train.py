@@ -123,6 +123,13 @@ def train(
         In True, the input data is normalised before being passed to the model.
     shift_min: bool
         If True, the input data is shifted to have a minimum value of 0 and max of 1.
+    bandpass: bool
+        If True, a band pass filter is applied to the data before it is used for training. For this, you must specify the lower and upper frequency band in (Hz).
+    bp_low:
+        lower frequency threshhold for the band pass filter
+    bp_high:
+        higher frequency threshhold for the band pass filter
+
     """
     torch.manual_seed(42)
 
