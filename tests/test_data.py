@@ -43,6 +43,9 @@ class DataTest(unittest.TestCase):
             gaussian_blur=True,
             normalise=True,
             shift_min=True,
+            bandpass=True,
+            bp_low=0,
+            bp_high=10,
         )
         print(os.getcwd())
 
@@ -75,6 +78,9 @@ class DataTest(unittest.TestCase):
             gaussian_blur=True,
             normalise=True,
             shift_min=True,
+            bandpass=True,
+            bp_low=0,
+            bp_high=10,
         )
 
         # test load_data

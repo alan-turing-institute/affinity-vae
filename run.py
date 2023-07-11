@@ -445,6 +445,28 @@ logging.basicConfig(
     is_flag=True,
     help="Shift the minimum of the data to one zero and the maximum to one",
 )
+@click.option(
+    "--bandpass",
+    "-sftm",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Applies the band pass filter. For this, you must specify the lower and upper frequency band in (Hz). ",
+)
+@click.option(
+    "--bp_low",
+    "-bplow",
+    type=int,
+    default=None,
+    help="lower frequency threshhold for  the band pass filter",
+)
+@click.option(
+    "--bp_high",
+    "-bphigh",
+    type=int,
+    default=None,
+    help="lower frequency threshhold for the band pass filter",
+)
 def run(
     config_file,
     datapath,
@@ -504,6 +526,9 @@ def run(
     gaussian_blur,
     normalise,
     shift_min,
+    bandpass,
+    bp_low,
+    bp_high,
 ):
 
     warnings.simplefilter("ignore", FutureWarning)
@@ -689,6 +714,9 @@ def run(
                 gaussian_blur=data["gaussian_blur"],
                 normalise=data["normalise"],
                 shift_min=data["shift_min"],
+                bandpass=data["bandpass"],
+                bp_low=data["bp_low"],
+                bp_high=data["bp_high"],
             )
         else:
             evaluate(
@@ -703,6 +731,9 @@ def run(
                 gaussian_blur=data["gaussian_blur"],
                 normalise=data["normalise"],
                 shift_min=data["shift_min"],
+                bandpass=data["bandpass"],
+                bp_low=data["bp_low"],
+                bp_high=data["bp_high"],
             )
             # TODO also make sure image is correct size, maybe in dataloader?
 

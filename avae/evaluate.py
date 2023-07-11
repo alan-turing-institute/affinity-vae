@@ -22,6 +22,9 @@ def evaluate(
     gaussian_blur,
     normalise,
     shift_min,
+    bandpass,
+    bp_low,
+    bp_high,
 ):
     """Function for evaluating the model. Loads the data, model and runs the evaluation. Saves the results of the
     evaluation in the plot and latents directories.
@@ -66,6 +69,9 @@ def evaluate(
         gaussian_blur=gaussian_blur,
         normalise=normalise,
         shift_min=shift_min,
+        bandpass=bandpass,
+        bp_low=bp_low,
+        bp_high=bp_high,
     )
 
     # ############################### MODEL ###############################

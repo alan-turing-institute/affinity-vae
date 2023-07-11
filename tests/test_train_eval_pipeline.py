@@ -56,6 +56,9 @@ class TrainEvalTest(unittest.TestCase):
             "gaussian_blur": True,
             "normalise": True,
             "shift_min": True,
+            "bandpass": True,
+            "bp_low": 0,
+            "bp_high": 10,
         }
 
         config.FREQ_ACC = 5
@@ -116,6 +119,9 @@ class TrainEvalTest(unittest.TestCase):
             gaussian_blur=self.data["gaussian_blur"],
             normalise=self.data["normalise"],
             shift_min=self.data["shift_min"],
+            bandpass=self.data["bandpass"],
+            bp_low=self.data["bp_low"],
+            bp_high=self.data["bp_high"],
         )
         n_dir_train = len(next(os.walk(temp_dir.name))[1])
         n_plots_train = len(os.listdir(os.path.join(temp_dir.name, "plots")))
@@ -141,6 +147,9 @@ class TrainEvalTest(unittest.TestCase):
             gaussian_blur=self.data["gaussian_blur"],
             normalise=self.data["normalise"],
             shift_min=self.data["shift_min"],
+            bandpass=self.data["bandpass"],
+            bp_low=self.data["bp_low"],
+            bp_high=self.data["bp_high"],
         )
 
         n_plots_eval = len(os.listdir(os.path.join(temp_dir.name, "plots")))
@@ -193,6 +202,9 @@ class TrainEvalTest(unittest.TestCase):
             gaussian_blur=self.data["gaussian_blur"],
             normalise=self.data["normalise"],
             shift_min=self.data["shift_min"],
+            bandpass=self.data["bandpass"],
+            bp_low=self.data["bp_low"],
+            bp_high=self.data["bp_high"],
         )
 
         n_dir_train = len(next(os.walk(temp_dir.name))[1])
@@ -219,6 +231,9 @@ class TrainEvalTest(unittest.TestCase):
             gaussian_blur=self.data["gaussian_blur"],
             normalise=self.data["normalise"],
             shift_min=self.data["shift_min"],
+            bandpass=self.data["bandpass"],
+            bp_low=self.data["bp_low"],
+            bp_high=self.data["bp_high"],
         )
 
         n_plots_eval = len(os.listdir(os.path.join(temp_dir.name, "plots")))

@@ -4,6 +4,7 @@ import random
 import mrcfile
 import numpy as np
 import pandas as pd
+from torch import from_numpy
 from torch.utils.data import DataLoader, Dataset, Subset
 from torchvision import transforms
 
@@ -26,6 +27,9 @@ def load_data(
     gaussian_blur=False,
     normalise=False,
     shift_min=False,
+    bandpass=False,
+    bp_low=None,
+    bp_high=None,
 ):
     """Loads all data needed for training, testing and evaluation. Loads MRC files from a given path, selects subset of
     classes if requested, splits it into train / val  and test in batch sets, loads affinity matrix. Returns train,
@@ -87,6 +91,9 @@ def load_data(
             gaussian_blur=gaussian_blur,
             normalise=normalise,
             shift_min=shift_min,
+            bandpass=bandpass,
+            bp_low=bp_low,
+            bp_high=bp_high,
             lim=lim,
             collect_m=collect_meta,
         )
@@ -214,10 +221,43 @@ class ProteinDataset(Dataset):
         gaussian_blur=False,
         normalise=False,
         shift_min=False,
+        bandpass=False,
+        bp_low=None,
+        bp_high=None,
         lim=None,
         collect_m=False,
     ):
         super().__init__()
+        self.transform = transform
+        self.gaussian_blur = gaussian_blur
+        self.normalise = normalise
+        self.shift_min = shift_min
+        self.bandpass = bandpass
+        self.bp_low = bp_low
+        self.bp_high = bp_high
+
+        if self.shift_min:
+            print(
+                "Data Transformation : Shift the minimum of the data to one zero and the maximum to one",
+                flush=True,
+            )
+
+        if self.gaussian_blur:
+            print(
+                "Data Transformation : GaussianBlur is applied to the images",
+                flush=True,
+            )
+
+        if self.normalise:
+            print(
+                "Data Transformation : Normalisation is applied to the images",
+                flush=True,
+            )
+        if self.bandpass:
+            print(
+                "Data Transformation :BandPasss filter is applied to input with lower threshhold of {bp_low} and higher threshhold of {bp_high}",
+                flush=True,
+            )
 
         self.collect_meta = collect_m
 
@@ -256,43 +296,77 @@ class ProteinDataset(Dataset):
 
         self.paths = self.paths[:lim]
 
-        self.transform = []
+    def transformations(self, x):
 
         # convert numpy to torch tensor
-        self.transform.append(transforms.ToTensor())
+        x = from_numpy(x)
 
         # unsqueeze adds a dimension for batch processing the data
-        self.transform.append(transforms.Lambda(lambda x: x.unsqueeze(0)))
+        x = x.unsqueeze(0)
 
-        if shift_min:
+        if self.shift_min:
             print(
                 "Data Transformation : Shift the minimum of the data to one zero and the maximum to one",
                 flush=True,
             )
-            self.transform.append(
-                transforms.Lambda(
-                    lambda x: (x - x.min()) / (x.max() - x.min())
-                )
-            )
-        if gaussian_blur:
+            x = (x - x.min()) / (x.max() - x.min())
+
+        if self.gaussian_blur:
             print(
                 "Data Transformation : GaussianBlur is applied to the images",
                 flush=True,
             )
-            self.transform.append(
-                transforms.GaussianBlur(3, sigma=(0.08, 10.0))
-            )
-        if normalise:
+            T = transforms.GaussianBlur(3, sigma=(0.08, 10.0))
+            x = T(x)
+
+        if self.normalise:
             print(
                 "Data Transformation : Normalisation is applied to the images",
                 flush=True,
             )
-            self.transform.append(transforms.Normalize(0, 1, inplace=False))
+            T = transforms.Normalize(0, 1, inplace=False)
+            x = T(x)
 
-        if transform:
-            self.transform.append(transform)
+        if self.bandpass:
+            image = x[0, :, :, :]
+            F = np.fft.fftn(image)
+            Fshift = np.fft.fftshift(F)
 
-        self.transform = transforms.Compose(self.transform)
+            bandpass_filter = np.zeros((F.shape), dtype=np.float32)
+            if len(F.shape) == 2:
+                for u in range(F.shape[0]):
+                    for v in range(F.shape[1]):
+                        D = np.sqrt(
+                            (u - F.shape[0] / 2) ** 2
+                            + (v - F.shape[1] / 2) ** 2
+                        )
+                        if D <= self.bp_low:
+                            bandpass_filter[u, v] = 1
+                        elif D >= self.bp_high:
+                            bandpass_filter[u, v] = 1
+            elif len(F.shape) == 3:
+                for u in range(F.shape[0]):
+                    for v in range(F.shape[1]):
+                        for w in range(F.shape[2]):
+                            D = np.sqrt(
+                                (u - F.shape[0] / 2) ** 2
+                                + (v - F.shape[1] / 2) ** 2
+                                + (w - F.shape[2] / 2) ** 2
+                            )
+
+                            if D <= self.bp_low:
+                                bandpass_filter[u, v, w] = 1
+                            elif D >= self.bp_high:
+                                bandpass_filter[u, v, w] = 1
+
+            Gshift = Fshift * bandpass_filter
+            G = np.fft.ifftshift(Gshift)
+            x[0, :, :, :] = from_numpy(abs(np.fft.ifftn(G)))
+
+        if self.transform:
+            x = self.transform(x)
+
+        return x
 
     def __len__(self):
         return len(self.paths)
@@ -322,7 +396,7 @@ class ProteinDataset(Dataset):
         with mrcfile.open(os.path.join(self.root_dir, filename)) as f:
             data = np.array(f.data)
 
-        x = self.transform(data)
+        x = self.transformations(data)
         # ground truth
         y = filename.split("_")[0]
 
