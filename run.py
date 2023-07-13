@@ -37,6 +37,7 @@ logging.basicConfig(
     "-res",
     type=bool,
     default=None,
+    is_flag=True,
     help="Is the calculation restarting from a checkpoint.",
 )
 @click.option(
@@ -44,7 +45,6 @@ logging.basicConfig(
     "-st",
     type=str,
     default=None,
-    is_flag=True,
     help="The saved model state to be loaded for evaluation/resume training.",
 )
 @click.option(
@@ -52,7 +52,6 @@ logging.basicConfig(
     "-mt",
     type=str,
     default=None,
-    is_flag=True,
     help="The saved meta file to be loaded for regenerating dynamic plots.",
 )
 @click.option(
@@ -698,6 +697,7 @@ def run(
                 lim=data["limit"],
                 splt=data["split"],
                 batch_s=data["batch"],
+                classes=data["classes"],
                 collect_meta=data["dynamic"],
                 use_gpu=data["gpu"],
                 gaussian_blur=data["gaussian_blur"],
