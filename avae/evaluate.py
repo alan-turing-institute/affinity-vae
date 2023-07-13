@@ -17,6 +17,7 @@ def evaluate(
     lim,
     splt,
     batch_s,
+    classes,
     collect_meta,
     use_gpu,
     gaussian_blur,
@@ -40,6 +41,8 @@ def evaluate(
         Percentage of data to be used for validation.
     batch_s: int
         Batch size.
+    classes: list
+        List of classes to be selected from the data for the training and validation set.
     collect_meta: bool
         If True, the meta data for visualisation will be collected and returned.
     use_gpu: bool
@@ -219,5 +222,6 @@ def evaluate(
             ypred_train,
             y_test,
             ypred_val,
+            classes,
             mode="_eval",
         )
