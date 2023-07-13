@@ -739,6 +739,7 @@ def run(
                 lim=data["limit"],
                 splt=data["split"],
                 batch_s=data["batch"],
+                classes=data["classes"],
                 collect_meta=data["dynamic"],
                 use_gpu=data["gpu"],
                 gaussian_blur=data["gaussian_blur"],
