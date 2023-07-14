@@ -177,7 +177,9 @@ def evaluate(
             classes_list = pd.read_csv(classes).columns.tolist()
         else:
             classes_list = []
-        vis.latent_space_similarity(x_test, np.array(y_test), mode="_eval", classes_order=classes_list)
+        vis.latent_space_similarity(
+            x_test, np.array(y_test), mode="_eval", classes_order=classes_list
+        )
 
     # ############################# Predict #############################
 
