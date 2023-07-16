@@ -174,12 +174,19 @@ def train(
     v_history = []
     e_start = 0
 
-    if restart and state is None:
-        raise RuntimeError(
-            "The restart flag is true however a path to a model state is not provided"
-        )
-
     if restart:
+        if state is None:
+            if not os.path.exists("states"):
+                raise RuntimeError(
+                    "There are no existing model states saved or provided via the state flag in config unable to evaluate."
+                )
+            else:
+                state = sorted(
+                    [s for s in os.listdir("states") if ".pt" in s],
+                    key=lambda x: int(x.split("_")[2][1:]),
+                )[-1]
+                state = os.path.join("states", state)
+
         checkpoint = torch.load(state)
         vae.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
