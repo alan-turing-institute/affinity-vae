@@ -408,6 +408,7 @@ def dyn_latentembed_plot(df, epoch, embedding="umap", mode=""):
     elif embedding == "tsne":
         chart.save(f"latents/plt_latent_embed_epoch_{epoch}_tsne{mode}.html")
 
+
 def confidence_plot(x, y, s, suffix=None):
     print(
         "\n################################################################",
