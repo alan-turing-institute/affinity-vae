@@ -134,7 +134,13 @@ def evaluate(
 
         if collect_meta:  # store meta for plots
             meta_df = add_meta(
-                meta_df, batch[-1], x_hat, lat_mu, lat_pose, lat_logvar, mode="evl"
+                meta_df,
+                batch[-1],
+                x_hat,
+                lat_mu,
+                lat_pose,
+                lat_logvar,
+                mode="evl",
             )
 
         print("Batch: [%d/%d]" % (b + 1, len(tests)), end="\r", flush=True)
