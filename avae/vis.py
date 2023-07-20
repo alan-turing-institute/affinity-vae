@@ -440,19 +440,94 @@ def accuracy_plot(
         plt.savefig(figure_name, dpi=300)
         plt.close()
 
-    train_f1_score = f1_score(y_train, ypred_train, average=None)
-    valid_f1_score = f1_score(y_val, ypred_val, average=None)
+
+def f1_plot(
+    y_train,
+    ypred_train,
+    y_val,
+    ypred_val,
+    classes=None,
+    mode="",
+    epoch=0,
+    valid_f1_score=None,
+):
+    """Plot F1 values.
+
+    Parameters
+    ----------
+    y_train: np.array
+        Training labels.
+    ypred_train: np.array
+        Predicted training labels.
+    y_val: np.array
+        Validation labels (unseen data).
+    ypred_val: np.array
+        Predicted validation labels (unseen data).
+    classes: str
+        Path to csv file containing classes to be used.
+    mode: str
+        Added data mode to the name of the saved figures (e.g train, valid, eval).
+    epoch: int
+        Epoch number.
+    """
+    print(
+        "\n################################################################",
+        flush=True,
+    )
+    print("Visualising F1 scores ...\n", flush=True)
+    if classes is not None:
+        classes_list = pd.read_csv(classes).columns.tolist()
+    else:
+        classes_list = np.unique(np.concatenate((y_train, ypred_train)))
+
+    classes_list_eval = np.unique(np.concatenate((y_val, ypred_val)))
+
+    if np.setdiff1d(classes_list_eval, classes_list).size > 0:
+        ordered_class_eval = np.concatenate(
+            (classes_list, np.setdiff1d(classes_list_eval, classes_list))
+        )
+    else:
+        ordered_class_eval = classes_list
+
+    train_f1_score = f1_score(
+        y_train, ypred_train, average=None, labels=classes_list
+    ).tolist()
+    valid_f1_score = f1_score(
+        y_val, ypred_val, average=None, labels=ordered_class_eval
+    ).tolist()
 
     if mode == "_eval":
         label = "eval"
     else:
         label = "valid"
 
+    f1_train_file = f"plots/f1_train_{mode}.csv"
+    f1_valid_file = f"plots/f1_{mode}.csv"
+
+    train_df = pd.DataFrame([train_f1_score], columns=classes_list)
+    valid_df = pd.DataFrame([valid_f1_score], columns=ordered_class_eval)
+
+    train_df["epoch"] = epoch
+    valid_df["epoch"] = epoch
+
+    if os.path.exists(f1_train_file):
+        f1_train = pd.read_csv(f1_train_file)
+        pd.concat([f1_train, train_df]).to_csv(f1_train_file, index=False)
+    else:
+        train_df.to_csv(f1_train_file, index=False)
+
+    if os.path.exists(f1_valid_file):
+        f1_valid = pd.read_csv(f1_valid_file)
+        pd.concat([f1_valid, valid_df]).to_csv(f1_valid_file, index=False)
+    else:
+        valid_df.to_csv(f1_valid_file, index=False)
+
     plt.figure()
-    plt.plot(classes_list, train_f1_score, label="train")
-    plt.plot(classes_list_eval, valid_f1_score, label=label)
+    plt.plot(classes_list, train_f1_score, label="train", marker="o")
+    plt.plot(ordered_class_eval, valid_f1_score, label=label, marker="o")
     plt.xticks(rotation=90)
-    plt.ylabel("F1 Score")
+    plt.legend(loc="lower right")
+    plt.ylabel("F1 Score at epoch {}".format(epoch))
     plt.savefig(f"plots/f1{mode}.png", dpi=150)
     plt.close()
 

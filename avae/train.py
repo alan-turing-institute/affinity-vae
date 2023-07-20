@@ -419,6 +419,10 @@ def train(
             )
             vis.accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes)
 
+            vis.f1_plot(
+                y_train, ypred_train, y_val, ypred_val, classes, epoch=epoch
+            )
+
         # visualise loss
         if config.VIS_LOS and epoch > 0:
             p = [
