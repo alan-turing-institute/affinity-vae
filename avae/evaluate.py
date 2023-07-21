@@ -222,3 +222,11 @@ def evaluate(
             classes,
             mode="_eval",
         )
+        vis.f1_plot(
+            np.array(latents_training_id),
+            ypred_train,
+            y_test,
+            ypred_val,
+            classes,
+            mode="_eval",
+        )
