@@ -352,9 +352,9 @@ def dyn_latentembed_plot(df, epoch, embedding="umap", mode=""):
 
 
 def accuracy_plot(
-    y_train, ypred_train, y_val, ypred_val, classes=None, mode=""
+    y_train, ypred_train, y_val, ypred_val, classes=None, mode="", epoch=0
 ):
-    """Plot confusion matrix  and F1 values.
+    """Plot confusion matrix .
 
     Parameters
     ----------
@@ -370,12 +370,14 @@ def accuracy_plot(
         Path to csv file containing classes to be used.
     mode: str
         Added data mode to the name of the saved figures (e.g train, valid, eval).
+    epoch: int
+        Current epoch.
     """
     print(
         "\n################################################################",
         flush=True,
     )
-    print("Visualising confusion and F1 scores ...\n", flush=True)
+    print("Visualising confusion ...\n", flush=True)
     if classes is not None:
         classes_list = pd.read_csv(classes).columns.tolist()
     else:
@@ -385,6 +387,8 @@ def accuracy_plot(
     disp = ConfusionMatrixDisplay(
         confusion_matrix=cm, display_labels=classes_list
     )
+
+    avg_accuracy = cm.diagonal() / cm.sum(axis=1)
     with plt.rc_context(
         {"font.weight": "bold", "font.size": int(len(classes_list) / 3) + 3}
     ):
@@ -395,6 +399,12 @@ def accuracy_plot(
         disp.plot(cmap=plt.cm.Blues, ax=ax, xticks_rotation=90)
 
         plt.tight_layout()
+        plt.title(
+            f"Average accuracy at epoch {0}: {1:.2f}".format(
+                epoch, np.mean(avg_accuracy)
+            ),
+            fontsize=12,
+        )
 
         if not os.path.exists("plots"):
             os.mkdir("plots")
@@ -415,6 +425,7 @@ def accuracy_plot(
     disp_eval = ConfusionMatrixDisplay(
         confusion_matrix=cm_eval, display_labels=ordered_class_eval
     )
+    avg_accuracy_eval = cm_eval.diagonal() / cm_eval.sum(axis=1)
 
     if mode == "_eval":
         figure_name = "plots/confusion_eval.png"
@@ -437,6 +448,12 @@ def accuracy_plot(
         )
         disp_eval.plot(cmap=plt.cm.Blues, ax=ax, xticks_rotation=90)
         plt.tight_layout()
+        plt.title(
+            "Average accuracy at epoch {}: {:.2f}".format(
+                epoch, np.mean(avg_accuracy_eval)
+            ),
+            fontsize=12,
+        )
         plt.savefig(figure_name, dpi=300)
         plt.close()
 
@@ -449,7 +466,6 @@ def f1_plot(
     classes=None,
     mode="",
     epoch=0,
-    valid_f1_score=None,
 ):
     """Plot F1 values.
 
@@ -501,8 +517,8 @@ def f1_plot(
     else:
         label = "valid"
 
-    f1_train_file = f"plots/f1_train_{mode}.csv"
-    f1_valid_file = f"plots/f1_{mode}.csv"
+    f1_train_file = f"plots/f1_train{mode}.csv"
+    f1_valid_file = f"plots/f1_{label}.csv"
 
     train_df = pd.DataFrame([train_f1_score], columns=classes_list)
     valid_df = pd.DataFrame([valid_f1_score], columns=ordered_class_eval)
@@ -510,26 +526,41 @@ def f1_plot(
     train_df["epoch"] = epoch
     valid_df["epoch"] = epoch
 
-    if os.path.exists(f1_train_file):
+    train_df["f1_avg"] = np.mean(train_f1_score)
+    valid_df["f1_avg"] = np.mean(valid_f1_score)
+
+    if os.path.exists(f1_train_file) and epoch != 0:
         f1_train = pd.read_csv(f1_train_file)
         pd.concat([f1_train, train_df]).to_csv(f1_train_file, index=False)
     else:
         train_df.to_csv(f1_train_file, index=False)
 
-    if os.path.exists(f1_valid_file):
+    if os.path.exists(f1_valid_file) and epoch != 0:
         f1_valid = pd.read_csv(f1_valid_file)
         pd.concat([f1_valid, valid_df]).to_csv(f1_valid_file, index=False)
     else:
         valid_df.to_csv(f1_valid_file, index=False)
 
-    plt.figure()
-    plt.plot(classes_list, train_f1_score, label="train", marker="o")
-    plt.plot(ordered_class_eval, valid_f1_score, label=label, marker="o")
-    plt.xticks(rotation=90)
-    plt.legend(loc="lower right")
-    plt.ylabel("F1 Score at epoch {}".format(epoch))
-    plt.savefig(f"plots/f1{mode}.png", dpi=150)
-    plt.close()
+    with plt.rc_context(
+        {
+            "font.weight": "bold",
+            "font.size": int(len(ordered_class_eval) / 3) + 3,
+        }
+    ):
+        fig, ax = plt.subplots(
+            figsize=(
+                int(len(ordered_class_eval)) / 2,
+                int(len(ordered_class_eval)) / 2,
+            )
+        )
+        plt.plot(classes_list, train_f1_score, label="train", marker="o")
+        plt.plot(ordered_class_eval, valid_f1_score, label=label, marker="o")
+        plt.xticks(rotation=45)
+        plt.legend(loc="lower left")
+        plt.title("F1 Score at epoch {}".format(epoch))
+        plt.ylabel("F1 Score")
+        plt.savefig(f"plots/f1{mode}.png", dpi=150)
+        plt.close()
 
 
 def loss_plot(epochs, beta, gamma, train_loss, val_loss=None, p=None):

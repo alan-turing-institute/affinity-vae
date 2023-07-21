@@ -417,7 +417,9 @@ def train(
                 % (train_acc, val_acc),
                 flush=True,
             )
-            vis.accuracy_plot(y_train, ypred_train, y_val, ypred_val, classes)
+            vis.accuracy_plot(
+                y_train, ypred_train, y_val, ypred_val, classes, epoch=epoch
+            )
 
             vis.f1_plot(
                 y_train, ypred_train, y_val, ypred_val, classes, epoch=epoch
