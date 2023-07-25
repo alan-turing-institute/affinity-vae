@@ -565,7 +565,18 @@ def train(
 
             if collect_meta:
                 meta_df.to_pickle(
-                    os.path.join("states", "meta_" + timestamp + ".pkl")
+                    os.path.join(
+                        "states",
+                        "meta_"
+                        + str(timestamp)
+                        + "_E"
+                        + str(epoch)
+                        + "_"
+                        + str(lat_dims)
+                        + "_"
+                        + str(pose_dims)
+                        + ".pkl",
+                    )
                 )
 
 
