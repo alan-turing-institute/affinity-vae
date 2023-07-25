@@ -389,6 +389,12 @@ def accuracy_plot(
     )
 
     avg_accuracy = cm.diagonal() / cm.sum(axis=1)
+
+    cmn = cm.astype("float") / cm.sum(axis=1)[:, np.newaxis]
+    dispn = ConfusionMatrixDisplay(
+        confusion_matrix=cmn, display_labels=classes_list
+    )
+
     with plt.rc_context(
         {"font.weight": "bold", "font.size": int(len(classes_list) / 3) + 3}
     ):
@@ -400,7 +406,29 @@ def accuracy_plot(
 
         plt.tight_layout()
         plt.title(
-            f"Average accuracy at epoch {0}: {1:.2f}".format(
+            "Average accuracy at epoch {}: {:.2f}".format(
+                epoch, np.mean(avg_accuracy)
+            ),
+            fontsize=10,
+        )
+
+        if not os.path.exists("plots"):
+            os.mkdir("plots")
+
+        plt.savefig(f"plots/confusion_train{mode}.png", dpi=300)
+        plt.close()
+
+        fig, ax = plt.subplots(
+            figsize=(int(len(classes_list)) / 2, int(len(classes_list)) / 2)
+        )
+
+        dispn.plot(
+            cmap=plt.cm.Blues, ax=ax, xticks_rotation=90, values_format=".2f"
+        )
+
+        plt.tight_layout()
+        plt.title(
+            "Average accuracy at epoch {}: {:.2f}".format(
                 epoch, np.mean(avg_accuracy)
             ),
             fontsize=12,
@@ -409,7 +437,7 @@ def accuracy_plot(
         if not os.path.exists("plots"):
             os.mkdir("plots")
 
-        plt.savefig(f"plots/confusion_train{mode}.png", dpi=300)
+        plt.savefig(f"plots/confusion_train{mode}_norm.png", dpi=300)
         plt.close()
 
     classes_list_eval = np.unique(np.concatenate((y_val, ypred_val)))
@@ -427,12 +455,17 @@ def accuracy_plot(
     )
     avg_accuracy_eval = cm_eval.diagonal() / cm_eval.sum(axis=1)
 
+    cmn_eval = cm_eval.astype("float") / cm_eval.sum(axis=1)[:, np.newaxis]
+    dispn_eval = ConfusionMatrixDisplay(
+        confusion_matrix=cmn_eval, display_labels=ordered_class_eval
+    )
+
     if mode == "_eval":
-        figure_name = "plots/confusion_eval.png"
+        figure_name = "plots/confusion_eval"
     elif mode == "":
-        figure_name = "plots/confusion_valid.png"
+        figure_name = "plots/confusion_valid"
     else:
-        figure_name = f"plots/confusion_{mode}.png"
+        figure_name = f"plots/confusion_{mode}"
 
     with plt.rc_context(
         {
@@ -454,7 +487,25 @@ def accuracy_plot(
             ),
             fontsize=12,
         )
-        plt.savefig(figure_name, dpi=300)
+        plt.savefig(figure_name + ".png", dpi=300)
+        plt.close()
+
+        fig, ax = plt.subplots(
+            figsize=(int(len(classes_list)) / 2, int(len(classes_list)) / 2)
+        )
+
+        dispn_eval.plot(
+            cmap=plt.cm.Blues, ax=ax, xticks_rotation=90, values_format=".2f"
+        )
+
+        plt.tight_layout()
+        plt.title(
+            "Average accuracy at epoch {}: {:.2f}".format(
+                epoch, np.mean(avg_accuracy)
+            ),
+            fontsize=10,
+        )
+        plt.savefig(figure_name + "_norm.png", dpi=300)
         plt.close()
 
 
