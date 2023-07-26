@@ -390,7 +390,7 @@ def accuracy_plot(
 
     avg_accuracy = cm.diagonal() / cm.sum(axis=1)
 
-    cmn = cm.astype("float") / cm.sum(axis=1)[:, np.newaxis]
+    cmn = (cm.astype("float") / cm.sum(axis=1)[:, np.newaxis]) * 100
     dispn = ConfusionMatrixDisplay(
         confusion_matrix=cmn, display_labels=classes_list
     )
@@ -406,8 +406,8 @@ def accuracy_plot(
 
         plt.tight_layout()
         plt.title(
-            "Average accuracy at epoch {}: {:.2f}".format(
-                epoch, np.mean(avg_accuracy)
+            "Average accuracy at epoch {}: {:.1f}%".format(
+                epoch, np.mean(avg_accuracy) * 100
             ),
             fontsize=10,
         )
@@ -423,20 +423,21 @@ def accuracy_plot(
         )
 
         dispn.plot(
-            cmap=plt.cm.Blues, ax=ax, xticks_rotation=90, values_format=".2f"
+            cmap=plt.cm.Blues, ax=ax, xticks_rotation=90, values_format=".0f"
         )
 
         plt.tight_layout()
         plt.title(
-            "Average accuracy at epoch {}: {:.2f}".format(
-                epoch, np.mean(avg_accuracy)
+            "Average accuracy at epoch {}: {:.1f}%".format(
+                epoch, np.mean(avg_accuracy) * 100
             ),
             fontsize=12,
         )
 
         if not os.path.exists("plots"):
             os.mkdir("plots")
-
+        plt.xlabel("Predicted label (%)")
+        plt.ylabel("True label (%)")
         plt.savefig(f"plots/confusion_train{mode}_norm.png", dpi=300)
         plt.close()
 
@@ -455,7 +456,9 @@ def accuracy_plot(
     )
     avg_accuracy_eval = cm_eval.diagonal() / cm_eval.sum(axis=1)
 
-    cmn_eval = cm_eval.astype("float") / cm_eval.sum(axis=1)[:, np.newaxis]
+    cmn_eval = (
+        cm_eval.astype("float") / cm_eval.sum(axis=1)[:, np.newaxis] * 100
+    )
     dispn_eval = ConfusionMatrixDisplay(
         confusion_matrix=cmn_eval, display_labels=ordered_class_eval
     )
@@ -482,8 +485,8 @@ def accuracy_plot(
         disp_eval.plot(cmap=plt.cm.Blues, ax=ax, xticks_rotation=90)
         plt.tight_layout()
         plt.title(
-            "Average accuracy at epoch {}: {:.2f}".format(
-                epoch, np.mean(avg_accuracy_eval)
+            "Average accuracy at epoch {}: {:.1f}%".format(
+                epoch, np.mean(avg_accuracy_eval) * 100
             ),
             fontsize=12,
         )
@@ -495,16 +498,18 @@ def accuracy_plot(
         )
 
         dispn_eval.plot(
-            cmap=plt.cm.Blues, ax=ax, xticks_rotation=90, values_format=".2f"
+            cmap=plt.cm.Blues, ax=ax, xticks_rotation=90, values_format=".0f"
         )
 
         plt.tight_layout()
         plt.title(
-            "Average accuracy at epoch {}: {:.2f}".format(
-                epoch, np.mean(avg_accuracy)
+            "Average accuracy at epoch {}: {:.1}% ".format(
+                epoch, np.mean(avg_accuracy_eval) * 100
             ),
             fontsize=10,
         )
+        plt.xlabel("Predicted label (%)")
+        plt.ylabel("True label (%)")
         plt.savefig(figure_name + "_norm.png", dpi=300)
         plt.close()
 
