@@ -423,7 +423,11 @@ def accuracy_plot(
         )
 
         dispn.plot(
-            cmap=plt.cm.Blues, ax=ax, xticks_rotation=90, values_format=".0f"
+            cmap=plt.cm.Blues,
+            ax=ax,
+            xticks_rotation=90,
+            values_format=".0f",
+            im_kw={"vmin": 0, "vmax": 100},
         )
 
         plt.tight_layout()
@@ -498,7 +502,11 @@ def accuracy_plot(
         )
 
         dispn_eval.plot(
-            cmap=plt.cm.Blues, ax=ax, xticks_rotation=90, values_format=".0f"
+            cmap=plt.cm.Blues,
+            ax=ax,
+            xticks_rotation=90,
+            values_format=".0f",
+            im_kw={"vmin": 0, "vmax": 100},
         )
 
         plt.tight_layout()
