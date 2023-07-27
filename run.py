@@ -425,7 +425,7 @@ logging.basicConfig(
     "-opt",
     type=str,
     default=None,
-    help=" The method of optimisation. It can be adam or sgd.",
+    help=" The method of optimisation. It can be adam/sgd/asgd",
 )
 @click.option(
     "--gaussian_blur",

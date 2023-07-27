@@ -115,7 +115,7 @@ def train(
     model: str
         Type of model to train. Can be a or b.
     opt_method: str
-        The method of optimisation. It can be adam or sgd
+        The method of optimisation. It can be adam/sgd/asgd (we can add other methods easily as we need them)
     gaussian_blur: bool
         if True, Gaussian bluring is applied to the input before being passed to the model.
         This is added as a way to remove noise from the input data.
@@ -178,9 +178,13 @@ def train(
         optimizer = torch.optim.SGD(
             params=vae.parameters(), lr=learning  # , weight_decay=1e-5
         )
+    elif opt_method == "asgd":
+        optimizer = torch.optim.aSGD(
+            params=vae.parameters(), lr=learning  # , weight_decay=1e-5
+        )
     else:
         raise ValueError(
-            "Invalid optimisation method", opt_method, "must be adam or sgd"
+            "Invalid optimisation method", opt_method, "must be adam or sgd if you have other methods in mind, this can be easily added to the train.py"
         )
 
     t_history = []
