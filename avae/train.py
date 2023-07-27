@@ -184,7 +184,9 @@ def train(
         )
     else:
         raise ValueError(
-            "Invalid optimisation method", opt_method, "must be adam or sgd if you have other methods in mind, this can be easily added to the train.py"
+            "Invalid optimisation method",
+            opt_method,
+            "must be adam or sgd if you have other methods in mind, this can be easily added to the train.py",
         )
 
     t_history = []
