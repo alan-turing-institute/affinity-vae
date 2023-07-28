@@ -12,6 +12,7 @@ import torch
 import torchvision
 import umap
 from PIL import Image
+from scipy.stats import norm
 from sklearn.manifold import TSNE
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix, f1_score
 from sklearn.metrics.pairwise import cosine_similarity
@@ -434,10 +435,9 @@ def confidence_plot(x, y, s, suffix=None):
         min_mu = np.min(mu_cl)
         max_mu = np.max(mu_cl)
         max_sig = np.max(std_cl)
+        step = max_sig / 100
 
-        from scipy.stats import norm
-
-        xs = np.arange(min_mu - (4 * max_sig), max_mu + (4 * max_sig), 0.01)
+        xs = np.arange(min_mu - (4 * max_sig), max_mu + (4 * max_sig), step)
 
         for i in range(len(mu_cl)):
             ax[c].plot(
