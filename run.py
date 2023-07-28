@@ -421,6 +421,13 @@ logging.basicConfig(
     help="Choose model to run.",
 )
 @click.option(
+    "--opt_method",
+    "-opt",
+    type=str,
+    default=None,
+    help=" The method of optimisation. It can be adam/sgd/asgd",
+)
+@click.option(
     "--gaussian_blur",
     "-gb",
     type=bool,
@@ -500,6 +507,7 @@ def run(
     eval,
     dynamic,
     model,
+    opt_method,
     gaussian_blur,
     normalise,
     shift_min,
@@ -685,6 +693,7 @@ def run(
                 recon_fn=data["loss_fn"],
                 use_gpu=data["gpu"],
                 model=data["model"],
+                opt_method=data["opt_method"],
                 gaussian_blur=data["gaussian_blur"],
                 normalise=data["normalise"],
                 shift_min=data["shift_min"],
