@@ -435,7 +435,7 @@ def confidence_plot(x, y, s, suffix=None):
         min_mu = np.min(mu_cl)
         max_mu = np.max(mu_cl)
         max_sig = np.max(std_cl)
-        step = max_sig / 100
+        step = (2 * 4 * max_sig) / 100
 
         xs = np.arange(min_mu - (4 * max_sig), max_mu + (4 * max_sig), step)
 
