@@ -285,9 +285,12 @@ def train(
         # create holders for latent spaces and labels
         x_train = []  # 0 x lat_dims
         y_train = []  # 0 x 1
+        c_train = []
         x_val = []
         y_val = []
+        c_val = []
         x_test = []
+        c_test = []
         if pose:
             p_train = []  # 0 x pose_dims
             p_val = []
@@ -312,12 +315,19 @@ def train(
             )
             x_train.extend(lat_mu.cpu().detach().numpy())  # store latents
             y_train.extend(batch[1])
+            c_train.extend(lat_logvar.cpu().detach().numpy())
             if pose:
                 p_train.extend(lat_pos.cpu().detach().numpy())
 
             if collect_meta:  # store meta for plots
                 meta_df = add_meta(
-                    meta_df, batch[-1], x_hat, lat_mu, lat_pos, mode="trn"
+                    meta_df,
+                    batch[-1],
+                    x_hat,
+                    lat_mu,
+                    lat_pos,
+                    lat_logvar,
+                    mode="trn",
                 )
 
         t_history[-1] /= len(trains)
@@ -352,12 +362,19 @@ def train(
             )
             x_val.extend(v_mu.cpu().detach().numpy())  # store latents
             y_val.extend(batch[1])
+            c_val.extend(v_logvar.cpu().detach().numpy())
             if pose:
                 p_val.extend(vlat_pos.cpu().detach().numpy())
 
             if collect_meta:  # store meta for plots
                 meta_df = add_meta(
-                    meta_df, batch[-1], v_hat, v_mu, vlat_pos, mode="val"
+                    meta_df,
+                    batch[-1],
+                    v_hat,
+                    v_mu,
+                    vlat_pos,
+                    v_logvar,
+                    mode="val",
                 )
 
         v_history[-1] /= len(vals)
@@ -382,6 +399,7 @@ def train(
                     device, vae, batch, b, len(tests), epoch, epochs
                 )
                 x_test.extend(t_mu.cpu().detach().numpy())  # store latents
+                c_test.extend(t_logvar.cpu().detach().numpy())
                 if pose:
                     p_test.extend(tlat_pose.cpu().detach().numpy())
 
@@ -392,12 +410,13 @@ def train(
                         t_hat,
                         t_mu,
                         tlat_pose,
+                        t_logvar,
                         mode="tst",
                     )
 
         # ########################## VISUALISE ################################
 
-        # visualise accuracy
+        # visualise accuracy: confusion and F1 scores
         if config.VIS_ACC and (epoch + 1) % config.FREQ_ACC == 0:
             train_acc, val_acc, ypred_train, ypred_val = accuracy(
                 x_train, y_train, x_val, y_val
@@ -441,8 +460,8 @@ def train(
 
         # visualise reconstructions - last batch
         if config.VIS_REC and (epoch + 1) % config.FREQ_REC == 0:
-            vis.recon_plot(x, x_hat, y_train, name="trn")
-            vis.recon_plot(v, v_hat, y_val, name="val")
+            vis.recon_plot(x, x_hat, y_train, mode="trn")
+            vis.recon_plot(v, v_hat, y_val, mode="val")
 
         # visualise mean and logvar similarity matrix
         if config.VIS_SIM and (epoch + 1) % config.FREQ_SIM == 0:
@@ -465,6 +484,10 @@ def train(
                 epoch=epoch,
                 classes_order=classes_list,
             )
+
+        if config.VIS_CON and (epoch + 1) % config.FREQ_CON == 0:
+            vis.confidence_plot(x_train, y_train, c_train, suffix="trn")
+            vis.confidence_plot(x_val, y_val, c_val, suffix="val")
 
         # visualise embeddings
         if config.VIS_EMB and (epoch + 1) % config.FREQ_EMB == 0:
@@ -672,7 +695,9 @@ def pass_batch(
     return x, x_hat, lat_mu, lat_logvar, lat, lat_pose, history
 
 
-def add_meta(meta_df, batch_meta, x_hat, latent_mu, lat_pose, mode="trn"):
+def add_meta(
+    meta_df, batch_meta, x_hat, latent_mu, lat_pose, latent_logvar, mode="trn"
+):
     """
     Created meta data about data and training.
 
@@ -688,6 +713,8 @@ def add_meta(meta_df, batch_meta, x_hat, latent_mu, lat_pose, mode="trn"):
         Latent mean.
     lat_pose: torch.Tensor
         Latent pose.
+    lat_logvar: torch.Tensor
+        Latent logvar.
     mode: str
         Data category on training (either 'trn', 'val' or 'test').
 
@@ -702,6 +729,9 @@ def add_meta(meta_df, batch_meta, x_hat, latent_mu, lat_pose, mode="trn"):
     meta["image"] += vis.format(x_hat)
     for d in range(latent_mu.shape[-1]):
         meta[f"lat{d}"] = np.array(latent_mu[:, d].cpu().detach().numpy())
+    for d in range(latent_logvar.shape[-1]):
+        lat_std = np.exp(0.5 * latent_logvar[:, d].cpu().detach().numpy())
+        meta[f"std-{d}"] = np.array(lat_std)
     if lat_pose is not None:
         for d in range(lat_pose.shape[-1]):
             meta[f"pos{d}"] = np.array(lat_pose[:, d].cpu().detach().numpy())
