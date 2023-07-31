@@ -76,6 +76,7 @@ DEFAULT_RUN_CONFIGS = {
     "vis_sim": VIS_SIM,
     "vis_all": False,
     "model": "a",
+    "opt_method": "adam",
     "gaussian_blur": False,
     "normalise": False,
     "shift_min": False,

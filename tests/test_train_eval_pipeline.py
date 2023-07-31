@@ -118,6 +118,7 @@ class TrainEvalTest(unittest.TestCase):
             recon_fn=self.data["recon_fn"],
             use_gpu=self.data["gpu"],
             model="a",
+            opt_method="adam",
             gaussian_blur=self.data["gaussian_blur"],
             normalise=self.data["normalise"],
             shift_min=self.data["shift_min"],
@@ -152,6 +153,7 @@ class TrainEvalTest(unittest.TestCase):
         n_plots_eval = len(os.listdir(os.path.join(temp_dir.name, "plots")))
         n_latent_eval = len(os.listdir(os.path.join(temp_dir.name, "latents")))
         n_states_eval = len(os.listdir(os.path.join(temp_dir.name, "states")))
+
 
         self.assertEqual(n_plots_eval, 42)
         self.assertEqual(n_latent_eval, 4)
@@ -196,6 +198,7 @@ class TrainEvalTest(unittest.TestCase):
             recon_fn=self.data["recon_fn"],
             use_gpu=self.data["gpu"],
             model="b",
+            opt_method="adam",
             gaussian_blur=self.data["gaussian_blur"],
             normalise=self.data["normalise"],
             shift_min=self.data["shift_min"],
@@ -231,6 +234,7 @@ class TrainEvalTest(unittest.TestCase):
         n_plots_eval = len(os.listdir(os.path.join(temp_dir.name, "plots")))
         n_latent_eval = len(os.listdir(os.path.join(temp_dir.name, "latents")))
         n_states_eval = len(os.listdir(os.path.join(temp_dir.name, "states")))
+
 
         self.assertEqual(n_plots_eval, 42)
         self.assertEqual(n_latent_eval, 4)

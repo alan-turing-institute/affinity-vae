@@ -99,9 +99,10 @@ def evaluate(
 
     if meta is None:
         if collect_meta:
-            metas = sorted([f for f in os.listdir("states") if ".pkl" in f])[
-                -1
-            ]
+            metas = sorted(
+                [f for f in os.listdir("states") if ".pkl" in f],
+                key=lambda x: int(x.split("_")[2][1:]),
+            )[-1]
             meta = os.path.join("states", metas)
 
     meta_df = pd.read_pickle(meta)
@@ -232,6 +233,14 @@ def evaluate(
             % (train_acc, val_acc)
         )
         vis.accuracy_plot(
+            np.array(latents_training_id),
+            ypred_train,
+            y_test,
+            ypred_val,
+            classes,
+            mode="_eval",
+        )
+        vis.f1_plot(
             np.array(latents_training_id),
             ypred_train,
             y_test,
