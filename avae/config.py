@@ -1,16 +1,19 @@
-VIS_CYC = False
 VIS_LOS = False
 VIS_ACC = False
 VIS_REC = False
+VIS_CON = False
 VIS_EMB = False
 VIS_INT = False
 VIS_DIS = False
 VIS_POS = False
+VIS_CYC = False
+VIS_AFF = False
 VIS_HIS = False
 VIS_SIM = False
 
 FREQ_ACC = 10
 FREQ_REC = 10
+FREQ_CON = 10
 FREQ_EMB = 10
 FREQ_INT = 10
 FREQ_DIS = 10
@@ -49,6 +52,7 @@ DEFAULT_RUN_CONFIGS = {
     "freq_eval": FREQ_EVAL,
     "freq_sta": FREQ_STA,
     "freq_emb": FREQ_EMB,
+    "freq_con": FREQ_CON,
     "freq_rec": FREQ_REC,
     "freq_int": FREQ_INT,
     "freq_dis": FREQ_DIS,
@@ -58,14 +62,16 @@ DEFAULT_RUN_CONFIGS = {
     "freq_all": None,
     "eval": False,
     "dynamic": False,
-    "vis_emb": VIS_EMB,
-    "vis_rec": VIS_REC,
     "vis_los": VIS_LOS,
-    "vis_cyc": VIS_CYC,
+    "vis_acc": VIS_ACC,
+    "vis_rec": VIS_REC,
+    "vis_con": VIS_CON,
+    "vis_emb": VIS_EMB,
     "vis_int": VIS_INT,
     "vis_dis": VIS_DIS,
     "vis_pos": VIS_POS,
-    "vis_acc": VIS_ACC,
+    "vis_cyc": VIS_CYC,
+    "vis_aff": VIS_AFF,
     "vis_his": VIS_HIS,
     "vis_sim": VIS_SIM,
     "vis_all": False,

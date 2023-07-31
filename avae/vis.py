@@ -12,6 +12,7 @@ import torch
 import torchvision
 import umap
 from PIL import Image
+from scipy.stats import norm
 from sklearn.manifold import TSNE
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix, f1_score
 from sklearn.metrics.pairwise import cosine_similarity
@@ -292,60 +293,118 @@ def dyn_latentembed_plot(df, epoch, embedding="umap", mode=""):
         titley = "t-SNE-2"
     df["emb-x"], df["emb-y"] = np.array(lat_emb)[:, 0], np.array(lat_emb)[:, 1]
 
-    selection = altair.selection_multi(fields=["id"], empty="all")
-    selection_mode = altair.selection_multi(fields=["mode"], empty="all")
+    # create column select options for radio buttons
+    # add no std to radio select options - change value here for marker size!
+    if "std-off" not in df.columns:
+        df.insert(loc=0, column="std-off", value=np.zeros(len(lat_emb)) + 0.5)
+    opts = [col for col in df.columns if col.startswith("std")]
 
+    # create radio buttons and bind to a folded column select
+    bind_checkbox = altair.binding_radio(
+        options=opts,
+        labels=[
+            str(int(i.split("-")[-1]) + 1)
+            if "off" not in i
+            else i.split("-")[-1]
+            for i in opts
+        ],
+        name="Certainty of prediction per dimension:",
+    )
+    column_select = altair.selection_point(
+        fields=["column"], bind=bind_checkbox, name="certainty"
+    )
+
+    # mode, class and in-chart selections (also work with shft+click for multi)
+    selection = altair.selection_point(fields=["id"], on="mouseover")
+    selection_mode = altair.selection_point(fields=["mode"])
+    selection_class = altair.selection_point(fields=["id"])
+
+    # in-chart color condition
     color = altair.condition(
-        (selection & selection_mode),
-        altair.Color("id:N"),
+        (selection & selection_mode & selection_class),
+        altair.Color("id:N", legend=None),
         altair.value("lightgray"),
     )
 
+    # tooltip disla on-mouseover
+    tooltip = ["id", "meta", "mode", "avg", "image"]  # .append(opts)
+
+    # main scatter plot
     scatter = (
-        altair.Chart(df)
+        altair.Chart(df, title="shift+click for multi-select")
         .mark_point(size=100, opacity=0.5, filled=True)
+        .transform_fold(fold=opts, as_=["column", "value"])
+        .transform_filter(column_select)
         .encode(
             altair.X("emb-x", title=titlex),
             altair.Y("emb-y", title=titley),
             altair.Shape(
                 "mode",
-                scale=altair.Scale(range=["square", "circle", "triangle"]),
+                scale=altair.Scale(
+                    range=["circle", "square", "triangle", "diamond"]
+                ),
+                legend=None,
             ),
-            altair.Tooltip(
-                ["id", "meta", "mode", "avg", "image"]
-            ),  # *degrees_of_freedom, 'image']),
+            altair.Tooltip(tooltip),
             color=color,
+            size=altair.Size("value:Q", legend=None, aggregate="mean").scale(
+                type="log"
+            ),
         )
         .interactive()
         .properties(width=800, height=500)
-        .add_selection(selection)
-        .add_selection(selection_mode)
+        .add_params(selection)
+        .add_params(selection_class)
+        .add_params(selection_mode)
+        .add_params(column_select)
     )
 
-    # Create interactive model name legend
-    legend_mode = (
-        altair.Chart(df)
+    # interactive class legend
+    legend_class = (
+        altair.Chart(df, title="Class")
         .mark_point(size=100, opacity=0.5, filled=True)
         .encode(
-            x=altair.X("mode:N", axis=altair.Axis(orient="bottom")),
+            y=altair.Y("id:N", axis=altair.Axis(title=None, orient="right")),
+            color=altair.condition(
+                selection_class,
+                altair.Color("id:N"),
+                altair.value("lightgrey"),
+            ),
+        )
+        .add_params(selection_class)
+    )
+
+    # interactive mode legend
+    legend_mode = (
+        altair.Chart(df, title="Mode")
+        .mark_point(size=100, opacity=0.5, filled=True)
+        .encode(
+            y=altair.Y("mode:N", axis=altair.Axis(title=None, orient="right")),
             shape=altair.Shape(
                 "mode",
                 scale=altair.Scale(
-                    range=["square", "circle", "triangle", "diamond"]
+                    range=["circle", "square", "triangle", "diamond"]
                 ),
-                title="mode",
                 legend=None,
             ),
+            color=altair.condition(
+                selection_mode,
+                altair.value("steelblue"),
+                altair.value("lightgrey"),
+            ),
         )
-        .add_selection(selection_mode)
+        .add_params(selection_mode)
     )
 
+    # organise charts in window and configure fonts
     chart = (
-        (legend_mode | scatter)
+        (scatter | altair.vconcat(legend_class, legend_mode))
         .configure_axis(labelFontSize=20, titleFontSize=20)
         .configure_legend(labelFontSize=20, titleFontSize=20)
+        .configure_title(fontSize=20)
     )
 
+    # save charts and latent embedding
     if not os.path.exists("latents"):
         os.mkdir("latents")
         # save latentspace and ids
@@ -353,6 +412,54 @@ def dyn_latentembed_plot(df, epoch, embedding="umap", mode=""):
         chart.save(f"latents/plt_latent_embed_epoch_{epoch}_umap{mode}.html")
     elif embedding == "tsne":
         chart.save(f"latents/plt_latent_embed_epoch_{epoch}_tsne{mode}.html")
+
+
+def confidence_plot(x, y, s, suffix=None):
+    print(
+        "\n################################################################",
+        flush=True,
+    )
+    print(
+        "Visualising class-average confidence metrics " + suffix + "...\n",
+        flush=True,
+    )
+    cmap = plt.get_cmap("jet")
+    cols = [cmap(i) for i in np.linspace(0, 1, len(x[0]))]
+    rows = len(np.unique(y)) // 2
+    if len(np.unique(y)) % 2 != 0:
+        rows += 1
+    fig, ax = plt.subplots(len(np.unique(y)), sharex=True, sharey=True)
+    for c, cl in enumerate(np.unique(y)):
+        mu_cl = np.take(x, np.where(np.array(y) == cl)[0], axis=0)
+        var_cl = np.take(s, np.where(np.array(y) == cl)[0], axis=0)
+        std_cl = np.exp(0.5 * var_cl)
+        mu_cl = np.mean(mu_cl, axis=0)
+        std_cl = np.mean(std_cl, axis=0)
+
+        min_mu = np.min(mu_cl)
+        max_mu = np.max(mu_cl)
+        max_sig = np.max(std_cl)
+        step = (2 * 4 * max_sig) / 100
+
+        xs = np.arange(min_mu - (4 * max_sig), max_mu + (4 * max_sig), step)
+
+        for i in range(len(mu_cl)):
+            ax[c].plot(
+                xs,
+                norm.pdf(xs, mu_cl[i], std_cl[i]),
+                color=cols[i],
+                label="lat" + str(i + 1),
+            )
+        ax[c].set_title(cl)
+    name = "plots/confidence.png"
+    if suffix is not None:
+        name = name[:-4] + "_" + suffix + name[-4:]
+    handles, labels = ax[-1].get_legend_handles_labels()
+    leg = fig.legend(
+        handles, labels, bbox_to_anchor=(1.06, 0.9)
+    )  # , loc="upper left")
+    fig.savefig(name, bbox_extra_artists=(leg,), bbox_inches="tight")
+    plt.close()
 
 
 def accuracy_plot(
@@ -381,7 +488,9 @@ def accuracy_plot(
         "\n################################################################",
         flush=True,
     )
-    print("Visualising confusion ...\n", flush=True)
+
+    print("Visualising accuracy: confusion and F1 scores ...\n", flush=True)
+
     if classes is not None:
         classes_list = pd.read_csv(classes).columns.tolist()
     else:
@@ -767,7 +876,7 @@ def loss_plot(epochs, beta, gamma, train_loss, val_loss=None, p=None):
     plt.close()
 
 
-def recon_plot(img, rec, label, name="trn"):
+def recon_plot(img, rec, label, mode="trn"):
     """Visualise reconstructions.
 
     Parameters
@@ -776,7 +885,7 @@ def recon_plot(img, rec, label, name="trn"):
         Input images.
     rec: torch.Tensor
         Reconstructed images.
-    name: str
+    mode: str
         Type of image in the training set: trn or val.
 
     """
@@ -784,10 +893,10 @@ def recon_plot(img, rec, label, name="trn"):
         "\n################################################################",
         flush=True,
     )
-    print("Visualising reconstructions ...\n", flush=True)
+    print("Visualising reconstructions " + mode + "...\n", flush=True)
 
-    fname_in = "plots/" + str(name) + "_recon_in.png"
-    fname_out = "plots/" + str(name) + "_recon_out.png"
+    fname_in = "plots/" + str(mode) + "_recon_in.png"
+    fname_out = "plots/" + str(mode) + "_recon_out.png"
 
     img_2d = img[:, :, :, :, img.shape[-1] // 2]
     rec_2d = rec[:, :, :, :, img.shape[-1] // 2]
@@ -856,12 +965,12 @@ def recon_plot(img, rec, label, name="trn"):
                 ] = rec_img[i, j, :, :, :]
 
     with mrcfile.new(
-        "plots/" + str(name) + "_recon_in.mrc", overwrite=True
+        "plots/" + str(mode) + "_recon_in.mrc", overwrite=True
     ) as mrc:
         mrc.set_data(grid_for_napari)
 
 
-def latent_disentamglement_plot(lats, vae, device, poses=None):
+def latent_disentamglement_plot(lats, vae, device, poses=None, mode="trn"):
     """Visualise latent content disentanglement.
 
     Parameters
@@ -944,12 +1053,12 @@ def latent_disentamglement_plot(lats, vae, device, poses=None):
     if not os.path.exists("plots"):
         os.mkdir("plots")
     with mrcfile.new(
-        "plots/disentanglement-latent.mrc", overwrite=True
+        f"plots/disentanglement-latent{mode}.mrc", overwrite=True
     ) as mrc:
         mrc.set_data(grid_for_napari)
 
 
-def pose_disentanglement_plot(lats, poses, vae, device):
+def pose_disentanglement_plot(lats, poses, vae, device, mode="trn"):
     """Visualise pose disentanglement.
 
     Parameters
@@ -1028,11 +1137,13 @@ def pose_disentanglement_plot(lats, poses, vae, device):
 
     if not os.path.exists("plots"):
         os.mkdir("plots")
-    with mrcfile.new("plots/disentanglement-pose.mrc", overwrite=True) as mrc:
+    with mrcfile.new(
+        f"plots/disentanglement-pose{mode}.mrc", overwrite=True
+    ) as mrc:
         mrc.set_data(grid_for_napari)
 
 
-def interpolations_plot(lats, classes, vae, device, poses=None):
+def interpolations_plot(lats, classes, vae, device, poses=None, mode="trn"):
     """Visualise interpolations.
 
     Parameters
@@ -1159,7 +1270,7 @@ def interpolations_plot(lats, classes, vae, device, poses=None):
 
     if not os.path.exists("plots"):
         os.mkdir("plots")
-    with mrcfile.new("plots/interpolations.mrc", overwrite=True) as mrc:
+    with mrcfile.new(f"plots/interpolations{mode}.mrc", overwrite=True) as mrc:
         mrc.set_data(grid_for_napari)
 
 
@@ -1240,7 +1351,7 @@ def plot_classes_distribution(data, category):
         "\n################################################################",
         flush=True,
     )
-    print("Visualising classes distribution ...\n", flush=True)
+    print("Visualising classes distribution " + category + "...\n", flush=True)
 
     fig, ax = plt.subplots(figsize=(9, 9))
     labels, counts = np.unique(data, return_counts=True)

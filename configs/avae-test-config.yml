@@ -53,21 +53,24 @@ eval:  false
 freq_eval: 10 # frequency of test evaluation (if test present)
 
 #### Visualization parameters
-vis_cyc:  false  # value of beta for each epoch in case of cyclical annealing
 vis_los:  false  # loss on/off (every epoch from epoch 2)
-vis_acc:  false  # confusion matrices on/off
-vis_rec:  false  # reconstructions on/off
-vis_emb:  false  # latent embeddings on/off
-vis_int:  false  # latent interpolations on/off
-vis_dis:  false  # latent disentanglement on/off
-vis_pos:  false  # pose disentanglement on/off
-vis_his:  false  # class distribution histogram on/off
+vis_acc:  false  # confusion matrices and F1 scores on/off (frequency controlled)
+vis_rec:  false  # reconstructions on/off (frequency controlled)
+vis_con:  false  # per-class confidence metrics on/off (frequency controlled)
+vis_emb:  false  # latent embeddings on/off (frequency controlled)
+vis_int:  false  # latent interpolations on/off (frequency controlled)
+vis_dis:  false  # latent disentanglement on/off (frequency controlled)
+vis_pos:  false  # pose disentanglement on/off (frequency controlled)
+vis_cyc:  false  # beta for cyclic anealing on/off (once per run)
+vis_aff: false   # affinity matrix on/off (once per run)
+vis_his:  false  # class distribution histogram on/off (once per run)
 vis_sim:  false  # latent space similarity matrix on/off
 vis_all:  true   # sets all above to on/off
 dynamic: true    # dynamic embedding visualisations on/off (freq same as freq_emb)
 
 freq_acc: 10  # frequency of accuracy visualisation
 freq_rec: 10  # frequency of reconstruction visualisation
+freq_con: 10  # frequency of per-class confidence metric visualisation
 freq_emb: 10  # frequency of latent embedding visualisation
 freq_int: 10  # frequency of latent interpolation visualisation
 freq_dis: 10  # frequency of latent disentanglement visualisation
