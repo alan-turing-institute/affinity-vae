@@ -168,10 +168,10 @@ def latent_embed_plot_tsne(xs, ys, mode=""):
     if n_classes < 3:
         # If the number of classes are not moe than 3 the size of the figure would be too
         # small and matplotlib would through a singularity error
-        fig, ax = plt.subplots(figsize=(6, 6))
+        fig, ax = plt.subplots(figsize=(int(n_classes / 2) + 7, int(n_classes / 2) +5))
     else:
         fig, ax = plt.subplots(
-            figsize=(int(n_classes / 2) + 2, int(n_classes / 2))
+            figsize=(int(n_classes / 2) + 4, int(n_classes / 2)+2)
         )
     # When the number of classes is less than 3 the image becomes two small
 
@@ -219,10 +219,10 @@ def latent_embed_plot_umap(xs, ys, mode=""):
 
     n_classes = len(np.unique(ys))
     if n_classes < 3:
-        fig, ax = plt.subplots(figsize=(6, 6))
+        fig, ax = plt.subplots(figsize=(int(n_classes / 2) + 7, int(n_classes / 2) +5))
     else:
         fig, ax = plt.subplots(
-            figsize=(int(n_classes / 2) + 2, int(n_classes / 2))
+            figsize=(int(n_classes / 2) + 4, int(n_classes / 2)+2)
         )
     for mol_id, mol in enumerate(set(ys.tolist())):
         idx = np.where(np.array(ys.tolist()) == mol)[0]
