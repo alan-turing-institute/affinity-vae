@@ -22,6 +22,7 @@ class TrainEvalTest(unittest.TestCase):
 
         self.data = {
             "datapath": self.testdata,
+            "datatype": "mrc",
             "limit": 100,
             "split": 10,
             "batch": 25,
@@ -88,6 +89,7 @@ class TrainEvalTest(unittest.TestCase):
         os.chdir(temp_dir.name)
         train(
             datapath=self.data["datapath"],
+            datatype=self.data["datatype"],
             restart=self.data["restart"],
             state=self.data["state"],
             lim=self.data["limit"],
@@ -137,6 +139,7 @@ class TrainEvalTest(unittest.TestCase):
 
         evaluate(
             datapath=os.path.join(self.testdata, "test"),
+            datatype=self.data["datatype"],
             state=self.data["state"],
             meta=self.data["meta"],
             lim=self.data["limit"],
@@ -167,6 +170,7 @@ class TrainEvalTest(unittest.TestCase):
 
         train(
             datapath=self.data["datapath"],
+            datatype=self.data["datatype"],
             restart=self.data["restart"],
             state=self.data["state"],
             lim=self.data["limit"],
@@ -217,6 +221,7 @@ class TrainEvalTest(unittest.TestCase):
 
         evaluate(
             datapath=os.path.join(self.testdata, "test"),
+            datatype=self.data["datatype"],
             state=self.data["state"],
             meta=self.data["meta"],
             lim=self.data["limit"],

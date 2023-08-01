@@ -36,6 +36,7 @@ class DataTest(unittest.TestCase):
 
         out = load_data(
             "./eval",
+            datatype="mrc",
             lim=None,
             batch_s=32,
             collect_meta=False,
@@ -65,6 +66,7 @@ class DataTest(unittest.TestCase):
 
         out = load_data(
             "./train",
+            datatype="mrc",
             lim=None,
             splt=30,
             batch_s=16,
