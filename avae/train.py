@@ -18,6 +18,7 @@ from .utils import set_device
 
 def train(
     datapath,
+    datatype,
     restart,
     state,
     lim,
@@ -62,6 +63,8 @@ def train(
     ----------
     datapath: str
         Path to the data directory.
+    datatype: str
+        data file formats : mrc, npy
     lim: int
         Limit the number of samples to load.
     splt: int
@@ -135,6 +138,7 @@ def train(
     # ############################### DATA ###############################
     trains, vals, tests, lookup = load_data(
         datapath,
+        datatype,
         lim=lim,
         splt=splt,
         batch_s=batch_s,

@@ -12,6 +12,7 @@ from .utils import set_device
 
 def evaluate(
     datapath,
+    datatype,
     state,
     meta,
     lim,
@@ -31,6 +32,8 @@ def evaluate(
     ----------
     datapath: str
         Path to the data directory.
+    datatype: str
+        data file formats : mrc, npy
     state: str
         Path to the model state file to be used for evaluation/resume.
     meta: str
@@ -61,6 +64,7 @@ def evaluate(
     # ############################### DATA ###############################
     tests = load_data(
         datapath,
+        datatype,
         lim,
         splt,
         batch_s,
