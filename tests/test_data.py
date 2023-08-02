@@ -34,7 +34,7 @@ class DataTest(unittest.TestCase):
             os.path.join(self.test_dir, "eval"),
         )
 
-        out = load_data(
+        out, data_dim = load_data(
             "./eval",
             datatype="mrc",
             lim=None,
@@ -80,8 +80,8 @@ class DataTest(unittest.TestCase):
         )
 
         # test load_data
-        assert len(out) == 4
-        train_data, val_data, test_data, lookup = out
+        assert len(out) == 5
+        train_data, val_data, test_data, lookup, data_dim = out
         assert len(train_data) >= len(val_data)
         assert isinstance(train_data, DataLoader)
 

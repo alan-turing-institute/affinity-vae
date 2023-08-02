@@ -4,7 +4,6 @@ import random
 import mrcfile
 import numpy as np
 import pandas as pd
-import torch
 from torch import from_numpy
 from torch.utils.data import DataLoader, Dataset, Subset
 from torchvision import transforms
@@ -178,6 +177,7 @@ def load_data(
             collect_m=collect_meta,
             datatype=datatype,
         )
+
         print("Eval data size:", len(data), flush=True)
         tests = DataLoader(
             data, batch_size=batch_s, num_workers=0, shuffle=True
@@ -186,9 +186,9 @@ def load_data(
         print(flush=True)
 
     if eval:
-        return tests
+        return tests, data.dim()
     else:
-        return trains, vals, tests, lookup  # , dsize
+        return trains, vals, tests, lookup, data.dim()  # , dsize
 
 
 class Dataset_reader(Dataset):
@@ -255,6 +255,9 @@ class Dataset_reader(Dataset):
     def __len__(self):
         return len(self.paths)
 
+    def dim(self):
+        return len(np.array(self.read(self.paths[0])).shape)
+
     def __getitem__(self, item):
         filename = self.paths[item]
 
@@ -275,7 +278,9 @@ class Dataset_reader(Dataset):
             # file info and metadata
             meta = "_".join(filename.split(".")[0].split("_")[1:])
             avg = np.around(np.average(x), decimals=4)
-            img = format(x)  # used for dynamic preview in Altair
+            img = format(
+                x, len(data.shape)
+            )  # used for dynamic preview in Altair
             meta = {
                 "filename": filename,
                 "id": y,
