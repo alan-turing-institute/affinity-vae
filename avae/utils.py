@@ -83,7 +83,7 @@ def fill_grid_for_plottting(rows, columns, grid, dsize, array, padding=0):
             for i in range(rows):
                 grid[
                     i * dsize[0] : (i + 1) * dsize[0],
-                    j * (dsize[1] + padding ) : (j + 1) * dsize[1]
+                    j * (dsize[1] + padding) : (j + 1) * dsize[1]
                     + padding * j,
                     :,
                 ] = array[i, j, :, :, :]
@@ -93,7 +93,7 @@ def fill_grid_for_plottting(rows, columns, grid, dsize, array, padding=0):
             for i in range(rows):
                 grid[
                     i * dsize[0] : (i + 1) * dsize[0],
-                    j * (dsize[1] + padding ) : (j + 1) * dsize[1]
+                    j * (dsize[1] + padding) : (j + 1) * dsize[1]
                     + padding * j,
                 ] = array[i, j, :, :]
     return grid

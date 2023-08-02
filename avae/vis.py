@@ -951,7 +951,6 @@ def recon_plot(img, rec, label, data_dim, mode="trn"):
             dtype=np.float32,
         )
 
-
         print("Molecules in the reconstructions are  ...", flush=True)
         for k in range(number_of_columns):
             # select 10 images at random
