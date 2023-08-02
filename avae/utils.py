@@ -2,7 +2,11 @@ import numpy as np
 import pandas as pd
 import torch
 from sklearn import metrics, preprocessing
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
+from sklearn.pipeline import make_pipeline
 
 from . import vis
 
@@ -206,8 +210,10 @@ def add_meta(
     return meta_df
 
 
-def accuracy(x_train, y_train, x_val, y_val):
-    """Computes the accuracy using a KNN classifier.
+def accuracy(x_train, y_train, x_val, y_val, classifier="NN"):
+    """Computes the accuracy using a given classifier. Currently only supports
+    neural network, K-nearest neighbors and logistic regression. A grid search on the
+    hyperparameters is performed.
 
     Parameters
     ----------
@@ -219,6 +225,9 @@ def accuracy(x_train, y_train, x_val, y_val):
         Validation data.
     y_val: np.array
         Validation labels.
+    classifier: str
+        Classifier to use. Either 'NN' for neural network, 'KNN' for K-nearest neighbors or LR for logistic regression.
+
 
     Returns
     -------
@@ -239,10 +248,53 @@ def accuracy(x_train, y_train, x_val, y_val):
     y_train = le.transform(y_train)
     y_val = le.transform(y_val)
 
-    neigh = KNeighborsClassifier(n_neighbors=20)
-    neigh.fit(x_train, y_train)
-    y_pred_train = neigh.predict(x_train)
-    y_pred_val = neigh.predict(x_val)
+    if classifier == "NN":
+
+        parameters = {
+            "hidden_layer_sizes": [
+                (250, 150, 30),
+                (100, 50, 15),
+                (50, 20, 10),
+                (20, 10, 5),
+                (200,),
+                (50,),
+                (10,),
+            ],
+        }
+        method = MLPClassifier(
+            max_iter=500,
+            activation="relu",
+            solver="adam",
+            random_state=1,
+            alpha=1,
+        )
+
+    elif classifier == "LR":
+        method = LogisticRegression(
+            random_state=0, multi_class="multinomial", max_iter=1000
+        )
+
+        parameters = [{"penalty": ["l1", "l2"]}, {"C": [1, 10, 100, 1000]}]
+
+    elif classifier == "KNN":
+        parameters = dict(n_neighbors=list(range(1, 500, 10)))
+        method = KNeighborsClassifier()
+    else:
+        raise ValueError("Invalid classifier type must be NN, KNN or LR")
+
+    clf_cv = GridSearchCV(
+        estimator=method,
+        param_grid=parameters,
+        scoring="f1_macro",
+        cv=5,
+        verbose=0,
+    )
+    clf = make_pipeline(preprocessing.StandardScaler(), clf_cv)
+    clf.fit(x_train, y_train)
+    print(f"Best parameters found for: {classifier}\n", clf_cv.best_params_)
+
+    y_pred_train = clf.predict(x_train)
+    y_pred_val = clf.predict(x_val)
     train_acc = metrics.accuracy_score(y_train, y_pred_train)
     val_acc = metrics.accuracy_score(y_val, y_pred_val)
 
