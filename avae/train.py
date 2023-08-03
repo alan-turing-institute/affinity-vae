@@ -50,6 +50,7 @@ def train(
     gaussian_blur,
     normalise,
     shift_min,
+    classifier,
 ):
     """Function to train an AffinityVAE model. The inputs are training configuration parameters. In this function the
     data is loaded, selected and split into training, validation and test sets, the model is initialised and trained
@@ -121,6 +122,8 @@ def train(
         In True, the input data is normalised before being passed to the model.
     shift_min: bool
         If True, the input data is shifted to have a minimum value of 0 and max of 1.
+    classifier: str
+        The method to use on the latent space classification. Can be neural network (NN), k nearest neighbourgs (KNN) or logistic regression (LR).
     """
     torch.manual_seed(42)
 
@@ -436,7 +439,7 @@ def train(
         # visualise accuracy: confusion and F1 scores
         if config.VIS_ACC and (epoch + 1) % config.FREQ_ACC == 0:
             train_acc, val_acc, ypred_train, ypred_val = accuracy(
-                x_train, y_train, x_val, y_val
+                x_train, y_train, x_val, y_val, classifier=classifier
             )
             print(
                 "Epoch: [%d/%d] |   Gamma: %f | Beta: %f"

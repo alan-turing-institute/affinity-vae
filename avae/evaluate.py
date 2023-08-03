@@ -22,6 +22,7 @@ def evaluate(
     gaussian_blur,
     normalise,
     shift_min,
+    classifier,
 ):
     """Function for evaluating the model. Loads the data, model and runs the evaluation. Saves the results of the
     evaluation in the plot and latents directories.
@@ -53,6 +54,8 @@ def evaluate(
         In True, the input data is normalised before being passed to the model.
     shift_min: bool
         If True, the input data is shifted to have a minimum value of 0 and max 1.
+    classifier: str
+        The method to use on the latent space classification. Can be neural network (NN), k nearest neighbourgs (KNN) or logistic regression (LR).
 
 
     """
@@ -226,6 +229,7 @@ def evaluate(
             np.array(latents_training_id),
             x_test,
             np.array(y_test),
+            classifier=classifier,
         )
         print(
             "\n------------------->>> Accuracy: Train: %f | Val: %f\n"

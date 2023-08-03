@@ -80,4 +80,5 @@ DEFAULT_RUN_CONFIGS = {
     "gaussian_blur": False,
     "normalise": False,
     "shift_min": False,
+    "classifier": "NN",
 }
