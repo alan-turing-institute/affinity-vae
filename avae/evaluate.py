@@ -1,3 +1,4 @@
+import datetime
 import os
 
 import numpy as np
@@ -59,6 +60,10 @@ def evaluate(
 
 
     """
+
+    # ############################### CONFIG ###############################
+    curr_dt = datetime.datetime.now()
+    timestamp = str(int(round(curr_dt.timestamp())))
 
     # ############################### DATA ###############################
     tests = load_data(
@@ -206,6 +211,8 @@ def evaluate(
         ].to_numpy()
         latents_training_id = meta_df[meta_df["mode"] == "trn"]["id"]
 
+        lat_dims = latents_training.shape[1]
+
         # visualise embeddings
         if config.VIS_EMB:
             vis.latent_embed_plot_umap(
@@ -250,4 +257,9 @@ def evaluate(
             ypred_val,
             classes,
             mode="_eval",
+        )
+
+        # save metadata with evaluation data
+        meta_df.to_pickle(
+            os.path.join("states", metas.split(".")[0] + "_eval.pkl")
         )

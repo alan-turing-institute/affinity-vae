@@ -159,7 +159,7 @@ class TrainEvalTest(unittest.TestCase):
 
         self.assertEqual(n_plots_eval, 50)
         self.assertEqual(n_latent_eval, 4)
-        self.assertEqual(n_states_eval, 2)
+        self.assertEqual(n_states_eval, 3)
 
         shutil.rmtree(temp_dir.name)
 
@@ -241,7 +241,7 @@ class TrainEvalTest(unittest.TestCase):
 
         self.assertEqual(n_plots_eval, 50)
         self.assertEqual(n_latent_eval, 4)
-        self.assertEqual(n_states_eval, 2)
+        self.assertEqual(n_states_eval, 3)
 
         shutil.rmtree(temp_dir.name)
 
