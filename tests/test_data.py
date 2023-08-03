@@ -7,13 +7,13 @@ import numpy as np
 from torch.utils.data import DataLoader
 
 from avae.data import load_data
-from tests import testdata
+from tests import testdata_mrc
 
 
 class DataTest(unittest.TestCase):
     def setUp(self) -> None:
         """Setup data and output directories."""
-        self.test_data = os.path.dirname(testdata.__file__)
+        self.test_data = os.path.dirname(testdata_mrc.__file__)
         self.test_dir = tempfile.mkdtemp(prefix="avae_")
         print(self.test_data, self.test_dir)
 
