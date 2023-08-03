@@ -685,7 +685,7 @@ def run(
         else:
             config.FREQ_EVAL = data["freq_eval"]
             config.FREQ_REC = data["freq_rec"]
-            config.FREQ_CON = data["freq_all"]
+            config.FREQ_CON = data["freq_con"]
             config.FREQ_EMB = data["freq_emb"]
             config.FREQ_INT = data["freq_int"]
             config.FREQ_DIS = data["freq_dis"]
