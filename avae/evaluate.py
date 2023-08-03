@@ -1,4 +1,3 @@
-import datetime
 import os
 
 import numpy as np
@@ -60,11 +59,6 @@ def evaluate(
 
 
     """
-
-    # ############################### CONFIG ###############################
-    curr_dt = datetime.datetime.now()
-    timestamp = str(int(round(curr_dt.timestamp())))
-
     # ############################### DATA ###############################
     tests = load_data(
         datapath,
@@ -210,8 +204,6 @@ def evaluate(
             [col for col in meta_df if col.startswith("lat")]
         ].to_numpy()
         latents_training_id = meta_df[meta_df["mode"] == "trn"]["id"]
-
-        lat_dims = latents_training.shape[1]
 
         # visualise embeddings
         if config.VIS_EMB:
