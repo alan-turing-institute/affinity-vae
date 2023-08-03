@@ -56,6 +56,7 @@ class TrainEvalTest(unittest.TestCase):
             "gaussian_blur": True,
             "normalise": True,
             "shift_min": True,
+            "classifier": "NN",
         }
 
         config.FREQ_ACC = 5
@@ -122,6 +123,7 @@ class TrainEvalTest(unittest.TestCase):
             gaussian_blur=self.data["gaussian_blur"],
             normalise=self.data["normalise"],
             shift_min=self.data["shift_min"],
+            classifier=self.data["classifier"],
         )
         n_dir_train = len(next(os.walk(temp_dir.name))[1])
         n_plots_train = len(os.listdir(os.path.join(temp_dir.name, "plots")))
@@ -148,6 +150,7 @@ class TrainEvalTest(unittest.TestCase):
             gaussian_blur=self.data["gaussian_blur"],
             normalise=self.data["normalise"],
             shift_min=self.data["shift_min"],
+            classifier=self.data["classifier"],
         )
 
         n_plots_eval = len(os.listdir(os.path.join(temp_dir.name, "plots")))
@@ -201,6 +204,7 @@ class TrainEvalTest(unittest.TestCase):
             gaussian_blur=self.data["gaussian_blur"],
             normalise=self.data["normalise"],
             shift_min=self.data["shift_min"],
+            classifier=self.data["classifier"],
         )
 
         n_dir_train = len(next(os.walk(temp_dir.name))[1])
@@ -228,6 +232,7 @@ class TrainEvalTest(unittest.TestCase):
             gaussian_blur=self.data["gaussian_blur"],
             normalise=self.data["normalise"],
             shift_min=self.data["shift_min"],
+            classifier=self.data["classifier"],
         )
 
         n_plots_eval = len(os.listdir(os.path.join(temp_dir.name, "plots")))
