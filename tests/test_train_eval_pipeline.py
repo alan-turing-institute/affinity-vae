@@ -16,8 +16,6 @@ class TrainEvalTest(unittest.TestCase):
     def setUp(self) -> None:
         """Test instantiation of the pipeline."""
 
-        torch.random.manual_seed(0)
-        random.seed(10)
         self.testdata_mrc = os.path.dirname(testdata_mrc.__file__)
         self.testdata_npy = os.path.dirname(testdata_npy.__file__)
 
@@ -152,6 +150,10 @@ class TrainEvalTest(unittest.TestCase):
 
 
 def helper_train_eval(data):
+
+    
+    torch.random.manual_seed(0)
+    random.seed(10)
 
     temp_dir = tempfile.TemporaryDirectory()
     os.chdir(temp_dir.name)
