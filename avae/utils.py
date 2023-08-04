@@ -1,8 +1,9 @@
-import pandas as pd
 import os.path
+
 import matplotlib.pyplot as plt
 import mrcfile
 import numpy as np
+import pandas as pd
 import torch
 from sklearn import metrics, preprocessing
 from sklearn.linear_model import LogisticRegression
@@ -168,7 +169,14 @@ def pass_batch(
 
 
 def add_meta(
-    meta_df, batch_meta, x_hat, latent_mu, lat_pose, latent_logvar, mode="trn"
+    data_dim,
+    meta_df,
+    batch_meta,
+    x_hat,
+    latent_mu,
+    lat_pose,
+    latent_logvar,
+    mode="trn",
 ):
     """
     Created meta data about data and training.
@@ -197,8 +205,9 @@ def add_meta(
 
     """
     meta = pd.DataFrame(batch_meta)
+
     meta["mode"] = mode
-    meta["image"] += vis.format(x_hat)
+    meta["image"] += vis.format(x_hat, data_dim)
     for d in range(latent_mu.shape[-1]):
         meta[f"lat{d}"] = np.array(latent_mu[:, d].cpu().detach().numpy())
     for d in range(latent_logvar.shape[-1]):
@@ -306,7 +315,8 @@ def accuracy(x_train, y_train, x_val, y_val, classifier="NN"):
 
     return train_acc, val_acc, y_pred_train, y_pred_val
 
-  def create_grid_for_plotting(rows, columns, dsize, padding=0):
+
+def create_grid_for_plotting(rows, columns, dsize, padding=0):
 
     # define the dimensions for the napari grid
 
@@ -330,6 +340,7 @@ def accuracy(x_train, y_train, x_val, y_val, classifier="NN"):
         )
 
     return grid_for_napari
+
 
 def fill_grid_for_plottting(rows, columns, grid, dsize, array, padding=0):
 
