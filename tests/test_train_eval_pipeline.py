@@ -11,6 +11,9 @@ from avae.evaluate import evaluate
 from avae.train import train
 from tests import testdata_mrc, testdata_npy
 
+torch.random.manual_seed(0)
+random.seed(10)
+
 
 class TrainEvalTest(unittest.TestCase):
     def setUp(self) -> None:
@@ -150,10 +153,6 @@ class TrainEvalTest(unittest.TestCase):
 
 
 def helper_train_eval(data):
-
-    
-    torch.random.manual_seed(0)
-    random.seed(10)
 
     temp_dir = tempfile.TemporaryDirectory()
     os.chdir(temp_dir.name)
