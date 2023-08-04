@@ -11,6 +11,7 @@ from avae.evaluate import evaluate
 from avae.train import train
 from tests import testdata_mrc, testdata_npy
 
+# fixing random seeds so we dont get fail on mrc tests
 torch.random.manual_seed(0)
 random.seed(10)
 
