@@ -8,7 +8,7 @@ import torch
 from avae.loss import AVAELoss
 from avae.model_a import AffinityVAE as avae_a
 from avae.utils import set_device
-from tests import testdata
+from tests import testdata_mrc
 
 torch.manual_seed(0)
 
@@ -18,7 +18,7 @@ class LossTest(unittest.TestCase):
         """Test instantiation of the loss."""
 
         self._orig_dir = os.getcwd()
-        self.test_data = os.path.dirname(testdata.__file__)
+        self.test_data = os.path.dirname(testdata_mrc.__file__)
         os.chdir(self.test_data)
 
         self.affinity = pd.read_csv("affinity_fsc_10.csv").to_numpy(

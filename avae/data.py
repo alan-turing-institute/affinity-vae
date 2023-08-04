@@ -4,6 +4,7 @@ import random
 import mrcfile
 import numpy as np
 import pandas as pd
+from torch import from_numpy
 from torch.utils.data import DataLoader, Dataset, Subset
 from torchvision import transforms
 
@@ -15,6 +16,7 @@ np.random.seed(42)
 
 def load_data(
     datapath: str,
+    datatype: str,
     lim: int = None,
     splt: int = 20,
     batch_s: int = 64,
@@ -35,6 +37,8 @@ def load_data(
     ----------
     datapath: str
         Path to the data directory.
+    datatype: str
+        data file formats : mrc, npy
     lim: int
         Limit the number of samples to load.
     splt: int
@@ -80,7 +84,7 @@ def load_data(
             lookup = None
 
         # create ProteinDataset
-        data = ProteinDataset(
+        data = Dataset_reader(
             datapath,
             amatrix=lookup,
             classes=classes,
@@ -89,6 +93,7 @@ def load_data(
             shift_min=shift_min,
             lim=lim,
             collect_m=collect_meta,
+            datatype=datatype,
         )
 
         # ################# Visualising affinity matrix ###################
@@ -163,14 +168,16 @@ def load_data(
     if eval or ("test" in os.listdir(datapath)):
         if "test" in os.listdir(datapath):
             datapath = os.path.join(datapath, "test")
-        data = ProteinDataset(
+        data = Dataset_reader(
             datapath,
             gaussian_blur=gaussian_blur,
             normalise=normalise,
             shift_min=shift_min,
             lim=lim,
             collect_m=collect_meta,
+            datatype=datatype,
         )
+
         print("Eval data size:", len(data), flush=True)
         tests = DataLoader(
             data, batch_size=batch_s, num_workers=0, shuffle=True
@@ -179,40 +186,12 @@ def load_data(
         print(flush=True)
 
     if eval:
-        return tests
+        return tests, data.dim()
     else:
-        return trains, vals, tests, lookup  # , dsize
+        return trains, vals, tests, lookup, data.dim()  # , dsize
 
 
-class ProteinDataset(Dataset):
-    """Protein dataset. Opens MRC files and returns images along with their
-    affinity and associated metadata.
-
-    Parameters
-    ----------
-    root_dir : string
-        Base directory containing .mrc files.
-    amatrix : pd.DataFrame
-        A square symmetric matrix where each column and row is the index of an
-        object class from the training set,
-        consisting of M different classes. First row and column contain IDs of
-        the classes.
-    transform: torchvision.transforms.Transform
-        List of transforms to be applied to the images.
-    gaussian_blur: bool
-        if True, Gaussian bluring is applied to the input before being passed to the model.
-        This is added as a way to remove noise from the input data.
-    normalise:
-        In True, the input data is normalised before being passed to the model.
-    shift_min: bool
-        If True, the minimum value of the input data is shifted to 0 and maximum to 1.
-    lim : int
-        Limit the dataset size to the given number; useful for debugging
-        purposes.
-    collect_meta: bool
-        If True, the meta data for visualisation will be collected and returned.
-    """
-
+class Dataset_reader(Dataset):
     def __init__(
         self,
         root_dir,
@@ -224,19 +203,25 @@ class ProteinDataset(Dataset):
         shift_min=False,
         lim=None,
         collect_m=False,
+        datatype="mrc",
     ):
         super().__init__()
-
+        self.datatype = datatype
+        self.shift_min = shift_min
+        self.normalise = normalise
+        self.gaussian_blur = gaussian_blur
+        self.transform = transform
         self.collect_meta = collect_m
-
         self.amatrix = amatrix
-
         self.root_dir = root_dir
-        self.paths = [f for f in os.listdir(root_dir) if ".mrc" in f]
+
+        self.paths = [
+            f for f in os.listdir(root_dir) if "." + self.datatype in f
+        ]
+
         random.shuffle(self.paths)
         ids = np.unique([f.split("_")[0] for f in self.paths])
         self.final_classes = ids
-
         if classes is not None:
             classes_list = pd.read_csv(classes).columns.tolist()
             self.final_classes = classes_list
@@ -259,78 +244,26 @@ class ProteinDataset(Dataset):
             self.amatrix = self.amatrix.iloc[index, index]
 
         self.paths = [
-            p for p in self.paths for c in self.final_classes if c in p
+            p
+            for p in self.paths
+            for c in self.final_classes
+            if c in p.split("_")[0]
         ]
 
         self.paths = self.paths[:lim]
 
-        self.transform = []
-
-        # convert numpy to torch tensor
-        self.transform.append(transforms.ToTensor())
-
-        # unsqueeze adds a dimension for batch processing the data
-        self.transform.append(transforms.Lambda(lambda x: x.unsqueeze(0)))
-
-        if shift_min:
-            print(
-                "Data Transformation : Shift the minimum of the data to one zero and the maximum to one",
-                flush=True,
-            )
-            self.transform.append(
-                transforms.Lambda(
-                    lambda x: (x - x.min()) / (x.max() - x.min())
-                )
-            )
-        if gaussian_blur:
-            print(
-                "Data Transformation : GaussianBlur is applied to the images",
-                flush=True,
-            )
-            self.transform.append(
-                transforms.GaussianBlur(3, sigma=(0.08, 10.0))
-            )
-        if normalise:
-            print(
-                "Data Transformation : Normalisation is applied to the images",
-                flush=True,
-            )
-            self.transform.append(transforms.Normalize(0, 1, inplace=False))
-
-        if transform:
-            self.transform.append(transform)
-
-        self.transform = transforms.Compose(self.transform)
-
     def __len__(self):
         return len(self.paths)
 
+    def dim(self):
+        return len(np.array(self.read(self.paths[0])).shape)
+
     def __getitem__(self, item):
-        """
-        Load and image, its metadata and optionally, its affinity class
-        index.
-
-        Parameters
-        ----------
-        item : int
-            Index of the element in the iterable.
-
-        Returns
-        -------
-        data : torch.Tensor (N,)
-            Transformed MRC data.
-        aff : int
-            Index of object's image class corresponding to rows in affinity
-            matrix.
-        meta : dict
-            Associated metadata.
-        """
-        # data
         filename = self.paths[item]
-        with mrcfile.open(os.path.join(self.root_dir, filename)) as f:
-            data = np.array(f.data)
 
-        x = self.transform(data)
+        data = np.array(self.read(filename))
+        x = self.voxel_transformation(data)
+
         # ground truth
         y = filename.split("_")[0]
 
@@ -345,7 +278,9 @@ class ProteinDataset(Dataset):
             # file info and metadata
             meta = "_".join(filename.split(".")[0].split("_")[1:])
             avg = np.around(np.average(x), decimals=4)
-            img = format(x)  # used for dynamic preview in Altair
+            img = format(
+                x, len(data.shape)
+            )  # used for dynamic preview in Altair
             meta = {
                 "filename": filename,
                 "id": y,
@@ -353,7 +288,38 @@ class ProteinDataset(Dataset):
                 "avg": avg,
                 "image": img,
             }
-
             return x, y, aff, meta
         else:
             return x, y, aff
+
+    def read(self, filename):
+
+        if self.datatype == "npy":
+            return np.load(os.path.join(self.root_dir, filename))
+
+        elif self.datatype == "mrc":
+            with mrcfile.open(os.path.join(self.root_dir, filename)) as f:
+                return np.array(f.data)
+
+    def voxel_transformation(self, x):
+
+        # convert numpy to torch tensor
+        x = from_numpy(x)
+
+        # unsqueeze adds a dimension for batch processing the data
+        x = x.unsqueeze(0)
+
+        if self.shift_min:
+            x = (x - x.min()) / (x.max() - x.min())
+
+        if self.gaussian_blur:
+            T = transforms.GaussianBlur(3, sigma=(0.08, 10.0))
+            x = T(x)
+
+        if self.normalise:
+            T = transforms.Normalize(0, 1, inplace=False)
+            x = T(x)
+
+        if self.transform:
+            x = self.transform(x)
+        return x

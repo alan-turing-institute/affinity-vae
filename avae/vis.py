@@ -5,7 +5,6 @@ import random
 import altair
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
-import mrcfile
 import numpy as np
 import pandas as pd
 import torch
@@ -16,6 +15,13 @@ from scipy.stats import norm
 from sklearn.manifold import TSNE
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix, f1_score
 from sklearn.metrics.pairwise import cosine_similarity
+
+from .utils import (
+    create_grid_for_plotting,
+    fill_grid_for_plottting,
+    save_imshow_png,
+    save_mrc_file,
+)
 
 
 def _encoder(i):
@@ -60,7 +66,7 @@ def _decoder(i):
     return Image.open(BytesIO(base64.b64decode(i)))
 
 
-def format(im):
+def format(im, data_dim):
     """Format PIL Image as Pandas compatible Altair image display.
 
     Parameters
@@ -75,16 +81,24 @@ def format(im):
     str
         Formatted image compatible Altair image display if batch is not true.
     """
-    if len(im.shape) == 5:
+    if len(im.shape) == 5 and data_dim == 3:
         batch = True
         im = np.sum(
             np.copy(im.squeeze(dim=1).cpu().detach().numpy()), axis=-1
         )  # .astype(np.uint8)
-    elif len(im.shape) == 4:
+    elif len(im.shape) == 4 and data_dim == 3:
         batch = False
         im = np.sum(
             np.copy(im.squeeze(dim=0).cpu().detach().numpy()), axis=-1
         )  # .astype(np.uint8)
+    elif len(im.shape) == 4 and data_dim == 2:
+        batch = True
+        im = np.sum(np.copy(im.squeeze(dim=0).cpu().detach().numpy()), axis=-1)
+        # .astype(np.uint8)
+    elif len(im.shape) == 3 and data_dim == 2:
+        batch = False
+        im = np.copy(im.squeeze(dim=0).cpu().detach().numpy())
+        # .astype(np.uint8)
     else:
         print(
             "WARNING: Wrong data format, please pass either a single "
@@ -876,7 +890,7 @@ def loss_plot(epochs, beta, gamma, train_loss, val_loss=None, p=None):
     plt.close()
 
 
-def recon_plot(img, rec, label, mode="trn"):
+def recon_plot(img, rec, label, data_dim, mode="trn"):
     """Visualise reconstructions.
 
     Parameters
@@ -895,82 +909,78 @@ def recon_plot(img, rec, label, mode="trn"):
     )
     print("Visualising reconstructions " + mode + "...\n", flush=True)
 
-    fname_in = "plots/" + str(mode) + "_recon_in.png"
-    fname_out = "plots/" + str(mode) + "_recon_out.png"
+    fname_in = str(mode) + "_recon_in.png"
+    fname_out = str(mode) + "_recon_out.png"
 
-    img_2d = img[:, :, :, :, img.shape[-1] // 2]
-    rec_2d = rec[:, :, :, :, img.shape[-1] // 2]
+    if data_dim == 3:
+        img_2d = img[:, :, :, :, img.shape[-1] // 2]
+        rec_2d = rec[:, :, :, :, img.shape[-1] // 2]
+    elif data_dim == 2:
+        img_2d = img
+        rec_2d = rec
 
-    plt.subplots(figsize=(10, 10))
     img_2d = torchvision.utils.make_grid(img_2d.cpu(), 10, 2).numpy()
-    plt.imshow(np.transpose(img_2d, (1, 2, 0)))  # channels last
-    if not os.path.exists("plots"):
-        os.mkdir("plots")
-    plt.savefig(fname_in)
-    plt.close()
-
-    plt.subplots(figsize=(10, 10))
     rec_2d = torchvision.utils.make_grid(rec_2d.detach().cpu(), 10, 2).numpy()
-    plt.imshow(np.transpose(rec_2d, (1, 2, 0)))  # channels last
-    if not os.path.exists("plots"):
-        os.mkdir("plots")
-    plt.savefig(fname_out)
-    plt.close()
 
-    rec = rec.detach().cpu().numpy()
-    img = img.detach().cpu().numpy()
-    label = np.array(label)
-    dsize = rec.shape[-3:]
+    save_imshow_png(fname_in, np.transpose(img_2d, (1, 2, 0)))
+    save_imshow_png(fname_out, np.transpose(rec_2d, (1, 2, 0)))
 
-    # The number of reconstruction and input images to be displayed in the .mrc output file
-    number_of_random_samples = 10
-    number_of_columns = 3
-    padding = 5
-    if len(label) < number_of_random_samples * number_of_columns:
-        # In there are not enough images for the stack, do one column only
-        number_of_random_samples = len(label)
-        number_of_columns = 0
+    if data_dim == 3:
+        rec = rec.detach().cpu().numpy()
+        img = img.detach().cpu().numpy()
+        label = np.array(label)
+        dsize = rec.shape[-data_dim:]
 
-    # define the dimensions for the napari grid
-    grid_for_napari = np.zeros(
-        (
-            number_of_random_samples * dsize[0],
-            2 * dsize[1] * number_of_columns + padding * number_of_columns,
-            dsize[2],
-        ),
-        dtype=np.float32,
-    )
-    print("Molecules in the reconstructions are  ...", flush=True)
-    for k in range(number_of_columns):
-        # select 10 images at random
-        rand_select = np.random.randint(
-            0, high=img.shape[0], size=number_of_random_samples, dtype=int
-        )  #
-        img = img[rand_select, :, :, :, :]
-        rec = rec[rand_select, :, :, :, :]
-        print(f"column {k} : {label[rand_select]}", flush=True)
+        # The number of reconstruction and input images to be displayed in the .mrc output file
+        number_of_random_samples = 10
+        number_of_columns = 3
+        padding = 0
 
-        # stack the images together with their reconstruction
-        rec_img = np.hstack((img, rec))
+        if len(label) < number_of_random_samples * number_of_columns:
+            # In there are not enough images for the stack, do one column only
+            number_of_random_samples = len(label)
+            number_of_columns = 0
 
-        # Create and save the mrc file with single transversals
-        for j in range(2):
-            for i in range(number_of_random_samples):
-                grid_for_napari[
-                    i * dsize[0] : (i + 1) * dsize[0],
-                    j * dsize[1]
-                    + (dsize[1] * 2 + padding) * k : (j + 1) * dsize[1]
-                    + (dsize[1] * 2 + padding) * k,
-                    :,
-                ] = rec_img[i, j, :, :, :]
+        # define the dimensions for the napari grid
+        grid_for_napari = np.zeros(
+            (
+                number_of_random_samples * dsize[0],
+                2 * dsize[1] * number_of_columns + padding * number_of_columns,
+                dsize[2],
+            ),
+            dtype=np.float32,
+        )
 
-    with mrcfile.new(
-        "plots/" + str(mode) + "_recon_in.mrc", overwrite=True
-    ) as mrc:
-        mrc.set_data(grid_for_napari)
+        print("Molecules in the reconstructions are  ...", flush=True)
+        for k in range(number_of_columns):
+            # select 10 images at random
+            rand_select = np.random.randint(
+                0, high=img.shape[0], size=number_of_random_samples, dtype=int
+            )  #
+            img = img[rand_select, :, :, :, :]
+            rec = rec[rand_select, :, :, :, :]
+            print(f"column {k} : {label[rand_select]}", flush=True)
+
+            # stack the images together with their reconstruction
+            rec_img = np.hstack((img, rec))
+
+            # Create and save the mrc file with single transversals
+            for j in range(2):
+                for i in range(number_of_random_samples):
+                    grid_for_napari[
+                        i * dsize[0] : (i + 1) * dsize[0],
+                        j * dsize[1]
+                        + (dsize[1] * 2 + padding) * k : (j + 1) * dsize[1]
+                        + (dsize[1] * 2 + padding) * k,
+                        :,
+                    ] = rec_img[i, j, :, :, :]
+
+        save_mrc_file(str(mode) + "_recon_in.mrc", grid_for_napari)
 
 
-def latent_disentamglement_plot(lats, vae, device, poses=None, mode="trn"):
+def latent_disentamglement_plot(
+    lats, vae, device, data_dim, poses=None, mode="trn"
+):
     """Visualise latent content disentanglement.
 
     Parameters
@@ -989,7 +999,8 @@ def latent_disentamglement_plot(lats, vae, device, poses=None, mode="trn"):
         flush=True,
     )
     print("Visualising latent content disentanglement ...\n", flush=True)
-
+    number_of_samples = 7
+    padding = 0
     lats = np.asarray(lats)
     if poses is not None:
         poses = np.asarray(poses)
@@ -997,11 +1008,13 @@ def latent_disentamglement_plot(lats, vae, device, poses=None, mode="trn"):
     lat_means = np.mean(lats, axis=0)
     lat_stds = np.std(lats, axis=0)
     lat_dims = lats.shape[-1]
-    lat_grid = np.zeros((lat_dims * 7, lat_dims))
+    lat_grid = np.zeros((lat_dims * number_of_samples, lat_dims))
     if poses is not None:
         pos_means = np.mean(poses, axis=0)
         pos_dims = poses.shape[-1]
-        pos_grid = np.zeros((lat_dims * 7, pos_dims)) + pos_means
+        pos_grid = (
+            np.zeros((lat_dims * number_of_samples, pos_dims)) + pos_means
+        )
 
     # Generate vectors representing single transversals along each lat_dim
     for l_dim in range(lat_dims):
@@ -1009,7 +1022,7 @@ def latent_disentamglement_plot(lats, vae, device, poses=None, mode="trn"):
             means = copy.deepcopy(lat_means)
             # every 0.4 interval from -1.2 to 1.2 sigma
             means[l_dim] += lat_stds[l_dim] * (-1.2 + 0.4 * grid_spot)
-            lat_grid[l_dim * 7 + grid_spot, :] = means
+            lat_grid[l_dim * number_of_samples + grid_spot, :] = means
 
     # Decode interpolated vectors
     with torch.no_grad():
@@ -1021,7 +1034,7 @@ def latent_disentamglement_plot(lats, vae, device, poses=None, mode="trn"):
             recon = vae.decoder(lat_grid, pos_grid)
         else:
             recon = vae.decoder(lat_grid, None)
-    dsize = recon.shape[-3:]
+    dsize = recon.shape[-data_dim:]
     if len(dsize) == 0:
         print(
             "WARNING: All images need to be the same size to create "
@@ -1030,35 +1043,23 @@ def latent_disentamglement_plot(lats, vae, device, poses=None, mode="trn"):
         )
         return
 
-    recon = np.reshape(np.array(recon.cpu()), (lat_dims, 7, *dsize))
-
-    grid_for_napari = np.zeros(
-        (
-            recon.shape[2] * recon.shape[0],
-            recon.shape[3] * recon.shape[1],
-            recon.shape[4],
-        ),
-        dtype=np.float32,
+    recon = np.reshape(
+        np.array(recon.cpu()), (lat_dims, number_of_samples, *dsize)
+    )
+    grid_for_napari = create_grid_for_plotting(
+        lat_dims, number_of_samples, dsize, padding
+    )
+    grid_for_napari = fill_grid_for_plottting(
+        lat_dims, number_of_samples, grid_for_napari, dsize, recon, padding
     )
 
-    # Create and save the mrc file with single transversals
-    for i in range(recon.shape[0]):
-        for j in range(recon.shape[1]):
-            grid_for_napari[
-                i * dsize[0] : (i + 1) * dsize[0],
-                j * dsize[1] : (j + 1) * dsize[1],
-                :,
-            ] = recon[i, j, :, :, :]
-
-    if not os.path.exists("plots"):
-        os.mkdir("plots")
-    with mrcfile.new(
-        f"plots/disentanglement-latent{mode}.mrc", overwrite=True
-    ) as mrc:
-        mrc.set_data(grid_for_napari)
+    if data_dim == 3:
+        save_mrc_file(f"disentanglement-latent_{mode}.mrc", grid_for_napari)
+    elif data_dim == 2:
+        save_imshow_png(f"disentanglement-latent_{mode}.png", grid_for_napari)
 
 
-def pose_disentanglement_plot(lats, poses, vae, device, mode="trn"):
+def pose_disentanglement_plot(lats, poses, vae, data_dim, device, mode="trn"):
     """Visualise pose disentanglement.
 
     Parameters
@@ -1077,24 +1078,28 @@ def pose_disentanglement_plot(lats, poses, vae, device, mode="trn"):
         flush=True,
     )
     print("Visualising pose disentanglement ...\n", flush=True)
+
+    number_of_samples = 7
+    padding = 0
+
     lats = np.asarray(lats)
     poses = np.asarray(poses)
 
     pos_means = np.mean(poses, axis=0)
     pos_stds = np.std(poses, axis=0)
     pos_dims = poses.shape[-1]
-    pos_grid = np.zeros((pos_dims * 7, pos_dims))
+    pos_grid = np.zeros((pos_dims * number_of_samples, pos_dims))
 
     lat_means = np.mean(lats, axis=0)
     lat_dims = lats.shape[-1]
-    lat_grid = np.zeros((pos_dims * 7, lat_dims)) + lat_means
+    lat_grid = np.zeros((pos_dims * number_of_samples, lat_dims)) + lat_means
 
     # Generate vectors representing single transversals along each lat_dim
     for p_dim in range(pos_dims):
-        for grid_spot in range(7):
+        for grid_spot in range(number_of_samples):
             means = copy.deepcopy(pos_means)
             means[p_dim] += pos_stds[p_dim] * (-1.2 + 0.4 * grid_spot)
-            pos_grid[p_dim * 7 + grid_spot, :] = means
+            pos_grid[p_dim * number_of_samples + grid_spot, :] = means
 
     # Decode interpolated vectors
     with torch.no_grad():
@@ -1103,7 +1108,8 @@ def pose_disentanglement_plot(lats, poses, vae, device, mode="trn"):
         pos_grid = torch.FloatTensor(np.array(pos_grid))
         pos_grid = pos_grid.to(device)
         recon = vae.decoder(lat_grid, pos_grid)
-    dsize = recon.shape[-3:]
+
+    dsize = recon.shape[-data_dim:]
     if len(dsize) == 0:
         print(
             "WARNING: All images need to be the same size to create "
@@ -1114,36 +1120,26 @@ def pose_disentanglement_plot(lats, poses, vae, device, mode="trn"):
 
     recon = np.reshape(
         np.array(recon.cpu()),
-        (pos_dims, 7, *dsize),
+        (pos_dims, number_of_samples, *dsize),
     )
-
-    grid_for_napari = np.zeros(
-        (
-            recon.shape[2] * recon.shape[0],
-            recon.shape[3] * recon.shape[1],
-            recon.shape[4],
-        ),
-        dtype=np.float32,
+    grid_for_napari = create_grid_for_plotting(
+        pos_dims, number_of_samples, dsize, padding
     )
 
     # Create and save the mrc file with single transversals
-    for i in range(recon.shape[0]):
-        for j in range(recon.shape[1]):
-            grid_for_napari[
-                i * dsize[0] : (i + 1) * dsize[0],
-                j * dsize[1] : (j + 1) * dsize[1],
-                :,
-            ] = recon[i, j, :, :, :]
+    grid_for_napari = fill_grid_for_plottting(
+        pos_dims, number_of_samples, grid_for_napari, dsize, recon, padding
+    )
 
-    if not os.path.exists("plots"):
-        os.mkdir("plots")
-    with mrcfile.new(
-        f"plots/disentanglement-pose{mode}.mrc", overwrite=True
-    ) as mrc:
-        mrc.set_data(grid_for_napari)
+    if data_dim == 3:
+        save_mrc_file(f"disentanglement-pose_{mode}.mrc", grid_for_napari)
+    elif data_dim == 2:
+        save_imshow_png(f"disentanglement-pose_{mode}.png", grid_for_napari)
 
 
-def interpolations_plot(lats, classes, vae, device, poses=None, mode="trn"):
+def interpolations_plot(
+    lats, classes, vae, device, data_dim, poses=None, mode="trn"
+):
     """Visualise interpolations.
 
     Parameters
@@ -1239,7 +1235,7 @@ def interpolations_plot(lats, classes, vae, device, poses=None, mode="trn"):
             recon = vae.decoder(latents, poses)
         else:
             recon = vae.decoder(latents, None)
-    dsize = recon.shape[-3:]
+    dsize = recon.shape[-data_dim:]
     if len(dsize) == 0:
         print(
             "WARNING: All images need to be the same size to create "
@@ -1250,28 +1246,16 @@ def interpolations_plot(lats, classes, vae, device, poses=None, mode="trn"):
 
     recon = np.reshape(np.array(recon.cpu()), (grid_size, grid_size, *dsize))
 
-    grid_for_napari = np.zeros(
-        (
-            recon.shape[2] * recon.shape[0],
-            recon.shape[3] * recon.shape[1],
-            recon.shape[4],
-        ),
-        dtype=np.float32,
+    grid_for_napari = create_grid_for_plotting(grid_size, grid_size, dsize)
+    grid_for_napari = fill_grid_for_plottting(
+        grid_size, grid_size, grid_for_napari, dsize, recon
     )
-
     # Create an mrc file with interpolations
-    for i in range(recon.shape[0]):
-        for j in range(recon.shape[1]):
-            grid_for_napari[
-                i * dsize[0] : (i + 1) * dsize[1],
-                j * dsize[0] : (j + 1) * dsize[1],
-                :,
-            ] = recon[i, j, :, :, :]
 
-    if not os.path.exists("plots"):
-        os.mkdir("plots")
-    with mrcfile.new(f"plots/interpolations{mode}.mrc", overwrite=True) as mrc:
-        mrc.set_data(grid_for_napari)
+    if data_dim == 3:
+        save_mrc_file(f"interpolations_{mode}.mrc", grid_for_napari)
+    elif data_dim == 2:
+        save_imshow_png(f"interpolations_{mode}.png", grid_for_napari)
 
 
 def plot_affinity_matrix(lookup, all_classes, selected_classes):

@@ -81,4 +81,5 @@ DEFAULT_RUN_CONFIGS = {
     "normalise": False,
     "shift_min": False,
     "classifier": "NN",
+    "datatype": "mrc",
 }

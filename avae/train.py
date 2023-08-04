@@ -16,6 +16,7 @@ from .utils import accuracy, add_meta, pass_batch, set_device
 
 def train(
     datapath,
+    datatype,
     restart,
     state,
     lim,
@@ -61,6 +62,8 @@ def train(
     ----------
     datapath: str
         Path to the data directory.
+    datatype: str
+        data file formats : mrc, npy
     lim: int
         Limit the number of samples to load.
     splt: int
@@ -134,8 +137,9 @@ def train(
     timestamp = str(int(round(curr_dt.timestamp())))
 
     # ############################### DATA ###############################
-    trains, vals, tests, lookup = load_data(
+    trains, vals, tests, lookup, data_dim = load_data(
         datapath,
+        datatype,
         lim=lim,
         splt=splt,
         batch_s=batch_s,
@@ -148,7 +152,7 @@ def train(
         normalise=normalise,
         shift_min=shift_min,
     )
-    dshape = list(trains)[0][0].shape[-3:]
+    dshape = list(trains)[0][0].shape[2:]
     pose = not (pose_dims == 0)
 
     # ############################### MODEL ###############################
@@ -320,7 +324,15 @@ def train(
         vae.train()
         for b, batch in enumerate(trains):
 
-            x, x_hat, lat_mu, lat_logvar, lat, lat_pos, t_history = pass_batch(
+            (
+                x,
+                x_hat,
+                lat_mu,
+                lat_logvar,
+                lat,
+                lat_pos,
+                t_history,
+            ) = pass_batch(
                 device,
                 vae,
                 batch,
@@ -341,6 +353,7 @@ def train(
 
             if collect_meta:  # store meta for plots
                 meta_df = add_meta(
+                    data_dim,
                     meta_df,
                     batch[-1],
                     x_hat,
@@ -368,7 +381,15 @@ def train(
         # ########################## VAL ######################################
         vae.eval()
         for b, batch in enumerate(vals):
-            v, v_hat, v_mu, v_logvar, vlat, vlat_pos, v_history = pass_batch(
+            (
+                v,
+                v_hat,
+                v_mu,
+                v_logvar,
+                vlat,
+                vlat_pos,
+                v_history,
+            ) = pass_batch(
                 device,
                 vae,
                 batch,
@@ -388,6 +409,7 @@ def train(
 
             if collect_meta:  # store meta for plots
                 meta_df = add_meta(
+                    data_dim,
                     meta_df,
                     batch[-1],
                     v_hat,
@@ -415,7 +437,7 @@ def train(
         # ########################## TEST #####################################
         if (epoch + 1) % config.FREQ_EVAL == 0:
             for b, batch in enumerate(tests):  # tests empty if no 'test' dir
-                t, t_hat, t_mu, t_logvar, tlat, tlat_pose, _ = pass_batch(
+                (t, t_hat, t_mu, t_logvar, tlat, tlat_pose, _,) = pass_batch(
                     device, vae, batch, b, len(tests), epoch, epochs
                 )
                 x_test.extend(t_mu.cpu().detach().numpy())  # store latents
@@ -425,6 +447,7 @@ def train(
 
                 if collect_meta:  # store meta for plots
                     meta_df = add_meta(
+                        data_dim,
                         meta_df,
                         batch[-1],
                         t_hat,
@@ -486,8 +509,8 @@ def train(
 
         # visualise reconstructions - last batch
         if config.VIS_REC and (epoch + 1) % config.FREQ_REC == 0:
-            vis.recon_plot(x, x_hat, y_train, mode="trn")
-            vis.recon_plot(v, v_hat, y_val, mode="val")
+            vis.recon_plot(x, x_hat, y_train, data_dim, mode="trn")
+            vis.recon_plot(v, v_hat, y_val, data_dim, mode="val")
 
         # visualise mean and logvar similarity matrix
         if config.VIS_SIM and (epoch + 1) % config.FREQ_SIM == 0:
@@ -541,12 +564,14 @@ def train(
             if not pose:
                 p_train = None
             vis.latent_disentamglement_plot(
-                x_train, vae, device, poses=p_train
+                x_train, vae, device, data_dim, poses=p_train
             )
 
         # visualise pose disentanglement
         if pose and config.VIS_POS and (epoch + 1) % config.FREQ_POS == 0:
-            vis.pose_disentanglement_plot(x_train, p_train, vae, device)
+            vis.pose_disentanglement_plot(
+                x_train, p_train, vae, data_dim, device
+            )
 
         # visualise interpolations
         if config.VIS_INT and (epoch + 1) % config.FREQ_INT == 0:
@@ -566,7 +591,12 @@ def train(
                     ps = None
 
             vis.interpolations_plot(
-                xs, ys, vae, device, poses=ps  # do we need val and test here?
+                xs,
+                ys,
+                vae,
+                device,
+                data_dim,
+                poses=ps,  # do we need val and test here?
             )
 
         # ########################## SAVE STATE ###############################
