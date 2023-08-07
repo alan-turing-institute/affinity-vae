@@ -95,6 +95,13 @@ logging.basicConfig(
     help="Path to a CSV file containing a list of classes for training.",
 )
 @click.option(
+    "--classifier",
+    "-clf",
+    type=str,
+    default=None,
+    help="Method to classify the latent space. Options are: KNN (nearest neighbour), NN (neural network), LR (Logistic Regression).",
+)
+@click.option(
     "--epochs",
     "-ep",
     type=int,
@@ -545,6 +552,7 @@ def run(
     gaussian_blur,
     normalise,
     shift_min,
+    classifier,
 ):
 
     warnings.simplefilter("ignore", FutureWarning)
@@ -694,6 +702,12 @@ def run(
             config.FREQ_STA = data["freq_sta"]
             config.FREQ_SIM = data["freq_sim"]
 
+        logging.info(
+            "Saving final submission config file to: "
+            + "avae_final_config"
+            + dt_name
+            + ".yaml"
+        )
         file = open("avae_final_config" + dt_name + ".yaml", "w")
         yaml.dump(data, file)
         file.close()
@@ -737,6 +751,7 @@ def run(
                 gaussian_blur=data["gaussian_blur"],
                 normalise=data["normalise"],
                 shift_min=data["shift_min"],
+                classifier=data["classifier"],
             )
         else:
             evaluate(
@@ -753,15 +768,9 @@ def run(
                 gaussian_blur=data["gaussian_blur"],
                 normalise=data["normalise"],
                 shift_min=data["shift_min"],
+                classifier=data["classifier"],
             )
             # TODO also make sure image is correct size, maybe in dataloader?
-
-        logging.info(
-            "Saving final submission config file to: "
-            + "avae_final_config"
-            + dt_name
-            + ".yaml"
-        )
 
     except Exception:
         logging.exception("An exception was thrown!")

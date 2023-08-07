@@ -60,6 +60,7 @@ class TrainEvalTest(unittest.TestCase):
             "gaussian_blur": True,
             "normalise": True,
             "shift_min": True,
+            "classifier": "NN",
         }
 
         config.FREQ_ACC = 5
@@ -102,9 +103,10 @@ class TrainEvalTest(unittest.TestCase):
         self.assertEqual(n_plots_train, 32)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
+
         self.assertEqual(n_plots_eval, 50)
         self.assertEqual(n_latent_eval, 4)
-        self.assertEqual(n_states_eval, 2)
+        self.assertEqual(n_states_eval, 3)
 
     def test_model_b_mrc(self):
         self.data["model"] = "b"
@@ -124,7 +126,7 @@ class TrainEvalTest(unittest.TestCase):
         self.assertEqual(n_states_train, 2)
         self.assertEqual(n_plots_eval, 50)
         self.assertEqual(n_latent_eval, 4)
-        self.assertEqual(n_states_eval, 2)
+        self.assertEqual(n_states_eval, 3)
 
     def test_model_a_npy(self):
         self.data["model"] = "a"
@@ -150,7 +152,7 @@ class TrainEvalTest(unittest.TestCase):
         self.assertEqual(n_states_train, 2)
         self.assertEqual(n_plots_eval, 47)
         self.assertEqual(n_latent_eval, 4)
-        self.assertEqual(n_states_eval, 2)
+        self.assertEqual(n_states_eval, 3)
 
 
 def helper_train_eval(data):
@@ -194,6 +196,7 @@ def helper_train_eval(data):
         gaussian_blur=data["gaussian_blur"],
         normalise=data["normalise"],
         shift_min=data["shift_min"],
+        classifier=data["classifier"],
     )
     n_dir_train = len(next(os.walk(temp_dir.name))[1])
     n_plots_train = len(os.listdir(os.path.join(temp_dir.name, "plots")))
@@ -214,6 +217,7 @@ def helper_train_eval(data):
         gaussian_blur=data["gaussian_blur"],
         normalise=data["normalise"],
         shift_min=data["shift_min"],
+        classifier=data["classifier"],
     )
 
     n_plots_eval = len(os.listdir(os.path.join(temp_dir.name, "plots")))

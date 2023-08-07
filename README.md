@@ -76,61 +76,120 @@ which will give you:
 Usage: run.py [OPTIONS]
 
 Options:
-  -d, --datapath TEXT         Path to training data.  [required]
-  -lm, --limit INTEGER        Limit the number of samples loaded (default
-                              None).
-  -sp, --split INTEGER        Train/val split in %.
-  -nd, --no_val_drop          Do not drop last validate batch if if it is
-                              smaller than batch_size.
-  -af, --affinity TEXT        Path to affinity matrix for training.
-  -cl, --classes TEXT         Path to a CSV file containing a list of classes
-                              for training.
-  -ep, --epochs INTEGER       Number of epochs (default 100).
-  -ba, --batch INTEGER        Batch size (default 128).
-  -de, --depth INTEGER        Depth of the convolutional layers (default 3).
-  -ch, --channels INTEGER     First layer channels (default 64).
-  -ld, --latent_dims INTEGER  Latent space dimension (default 10).
-  -pd, --pose_dims INTEGER    If pose on, number of pose dimensions. If 0 and
-                              gamma=0 it becomesa standard beta-VAE.
-  -b, --beta FLOAT            Variational beta (default 1).
-  -g, --gamma FLOAT           Scale factor for the loss component
-                              corresponding to shape similarity (default 1).
-                              If 0 and pd=0 it becomes a standardbeta-VAE.
-  -lr, --learning FLOAT       Learning rate (default 1e-4).
-  -lf, --loss_fn TEXT         Loss type: 'MSE' or 'BCE' (default 'MSE').
-  -fev, --freq_eval INTEGER   Frequency at which to evaluate test set (default
-                              every 10 epochs).
-  -fs, --freq_sta INTEGER     Frequency at which to save state (default every
-                              10 epochs).
-  -fe, --freq_emb INTEGER     Frequency at which to visualise the latent space
-                              embedding (default every 10 epochs).
-  -fr, --freq_rec INTEGER     Frequency at which to visualise reconstructions
-                              (default every 10 epochs).
-  -fi, --freq_int INTEGER     Frequency at which to visualise latent
-                              spaceinterpolations (default every 10 epochs).
-  -ft, --freq_dis INTEGER     Frequency at which to visualise single
-                              transversals (default every 10 epochs).
-  -fp, --freq_pos INTEGER     Frequency at which to visualise pose (default
-                              every 10 epochs).
-  -fac, --freq_acc INTEGER    Frequency at which to visualise confusion
-                              matrix.
-  -fa, --freq_all INTEGER     Frequency at which to visualise all plots except
-                              loss (default every 10 epochs).
-  -ve, --vis_emb              Visualise latent space embedding.
-  -vr, --vis_rec              Visualise reconstructions.
-  -vl, --vis_los              Visualise loss.
-  -vi, --vis_int              Visualise interpolations.
-  -vt, --vis_dis              Visualise single transversals.
-  -vps, --vis_pos             Visualise pose interpolations in the first 2
-                              dimensions
-  -vac, --vis_acc             Visualise confusion matrix.
-  -va, --vis_all              Visualise all above.
-  -g, --gpu                   Use GPU for training.
-  -ev, --eval                 Evaluate test data.
-  -dn, --dynamic              Enable collecting meta and dynamic latent space
-                              plots.
-  --help                      Show this message and exit.
-
+  --config_file PATH
+  -d, --datapath TEXT             Path to training data.
+  -dtype, --datatype TEXT         Type of the data: mrc, npy
+  -res, --restart                 Is the calculation restarting from a
+                                  checkpoint.
+  -st, --state TEXT               The saved model state to be loaded for
+                                  evaluation/resume training.
+  -mt, --meta TEXT                The saved meta file to be loaded for
+                                  regenerating dynamic plots.
+  -lm, --limit INTEGER            Limit the number of samples loaded (default
+                                  None).
+  -sp, --split INTEGER            Train/val split in %.
+  -nd, --no_val_drop              Do not drop last validate batch if if it is
+                                  smaller than batch_size.
+  -af, --affinity TEXT            Path to affinity matrix for training.
+  -cl, --classes TEXT             Path to a CSV file containing a list of
+                                  classes for training.
+  -clf, --classifier TEXT         Method to classify the latent space. Options
+                                  are: KNN (nearest neighbour), NN (neural
+                                  network), LR (Logistic Regression).
+  -ep, --epochs INTEGER           Number of epochs (default 100).
+  -ba, --batch INTEGER            Batch size (default 128).
+  -de, --depth INTEGER            Depth of the convolutional layers (default
+                                  3).
+  -ch, --channels INTEGER         First layer channels (default 64).
+  -ld, --latent_dims INTEGER      Latent space dimension (default 10).
+  -pd, --pose_dims INTEGER        If pose on, number of pose dimensions. If 0
+                                  and gamma=0 it becomesa standard beta-VAE.
+  -be, --beta FLOAT               Beta maximum in the case of cyclical
+                                  annealing schedule
+  -bl, --beta_load                The path to the saved beta array file to be
+                                  loaded if this file is provided, all other
+                                  beta related variables would be ignored
+  -g, --gamma FLOAT               Scale factor for the loss component
+                                  corresponding to shape similarity. If 0 and
+                                  pd=0 it becomes a standardbeta-VAE.
+  -gl, --gamma_load               The path to the saved gamma array file to be
+                                  loadedif this file is provided, all other
+                                  gamma related variables would be ignored
+  -lr, --learning FLOAT           Learning rate.
+  -lf, --loss_fn TEXT             Loss type: 'MSE' or 'BCE' (default 'MSE').
+  -bs, --beta_min FLOAT           Beta minimum in the case of cyclical
+                                  annealing schedule
+  -bc, --beta_cycle INTEGER       Number of cycles for beta during training in
+                                  the case of cyclical annealing schedule
+  -br, --beta_ratio FLOAT         The ratio for steps in beta
+  -cycmb, --cyc_method_beta TEXT  The schedule for : for constant beta : flat,
+                                  other options include , cycle_linear,
+                                  cycle_sigmoid, cycle_cosine, ramp
+  -gs, --gamma_min FLOAT          gamma minimum in the case of cyclical
+                                  annealing schedule
+  -gc, --gamma_cycle INTEGER      Number of cycles for gamma during training
+                                  in the case of cyclical annealing schedule
+  -gr, --gamma_ratio FLOAT        The ratio for steps in gamma
+  -cycmg, --cyc_method_gamma TEXT
+                                  The schedule for gamma: for constant gamma :
+                                  flat, other options include , cycle_linear,
+                                  cycle_sigmoid, cycle_cosine, ramp
+  -g, --gpu                       Use GPU for training.
+  -ev, --eval                     Evaluate test data.
+  -dn, --dynamic                  Enable collecting meta and dynamic latent
+                                  space plots.
+  -m, --model TEXT                Choose model to run.
+  -vl, --vis_los                  Visualise loss (every epoch starting at
+                                  epoch 2).
+  -vac, --vis_acc                 Visualise confusion matrix and F1 scores
+                                  (frequency controlled).
+  -vr, --vis_rec                  Visualise reconstructions (frequency
+                                  controlled).
+  -vcn, --vis_con                 Visualise per-class confidence metrics
+  -ve, --vis_emb                  Visualise latent space embedding (frequency
+                                  controlled).
+  -vi, --vis_int                  Visualise interpolations (frequency
+                                  controlled).
+  -vt, --vis_dis                  Visualise latent disentanglement (frequency
+                                  controlled).
+  -vps, --vis_pos                 Visualise pose disentanglement (frequency
+                                  controlled).
+  -vc, --vis_cyc                  Visualise cyclical parameters (once per
+                                  run).
+  -va, --vis_aff                  Visualise affinity matrix (once per run).
+  -his, --vis_his                 Visualise train-val class distribution (once
+                                  per run).
+  -similarity, --vis_sim          Visualise train-val model similarity matrix.
+  -va, --vis_all                  Visualise all above.
+  -fev, --freq_eval INTEGER       Frequency at which to evaluate test set.
+  -fs, --freq_sta INTEGER         Frequency at which to save state
+  -fac, --freq_acc INTEGER        Frequency at which to visualise confusion
+                                  matrix.
+  -fr, --freq_rec INTEGER         Frequency at which to visualise
+                                  reconstructions
+  -fr, --freq_con INTEGER         Frequency at which to visualise per-class
+                                  confidence metrics
+  -fe, --freq_emb INTEGER         Frequency at which to visualise the latent
+                                  space embedding.
+  -fi, --freq_int INTEGER         Frequency at which to visualise latent
+                                  spaceinterpolations (default every 10
+                                  epochs).
+  -ft, --freq_dis INTEGER         Frequency at which to visualise single
+                                  transversals.
+  -fp, --freq_pos INTEGER         Frequency at which to visualise pose.
+  -fsim, --freq_sim INTEGER       Frequency at which to visualise similarity
+                                  matrix.
+  -fa, --freq_all INTEGER         Frequency at which to visualise all plots
+                                  except loss.
+  -opt, --opt_method TEXT         The method of optimisation. It can be
+                                  adam/sgd/asgd
+  -gb, --gaussian_blur            Applying gaussian bluring to the image data
+                                  which should help removing noise. The
+                                  minimum and maximum for this is hardcoded.
+  -nrm, --normalise               Normalise data
+  -sftm, --shift_min              Shift the minimum of the data to one zero
+                                  and the maximum to one
+  --help                          Show this message and exit.
 ```
 
 Note that setting ```-g/--gamma``` to ```0``` and ```-pd/--pose_dims``` to ```0``` will run a vanilla beta-VAE.

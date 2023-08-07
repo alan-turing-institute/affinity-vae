@@ -6,8 +6,8 @@ import torch
 
 from . import config, vis
 from .data import load_data
-from .train import accuracy, add_meta, pass_batch
-from .utils import set_device
+from .utils import accuracy
+from .utils_learning import add_meta, pass_batch, set_device
 
 
 def evaluate(
@@ -24,6 +24,7 @@ def evaluate(
     gaussian_blur,
     normalise,
     shift_min,
+    classifier,
 ):
     """Function for evaluating the model. Loads the data, model and runs the evaluation. Saves the results of the
     evaluation in the plot and latents directories.
@@ -57,10 +58,11 @@ def evaluate(
         In True, the input data is normalised before being passed to the model.
     shift_min: bool
         If True, the input data is shifted to have a minimum value of 0 and max 1.
+    classifier: str
+        The method to use on the latent space classification. Can be neural network (NN), k nearest neighbourgs (KNN) or logistic regression (LR).
 
 
     """
-
     # ############################### DATA ###############################
     tests, data_dim = load_data(
         datapath,
@@ -233,6 +235,7 @@ def evaluate(
             np.array(latents_training_id),
             x_test,
             np.array(y_test),
+            classifier=classifier,
         )
         print(
             "\n------------------->>> Accuracy: Train: %f | Val: %f\n"
@@ -253,4 +256,9 @@ def evaluate(
             ypred_val,
             classes,
             mode="_eval",
+        )
+
+        # save metadata with evaluation data
+        meta_df.to_pickle(
+            os.path.join("states", metas.split(".")[0] + "_eval.pkl")
         )
