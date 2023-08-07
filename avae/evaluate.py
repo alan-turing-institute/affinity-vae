@@ -6,7 +6,8 @@ import torch
 
 from . import config, vis
 from .data import load_data
-from .utils import accuracy, add_meta, pass_batch, set_device
+from .utils import accuracy
+from .utils_learning import add_meta, pass_batch, set_device
 
 
 def evaluate(

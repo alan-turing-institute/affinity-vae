@@ -7,7 +7,7 @@ import torch
 
 from avae.loss import AVAELoss
 from avae.model_a import AffinityVAE as avae_a
-from avae.utils import set_device
+from avae.utils_learning import set_device
 from tests import testdata_mrc
 
 torch.manual_seed(0)

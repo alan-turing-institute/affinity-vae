@@ -11,7 +11,8 @@ from .data import load_data
 from .loss import AVAELoss
 from .model_a import AffinityVAE as AffinityVAE_A
 from .model_b import AffinityVAE as AffinityVAE_B
-from .utils import accuracy, add_meta, pass_batch, set_device
+from .utils import accuracy
+from .utils_learning import add_meta, pass_batch, set_device
 
 
 def train(
