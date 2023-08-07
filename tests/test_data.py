@@ -7,13 +7,13 @@ import numpy as np
 from torch.utils.data import DataLoader
 
 from avae.data import load_data
-from tests import testdata
+from tests import testdata_mrc
 
 
 class DataTest(unittest.TestCase):
     def setUp(self) -> None:
         """Setup data and output directories."""
-        self.test_data = os.path.dirname(testdata.__file__)
+        self.test_data = os.path.dirname(testdata_mrc.__file__)
         self.test_dir = tempfile.mkdtemp(prefix="avae_")
         print(self.test_data, self.test_dir)
 
@@ -34,8 +34,9 @@ class DataTest(unittest.TestCase):
             os.path.join(self.test_dir, "eval"),
         )
 
-        out = load_data(
+        out, data_dim = load_data(
             "./eval",
+            datatype="mrc",
             lim=None,
             batch_s=32,
             collect_meta=False,
@@ -65,6 +66,7 @@ class DataTest(unittest.TestCase):
 
         out = load_data(
             "./train",
+            datatype="mrc",
             lim=None,
             splt=30,
             batch_s=16,
@@ -78,8 +80,8 @@ class DataTest(unittest.TestCase):
         )
 
         # test load_data
-        assert len(out) == 4
-        train_data, val_data, test_data, lookup = out
+        assert len(out) == 5
+        train_data, val_data, test_data, lookup, data_dim = out
         assert len(train_data) >= len(val_data)
         assert isinstance(train_data, DataLoader)
 

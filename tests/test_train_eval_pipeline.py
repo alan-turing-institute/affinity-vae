@@ -9,25 +9,29 @@ import torch
 from avae import config
 from avae.evaluate import evaluate
 from avae.train import train
-from tests import testdata
+from tests import testdata_mrc, testdata_npy
+
+# fixing random seeds so we dont get fail on mrc tests
+torch.random.manual_seed(0)
+random.seed(10)
 
 
 class TrainEvalTest(unittest.TestCase):
     def setUp(self) -> None:
         """Test instantiation of the pipeline."""
 
-        torch.random.manual_seed(0)
-        random.seed(10)
-        self.testdata = os.path.dirname(testdata.__file__)
+        self.testdata_mrc = os.path.dirname(testdata_mrc.__file__)
+        self.testdata_npy = os.path.dirname(testdata_npy.__file__)
 
         self.data = {
-            "datapath": self.testdata,
+            "datapath": self.testdata_mrc,
+            "datatype": "mrc",
             "limit": 100,
             "split": 10,
             "batch": 25,
             "no_val_drop": True,
-            "affinity": os.path.join(self.testdata, "affinity_fsc_10.csv"),
-            "classes": os.path.join(self.testdata, "classes.csv"),
+            "affinity": os.path.join(self.testdata_mrc, "affinity_fsc_10.csv"),
+            "classes": os.path.join(self.testdata_mrc, "classes.csv"),
             "collect_meta": True,
             "epochs": 5,
             "channels": 3,
@@ -82,163 +86,151 @@ class TrainEvalTest(unittest.TestCase):
         config.VIS_AFF = True
         config.VIS_SIM = True
 
-    def test_train_eval_a(self):
-
-        temp_dir = tempfile.TemporaryDirectory()
-        os.chdir(temp_dir.name)
-        train(
-            datapath=self.data["datapath"],
-            restart=self.data["restart"],
-            state=self.data["state"],
-            lim=self.data["limit"],
-            splt=self.data["split"],
-            batch_s=self.data["batch"],
-            no_val_drop=self.data["no_val_drop"],
-            affinity=self.data["affinity"],
-            classes=self.data["classes"],
-            collect_meta=self.data["collect_meta"],
-            epochs=self.data["epochs"],
-            channels=self.data["channels"],
-            depth=self.data["depth"],
-            lat_dims=self.data["latent_dims"],
-            pose_dims=self.data["pose_dims"],
-            learning=self.data["learning"],
-            beta_load=self.data["beta_load"],
-            beta_min=self.data["beta_min"],
-            beta_max=self.data["beta_max"],
-            beta_cycle=self.data["beta_cycle"],
-            beta_ratio=self.data["beta_ratio"],
-            cyc_method_beta=self.data["cyc_method_beta"],
-            gamma_load=self.data["gamma_load"],
-            gamma_min=self.data["gamma_min"],
-            gamma_max=self.data["gamma_max"],
-            gamma_cycle=self.data["gamma_cycle"],
-            gamma_ratio=self.data["gamma_ratio"],
-            cyc_method_gamma=self.data["cyc_method_gamma"],
-            recon_fn=self.data["recon_fn"],
-            use_gpu=self.data["gpu"],
-            model="a",
-            opt_method="adam",
-            gaussian_blur=self.data["gaussian_blur"],
-            normalise=self.data["normalise"],
-            shift_min=self.data["shift_min"],
-        )
-        n_dir_train = len(next(os.walk(temp_dir.name))[1])
-        n_plots_train = len(os.listdir(os.path.join(temp_dir.name, "plots")))
-        n_latent_train = len(
-            os.listdir(os.path.join(temp_dir.name, "latents"))
-        )
-        n_states_train = len(os.listdir(os.path.join(temp_dir.name, "states")))
+    def test_model_a_mrc(self):
+        self.data["model"] = "a"
+        (
+            n_dir_train,
+            n_plots_train,
+            n_latent_train,
+            n_states_train,
+            n_plots_eval,
+            n_latent_eval,
+            n_states_eval,
+        ) = helper_train_eval(self.data)
 
         self.assertEqual(n_dir_train, 3)
         self.assertEqual(n_plots_train, 32)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
-
-        evaluate(
-            datapath=os.path.join(self.testdata, "test"),
-            state=self.data["state"],
-            meta=self.data["meta"],
-            lim=self.data["limit"],
-            splt=self.data["split"],
-            batch_s=self.data["batch"],
-            classes=self.data["classes"],
-            collect_meta=True,
-            use_gpu=self.data["use_gpu"],
-            gaussian_blur=self.data["gaussian_blur"],
-            normalise=self.data["normalise"],
-            shift_min=self.data["shift_min"],
-        )
-
-        n_plots_eval = len(os.listdir(os.path.join(temp_dir.name, "plots")))
-        n_latent_eval = len(os.listdir(os.path.join(temp_dir.name, "latents")))
-        n_states_eval = len(os.listdir(os.path.join(temp_dir.name, "states")))
-
         self.assertEqual(n_plots_eval, 50)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 2)
 
-        shutil.rmtree(temp_dir.name)
-
-    def test_train_eval_b(self):
-
-        temp_dir = tempfile.TemporaryDirectory()
-        os.chdir(temp_dir.name)
-
-        train(
-            datapath=self.data["datapath"],
-            restart=self.data["restart"],
-            state=self.data["state"],
-            lim=self.data["limit"],
-            splt=self.data["split"],
-            batch_s=self.data["batch"],
-            no_val_drop=self.data["no_val_drop"],
-            affinity=self.data["affinity"],
-            classes=self.data["classes"],
-            collect_meta=self.data["collect_meta"],
-            epochs=self.data["epochs"],
-            channels=self.data["channels"],
-            depth=self.data["depth"],
-            lat_dims=self.data["latent_dims"],
-            pose_dims=self.data["pose_dims"],
-            learning=self.data["learning"],
-            beta_load=self.data["beta_load"],
-            beta_min=self.data["beta_min"],
-            beta_max=self.data["beta_max"],
-            beta_cycle=self.data["beta_cycle"],
-            beta_ratio=self.data["beta_ratio"],
-            cyc_method_beta=self.data["cyc_method_beta"],
-            gamma_load=self.data["gamma_load"],
-            gamma_min=self.data["gamma_min"],
-            gamma_max=self.data["gamma_max"],
-            gamma_cycle=self.data["gamma_cycle"],
-            gamma_ratio=self.data["gamma_ratio"],
-            cyc_method_gamma=self.data["cyc_method_gamma"],
-            recon_fn=self.data["recon_fn"],
-            use_gpu=self.data["gpu"],
-            model="b",
-            opt_method="adam",
-            gaussian_blur=self.data["gaussian_blur"],
-            normalise=self.data["normalise"],
-            shift_min=self.data["shift_min"],
-        )
-
-        n_dir_train = len(next(os.walk(temp_dir.name))[1])
-        n_plots_train = len(os.listdir(os.path.join(temp_dir.name, "plots")))
-        n_latent_train = len(
-            os.listdir(os.path.join(temp_dir.name, "latents"))
-        )
-        n_states_train = len(os.listdir(os.path.join(temp_dir.name, "states")))
+    def test_model_b_mrc(self):
+        self.data["model"] = "b"
+        (
+            n_dir_train,
+            n_plots_train,
+            n_latent_train,
+            n_states_train,
+            n_plots_eval,
+            n_latent_eval,
+            n_states_eval,
+        ) = helper_train_eval(self.data)
 
         self.assertEqual(n_dir_train, 3)
         self.assertEqual(n_plots_train, 32)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
-
-        evaluate(
-            datapath=os.path.join(self.testdata, "test"),
-            state=self.data["state"],
-            meta=self.data["meta"],
-            lim=self.data["limit"],
-            splt=self.data["split"],
-            batch_s=self.data["batch"],
-            classes=self.data["classes"],
-            collect_meta=True,
-            use_gpu=self.data["use_gpu"],
-            gaussian_blur=self.data["gaussian_blur"],
-            normalise=self.data["normalise"],
-            shift_min=self.data["shift_min"],
-        )
-
-        n_plots_eval = len(os.listdir(os.path.join(temp_dir.name, "plots")))
-        n_latent_eval = len(os.listdir(os.path.join(temp_dir.name, "latents")))
-        n_states_eval = len(os.listdir(os.path.join(temp_dir.name, "states")))
-
         self.assertEqual(n_plots_eval, 50)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 2)
 
-        shutil.rmtree(temp_dir.name)
+    def test_model_a_npy(self):
+        self.data["model"] = "a"
+        self.data["datatype"] = "npy"
+        self.data["datapath"] = self.testdata_npy
+        self.data["affinity"] = os.path.join(
+            self.testdata_npy, "affinity_an.csv"
+        )
+        self.data["classes"] = os.path.join(self.testdata_npy, "classes.csv")
+        (
+            n_dir_train,
+            n_plots_train,
+            n_latent_train,
+            n_states_train,
+            n_plots_eval,
+            n_latent_eval,
+            n_states_eval,
+        ) = helper_train_eval(self.data)
+
+        self.assertEqual(n_dir_train, 3)
+        self.assertEqual(n_plots_train, 30)
+        self.assertEqual(n_latent_train, 2)
+        self.assertEqual(n_states_train, 2)
+        self.assertEqual(n_plots_eval, 47)
+        self.assertEqual(n_latent_eval, 4)
+        self.assertEqual(n_states_eval, 2)
+
+
+def helper_train_eval(data):
+
+    temp_dir = tempfile.TemporaryDirectory()
+    os.chdir(temp_dir.name)
+    train(
+        datapath=data["datapath"],
+        datatype=data["datatype"],
+        restart=data["restart"],
+        state=data["state"],
+        lim=data["limit"],
+        splt=data["split"],
+        batch_s=data["batch"],
+        no_val_drop=data["no_val_drop"],
+        affinity=data["affinity"],
+        classes=data["classes"],
+        collect_meta=data["collect_meta"],
+        epochs=data["epochs"],
+        channels=data["channels"],
+        depth=data["depth"],
+        lat_dims=data["latent_dims"],
+        pose_dims=data["pose_dims"],
+        learning=data["learning"],
+        beta_load=data["beta_load"],
+        beta_min=data["beta_min"],
+        beta_max=data["beta_max"],
+        beta_cycle=data["beta_cycle"],
+        beta_ratio=data["beta_ratio"],
+        cyc_method_beta=data["cyc_method_beta"],
+        gamma_load=data["gamma_load"],
+        gamma_min=data["gamma_min"],
+        gamma_max=data["gamma_max"],
+        gamma_cycle=data["gamma_cycle"],
+        gamma_ratio=data["gamma_ratio"],
+        cyc_method_gamma=data["cyc_method_gamma"],
+        recon_fn=data["recon_fn"],
+        use_gpu=data["gpu"],
+        model=data["model"],
+        opt_method="adam",
+        gaussian_blur=data["gaussian_blur"],
+        normalise=data["normalise"],
+        shift_min=data["shift_min"],
+    )
+    n_dir_train = len(next(os.walk(temp_dir.name))[1])
+    n_plots_train = len(os.listdir(os.path.join(temp_dir.name, "plots")))
+    n_latent_train = len(os.listdir(os.path.join(temp_dir.name, "latents")))
+    n_states_train = len(os.listdir(os.path.join(temp_dir.name, "states")))
+
+    evaluate(
+        datapath=os.path.join(data["datapath"], "test"),
+        datatype=data["datatype"],
+        state=data["state"],
+        meta=data["meta"],
+        lim=data["limit"],
+        splt=data["split"],
+        batch_s=data["batch"],
+        classes=data["classes"],
+        collect_meta=True,
+        use_gpu=data["use_gpu"],
+        gaussian_blur=data["gaussian_blur"],
+        normalise=data["normalise"],
+        shift_min=data["shift_min"],
+    )
+
+    n_plots_eval = len(os.listdir(os.path.join(temp_dir.name, "plots")))
+    n_latent_eval = len(os.listdir(os.path.join(temp_dir.name, "latents")))
+    n_states_eval = len(os.listdir(os.path.join(temp_dir.name, "states")))
+
+    shutil.rmtree(temp_dir.name)
+
+    return (
+        n_dir_train,
+        n_plots_train,
+        n_latent_train,
+        n_states_train,
+        n_plots_eval,
+        n_latent_eval,
+        n_states_eval,
+    )
 
 
 if __name__ == "__main__":

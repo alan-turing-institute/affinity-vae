@@ -33,6 +33,13 @@ logging.basicConfig(
     help="Path to training data.",
 )
 @click.option(
+    "--datatype",
+    "-dtype",
+    type=str,
+    default=None,
+    help="Type of the data: mrc, npy",
+)
+@click.option(
     "--restart",
     "-res",
     type=bool,
@@ -477,6 +484,7 @@ logging.basicConfig(
 def run(
     config_file,
     datapath,
+    datatype,
     restart,
     state,
     meta,
@@ -677,7 +685,7 @@ def run(
         else:
             config.FREQ_EVAL = data["freq_eval"]
             config.FREQ_REC = data["freq_rec"]
-            config.FREQ_CON = data["freq_all"]
+            config.FREQ_CON = data["freq_con"]
             config.FREQ_EMB = data["freq_emb"]
             config.FREQ_INT = data["freq_int"]
             config.FREQ_DIS = data["freq_dis"]
@@ -694,6 +702,7 @@ def run(
         if not data["eval"]:
             train(
                 datapath=data["datapath"],
+                datatype=data["datatype"],
                 restart=data["restart"],
                 state=data["state"],
                 lim=data["limit"],
@@ -732,6 +741,7 @@ def run(
         else:
             evaluate(
                 datapath=data["datapath"],
+                datatype=data["datatype"],
                 state=data["state"],
                 meta=data["meta"],
                 lim=data["limit"],

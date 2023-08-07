@@ -12,6 +12,7 @@ from .utils import set_device
 
 def evaluate(
     datapath,
+    datatype,
     state,
     meta,
     lim,
@@ -31,6 +32,8 @@ def evaluate(
     ----------
     datapath: str
         Path to the data directory.
+    datatype: str
+        data file formats : mrc, npy
     state: str
         Path to the model state file to be used for evaluation/resume.
     meta: str
@@ -59,8 +62,9 @@ def evaluate(
     """
 
     # ############################### DATA ###############################
-    tests = load_data(
+    tests, data_dim = load_data(
         datapath,
+        datatype,
         lim,
         splt,
         batch_s,
@@ -135,6 +139,7 @@ def evaluate(
 
         if collect_meta:  # store meta for plots
             meta_df = add_meta(
+                data_dim,
                 meta_df,
                 batch[-1],
                 x_hat,
@@ -151,18 +156,18 @@ def evaluate(
 
     # visualise reconstructions - last batch
     if config.VIS_REC:
-        vis.recon_plot(x, x_hat, y_test, mode="evl")
+        vis.recon_plot(x, x_hat, y_test, data_dim, mode="evl")
 
     # visualise latent disentanglement
     if config.VIS_DIS:
         vis.latent_disentamglement_plot(
-            x_test, vae, device, poses=p_test, mode="_eval"
+            x_test, vae, device, data_dim, poses=p_test, mode="_eval"
         )
 
     # visualise pose disentanglement
     if pose_dims != 0 and config.VIS_POS:
         vis.pose_disentanglement_plot(
-            x_test, p_test, vae, device, mode="_eval"
+            x_test, p_test, vae, data_dim, device, mode="_eval"
         )
 
     # visualise interpolations
@@ -172,6 +177,7 @@ def evaluate(
             np.ones(len(x_test)),
             vae,
             device,
+            data_dim,
             poses=p_test,
             mode="_eval",
         )
