@@ -75,10 +75,10 @@ class AVAELoss:
     ----------
     device : torch.device
         Device used to calculate the loss.
-    beta: float
-        Beta parameter defining weight on latent regularisation term.
-    gamma : float
-        Gamma parameter defining weight on affinity regularisation term,
+    beta: list
+        Beta parameter list defining weight on latent regularisation term.
+    gamma : list
+        Gamma parameter list defining weight on affinity regularisation term,
         default = 1. Only used if lookup_aff is present.
     lookup_aff : np.ndarray [M, M]
         A square symmetric matrix where each column and row is the index of an
@@ -90,32 +90,33 @@ class AVAELoss:
 
     """
 
-    def __init__(self, device, beta, gamma=1, lookup_aff=None, recon_fn="MSE"):
+    def __init__(self, device, beta, gamma, lookup_aff=None, recon_fn="MSE"):
         self.device = device
         self.recon_fn = recon_fn
         self.beta = beta
 
-        self.gamma = 0
         self.affinity_loss = None
+        self.gamma = gamma
 
-        if lookup_aff is not None and gamma != 0:
-            self.gamma = gamma
+        if lookup_aff is not None and max(gamma) != 0:
             self.affinity_loss = AffinityLoss(lookup_aff, device)
-        elif lookup_aff is None and gamma != 0:
+
+        elif lookup_aff is None and max(gamma) != 0:
             raise RuntimeError(
                 "Affinity matrix is needed to compute Affinity loss"
                 ". Although you've set gamma, you have not provided --af/"
                 "--affinity parameter."
             )
-        elif lookup_aff is not None and gamma == 0:
+        elif lookup_aff is not None and max(gamma) == 0:
             print(
                 "\nWARNING: You provided affinity matrix but no gamma. Unless "
                 "you provide gamma, affinity will be ignored and you're "
-                "running a vanilla beta-VAE.\n"
+                "running a vanilla beta-VAE.\n",
+                flush=True,
             )
             self.affinity_loss = None
 
-    def __call__(self, x, recon_x, mu, logvar, batch_aff=None):
+    def __call__(self, x, recon_x, mu, logvar, epoch, batch_aff=None):
         """Return the aVAE loss.
 
         Parameters
@@ -183,7 +184,9 @@ class AVAELoss:
 
         # total loss
         total_loss = (
-            recon_loss + self.beta * kldivergence + self.gamma * affin_loss
+            recon_loss
+            + self.beta[epoch] * kldivergence
+            + self.gamma[epoch] * affin_loss
         )
 
         return total_loss, recon_loss, kldivergence, affin_loss

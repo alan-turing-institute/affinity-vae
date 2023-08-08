@@ -4,14 +4,19 @@ import random
 import mrcfile
 import numpy as np
 import pandas as pd
+from torch import from_numpy
 from torch.utils.data import DataLoader, Dataset, Subset
 from torchvision import transforms
 
-from .vis import format, plot_affinity_matrix
+from . import config
+from .vis import format, plot_affinity_matrix, plot_classes_distribution
+
+np.random.seed(42)
 
 
 def load_data(
     datapath: str,
+    datatype: str,
     lim: int = None,
     splt: int = 20,
     batch_s: int = 64,
@@ -20,7 +25,57 @@ def load_data(
     eval: bool = True,
     affinity=None,
     classes=None,
+    gaussian_blur=False,
+    normalise=False,
+    shift_min=False,
 ):
+    """Loads all data needed for training, testing and evaluation. Loads MRC files from a given path, selects subset of
+    classes if requested, splits it into train / val  and test in batch sets, loads affinity matrix. Returns train,
+    validation and test data as DataLoader objects.
+
+    Parameters
+    ----------
+    datapath: str
+        Path to the data directory.
+    datatype: str
+        data file formats : mrc, npy
+    lim: int
+        Limit the number of samples to load.
+    splt: int
+        Percentage of data to be used for validation.
+    batch_s: int
+        Batch size.
+    no_val_drop: bool
+        If True, the last batch of validation data will not be dropped if it is smaller than batch size.
+    collect_meta: bool
+        If True, the meta data for visualisation will be collected and returned.
+    eval: bool
+        If True, the data will be loaded only for evaluation.
+    affinity: str
+        Path to the affinity matrix.
+    classes: list
+        List of classes to be selected from the data.
+    gaussian_blur: bool
+        if True, Gaussian bluring is applied to the input before being passed to the model.
+        This is added as a way to remove noise from the input data.
+    normalise:
+        In True, the input data is normalised before being passed to the model.
+    shift_min: bool
+        If True, the minimum value of the input data is shifted to 0 and maximum to 1.
+
+
+    Returns
+    -------
+    train_data: DataLoader
+        Train data, returned only if eval is False.
+    val_data: DataLoader
+        Validation data, returned only if eval is False.
+    test_data: DataLoader
+        Test data, if eval is True only test data is returned.
+    lookup: pd.DataFrame
+        Affinity matrix, returned only if eval is False.
+    """
+
     if not eval:
         if affinity is not None:
             # load affinity matrix
@@ -29,22 +84,28 @@ def load_data(
             lookup = None
 
         # create ProteinDataset
-        data = ProteinDataset(
+        data = Dataset_reader(
             datapath,
             amatrix=lookup,
             classes=classes,
+            gaussian_blur=gaussian_blur,
+            normalise=normalise,
+            shift_min=shift_min,
             lim=lim,
             collect_m=collect_meta,
+            datatype=datatype,
         )
-        print("\nData size:", len(data))
-        print("\nClass list:", data.final_classes)
 
-        if affinity is not None:
+        # ################# Visualising affinity matrix ###################
+        if affinity is not None and config.VIS_AFF:
             plot_affinity_matrix(
                 lookup=lookup,
                 all_classes=lookup.columns.tolist(),
                 selected_classes=data.final_classes,
             )
+
+        # updating affinity matrix with the final classes
+        lookup = data.amatrix
 
         # split into train / val sets
         idx = np.random.permutation(len(data))
@@ -56,7 +117,15 @@ def load_data(
             )
         train_data = Subset(data, indices=idx[:-s])
         val_data = Subset(data, indices=idx[-s:])
-        print("Train / val split:", len(train_data), len(val_data))
+
+        # ################# Visualising class distribution ###################
+
+        train_y = [y[1] for _, y in enumerate(train_data)]
+        val_y = [y[1] for _, y in enumerate(val_data)]
+
+        if config.VIS_HIS:
+            plot_classes_distribution(train_y, "train")
+            plot_classes_distribution(val_y, "validation")
 
         # split into batches
         trains = DataLoader(
@@ -85,8 +154,11 @@ def load_data(
                     batch_s, len(train_data), len(val_data), splt
                 )
             )
-        print("Train / val batches:", len(trains), len(vals))
-        print()
+        print("\nData size:", len(data), flush=True)
+        print("\nClass list:", data.final_classes, flush=True)
+        print("Train / val split:", len(train_data), len(val_data), flush=True)
+        print("Train / val batches:", len(trains), len(vals), flush=True)
+        print(flush=True)
 
         if affinity is not None:
             lookup = lookup.to_numpy(dtype=np.float32)
@@ -96,61 +168,60 @@ def load_data(
     if eval or ("test" in os.listdir(datapath)):
         if "test" in os.listdir(datapath):
             datapath = os.path.join(datapath, "test")
-        data = ProteinDataset(datapath, lim=lim, collect_m=collect_meta)
-        print("Eval data size:", len(data))
+        data = Dataset_reader(
+            datapath,
+            gaussian_blur=gaussian_blur,
+            normalise=normalise,
+            shift_min=shift_min,
+            lim=lim,
+            collect_m=collect_meta,
+            datatype=datatype,
+        )
+
+        print("Eval data size:", len(data), flush=True)
         tests = DataLoader(
             data, batch_size=batch_s, num_workers=0, shuffle=True
         )
-        print("Eval batches:", len(tests))
-        print()
+        print("Eval batches:", len(tests), flush=True)
+        print(flush=True)
 
     if eval:
-        return tests
+        return tests, data.dim()
     else:
-        return trains, vals, tests, lookup  # , dsize
+        return trains, vals, tests, lookup, data.dim()  # , dsize
 
 
-class ProteinDataset(Dataset):
-    """Protein dataset. Opens MRC files and returns images along with their
-    affinity and associated metadata.
-
-    Parameters
-    ----------
-    root_dir : string
-        Base directory containing .mrc files.
-    amatrix : pd.DataFrame
-        A square symmetric matrix where each column and row is the index of an
-        object class from the training set,
-        consisting of M different classes. First row and column contain IDs of
-        the classes.
-    transform: torchvision.transforms.Transform
-        List of transforms to be applied to the images.
-    lim : int
-        Limit the dataset size to the given number; useful for debugging
-        purposes.
-    """
-
+class Dataset_reader(Dataset):
     def __init__(
         self,
         root_dir,
         amatrix=None,
         classes=None,
         transform=None,
+        gaussian_blur=False,
+        normalise=False,
+        shift_min=False,
         lim=None,
         collect_m=False,
+        datatype="mrc",
     ):
         super().__init__()
-
+        self.datatype = datatype
+        self.shift_min = shift_min
+        self.normalise = normalise
+        self.gaussian_blur = gaussian_blur
+        self.transform = transform
         self.collect_meta = collect_m
-
         self.amatrix = amatrix
-
         self.root_dir = root_dir
-        self.paths = [f for f in os.listdir(root_dir) if ".mrc" in f]
+
+        self.paths = [
+            f for f in os.listdir(root_dir) if "." + self.datatype in f
+        ]
+
         random.shuffle(self.paths)
         ids = np.unique([f.split("_")[0] for f in self.paths])
         self.final_classes = ids
-
         if classes is not None:
             classes_list = pd.read_csv(classes).columns.tolist()
             self.final_classes = classes_list
@@ -165,52 +236,33 @@ class ProteinDataset(Dataset):
                     )
                 )
 
-            self.paths = [
-                p for p in self.paths for c in self.final_classes if c in p
+            # subset affinity matrix with only the relevant classes
+            index = [
+                self.amatrix.columns.get_loc(f"{columns}")
+                for columns in self.final_classes
             ]
+            self.amatrix = self.amatrix.iloc[index, index]
+
+        self.paths = [
+            p
+            for p in self.paths
+            for c in self.final_classes
+            if c in p.split("_")[0]
+        ]
 
         self.paths = self.paths[:lim]
-
-        if not transform:
-            self.transform = transforms.Compose(
-                [
-                    transforms.ToTensor(),
-                    transforms.Lambda(lambda x: x.unsqueeze(0))
-                    # transforms.Resize(64),
-                    # transforms.Lambda(lambda x: \
-                    # (x - x.min()) / (x.max() - x.min()))
-                ]
-            )
-        else:
-            self.transform = transform
 
     def __len__(self):
         return len(self.paths)
 
+    def dim(self):
+        return len(np.array(self.read(self.paths[0])).shape)
+
     def __getitem__(self, item):
-        """Load and image, its metadata and optionally, its affinity class
-        index.
-
-        Parameters
-        ----------
-        item : int
-            Index of the element in the iterable.
-
-        Returns
-        -------
-        data : torch.Tensor (N,)
-            Transformed MRC data.
-        aff : int
-            Index of object's image class corresponding to rows in affinity
-            matrix.
-        meta : dict
-            Associated metadata.
-        """
-        # data
         filename = self.paths[item]
-        with mrcfile.open(os.path.join(self.root_dir, filename)) as f:
-            data = np.array(f.data)
-        x = self.transform(data)
+
+        data = np.array(self.read(filename))
+        x = self.voxel_transformation(data)
 
         # ground truth
         y = filename.split("_")[0]
@@ -226,7 +278,9 @@ class ProteinDataset(Dataset):
             # file info and metadata
             meta = "_".join(filename.split(".")[0].split("_")[1:])
             avg = np.around(np.average(x), decimals=4)
-            img = format(x)  # used for dynamic preview in Altair
+            img = format(
+                x, len(data.shape)
+            )  # used for dynamic preview in Altair
             meta = {
                 "filename": filename,
                 "id": y,
@@ -234,7 +288,38 @@ class ProteinDataset(Dataset):
                 "avg": avg,
                 "image": img,
             }
-
             return x, y, aff, meta
         else:
             return x, y, aff
+
+    def read(self, filename):
+
+        if self.datatype == "npy":
+            return np.load(os.path.join(self.root_dir, filename))
+
+        elif self.datatype == "mrc":
+            with mrcfile.open(os.path.join(self.root_dir, filename)) as f:
+                return np.array(f.data)
+
+    def voxel_transformation(self, x):
+
+        # convert numpy to torch tensor
+        x = from_numpy(x)
+
+        # unsqueeze adds a dimension for batch processing the data
+        x = x.unsqueeze(0)
+
+        if self.shift_min:
+            x = (x - x.min()) / (x.max() - x.min())
+
+        if self.gaussian_blur:
+            T = transforms.GaussianBlur(3, sigma=(0.08, 10.0))
+            x = T(x)
+
+        if self.normalise:
+            T = transforms.Normalize(0, 1, inplace=False)
+            x = T(x)
+
+        if self.transform:
+            x = self.transform(x)
+        return x
