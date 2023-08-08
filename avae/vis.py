@@ -150,7 +150,7 @@ def merge(im):
     return f"data:image/png;base64,{data}"
 
 
-def latent_embed_plot_tsne(xs, ys, mode=""):
+def latent_embed_plot_tsne(xs, ys, mode="", epoch=0, writer=None):
     """Plot static TSNE embedding.
 
     Parameters
@@ -161,6 +161,10 @@ def latent_embed_plot_tsne(xs, ys, mode=""):
         List of labels.
     mode: str
         Added data mode to the name of the saved figure (e.g train, valid, eval).
+    epoch: int
+        Current epoch
+    writer: SummaryWriter
+        Tensorboard summary writer
     """
     print(
         "\n################################################################",
@@ -210,11 +214,15 @@ def latent_embed_plot_tsne(xs, ys, mode=""):
     plt.xlabel("TSNE-1")
     plt.ylabel("TSNE-2")
     plt.tight_layout()
+
+    if writer:
+        writer.add_figure("TSNE embedding", fig, epoch)
+
     plt.savefig(f"plots/embedding_TSNE{mode}.png")
     plt.close()
 
 
-def latent_embed_plot_umap(xs, ys, mode=""):
+def latent_embed_plot_umap(xs, ys, mode="", epoch=0, writer=None):
     """Plot static UMAP embedding.
 
     Parameters
@@ -225,6 +233,10 @@ def latent_embed_plot_umap(xs, ys, mode=""):
         List of labels.
     mode: str
         Added data mode to the name of the saved figure (e.g train, valid, eval).
+    epoch: int
+        Current epoch
+    writer: SummaryWriter
+        Tensorboard summary writer
     """
     print(
         "\n################################################################",
@@ -263,6 +275,10 @@ def latent_embed_plot_umap(xs, ys, mode=""):
     plt.xlabel("UMAP-1")
     plt.ylabel("UMAP-2")
     plt.tight_layout()
+
+    if writer:
+        writer.add_figure("UMAP embedding", fig, epoch)
+
     plt.savefig(f"plots/embedding_UMAP{mode}.png")
     plt.close()
 
@@ -477,7 +493,14 @@ def confidence_plot(x, y, s, suffix=None):
 
 
 def accuracy_plot(
-    y_train, ypred_train, y_val, ypred_val, classes=None, mode="", epoch=0
+    y_train,
+    ypred_train,
+    y_val,
+    ypred_val,
+    classes=None,
+    mode="",
+    epoch=0,
+    writer=None,
 ):
     """Plot confusion matrix .
 
@@ -497,6 +520,8 @@ def accuracy_plot(
         Added data mode to the name of the saved figures (e.g train, valid, eval).
     epoch: int
         Current epoch.
+    writer: SummaryWriter
+        Tensorboard summary writer
     """
     print(
         "\n################################################################",
@@ -542,6 +567,9 @@ def accuracy_plot(
         if not os.path.exists("plots"):
             os.mkdir("plots")
 
+        if writer:
+            writer.add_figure("Accuracy", fig, epoch)
+
         plt.savefig(f"plots/confusion_train{mode}.png", dpi=300)
         plt.close()
 
@@ -569,6 +597,10 @@ def accuracy_plot(
             os.mkdir("plots")
         plt.xlabel("Predicted label (%)")
         plt.ylabel("True label (%)")
+
+        if writer:
+            writer.add_figure("Accuracy (Norm)", fig, epoch)
+
         plt.savefig(f"plots/confusion_train{mode}_norm.png", dpi=300)
         plt.close()
 
@@ -657,6 +689,7 @@ def f1_plot(
     classes=None,
     mode="",
     epoch=0,
+    writer=None,
 ):
     """Plot F1 values.
 
@@ -676,6 +709,8 @@ def f1_plot(
         Added data mode to the name of the saved figures (e.g train, valid, eval).
     epoch: int
         Epoch number.
+    writer: SummaryWriter
+        Tensorboard summary writer
     """
     print(
         "\n################################################################",
@@ -750,6 +785,10 @@ def f1_plot(
         plt.legend(loc="lower left")
         plt.title("F1 Score at epoch {}".format(epoch))
         plt.ylabel("F1 Score")
+
+        if writer:
+            writer.add_figure("Accuracy (Norm)", fig, epoch)
+
         plt.savefig(f"plots/f1{mode}.png", dpi=150)
         plt.close()
 
@@ -890,7 +929,7 @@ def loss_plot(epochs, beta, gamma, train_loss, val_loss=None, p=None):
     plt.close()
 
 
-def recon_plot(img, rec, label, data_dim, mode="trn"):
+def recon_plot(img, rec, label, data_dim, mode="trn", epoch=0, writer=None):
     """Visualise reconstructions.
 
     Parameters
@@ -901,7 +940,10 @@ def recon_plot(img, rec, label, data_dim, mode="trn"):
         Reconstructed images.
     mode: str
         Type of image in the training set: trn or val.
-
+    epoch: int
+        Current epoch
+    writer: SummaryWriter
+        Tensorboard summary writer
     """
     print(
         "\n################################################################",
@@ -922,8 +964,20 @@ def recon_plot(img, rec, label, data_dim, mode="trn"):
     img_2d = torchvision.utils.make_grid(img_2d.cpu(), 10, 2).numpy()
     rec_2d = torchvision.utils.make_grid(rec_2d.detach().cpu(), 10, 2).numpy()
 
-    save_imshow_png(fname_in, np.transpose(img_2d, (1, 2, 0)))
-    save_imshow_png(fname_out, np.transpose(rec_2d, (1, 2, 0)))
+    save_imshow_png(
+        fname_in,
+        np.transpose(img_2d, (1, 2, 0)),
+        writer=writer,
+        figname="Recon. (In)",
+        epoch=epoch,
+    )
+    save_imshow_png(
+        fname_out,
+        np.transpose(rec_2d, (1, 2, 0)),
+        writer=writer,
+        figname="Recon. (Out)",
+        epoch=epoch,
+    )
 
     if data_dim == 3:
         rec = rec.detach().cpu().numpy()
@@ -979,7 +1033,13 @@ def recon_plot(img, rec, label, data_dim, mode="trn"):
 
 
 def latent_disentamglement_plot(
-    lats, vae, device, data_dim, poses=None, mode="trn"
+    lats,
+    vae,
+    device,
+    data_dim,
+    poses=None,
+    mode="trn",
+    writer=None,
 ):
     """Visualise latent content disentanglement.
 
@@ -993,6 +1053,8 @@ def latent_disentamglement_plot(
         Device to run the model on.
     poses: list
         List of pose vectors.
+    writer: SummaryWriter
+        Tensorboard summary writer
     """
     print(
         "\n################################################################",
