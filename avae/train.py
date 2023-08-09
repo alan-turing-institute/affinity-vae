@@ -14,6 +14,7 @@ from .model_b import AffinityVAE as AffinityVAE_B
 from .utils import accuracy
 from .utils_learning import add_meta, pass_batch, set_device
 
+import logging
 
 def train(
     datapath,
@@ -166,6 +167,7 @@ def train(
     else:
         raise ValueError("Invalid model type", model, "must be a or b")
 
+
     vae = affinityVAE(
         channels,
         depth,
@@ -289,7 +291,8 @@ def train(
         lookup_aff=lookup,
         recon_fn=recon_fn,
     )
-
+    logging.info( "Epoch: [0/%d] | Batch: [0/%d] | Loss: -- | Recon: -- | "
+        "KLdiv: -- | Affin: -- | Beta: --" % (epochs, len(trains)))
     print(
         "Epoch: [0/%d] | Batch: [0/%d] | Loss: -- | Recon: -- | "
         "KLdiv: -- | Affin: -- | Beta: --" % (epochs, len(trains)),
