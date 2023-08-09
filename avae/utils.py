@@ -1,6 +1,5 @@
 import os.path
 
-from . import config
 import matplotlib.pyplot as plt
 import mrcfile
 import numpy as np
@@ -11,6 +10,8 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import make_pipeline
+
+from . import config
 
 
 def accuracy(x_train, y_train, x_val, y_val, classifier="NN"):

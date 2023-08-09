@@ -566,10 +566,10 @@ def run(
 ):
 
     warnings.simplefilter("ignore", FutureWarning)
-    # read config file and command line arguments and assign to local variables that are used in the rest of the code
-    local_vars = locals().copy()
-    logging.info("Reading submission configuration file" + config_file)
 
+    # read config file and command line arguments and assign to local variables that are used in the rest of the code
+    logging.info("Reading submission configuration file" + config_file)
+    local_vars = locals().copy()
     data = load_config_params(config_file, local_vars)
 
     if data["vis_all"]:

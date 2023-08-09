@@ -7,8 +7,7 @@ import unittest
 import torch
 
 from avae import config
-from avae.evaluate import evaluate
-from avae.train import train
+from run import run_pipeline
 from tests import testdata_mrc, testdata_npy
 
 # fixing random seeds so we dont get fail on mrc tests
@@ -42,6 +41,7 @@ class TrainEvalTest(unittest.TestCase):
             "beta_load": None,
             "beta_min": 0,
             "beta_max": 1,
+            "beta": 1,
             "beta_cycle": "flat",
             "beta_ratio": None,
             "cyc_method_beta": "flat",
@@ -50,8 +50,9 @@ class TrainEvalTest(unittest.TestCase):
             "gamma_max": 1,
             "gamma_cycle": None,
             "gamma_ratio": None,
+            "gamma": 1,
             "cyc_method_gamma": "flat",
-            "recon_fn": "MSE",
+            "loss_fn": "MSE",
             "use_gpu": False,
             "restart": False,
             "state": None,
@@ -61,6 +62,9 @@ class TrainEvalTest(unittest.TestCase):
             "normalise": True,
             "shift_min": True,
             "classifier": "NN",
+            "new_out": False,
+            "dynamic": True,
+            "opt_method": "adam",
         }
 
         config.FREQ_ACC = 5
@@ -159,66 +163,20 @@ def helper_train_eval(data):
 
     temp_dir = tempfile.TemporaryDirectory()
     os.chdir(temp_dir.name)
-    train(
-        datapath=data["datapath"],
-        datatype=data["datatype"],
-        restart=data["restart"],
-        state=data["state"],
-        lim=data["limit"],
-        splt=data["split"],
-        batch_s=data["batch"],
-        no_val_drop=data["no_val_drop"],
-        affinity=data["affinity"],
-        classes=data["classes"],
-        collect_meta=data["collect_meta"],
-        epochs=data["epochs"],
-        channels=data["channels"],
-        depth=data["depth"],
-        lat_dims=data["latent_dims"],
-        pose_dims=data["pose_dims"],
-        learning=data["learning"],
-        beta_load=data["beta_load"],
-        beta_min=data["beta_min"],
-        beta_max=data["beta_max"],
-        beta_cycle=data["beta_cycle"],
-        beta_ratio=data["beta_ratio"],
-        cyc_method_beta=data["cyc_method_beta"],
-        gamma_load=data["gamma_load"],
-        gamma_min=data["gamma_min"],
-        gamma_max=data["gamma_max"],
-        gamma_cycle=data["gamma_cycle"],
-        gamma_ratio=data["gamma_ratio"],
-        cyc_method_gamma=data["cyc_method_gamma"],
-        recon_fn=data["recon_fn"],
-        use_gpu=data["gpu"],
-        model=data["model"],
-        opt_method="adam",
-        gaussian_blur=data["gaussian_blur"],
-        normalise=data["normalise"],
-        shift_min=data["shift_min"],
-        classifier=data["classifier"],
-    )
+
+    # run training
+    data["eval"] = False
+    run_pipeline(data)
+
     n_dir_train = len(next(os.walk(temp_dir.name))[1])
     n_plots_train = len(os.listdir(os.path.join(temp_dir.name, "plots")))
     n_latent_train = len(os.listdir(os.path.join(temp_dir.name, "latents")))
     n_states_train = len(os.listdir(os.path.join(temp_dir.name, "states")))
 
-    evaluate(
-        datapath=os.path.join(data["datapath"], "test"),
-        datatype=data["datatype"],
-        state=data["state"],
-        meta=data["meta"],
-        lim=data["limit"],
-        splt=data["split"],
-        batch_s=data["batch"],
-        classes=data["classes"],
-        collect_meta=True,
-        use_gpu=data["use_gpu"],
-        gaussian_blur=data["gaussian_blur"],
-        normalise=data["normalise"],
-        shift_min=data["shift_min"],
-        classifier=data["classifier"],
-    )
+    # run evaluation
+    data["eval"] = True
+    data["datapath"] = os.path.join(data["datapath"], "test")
+    run_pipeline(data)
 
     n_plots_eval = len(os.listdir(os.path.join(temp_dir.name, "plots")))
     n_latent_eval = len(os.listdir(os.path.join(temp_dir.name, "latents")))
