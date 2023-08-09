@@ -1,6 +1,6 @@
 import os.path
 
-import config
+from . import config
 import matplotlib.pyplot as plt
 import mrcfile
 import numpy as np
