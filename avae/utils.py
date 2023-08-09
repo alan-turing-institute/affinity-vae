@@ -1,3 +1,4 @@
+import logging
 import os.path
 
 import matplotlib.pyplot as plt
@@ -95,7 +96,9 @@ def accuracy(x_train, y_train, x_val, y_val, classifier="NN"):
     )
     clf = make_pipeline(preprocessing.StandardScaler(), clf_cv)
     clf.fit(x_train, y_train)
-    print(f"Best parameters found for: {classifier}\n", clf_cv.best_params_)
+    logging.info(
+        f"Best parameters found for: {classifier}\n", clf_cv.best_params_
+    )
 
     y_pred_train = clf.predict(x_train)
     y_pred_val = clf.predict(x_val)
@@ -175,7 +178,7 @@ def save_mrc_file(fname, array):
         mrc.set_data(array)
 
 
-def load_config_params(config_file, local_vars, logging):
+def load_config_params(config_file, local_vars):
 
     if config_file is not None:
         with open(config_file, "r") as f:
@@ -266,3 +269,15 @@ def load_config_params(config_file, local_vars, logging):
                 )
 
     return data
+
+
+def write_config_file(time_stamp_name, data):
+    # record final configuration in logger and save to yaml file
+    for key, val in data.items():
+        logging.info("Parameter " + key + " set to value: " + str(data[key]))
+
+    file = open("avae_final_config" + time_stamp_name + ".yaml", "w")
+    yaml.dump(data, file)
+    file.close()
+
+    logging.info("YAML File saved!")

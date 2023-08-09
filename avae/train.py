@@ -1,4 +1,5 @@
 import datetime
+import logging
 import os
 
 import numpy as np
@@ -14,7 +15,6 @@ from .model_b import AffinityVAE as AffinityVAE_B
 from .utils import accuracy
 from .utils_learning import add_meta, pass_batch, set_device
 
-import logging
 
 def train(
     datapath,
@@ -167,7 +167,6 @@ def train(
     else:
         raise ValueError("Invalid model type", model, "must be a or b")
 
-
     vae = affinityVAE(
         channels,
         depth,
@@ -291,14 +290,6 @@ def train(
         lookup_aff=lookup,
         recon_fn=recon_fn,
     )
-    logging.info( "Epoch: [0/%d] | Batch: [0/%d] | Loss: -- | Recon: -- | "
-        "KLdiv: -- | Affin: -- | Beta: --" % (epochs, len(trains)))
-    print(
-        "Epoch: [0/%d] | Batch: [0/%d] | Loss: -- | Recon: -- | "
-        "KLdiv: -- | Affin: -- | Beta: --" % (epochs, len(trains)),
-        end="\r",
-        flush=True,
-    )
 
     # ########################## TRAINING LOOP ################################
     for epoch in range(e_start, epochs):
@@ -368,8 +359,8 @@ def train(
                 )
 
         t_history[-1] /= len(trains)
-        print(
-            "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
+        logging.info(
+            "Training : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
             "KLdiv: %f | Affin: %f | Beta: %f"
             % (
                 epoch + 1,
@@ -378,8 +369,7 @@ def train(
                 len(trains),
                 *t_history[-1],
                 beta_arr[epoch],
-            ),
-            flush=True,
+            )
         )
 
         # ########################## VAL ######################################
@@ -424,8 +414,8 @@ def train(
                 )
 
         v_history[-1] /= len(vals)
-        print(
-            "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
+        logging.info(
+            "Validation : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
             "KLdiv: %f | Affin: %f | Beta: %f"
             % (
                 epoch + 1,
@@ -434,8 +424,7 @@ def train(
                 len(vals),
                 *v_history[-1],
                 beta_arr[epoch],
-            ),
-            flush=True,
+            )
         )
 
         # ########################## TEST #####################################
@@ -468,20 +457,10 @@ def train(
             train_acc, val_acc, ypred_train, ypred_val = accuracy(
                 x_train, y_train, x_val, y_val, classifier=classifier
             )
-            print(
-                "Epoch: [%d/%d] |   Gamma: %f | Beta: %f"
-                % (
-                    epoch + 1,
-                    epochs,
-                    gamma_arr[epoch],
-                    beta_arr[epoch],
-                )
-            )
 
-            print(
+            logging.info(
                 "\n------------------->>> Accuracy: Train: %f | Val: %f\n"
                 % (train_acc, val_acc),
-                flush=True,
             )
             vis.accuracy_plot(
                 y_train, ypred_train, y_val, ypred_val, classes, epoch=epoch
@@ -619,13 +598,8 @@ def train(
                 + ".pt"
             )
 
-            print(
-                "\n################################################################",
-                flush=True,
-            )
-            print(
-                "Saving model state for restarting and evaluation ...\n",
-                flush=True,
+            logging.info(
+                "\n################################################################"
             )
 
             torch.save(
@@ -639,19 +613,23 @@ def train(
                 },
                 os.path.join("states", mname),
             )
+            logging.info(
+                f"Saved model state: {mname} for restarting and evaluation "
+            )
 
             if collect_meta:
-                meta_df.to_pickle(
-                    os.path.join(
-                        "states",
-                        "meta_"
-                        + str(timestamp)
-                        + "_E"
-                        + str(epoch)
-                        + "_"
-                        + str(lat_dims)
-                        + "_"
-                        + str(pose_dims)
-                        + ".pkl",
-                    )
+
+                filename = (
+                    "meta_"
+                    + str(timestamp)
+                    + "_E"
+                    + str(epoch)
+                    + "_"
+                    + str(lat_dims)
+                    + "_"
+                    + str(pose_dims)
+                    + ".pkl"
                 )
+                meta_df.to_pickle(os.path.join("states", filename))
+
+                logging.info(f"Saved meta file : {filename} for evaluation ")

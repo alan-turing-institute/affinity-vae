@@ -4,23 +4,15 @@ import warnings
 from datetime import datetime
 
 import click
-import yaml
 
 from avae import config
 from avae.evaluate import evaluate
 from avae.train import train
-from avae.utils import load_config_params
+from avae.utils import load_config_params, write_config_file
 
-if not os.path.exists("logs"):
-    os.mkdir("logs")
 dt_name = datetime.now().strftime("%H_%M_%d_%m_%Y")
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[
-        logging.FileHandler("logs/avae_run_log_" + dt_name + ".log"),
-        logging.StreamHandler(),
-    ],
+    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
 )
 
 
@@ -623,16 +615,27 @@ def run(
         config.FREQ_STA = data["freq_sta"]
         config.FREQ_SIM = data["freq_sim"]
 
+    if data["new_out"]:
+        dir_name = f'results_{dt_name}_lat{data["latent_dims"]}_pose{data["pose_dims"]}_lr{data["learning"]}_beta{data["beta"]}_gamma{data["gamma"]}'
+        if not os.path.exists(dir_name):
+            os.mkdir(dir_name)
+        os.chdir(dir_name)
+
+    if not os.path.exists("logs"):
+        os.mkdir("logs")
+
+    # setup logger inside the  directory where we are running the code
+    fileh = logging.FileHandler("logs/avae_run_log_" + dt_name + ".log", "a")
+    logging.getLogger().addHandler(fileh)
+
     logging.info(
         "Saving final submission config file to: "
         + "avae_final_config"
         + dt_name
         + ".yaml"
     )
-    file = open("avae_final_config" + dt_name + ".yaml", "w")
-    yaml.dump(data, file)
-    file.close()
-    logging.info("YAML File saved!")
+
+    write_config_file(dt_name, data)
 
     try:
         run_pipeline(data)
@@ -642,12 +645,6 @@ def run(
 
 
 def run_pipeline(data):
-
-    if data["new_out"]:
-        dir_name = f'results_{dt_name}_lat{data["latent_dims"]}_pose{data["pose_dims"]}_lr{data["learning"]}_beta{data["beta"]}_gamma{data["gamma"]}'
-        if not os.path.exists(dir_name):
-            os.mkdir(dir_name)
-        os.chdir(dir_name)
 
     if not data["eval"]:
         train(

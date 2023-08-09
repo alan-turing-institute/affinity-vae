@@ -5,6 +5,7 @@ mrcfile
 numpy
 pandas
 pillow
+pyyaml
 requests
 scikit-image
 scikit-learn
@@ -12,4 +13,3 @@ scipy
 torch
 torchvision
 umap-learn
-pyyaml

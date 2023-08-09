@@ -1,3 +1,4 @@
+import logging
 import os
 
 import numpy as np
@@ -95,7 +96,7 @@ def evaluate(
     fname = state.split(".")[0].split("_")
     pose_dims = fname[3]
 
-    print("Loading model from: ", state, flush=True)
+    logging.info("Loading model from: ", state, flush=True)
     checkpoint = torch.load(state)
     vae = checkpoint["model_class_object"]
     vae.load_state_dict(checkpoint["model_state_dict"])
@@ -121,7 +122,7 @@ def evaluate(
     if pose_dims != 0:
         p_test = []
 
-    print("Batch: [0/%d]" % (len(tests)), end="\r", flush=True)
+    logging.info("Batch: [0/%d]" % (len(tests)), end="\r", flush=True)
 
     vae.eval()
     for b, batch in enumerate(tests):
@@ -151,8 +152,10 @@ def evaluate(
                 mode="evl",
             )
 
-        print("Batch: [%d/%d]" % (b + 1, len(tests)), end="\r", flush=True)
-    print("Batch: [%d/%d]" % (b + 1, len(tests)), flush=True)
+        logging.info(
+            "Batch: [%d/%d]" % (b + 1, len(tests)), end="\r", flush=True
+        )
+    logging.info("Batch: [%d/%d]" % (b + 1, len(tests)), flush=True)
 
     # ########################## VISUALISE ################################
 
@@ -237,7 +240,7 @@ def evaluate(
             np.array(y_test),
             classifier=classifier,
         )
-        print(
+        logging.info(
             "\n------------------->>> Accuracy: Train: %f | Val: %f\n"
             % (train_acc, val_acc)
         )
