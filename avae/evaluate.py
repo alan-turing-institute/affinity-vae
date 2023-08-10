@@ -96,7 +96,7 @@ def evaluate(
     fname = state.split(".")[0].split("_")
     pose_dims = fname[3]
 
-    logging.info("Loading model from: ", state, flush=True)
+    logging.info(f"Loading model from: {state}")
     checkpoint = torch.load(state)
     vae = checkpoint["model_class_object"]
     vae.load_state_dict(checkpoint["model_state_dict"])
@@ -122,7 +122,7 @@ def evaluate(
     if pose_dims != 0:
         p_test = []
 
-    logging.info("Batch: [0/%d]" % (len(tests)), end="\r", flush=True)
+    logging.info("Batch: [0/%d]" % (len(tests)))
 
     vae.eval()
     for b, batch in enumerate(tests):
@@ -152,10 +152,8 @@ def evaluate(
                 mode="evl",
             )
 
-        logging.info(
-            "Batch: [%d/%d]" % (b + 1, len(tests)), end="\r", flush=True
-        )
-    logging.info("Batch: [%d/%d]" % (b + 1, len(tests)), flush=True)
+        logging.info("Batch: [%d/%d]" % (b + 1, len(tests)))
+    logging.info("Batch: [%d/%d]" % (b + 1, len(tests)))
 
     # ########################## VISUALISE ################################
 

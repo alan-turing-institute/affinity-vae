@@ -182,11 +182,11 @@ def load_data(
             datatype=datatype,
         )
 
-        logging.info("Eval data size:", len(data))
+        logging.info("Eval data size: {}".format(len(data)))
         tests = DataLoader(
             data, batch_size=batch_s, num_workers=0, shuffle=True
         )
-        logging.info("Eval batches:", len(tests))
+        logging.info("Eval batches: {}".format(len(tests)))
 
     if eval:
         return tests, data.dim()
