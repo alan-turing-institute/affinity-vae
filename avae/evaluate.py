@@ -96,7 +96,7 @@ def evaluate(
     fname = state.split(".")[0].split("_")
     pose_dims = fname[3]
 
-    logging.info("Loading model from: {state}".format(state))
+    logging.info("Loading model from: {}".format(state))
     checkpoint = torch.load(state)
     vae = checkpoint["model_class_object"]
     vae.load_state_dict(checkpoint["model_state_dict"])
