@@ -295,7 +295,6 @@ def train(
         recon_fn=recon_fn,
     )
 
-
     if tensorboard:
         writer = SummaryWriter()
     else:

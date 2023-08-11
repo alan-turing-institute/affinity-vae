@@ -169,7 +169,6 @@ def helper_train_eval(data):
     data["eval"] = False
     run_pipeline(data)
 
-
     n_dir_train = len(next(os.walk(temp_dir.name))[1])
     n_plots_train = len(os.listdir(os.path.join(temp_dir.name, "plots")))
     n_latent_train = len(os.listdir(os.path.join(temp_dir.name, "latents")))
