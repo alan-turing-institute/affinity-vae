@@ -61,6 +61,7 @@ class TrainEvalTest(unittest.TestCase):
             "gaussian_blur": True,
             "normalise": True,
             "shift_min": True,
+            "tensorboard": True,
             "classifier": "NN",
             "new_out": False,
             "dynamic": True,
@@ -103,7 +104,7 @@ class TrainEvalTest(unittest.TestCase):
             n_states_eval,
         ) = helper_train_eval(self.data)
 
-        self.assertEqual(n_dir_train, 3)
+        self.assertEqual(n_dir_train, 4)
         self.assertEqual(n_plots_train, 32)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
@@ -124,7 +125,7 @@ class TrainEvalTest(unittest.TestCase):
             n_states_eval,
         ) = helper_train_eval(self.data)
 
-        self.assertEqual(n_dir_train, 3)
+        self.assertEqual(n_dir_train, 4)
         self.assertEqual(n_plots_train, 32)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
@@ -150,7 +151,7 @@ class TrainEvalTest(unittest.TestCase):
             n_states_eval,
         ) = helper_train_eval(self.data)
 
-        self.assertEqual(n_dir_train, 3)
+        self.assertEqual(n_dir_train, 4)
         self.assertEqual(n_plots_train, 30)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
@@ -167,6 +168,7 @@ def helper_train_eval(data):
     # run training
     data["eval"] = False
     run_pipeline(data)
+
 
     n_dir_train = len(next(os.walk(temp_dir.name))[1])
     n_plots_train = len(os.listdir(os.path.join(temp_dir.name, "plots")))
