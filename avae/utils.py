@@ -154,12 +154,24 @@ def fill_grid_for_plottting(rows, columns, grid, dsize, array, padding=0):
     return grid
 
 
-def save_imshow_png(fname, array, cmap=None, min=None, max=None):
+def save_imshow_png(
+    fname,
+    array,
+    cmap=None,
+    min=None,
+    max=None,
+    writer=None,
+    figname=None,
+    epoch=0,
+):
     if not os.path.exists("plots"):
         os.mkdir("plots")
 
-    plt.subplots(figsize=(10, 10))
+    fig, _ = plt.subplots(figsize=(10, 10))
     plt.imshow(array, cmap=cmap, vmin=min, vmax=max)  # channels last
+
+    if writer:
+        writer.add_figure(figname, fig, epoch)
 
     plt.savefig("plots/" + fname)
     plt.close()

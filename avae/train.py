@@ -4,6 +4,7 @@ import os
 import numpy as np
 import pandas as pd
 import torch
+from torch.utils.tensorboard import SummaryWriter
 
 from . import config, vis
 from .cyc_annealing import cyc_annealing
@@ -52,6 +53,7 @@ def train(
     gaussian_blur,
     normalise,
     shift_min,
+    tensorboard,
     classifier,
 ):
     """Function to train an AffinityVAE model. The inputs are training configuration parameters. In this function the
@@ -126,6 +128,8 @@ def train(
         In True, the input data is normalised before being passed to the model.
     shift_min: bool
         If True, the input data is shifted to have a minimum value of 0 and max of 1.
+    tensorboard: bool
+        If True, log metrics and figures using tensorboard.
     classifier: str
         The method to use on the latent space classification. Can be neural network (NN), k nearest neighbourgs (KNN) or logistic regression (LR).
     """
@@ -297,6 +301,11 @@ def train(
         flush=True,
     )
 
+    if tensorboard:
+        writer = SummaryWriter()
+    else:
+        writer = None
+
     # ########################## TRAINING LOOP ################################
     for epoch in range(e_start, epochs):
 
@@ -435,6 +444,12 @@ def train(
             flush=True,
         )
 
+        if writer:
+            for i, loss_name in enumerate(
+                ["Loss", "Recon loss", "KLdiv loss", "Affin loss"]
+            ):
+                writer.add_scalar(loss_name, v_history[-1][i], epoch)
+
         # ########################## TEST #####################################
         if (epoch + 1) % config.FREQ_EVAL == 0:
             for b, batch in enumerate(tests):  # tests empty if no 'test' dir
@@ -481,11 +496,23 @@ def train(
                 flush=True,
             )
             vis.accuracy_plot(
-                y_train, ypred_train, y_val, ypred_val, classes, epoch=epoch
+                y_train,
+                ypred_train,
+                y_val,
+                ypred_val,
+                classes,
+                epoch=epoch,
+                writer=writer,
             )
 
             vis.f1_plot(
-                y_train, ypred_train, y_val, ypred_val, classes, epoch=epoch
+                y_train,
+                ypred_train,
+                y_val,
+                ypred_val,
+                classes,
+                epoch=epoch,
+                writer=writer,
             )
 
         # visualise loss
@@ -510,8 +537,24 @@ def train(
 
         # visualise reconstructions - last batch
         if config.VIS_REC and (epoch + 1) % config.FREQ_REC == 0:
-            vis.recon_plot(x, x_hat, y_train, data_dim, mode="trn")
-            vis.recon_plot(v, v_hat, y_val, data_dim, mode="val")
+            vis.recon_plot(
+                x,
+                x_hat,
+                y_train,
+                data_dim,
+                mode="trn",
+                epoch=epoch,
+                writer=writer,
+            )
+            vis.recon_plot(
+                v,
+                v_hat,
+                y_val,
+                data_dim,
+                mode="val",
+                epoch=epoch,
+                writer=writer,
+            )
 
         # visualise mean and logvar similarity matrix
         if config.VIS_SIM and (epoch + 1) % config.FREQ_SIM == 0:
@@ -551,8 +594,8 @@ def train(
             else:
                 xs = np.r_[x_train, x_val]
                 ys = np.r_[y_train, y_val]
-            vis.latent_embed_plot_tsne(xs, ys)
-            vis.latent_embed_plot_umap(xs, ys)
+            vis.latent_embed_plot_tsne(xs, ys, epoch=epoch, writer=writer)
+            vis.latent_embed_plot_umap(xs, ys, epoch=epoch, writer=writer)
 
             if collect_meta:
                 # merge img and rec into one image for display in altair
@@ -652,3 +695,7 @@ def train(
                         + ".pkl",
                     )
                 )
+
+    if writer:
+        writer.flush()
+        writer.close()

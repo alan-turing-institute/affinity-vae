@@ -60,6 +60,7 @@ class TrainEvalTest(unittest.TestCase):
             "gaussian_blur": True,
             "normalise": True,
             "shift_min": True,
+            "tensorboard": True,
             "classifier": "NN",
         }
 
@@ -99,7 +100,7 @@ class TrainEvalTest(unittest.TestCase):
             n_states_eval,
         ) = helper_train_eval(self.data)
 
-        self.assertEqual(n_dir_train, 3)
+        self.assertEqual(n_dir_train, 4)
         self.assertEqual(n_plots_train, 32)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
@@ -120,7 +121,7 @@ class TrainEvalTest(unittest.TestCase):
             n_states_eval,
         ) = helper_train_eval(self.data)
 
-        self.assertEqual(n_dir_train, 3)
+        self.assertEqual(n_dir_train, 4)
         self.assertEqual(n_plots_train, 32)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
@@ -146,7 +147,7 @@ class TrainEvalTest(unittest.TestCase):
             n_states_eval,
         ) = helper_train_eval(self.data)
 
-        self.assertEqual(n_dir_train, 3)
+        self.assertEqual(n_dir_train, 4)
         self.assertEqual(n_plots_train, 30)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
@@ -196,6 +197,7 @@ def helper_train_eval(data):
         gaussian_blur=data["gaussian_blur"],
         normalise=data["normalise"],
         shift_min=data["shift_min"],
+        tensorboard=data["tensorboard"],
         classifier=data["classifier"],
     )
     n_dir_train = len(next(os.walk(temp_dir.name))[1])

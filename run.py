@@ -488,6 +488,14 @@ logging.basicConfig(
     is_flag=True,
     help="Shift the minimum of the data to one zero and the maximum to one",
 )
+@click.option(
+    "--tensorboard",
+    "-tb",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Log metrics and figures to tensorboard during training",
+)
 def run(
     config_file,
     datapath,
@@ -552,6 +560,7 @@ def run(
     gaussian_blur,
     normalise,
     shift_min,
+    tensorboard,
     classifier,
 ):
 
@@ -751,6 +760,7 @@ def run(
                 gaussian_blur=data["gaussian_blur"],
                 normalise=data["normalise"],
                 shift_min=data["shift_min"],
+                tensorboard=data["tensorboard"],
                 classifier=data["classifier"],
             )
         else:
