@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 import pandas as pd
 import torch
@@ -22,9 +24,8 @@ def set_device(gpu):
         "cuda:0" if gpu and torch.cuda.is_available() else "cpu"
     )
     if gpu and device == "cpu":
-        print(
-            "\nWARNING: no GPU available, running on CPU instead.\n",
-            flush=True,
+        logging.warning(
+            "\nWARNING: no GPU available, running on CPU instead.\n"
         )
     return device
 
@@ -141,12 +142,10 @@ def pass_batch(
         # record loss
         for i in range(len(history[-1])):
             history[-1][i] += history_loss[i].item()
-        print(
+        logging.info(
             "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
             "KLdiv: %f | Affin: %f | Beta: %f"
-            % (e + 1, epochs, b + 1, batches, *history_loss, beta[e]),
-            end="\r",
-            flush=True,
+            % (e + 1, epochs, b + 1, batches, *history_loss, beta[e])
         )
 
     # backwards

@@ -1,3 +1,4 @@
+import logging
 import os
 import random
 
@@ -154,11 +155,14 @@ def load_data(
                     batch_s, len(train_data), len(val_data), splt
                 )
             )
-        print("\nData size:", len(data), flush=True)
-        print("\nClass list:", data.final_classes, flush=True)
-        print("Train / val split:", len(train_data), len(val_data), flush=True)
-        print("Train / val batches:", len(trains), len(vals), flush=True)
-        print(flush=True)
+        logging.info("Data size: {}".format(len(data)))
+        logging.info("Class list: {}".format(data.final_classes))
+        logging.info(
+            "Train / val split: {}, {}".format(len(train_data), len(val_data))
+        )
+        logging.info(
+            "Train / val batches: {}, {}".format(len(trains), len(vals))
+        )
 
         if affinity is not None:
             lookup = lookup.to_numpy(dtype=np.float32)
@@ -178,12 +182,11 @@ def load_data(
             datatype=datatype,
         )
 
-        print("Eval data size:", len(data), flush=True)
+        logging.info("Eval data size: {}".format(len(data)))
         tests = DataLoader(
             data, batch_size=batch_s, num_workers=0, shuffle=True
         )
-        print("Eval batches:", len(tests), flush=True)
-        print(flush=True)
+        logging.info("Eval batches: {}".format(len(tests)))
 
     if eval:
         return tests, data.dim()
