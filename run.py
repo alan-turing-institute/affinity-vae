@@ -9,7 +9,6 @@ import yaml
 from avae import config
 from avae.evaluate import evaluate
 from avae.train import train
-from tools.create_subtomo import create_subtomo
 
 if not os.path.exists("logs"):
     os.mkdir("logs")
@@ -723,7 +722,7 @@ def run(
         file.close()
         logging.info("YAML File saved!")
 
-        if not data["eval"] or data["create_subtomo"]:
+        if not data["eval"]:
             train(
                 datapath=data["datapath"],
                 datatype=data["datatype"],
@@ -764,7 +763,7 @@ def run(
                 tensorboard=data["tensorboard"],
                 classifier=data["classifier"],
             )
-        elif data["eval"]:
+        else:
             evaluate(
                 datapath=data["datapath"],
                 datatype=data["datatype"],
@@ -782,20 +781,7 @@ def run(
                 classifier=data["classifier"],
             )
             # TODO also make sure image is correct size, maybe in dataloader?
-        elif data["create_subtomo"]:
-            create_subtomo(
-                input_path=data["input_path"],
-                output_path=data["output_path"],
-                bandpass=data["bandpass"],
-                low_freq=data["low_freq"],
-                high_freq=data["high_freq"],
-                add_noise=data["add_noise"],
-                noise_int=data["noise_intensity"],
-                padding=data["padding"],
-                augment=data["augment"],
-                aug_th_min=data["aug_th_min"],
-                aug_th_max=data["aug_th_max"],
-            )
+
     except Exception:
         logging.exception("An exception was thrown!")
 

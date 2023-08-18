@@ -47,9 +47,9 @@ def create_subtomo(
         size of each subtomogram voxel given as a list where vox_size: [x,y,x]
     bandpass: bool
         Apply band pass filter to the full tomogram before extracting the subtomograms
-    low_freq: int
+    low_freq: float
         Lower frequency threshold for the band pass filter
-    high_freq: int
+    high_freq: float
         higher frequency threshold for the band pass filter
 
     """
