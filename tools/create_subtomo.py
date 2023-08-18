@@ -17,12 +17,11 @@ def create_subtomo(
     low_freq=0,
     high_freq=15,
     gaussian_blur=False,
+    normalise=False,
     add_noise=False,
     noise_int=0,
-    padding=False,
-    padded_size=[32, 32, 32],
-    augment=False,
-    aug_num=5,
+    padding=None,
+    augment=None,
     aug_th_min=-45,
     aug_th_max=45,
 ):
@@ -51,7 +50,23 @@ def create_subtomo(
         Lower frequency threshold for the band pass filter
     high_freq: float
         higher frequency threshold for the band pass filter
-
+    gaussian_blur: bool
+        if True, Gaussian bluring is applied to the input before being passed to the model.
+        This is added as a way to remove noise from the input data.
+    normalise: bool
+        In True, the input data is normalised before being passed to the model.
+    add_noise: bool
+        Add noise to images, this can be used for benchmarking
+    noise_int: int
+        noise intensity
+    padding: list
+        size of padding boxes
+    augment: int
+        perform the given number of aumentation on each voxel before saving
+    aug_th_max: int
+        The minimum value of the augmentation range in degrees
+    aug_th_min: int
+        The maximum value of the augmentation range in degrees
     """
 
     # the name of all full tomograms
@@ -77,6 +92,8 @@ def create_subtomo(
         if gaussian_blur:
             print("gaussian blur is not implemented yet")
             data = data
+        if normalise:
+            data = normalisiation(data)
 
         particle_df = particles_GT(
             os.path.join(annot_path, annot_list[t]), output_path
@@ -94,12 +111,12 @@ def create_subtomo(
                 protein["y"] - s[1] : protein["y"] + s[1],
                 protein["z"] - s[2] : protein["z"] + s[2],
             ]
-            if augment:
-                for a in range(aug_num):
+            if augment is not None:
+                for a in range(augment):
                     mol = augmentation(mol, aug_th_min, aug_th_max)
 
-            if padding:
-                mol = padding_mol(mol, padded_size)
+            if padding is not None:
+                mol = padding_mol(mol, padding)
 
             mol_file_name = (
                 f"{name}_{tomo[:-4]}_{index}_Th{a}_n{noise_int}.mrc"
@@ -107,6 +124,11 @@ def create_subtomo(
             mrcfile.write(
                 os.path.join(output_path, mol_file_name), mol, overwrite=True
             )
+
+
+def normalisiation(x):
+    x = (x - x.min()) / (x.max() - x.min())
+    return x
 
 
 def augmentation(mol, aug_th_min, aug_th_max):

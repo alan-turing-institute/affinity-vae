@@ -66,6 +66,28 @@ logging.basicConfig(
     help=" size of each subtomogram voxel given as a list where vox_size: [x,y,x]",
 )
 @click.option(
+    "--bandpass",
+    "-bp",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Apply band pass",
+)
+@click.option(
+    "--low_freq",
+    "-lf",
+    type=float,
+    default=None,
+    help="Lower  frequency threshold for the band pass filter",
+)
+@click.option(
+    "--high_freq",
+    "-hf",
+    type=float,
+    default=None,
+    help="higher frequency threshold for the band pass filter",
+)
+@click.option(
     "--gaussian_blur",
     "-gb",
     type=bool,
@@ -82,26 +104,47 @@ logging.basicConfig(
     help="Normalise data",
 )
 @click.option(
-    "--bandpass",
-    "-bp",
+    "--add_noise",
+    "-n",
     type=bool,
     default=None,
     is_flag=True,
-    help="Apply band pass",
+    help="Add noise to images, this can be used for benchmarking",
 )
 @click.option(
-    "--low_freq",
-    "-lf",
-    type=(float, float),
+    "--noise_int",
+    "-ni",
+    type=int,
     default=None,
-    help="Lower  frequency threshold for the band pass filter",
+    help="noise intensity",
 )
 @click.option(
-    "--high_freq",
-    "-hf",
-    type=(float, float),
+    "--padding",
+    "-ni",
+    type=list,
     default=None,
-    help="higher frequency threshold for the band pass filter",
+    help="size of padding boxes",
+)
+@click.option(
+    "--augment",
+    "-aug",
+    type=int,
+    default=None,
+    help="perform the given number of aumentation on each voxel before saving",
+)
+@click.option(
+    "--aug_th_min",
+    "-atmin",
+    type=int,
+    default=None,
+    help="The minimum value of the augmentation range in degrees",
+)
+@click.option(
+    "--aug_th_max",
+    "-atmax",
+    type=int,
+    default=None,
+    help="The maximum value of the augmentation range in degrees",
 )
 def run(
     config_file,
@@ -116,8 +159,7 @@ def run(
     gaussian_blur=False,
     add_noise=False,
     noise_int=0,
-    padding=False,
-    padded_size=[32, 32, 32],
+    padding=None,
     augment=False,
     aug_num=5,
     aug_th_min=-45,
@@ -174,9 +216,14 @@ def run(
     create_subtomo(
         input_path=data["input_path"],
         output_path=data["output_path"],
+        datatype=data["datatype"],
+        annot_path=data["annot_path"],
+        vox_size=data["vox_size"],
         bandpass=data["bandpass"],
         low_freq=data["low_freq"],
         high_freq=data["high_freq"],
+        gaussian_blur=data["gaussian_blur"],
+        normalise=data["normalise"],
         add_noise=data["add_noise"],
         noise_int=data["noise_intensity"],
         padding=data["padding"],
