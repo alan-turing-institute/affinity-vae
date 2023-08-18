@@ -1,0 +1,25 @@
+#### Data parameters
+input_path: /Users/mfamili/work/test_affinity_merge/test_create_subtomo_avae
+annot_path: /Users/mfamili/work/test_affinity_merge/test_create_subtomo_avae
+output_path: /Users/mfamili/work/test_affinity_merge/test_create_subtomo_avae/subtomos
+
+####
+datatype: mrc
+vox_size: [32, 32, 32]
+
+
+
+### Filters
+bandpass: False
+low_freq: 0
+high_freq: 15
+gaussian_blur: True
+normalise: True
+add_noise: True
+noise_int: 3
+
+
+#### augmentation
+augment: 3
+aug_th_min: -20
+aug_th_max: 20
