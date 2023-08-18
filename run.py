@@ -574,7 +574,6 @@ def run(
             logging.info("Reading submission configuration file" + config_file)
             data = yaml.load(f, Loader=yaml.FullLoader)
         # returns JSON object as
-        print(data.get("gaussian_blur"))
 
         for key, val in local_vars.items():
             if (

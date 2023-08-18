@@ -69,11 +69,13 @@ def create_subtomo(
         The maximum value of the augmentation range in degrees
     """
 
+    a = 0
     # the name of all full tomograms
     file_list = [f for f in os.listdir(input_path) if "." + datatype in f]
-
+    print("List of tomograms provided:", file_list)
     # the name of all annotations for tomograms
     annot_list = [f for f in os.listdir(input_path) if "." + "txt" in f]
+    print("List of annotation files provided:", annot_list)
 
     if len(annot_list) != len(file_list):
         raise RuntimeError(
@@ -81,22 +83,33 @@ def create_subtomo(
         )
 
     for t, tomo in enumerate(file_list):
+        print("#####################################")
+        print("#####################################")
+        print(f"{t}: segmenting tomogram {tomo}")
+        print("#####################################")
+        print("#####################################")
+
         data = read_mrc(os.path.join(input_path, tomo))
         if bandpass:
+            print("creating band pass filter")
             bandpass_filter_image = bandpass_filter(
                 data.shape, low_freq, high_freq
             )
+            print("Applying band pass filter")
             data = apply_bandpass_filter(data, bandpass_filter_image)
+
         if add_noise:
             data = add_g_noise(data, noise_int)
+
         if gaussian_blur:
             print("gaussian blur is not implemented yet")
             data = data
+
         if normalise:
             data = normalisiation(data)
 
         particle_df = particles_GT(
-            os.path.join(annot_path, annot_list[t]), output_path
+            os.path.join(annot_path, f"{tomo[:-4]}.txt"), output_path
         )
 
         particle_df = delete_detection_in_edges(
@@ -111,19 +124,20 @@ def create_subtomo(
                 protein["y"] - s[1] : protein["y"] + s[1],
                 protein["z"] - s[2] : protein["z"] + s[2],
             ]
-            if augment is not None:
-                for a in range(augment):
-                    mol = augmentation(mol, aug_th_min, aug_th_max)
+            for a in range(augment):
+                mol = augmentation(mol, a, aug_th_min, aug_th_max)
+                if padding is not None:
+                    mol = padding_mol(mol, padding)
 
-            if padding is not None:
-                mol = padding_mol(mol, padding)
-
-            mol_file_name = (
-                f"{name}_{tomo[:-4]}_{index}_Th{a}_n{noise_int}.mrc"
-            )
-            mrcfile.write(
-                os.path.join(output_path, mol_file_name), mol, overwrite=True
-            )
+                mol_file_name = (
+                    f"{name}_{tomo[:-4]}_{index}_Th{a}_n{noise_int}.mrc"
+                )
+                print("saving:", mol_file_name)
+                mrcfile.write(
+                    os.path.join(output_path, mol_file_name),
+                    mol,
+                    overwrite=True,
+                )
 
 
 def normalisiation(x):
@@ -131,13 +145,15 @@ def normalisiation(x):
     return x
 
 
-def augmentation(mol, aug_th_min, aug_th_max):
-    deg_per_rot = 15
+def augmentation(mol, a, aug_th_min, aug_th_max):
+    mol = np.array(mol)
+    deg_per_rot = 5
     angle = np.random.randint(aug_th_min, aug_th_max, size=(len(mol.shape),))
     for ax in range(angle.size):
-        theta = angle[ax] * deg_per_rot
+        theta = angle[ax] * deg_per_rot * a
         axes = (ax, (ax + 1) % angle.size)
         mol = rotate(mol, theta, axes=axes, order=0, reshape=False)
+    return mol
 
 
 def bandpass_filter(image_size, bp_low, bp_high):

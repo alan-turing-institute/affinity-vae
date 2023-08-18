@@ -21,7 +21,21 @@ logging.basicConfig(
 )
 
 
-@click.command(name="Affinity Trainer")
+class ConvertStrToList(click.Option):
+    def type_cast_value(self, ctx, value) -> list:
+        try:
+            value = str(value)
+            assert value.count("[") == 1 and value.count("]") == 1
+            list_as_str = value.replace('"', "'").split("[")[1].split("]")[0]
+            list_of_items = [
+                item.strip().strip("'") for item in list_as_str.split()
+            ]
+            return list_of_items
+        except Exception:
+            raise click.BadParameter(value)
+
+
+@click.command(name="Subtomogram creator")
 @click.option("--config_file", type=click.Path(exists=True))
 @click.option(
     "--input_path",
@@ -54,16 +68,9 @@ logging.basicConfig(
 @click.option(
     "--vox_size",
     "-vs",
-    type=(int, int, int),
-    default=None,
-    help="size of each subtomogram voxel given as a list where vox_size: [x,y,x]",
-)
-@click.option(
-    "--vox_size",
-    "-vs",
-    type=list,
+    cls=ConvertStrToList,
     default=[],
-    help=" size of each subtomogram voxel given as a list where vox_size: [x,y,x]",
+    help="size of each subtomogram voxel given as a list where vox_size: [x,y,x]",
 )
 @click.option(
     "--bandpass",
@@ -157,6 +164,7 @@ def run(
     low_freq=0,
     high_freq=15,
     gaussian_blur=False,
+    normalise=False,
     add_noise=False,
     noise_int=0,
     padding=None,
@@ -176,7 +184,6 @@ def run(
             logging.info("Reading submission configuration file" + config_file)
             data = yaml.load(f, Loader=yaml.FullLoader)
         # returns JSON object as
-        print(data.get("gaussian_blur"))
 
         for key, val in local_vars.items():
             if (
@@ -225,7 +232,7 @@ def run(
         gaussian_blur=data["gaussian_blur"],
         normalise=data["normalise"],
         add_noise=data["add_noise"],
-        noise_int=data["noise_intensity"],
+        noise_int=data["noise_int"],
         padding=data["padding"],
         augment=data["augment"],
         aug_th_min=data["aug_th_min"],
