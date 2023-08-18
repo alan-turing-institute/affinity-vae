@@ -4,7 +4,6 @@ import warnings
 import mrcfile
 import numpy as np
 import pandas as pd
-import torch
 from scipy.ndimage import rotate
 
 
@@ -89,30 +88,34 @@ def create_subtomo(
 
         for index, protein in particle_df.iterrows():
             name = protein["class"]
-            s = [int(n / 2) - more for n in vox_size]
+            s = [int(n / 2) for n in vox_size]
             mol = data[
                 protein["x"] - s[0] : protein["x"] + s[0],
                 protein["y"] - s[1] : protein["y"] + s[1],
                 protein["z"] - s[2] : protein["z"] + s[2],
             ]
             if augment:
-                mol = augmentation(mol, aug_num, aug_th_min, aug_th_max)
+                for a in range(aug_num):
+                    mol = augmentation(mol, aug_th_min, aug_th_max)
 
             if padding:
                 mol = padding_mol(mol, padded_size)
 
+            mol_file_name = (
+                f"{name}_{tomo[:-4]}_{index}_Th{a}_n{noise_int}.mrc"
+            )
+            mrcfile.write(
+                os.path.join(output_path, mol_file_name), mol, overwrite=True
+            )
 
-def augmentation(mol, aug_num, aug_th_min, aug_th_max):
+
+def augmentation(mol, aug_th_min, aug_th_max):
     deg_per_rot = 15
-    for i in range(aug_num):
-        angle = np.random.randint(
-            aug_th_min, aug_th_max, size=(len(mol.shape),)
-        )
-
-        for ax in range(angle.size):
-            theta = angle[ax] * deg_per_rot
-            axes = (ax, (ax + 1) % angle.size)
-            mol = rotate(mol, theta, axes=axes, order=0, reshape=False)
+    angle = np.random.randint(aug_th_min, aug_th_max, size=(len(mol.shape),))
+    for ax in range(angle.size):
+        theta = angle[ax] * deg_per_rot
+        axes = (ax, (ax + 1) % angle.size)
+        mol = rotate(mol, theta, axes=axes, order=0, reshape=False)
 
 
 def bandpass_filter(image_size, bp_low, bp_high):
