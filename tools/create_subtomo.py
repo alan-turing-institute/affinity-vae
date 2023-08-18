@@ -98,6 +98,9 @@ def create_subtomo(
             if augment:
                 mol = augmentation(mol, aug_num, aug_th_min, aug_th_max)
 
+            if padding:
+                mol = padding_mol(mol, padded_size)
+
 
 def augmentation(mol, aug_num, aug_th_min, aug_th_max):
     deg_per_rot = 15
@@ -212,3 +215,33 @@ def delete_detection_in_edges(df, data_shape, vox_size):
     df.drop(df[df["y"] < vox_size[1]].index, inplace=True)
     df.drop(df[df["z"] < vox_size[2]].index, inplace=True)
     return df
+
+
+def padding_mol(array, padding_size):
+    """
+    :param array: numpy array
+    :param xx: desired height
+    :param yy: desirex width
+    :return: padded array
+    """
+
+    h = array.shape[0]
+    w = array.shape[1]
+    z = array.shape[2]
+
+    xx = padding_size[0]
+    yy = padding_size[1]
+    zz = padding_size[2]
+
+    a = (xx - h) // 2
+    aa = xx - a - h
+
+    b = (yy - w) // 2
+    bb = yy - b - w
+
+    c = (zz - z) // 2
+    cc = zz - c - z
+
+    return np.pad(
+        array, pad_width=((a, aa), (b, bb), (c, cc)), mode="constant"
+    )
