@@ -1,13 +1,13 @@
 ##################################
-# This input file contains the parameters required for running 
+# This input file contains the parameters required for running
 # run_create_subtomo.py
 # This run script can preprocess a full tomogram by applying various filters such as :
-#  Normalisation 
-#  add gaussian noise for benchmarking purposes 
-#  apply a bandpass filter fiven a low and high frequency threshold 
-#  create augmentations of the voxel where the voxels are rotated between a minimum and maximum input angle 
+#  Normalisation
+#  add gaussian noise for benchmarking purposes
+#  apply a bandpass filter fiven a low and high frequency threshold
+#  create augmentations of the voxel where the voxels are rotated between a minimum and maximum input angle
 #  can apply padding
-#  Not implemented yet : can apply crop after rotation 
+#  Not implemented yet : can apply crop after rotation
 #  Not Implemented yet: gaussian blur
 
 
