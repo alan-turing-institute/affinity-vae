@@ -5,9 +5,10 @@ mrcfile
 numpy
 pandas
 pillow
+pyyaml
 requests
 scikit-image
-scikit-learn==1.2.0
+scikit-learn
 scipy
 tensorboard
 torch

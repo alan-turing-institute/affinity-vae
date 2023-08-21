@@ -83,4 +83,5 @@ DEFAULT_RUN_CONFIGS = {
     "tensorboard": True,
     "classifier": "NN",
     "datatype": "mrc",
+    "new_out": False,
 }
