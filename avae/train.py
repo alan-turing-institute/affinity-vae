@@ -16,7 +16,6 @@ from .model_b import AffinityVAE as AffinityVAE_B
 from .utils import accuracy
 from .utils_learning import add_meta, pass_batch, set_device
 
-
 def train(
     datapath,
     datatype,
@@ -368,18 +367,20 @@ def train(
                 )
 
         t_history[-1] /= len(trains)
-        logging.info(
-            "Training : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
-            "KLdiv: %f | Affin: %f | Beta: %f"
-            % (
-                epoch + 1,
-                epochs,
-                b + 1,
-                len(trains),
-                *t_history[-1],
-                beta_arr[epoch],
+
+        if (int(epoch) % 10) == 0:
+            logging.info(
+                "Training : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
+                "KLdiv: %f | Affin: %f | Beta: %f"
+                % (
+                    epoch + 1,
+                    epochs,
+                    b + 1,
+                    len(trains),
+                    *t_history[-1],
+                    beta_arr[epoch],
+                )
             )
-        )
 
         # ########################## VAL ######################################
         vae.eval()
@@ -423,18 +424,21 @@ def train(
                 )
 
         v_history[-1] /= len(vals)
-        logging.info(
-            "Validation : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
-            "KLdiv: %f | Affin: %f | Beta: %f"
-            % (
-                epoch + 1,
-                epochs,
-                b + 1,
-                len(vals),
-                *v_history[-1],
-                beta_arr[epoch],
+
+        if (int(epoch) % 10) == 0:
+            logging.info(
+                "Validation : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
+                "KLdiv: %f | Affin: %f | Beta: %f"
+                % (
+                    epoch + 1,
+                    epochs,
+                    b + 1,
+                    len(vals),
+                    *v_history[-1],
+                    beta_arr[epoch],
+                )
             )
-        )
+
 
         if writer:
             for i, loss_name in enumerate(

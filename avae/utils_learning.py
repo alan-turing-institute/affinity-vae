@@ -142,7 +142,7 @@ def pass_batch(
         # record loss
         for i in range(len(history[-1])):
             history[-1][i] += history_loss[i].item()
-        logging.info(
+        logging.debug(
             "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
             "KLdiv: %f | Affin: %f | Beta: %f"
             % (e + 1, epochs, b + 1, batches, *history_loss, beta[e])
