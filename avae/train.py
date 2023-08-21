@@ -16,6 +16,7 @@ from .model_b import AffinityVAE as AffinityVAE_B
 from .utils import accuracy
 from .utils_learning import add_meta, pass_batch, set_device
 
+
 def train(
     datapath,
     datatype,
@@ -438,7 +439,6 @@ def train(
                     beta_arr[epoch],
                 )
             )
-
 
         if writer:
             for i, loss_name in enumerate(
