@@ -585,6 +585,7 @@ def run(
     if data["debug"]:
         logging.info("Debug mode enabled")
         logging.getLogger().setLevel(logging.DEBUG)
+        logging.getLogger('matplotlib.font_manager').disabled = True
 
     if data["vis_all"]:
         config.VIS_LOS = True
