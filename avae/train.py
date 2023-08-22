@@ -370,16 +370,16 @@ def train(
         t_history[-1] /= len(trains)
 
         logging.info(
-                "Training : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
-                "KLdiv: %f | Affin: %f | Beta: %f"
-                % (
-                    epoch + 1,
-                    epochs,
-                    b + 1,
-                    len(trains),
-                    *t_history[-1],
-                    beta_arr[epoch],
-                )
+            "Training : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
+            "KLdiv: %f | Affin: %f | Beta: %f"
+            % (
+                epoch + 1,
+                epochs,
+                b + 1,
+                len(trains),
+                *t_history[-1],
+                beta_arr[epoch],
+            )
         )
 
         # ########################## VAL ######################################
@@ -426,16 +426,16 @@ def train(
         v_history[-1] /= len(vals)
 
         logging.info(
-                "Validation : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
-                "KLdiv: %f | Affin: %f | Beta: %f"
-                % (
-                    epoch + 1,
-                    epochs,
-                    b + 1,
-                    len(vals),
-                    *v_history[-1],
-                    beta_arr[epoch],
-                )
+            "Validation : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
+            "KLdiv: %f | Affin: %f | Beta: %f"
+            % (
+                epoch + 1,
+                epochs,
+                b + 1,
+                len(vals),
+                *v_history[-1],
+                beta_arr[epoch],
+            )
         )
 
         if writer:
