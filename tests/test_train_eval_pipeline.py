@@ -165,9 +165,6 @@ def helper_train_eval(data):
     temp_dir = tempfile.TemporaryDirectory()
     os.chdir(temp_dir.name)
 
-    print(random.randint(0, 9))
-    print(torch.rand(1))
-
     # run training
     data["eval"] = False
     run_pipeline(data)

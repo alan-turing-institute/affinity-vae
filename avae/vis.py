@@ -101,7 +101,7 @@ def format(im, data_dim):
         im = np.copy(im.squeeze(dim=0).cpu().detach().numpy())
         # .astype(np.uint8)
     else:
-        logging.info(
+        logging.warning(
             "WARNING: Wrong data format, please pass either a single "
             "unsqueezed tensor or a batch to image formatter. Exiting.\n",
         )
