@@ -11,7 +11,7 @@ from run import run_pipeline
 from tests import testdata_mrc, testdata_npy
 
 # fixing random seeds so we dont get fail on mrc tests
-torch.random.manual_seed(0)
+torch.random.manual_seed(10)
 random.seed(10)
 
 
@@ -25,7 +25,7 @@ class TrainEvalTest(unittest.TestCase):
         self.data = {
             "datapath": self.testdata_mrc,
             "datatype": "mrc",
-            "limit": 100,
+            "limit": None,
             "split": 10,
             "batch": 25,
             "no_val_drop": True,
