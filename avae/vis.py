@@ -101,7 +101,7 @@ def format(im, data_dim):
         im = np.copy(im.squeeze(dim=0).cpu().detach().numpy())
         # .astype(np.uint8)
     else:
-        logging.info(
+        logging.warning(
             "WARNING: Wrong data format, please pass either a single "
             "unsqueezed tensor or a batch to image formatter. Exiting.\n",
         )
@@ -165,10 +165,10 @@ def latent_embed_plot_tsne(xs, ys, mode="", epoch=0, writer=None):
     writer: SummaryWriter
         Tensorboard summary writer
     """
-    logging.info(
+    logging.debug(
         "\n################################################################",
     )
-    logging.info("Visualising static TSNE embedding...\n")
+    logging.debug("Visualising static TSNE embedding...\n")
 
     xs = np.asarray(xs)
     ys = np.asarray(ys)
@@ -236,10 +236,10 @@ def latent_embed_plot_umap(xs, ys, mode="", epoch=0, writer=None):
     writer: SummaryWriter
         Tensorboard summary writer
     """
-    logging.info(
+    logging.debug(
         "\n################################################################",
     )
-    logging.info("Visualising static UMAP embedding...\n")
+    logging.debug("Visualising static UMAP embedding...\n")
     reducer = umap.UMAP(random_state=42)
     embedding = reducer.fit_transform(xs)
 
@@ -294,10 +294,10 @@ def dyn_latentembed_plot(df, epoch, embedding="umap", mode=""):
     mode: str
         Added data mode to the name of the saved figure (e.g train, valid, eval).
     """
-    logging.info(
+    logging.debug(
         "\n################################################################",
     )
-    logging.info("Visualising dynamic embedding {}...\n".format(embedding))
+    logging.debug("Visualising dynamic embedding {}...\n".format(embedding))
 
     epoch += 1
     latentspace = df[[col for col in df if col.startswith("lat")]].to_numpy()
@@ -439,10 +439,10 @@ def dyn_latentembed_plot(df, epoch, embedding="umap", mode=""):
 
 
 def confidence_plot(x, y, s, suffix=None):
-    logging.info(
+    logging.debug(
         "\n################################################################",
     )
-    logging.info(
+    logging.debug(
         "Visualising class-average confidence metrics " + suffix + "...\n",
     )
     cmap = plt.get_cmap("jet")
@@ -515,11 +515,11 @@ def accuracy_plot(
     writer: SummaryWriter
         Tensorboard summary writer
     """
-    logging.info(
+    logging.debug(
         "\n################################################################",
     )
 
-    logging.info("Visualising accuracy: confusion and F1 scores ...\n")
+    logging.debug("Visualising accuracy: confusion and F1 scores ...\n")
 
     if classes is not None:
         classes_list = pd.read_csv(classes).columns.tolist()
@@ -703,10 +703,10 @@ def f1_plot(
     writer: SummaryWriter
         Tensorboard summary writer
     """
-    logging.info(
+    logging.debug(
         "\n################################################################",
     )
-    logging.info("Visualising F1 scores ...\n")
+    logging.debug("Visualising F1 scores ...\n")
     if classes is not None:
         classes_list = pd.read_csv(classes).columns.tolist()
     else:
@@ -798,10 +798,10 @@ def loss_plot(epochs, beta, gamma, train_loss, val_loss=None, p=None):
         List of 7 hyperparameters: batch size, depth, "
                 "channel init, latent dimension, learning rate, beta, gamma.
     """
-    logging.info(
+    logging.debug(
         "\n################################################################",
     )
-    logging.info("Visualising loss ...\n")
+    logging.debug("Visualising loss ...\n")
 
     train_loss = np.transpose(np.asarray(train_loss))
     if val_loss is not None:
@@ -847,7 +847,7 @@ def loss_plot(epochs, beta, gamma, train_loss, val_loss=None, p=None):
 
     if p is not None:
         if len(p) != 7:
-            logging.info(
+            logging.warning(
                 "WARNING: Function vis.loss_plot is expecting 'p' parameter "
                 "to be a list of 7 hyperparameters: batch size, depth, "
                 "channel init, latent dimension, learning rate, beta, gamma. "
@@ -933,10 +933,10 @@ def recon_plot(img, rec, label, data_dim, mode="trn", epoch=0, writer=None):
     writer: SummaryWriter
         Tensorboard summary writer
     """
-    logging.info(
+    logging.debug(
         "\n################################################################",
     )
-    logging.info("Visualising reconstructions " + mode + "...\n")
+    logging.debug("Visualising reconstructions " + mode + "...\n")
 
     fname_in = str(mode) + "_recon_in.png"
     fname_out = str(mode) + "_recon_out.png"
@@ -1043,10 +1043,10 @@ def latent_disentamglement_plot(
     writer: SummaryWriter
         Tensorboard summary writer
     """
-    logging.info(
+    logging.debug(
         "\n################################################################",
     )
-    logging.info("Visualising latent content disentanglement ...\n")
+    logging.debug("Visualising latent content disentanglement ...\n")
     number_of_samples = 7
     padding = 0
     lats = np.asarray(lats)
@@ -1120,10 +1120,10 @@ def pose_disentanglement_plot(lats, poses, vae, data_dim, device, mode="trn"):
     device: torch.device
         Device to run the model on.
     """
-    logging.info(
+    logging.debug(
         "\n################################################################",
     )
-    logging.info("Visualising pose disentanglement ...\n")
+    logging.debug("Visualising pose disentanglement ...\n")
 
     number_of_samples = 7
     padding = 0
@@ -1200,10 +1200,10 @@ def interpolations_plot(
     poses: list
         List of pose vectors.
     """
-    logging.info(
+    logging.debug(
         "\n################################################################",
     )
-    logging.info("Visualising interpolations ...\n")
+    logging.debug("Visualising interpolations ...\n")
     lats = np.asarray(lats)
     classes = np.asarray(classes)
     if poses is not None:
@@ -1280,7 +1280,7 @@ def interpolations_plot(
             recon = vae.decoder(latents, None)
     dsize = recon.shape[-data_dim:]
     if len(dsize) == 0:
-        logging.info(
+        logging.warning(
             "WARNING: All images need to be the same size to create "
             "interpolation plot. Exiting.\n",
         )
@@ -1314,10 +1314,10 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
     selected_classes : list
         All classes selected by the user for training in classes.csv
     """
-    logging.info(
+    logging.debug(
         "\n################################################################",
     )
-    logging.info("Visualising affinity matrix ...\n")
+    logging.debug("Visualising affinity matrix ...\n")
 
     with plt.rc_context(
         {"font.weight": "bold", "font.size": int(len(all_classes) / 3) + 3}
@@ -1372,10 +1372,10 @@ def plot_classes_distribution(data, category):
         The category of the data (train, test, val)
     """
 
-    logging.info(
+    logging.debug(
         "\n################################################################",
     )
-    logging.info("Visualising classes distribution " + category + "...\n")
+    logging.debug("Visualising classes distribution " + category + "...\n")
 
     fig, ax = plt.subplots(figsize=(9, 9))
     labels, counts = np.unique(data, return_counts=True)
@@ -1404,10 +1404,10 @@ def plot_cyc_variable(array: list, variable_name: str):
     variable_name : str
         Name of the variable
     """
-    logging.info(
+    logging.debug(
         "\n################################################################",
     )
-    logging.info(f"Visualising {variable_name} ...\n")
+    logging.debug(f"Visualising {variable_name} ...\n")
     plt.plot(array, linewidth=3)
     plt.ylabel(rf"$\{variable_name}$", fontsize=16)
     plt.xlabel("Epochs", fontsize=16)
@@ -1439,10 +1439,10 @@ def latent_space_similarity(
         Order of the classes in the matrix
 
     """
-    logging.info(
+    logging.debug(
         "\n################################################################",
     )
-    logging.info("Visualising the latent space similarity matrix ...\n")
+    logging.debug("Visualising the latent space similarity matrix ...\n")
 
     # get same label order as affinity matrix
     cosine_sim_matrix = cosine_similarity(latent_space)

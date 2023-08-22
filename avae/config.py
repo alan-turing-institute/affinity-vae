@@ -84,4 +84,5 @@ DEFAULT_RUN_CONFIGS = {
     "classifier": "NN",
     "datatype": "mrc",
     "new_out": False,
+    "debug": False,
 }

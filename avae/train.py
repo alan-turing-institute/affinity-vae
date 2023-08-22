@@ -368,6 +368,7 @@ def train(
                 )
 
         t_history[-1] /= len(trains)
+
         logging.info(
             "Training : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
             "KLdiv: %f | Affin: %f | Beta: %f"
@@ -423,6 +424,7 @@ def train(
                 )
 
         v_history[-1] /= len(vals)
+
         logging.info(
             "Validation : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
             "KLdiv: %f | Affin: %f | Beta: %f"

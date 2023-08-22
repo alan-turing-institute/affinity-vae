@@ -33,6 +33,14 @@ logging.basicConfig(
     help="Type of the data: mrc, npy",
 )
 @click.option(
+    "--debug",
+    "-dbg",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Run in debug mode.",
+)
+@click.option(
     "--restart",
     "-res",
     type=bool,
@@ -564,6 +572,7 @@ def run(
     tensorboard,
     classifier,
     new_out,
+    debug,
 ):
 
     warnings.simplefilter("ignore", FutureWarning)
@@ -572,6 +581,11 @@ def run(
     logging.info("Reading submission configuration file" + config_file)
     local_vars = locals().copy()
     data = load_config_params(config_file, local_vars)
+
+    if data["debug"]:
+        logging.info("Debug mode enabled")
+        logging.getLogger().setLevel(logging.DEBUG)
+        logging.getLogger("matplotlib.font_manager").disabled = True
 
     if data["vis_all"]:
         config.VIS_LOS = True

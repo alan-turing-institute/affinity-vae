@@ -122,7 +122,7 @@ def evaluate(
     if pose_dims != 0:
         p_test = []
 
-    logging.info("Batch: [0/%d]" % (len(tests)))
+    logging.debug("Batch: [0/%d]" % (len(tests)))
 
     vae.eval()
     for b, batch in enumerate(tests):
@@ -152,7 +152,7 @@ def evaluate(
                 mode="evl",
             )
 
-        logging.info("Batch: [%d/%d]" % (b + 1, len(tests)))
+        logging.debug("Batch: [%d/%d]" % (b + 1, len(tests)))
     logging.info("Batch: [%d/%d]" % (b + 1, len(tests)))
 
     # ########################## VISUALISE ################################
