@@ -369,7 +369,7 @@ def train(
 
         t_history[-1] /= len(trains)
 
-        if (int(epoch) % 10) == 0:
+        if (int(epoch) % 1) == 0:
             logging.info(
                 "Training : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
                 "KLdiv: %f | Affin: %f | Beta: %f"
@@ -426,7 +426,7 @@ def train(
 
         v_history[-1] /= len(vals)
 
-        if (int(epoch) % 10) == 0:
+        if (int(epoch) % 1) == 0:
             logging.info(
                 "Validation : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
                 "KLdiv: %f | Affin: %f | Beta: %f"
