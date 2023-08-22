@@ -11,8 +11,8 @@ from run import run_pipeline
 from tests import testdata_mrc, testdata_npy
 
 # fixing random seeds so we dont get fail on mrc tests
-torch.random.manual_seed(0)
-random.seed(0)
+torch.random.manual_seed(20)
+random.seed(20)
 
 
 class TrainEvalTest(unittest.TestCase):
@@ -165,9 +165,8 @@ def helper_train_eval(data):
     temp_dir = tempfile.TemporaryDirectory()
     os.chdir(temp_dir.name)
 
-    print (random.randint(0,9))
-    print (torch.rand(1))
-
+    print(random.randint(0, 9))
+    print(torch.rand(1))
 
     # run training
     data["eval"] = False
