@@ -369,8 +369,7 @@ def train(
 
         t_history[-1] /= len(trains)
 
-        if (int(epoch) % 1) == 0:
-            logging.info(
+        logging.info(
                 "Training : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
                 "KLdiv: %f | Affin: %f | Beta: %f"
                 % (
@@ -381,7 +380,7 @@ def train(
                     *t_history[-1],
                     beta_arr[epoch],
                 )
-            )
+        )
 
         # ########################## VAL ######################################
         vae.eval()
@@ -426,8 +425,7 @@ def train(
 
         v_history[-1] /= len(vals)
 
-        if (int(epoch) % 1) == 0:
-            logging.info(
+        logging.info(
                 "Validation : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
                 "KLdiv: %f | Affin: %f | Beta: %f"
                 % (
@@ -438,7 +436,7 @@ def train(
                     *v_history[-1],
                     beta_arr[epoch],
                 )
-            )
+        )
 
         if writer:
             for i, loss_name in enumerate(
