@@ -64,7 +64,6 @@ def accuracy(x_train, y_train, x_val, y_val, classifier="NN"):
                 (20, 10, 5),
                 (200,),
                 (50,),
-                (10,),
             ],
         }
         method = MLPClassifier(
@@ -83,7 +82,7 @@ def accuracy(x_train, y_train, x_val, y_val, classifier="NN"):
         parameters = [{"penalty": ["l1", "l2"]}, {"C": [1, 10, 100, 1000]}]
 
     elif classifier == "KNN":
-        parameters = dict(n_neighbors=list(range(1, 500, 10)))
+        parameters = dict(n_neighbors=list(range(1, 500, 100)))
         method = KNeighborsClassifier()
     else:
         raise ValueError("Invalid classifier type must be NN, KNN or LR")
@@ -92,13 +91,13 @@ def accuracy(x_train, y_train, x_val, y_val, classifier="NN"):
         estimator=method,
         param_grid=parameters,
         scoring="f1_macro",
-        cv=5,
+        cv=2,
         verbose=0,
     )
     clf = make_pipeline(preprocessing.StandardScaler(), clf_cv)
     clf.fit(x_train, y_train)
     logging.info(
-        f"Best parameters found for: {classifier}\n", clf_cv.best_params_
+        f"Best parameters found for {classifier}: {clf_cv.best_params_}\n"
     )
 
     y_pred_train = clf.predict(x_train)
