@@ -212,11 +212,11 @@ def latent_embed_plot_tsne(xs, ys, mode="", epoch=0, writer=None):
     plt.xlabel("TSNE-1")
     plt.ylabel("TSNE-2")
     plt.tight_layout()
+    plt.savefig(f"plots/embedding_TSNE{mode}.png")
 
     if writer:
         writer.add_figure("TSNE embedding", fig, epoch)
 
-    plt.savefig(f"plots/embedding_TSNE{mode}.png")
     plt.close()
 
 
@@ -272,11 +272,11 @@ def latent_embed_plot_umap(xs, ys, mode="", epoch=0, writer=None):
     plt.xlabel("UMAP-1")
     plt.ylabel("UMAP-2")
     plt.tight_layout()
+    plt.savefig(f"plots/embedding_UMAP{mode}.png")
 
     if writer:
         writer.add_figure("UMAP embedding", fig, epoch)
 
-    plt.savefig(f"plots/embedding_UMAP{mode}.png")
     plt.close()
 
 
@@ -558,10 +558,11 @@ def accuracy_plot(
         if not os.path.exists("plots"):
             os.mkdir("plots")
 
+        plt.savefig(f"plots/confusion_train{mode}.png", dpi=300)
+
         if writer:
             writer.add_figure("Accuracy", fig, epoch)
 
-        plt.savefig(f"plots/confusion_train{mode}.png", dpi=300)
         plt.close()
 
         fig, ax = plt.subplots(
@@ -588,11 +589,11 @@ def accuracy_plot(
             os.mkdir("plots")
         plt.xlabel("Predicted label (%)")
         plt.ylabel("True label (%)")
+        plt.savefig(f"plots/confusion_train{mode}_norm.png", dpi=300)
 
         if writer:
             writer.add_figure("Accuracy (Norm)", fig, epoch)
 
-        plt.savefig(f"plots/confusion_train{mode}_norm.png", dpi=300)
         plt.close()
 
     classes_list_eval = np.unique(np.concatenate((y_val, ypred_val)))
@@ -775,11 +776,11 @@ def f1_plot(
         plt.legend(loc="lower left")
         plt.title("F1 Score at epoch {}".format(epoch))
         plt.ylabel("F1 Score")
+        plt.savefig(f"plots/f1{mode}.png", dpi=150)
 
         if writer:
             writer.add_figure("Accuracy (Norm)", fig, epoch)
 
-        plt.savefig(f"plots/f1{mode}.png", dpi=150)
         plt.close()
 
 
