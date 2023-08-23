@@ -46,6 +46,7 @@ def accuracy(x_train, y_train, x_val, y_val, classifier="NN"):
         Predicted validation labels.
 
     """
+    logging.info("Computing accuracy...")
     labs = np.unique(np.concatenate((y_train, y_val)))
     le = preprocessing.LabelEncoder()
     le.fit(labs)
@@ -176,10 +177,11 @@ def save_imshow_png(
     fig, _ = plt.subplots(figsize=(10, 10))
     plt.imshow(array, cmap=cmap, vmin=min, vmax=max)  # channels last
 
+    plt.savefig("plots/" + fname)
+
     if writer:
         writer.add_figure(figname, fig, epoch)
 
-    plt.savefig("plots/" + fname)
     plt.close()
 
 
