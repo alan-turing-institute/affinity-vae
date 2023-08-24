@@ -80,7 +80,7 @@ DEFAULT_RUN_CONFIGS = {
     "gaussian_blur": False,
     "normalise": False,
     "shift_min": False,
-    "tensorboard": True,
+    "tensorboard": False,
     "classifier": "NN",
     "datatype": "mrc",
     "new_out": False,
