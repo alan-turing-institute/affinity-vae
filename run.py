@@ -591,7 +591,7 @@ def run(
         config.VIS_LOS = True
         config.VIS_ACC = True
         config.VIS_REC = True
-        config.VIS_CON = True
+        # config.VIS_CON = True #TODO fix out of memory issue in this plot
         config.VIS_CYC = True
         config.VIS_AFF = True
         config.VIS_EMB = True
