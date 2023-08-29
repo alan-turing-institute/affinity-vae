@@ -578,8 +578,12 @@ def train(
             else:
                 xs = np.r_[x_train, x_val]
                 ys = np.r_[y_train, y_val]
-            vis.latent_embed_plot_tsne(xs, ys, epoch=epoch, writer=writer)
-            vis.latent_embed_plot_umap(xs, ys, epoch=epoch, writer=writer)
+            vis.latent_embed_plot_tsne(
+                xs, ys, classes, epoch=epoch, writer=writer
+            )
+            vis.latent_embed_plot_umap(
+                xs, ys, classes, epoch=epoch, writer=writer
+            )
 
             if collect_meta:
                 # merge img and rec into one image for display in altair

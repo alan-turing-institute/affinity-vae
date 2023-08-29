@@ -187,8 +187,8 @@ def evaluate(
 
     # visualise embeddings
     if config.VIS_EMB:
-        vis.latent_embed_plot_umap(x_test, np.array(y_test), "_eval")
-        vis.latent_embed_plot_tsne(x_test, np.array(y_test), "_eval")
+        vis.latent_embed_plot_umap(x_test, np.array(y_test), classes, "_eval")
+        vis.latent_embed_plot_tsne(x_test, np.array(y_test), classes, "_eval")
 
     if config.VIS_SIM:
         if classes is not None:
@@ -220,6 +220,7 @@ def evaluate(
                 np.concatenate(
                     [np.array(y_test), np.array(latents_training_id)]
                 ),
+                classes,
                 "_train_eval_comparison",
             )
             vis.latent_embed_plot_tsne(
@@ -227,6 +228,7 @@ def evaluate(
                 np.concatenate(
                     [np.array(y_test), np.array(latents_training_id)]
                 ),
+                classes,
                 "_train_eval_comparison",
             )
 
