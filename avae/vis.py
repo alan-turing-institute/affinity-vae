@@ -185,6 +185,9 @@ def latent_embed_plot_tsne(
     ).fit_transform(xs)
 
     n_classes = len(np.unique(ys))
+    if classes is None:
+        classes = sorted(list(np.unique(ys)))
+
     if n_classes < 3:
         # If the number of classes are not moe than 3 the size of the figure would be too
         # small and matplotlib would through a singularity error
@@ -197,10 +200,7 @@ def latent_embed_plot_tsne(
         )
     # When the number of classes is less than 3 the image becomes two small
 
-    if classes is not None:
-        colours = colour_per_class(classes)
-    else:
-        colours = colour_per_class(np.unique(ys))
+    colours = colour_per_class(classes)
 
     for mol_id, mol in enumerate(set(ys.tolist())):
         idx = np.where(np.array(ys.tolist()) == mol)[0]
@@ -271,7 +271,7 @@ def latent_embed_plot_umap(
 
     for mol_id, mol in enumerate(set(ys.tolist())):
         idx = np.where(np.array(ys.tolist()) == mol)[0]
-
+        print(classes, mol)
         color = colours[classes.index(mol)]
 
         ax.scatter(
