@@ -259,6 +259,7 @@ def evaluate(
             mode="_eval",
         )
 
+        metas = os.path.basename(meta)
         # save metadata with evaluation data
         meta_df.to_pickle(
             os.path.join("states", metas.split(".")[0] + "_eval.pkl")
