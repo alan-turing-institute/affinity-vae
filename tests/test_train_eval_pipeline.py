@@ -18,9 +18,10 @@ random.seed(10)
 class TrainEvalTest(unittest.TestCase):
     def setUp(self) -> None:
         """Test instantiation of the pipeline."""
-
-        self.testdata_mrc = os.path.dirname(testdata_mrc.__file__)
-        self.testdata_npy = os.path.dirname(testdata_npy.__file__)
+        print(type(testdata_mrc))
+        self.testdata_mrc =os.getcwd()+ "tests/testdata_mrc"
+        # = os.path.dirname(testdata_mrc)      
+        self.testdata_npy =os.getcwd()+ "tests/testdata_npy"
 
         self.data = {
             "datapath": self.testdata_mrc,

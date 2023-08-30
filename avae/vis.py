@@ -204,6 +204,8 @@ def latent_embed_plot_tsne(
 
     for mol_id, mol in enumerate(set(ys.tolist())):
         idx = np.where(np.array(ys.tolist()) == mol)[0]
+        print(classes, mol, sorted(list(np.unique(ys))))
+
         color = colours[classes.index(mol)]
 
         plt.scatter(
@@ -255,6 +257,9 @@ def latent_embed_plot_umap(
     embedding = reducer.fit_transform(xs)
 
     n_classes = len(np.unique(ys))
+    if classes is None:
+        classes = sorted(list(np.unique(ys)))
+
     if n_classes < 3:
         fig, ax = plt.subplots(
             figsize=(int(n_classes / 2) + 7, int(n_classes / 2) + 5)
@@ -264,10 +269,7 @@ def latent_embed_plot_umap(
             figsize=(int(n_classes / 2) + 4, int(n_classes / 2) + 2)
         )
 
-    if classes is not None:
-        colours = colour_per_class(classes)
-    else:
-        colours = colour_per_class(np.unique(ys))
+    colours = colour_per_class(classes)
 
     for mol_id, mol in enumerate(set(ys.tolist())):
         idx = np.where(np.array(ys.tolist()) == mol)[0]
@@ -282,6 +284,7 @@ def latent_embed_plot_umap(
             facecolor=color,
             edgecolor=color,
             alpha=0.2,
+            sort=True,
         )
 
     ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=16)
