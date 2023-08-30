@@ -185,9 +185,12 @@ def latent_embed_plot_tsne(
     ).fit_transform(xs)
 
     n_classes = len(np.unique(ys))
-    if classes is None:
-        classes = sorted(list(np.unique(ys)))
 
+    unique_classes = sorted(list(np.unique(ys)))
+    if len(unique_classes) != len(classes):
+        logging.warning(
+            "WARNING: Some of the classes in your data, does not exist in classes.csv",
+        )
     if n_classes < 3:
         # If the number of classes are not moe than 3 the size of the figure would be too
         # small and matplotlib would through a singularity error
@@ -200,13 +203,12 @@ def latent_embed_plot_tsne(
         )
     # When the number of classes is less than 3 the image becomes two small
 
-    colours = colour_per_class(classes)
+    colours = colour_per_class(unique_classes)
 
     for mol_id, mol in enumerate(set(ys.tolist())):
         idx = np.where(np.array(ys.tolist()) == mol)[0]
-        print(classes, mol, sorted(list(np.unique(ys))))
 
-        color = colours[classes.index(mol)]
+        color = colours[unique_classes.index(mol)]
 
         plt.scatter(
             lats[idx, 0],
@@ -257,9 +259,12 @@ def latent_embed_plot_umap(
     embedding = reducer.fit_transform(xs)
 
     n_classes = len(np.unique(ys))
-    if classes is None:
-        classes = sorted(list(np.unique(ys)))
 
+    unique_classes = sorted(list(np.unique(ys)))
+    if len(unique_classes) != len(classes):
+        logging.warning(
+            "WARNING: Some of the classes in your data, does not exist in classes.csv",
+        )
     if n_classes < 3:
         fig, ax = plt.subplots(
             figsize=(int(n_classes / 2) + 7, int(n_classes / 2) + 5)
@@ -269,12 +274,12 @@ def latent_embed_plot_umap(
             figsize=(int(n_classes / 2) + 4, int(n_classes / 2) + 2)
         )
 
-    colours = colour_per_class(classes)
+    colours = colour_per_class(unique_classes)
 
     for mol_id, mol in enumerate(set(ys.tolist())):
         idx = np.where(np.array(ys.tolist()) == mol)[0]
-        print(classes, mol)
-        color = colours[classes.index(mol)]
+
+        color = colours[unique_classes.index(mol)]
 
         ax.scatter(
             embedding[idx, 0],
@@ -284,7 +289,6 @@ def latent_embed_plot_umap(
             facecolor=color,
             edgecolor=color,
             alpha=0.2,
-            sort=True,
         )
 
     ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=16)
