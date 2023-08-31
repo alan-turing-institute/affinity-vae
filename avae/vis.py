@@ -183,15 +183,13 @@ def latent_embed_plot_tsne(
     lats = TSNE(
         n_components=2, perplexity=perplexity, random_state=42
     ).fit_transform(xs)
-    print(".............",classes)
+    print(".............", classes)
     if classes is None:
         classes = sorted(list(np.unique(ys)))
     else:
         if np.setdiff1d(ys, classes).size > 0:
-            classes = np.concatenate(
-                (classes, np.setdiff1d(ys, classes))
-            )
-        classes= classes.tolist()
+            classes = np.concatenate((classes, np.setdiff1d(ys, classes)))
+        classes = classes.tolist()
 
     n_classes = len(classes)
 
@@ -262,17 +260,15 @@ def latent_embed_plot_umap(
     logging.debug("Visualising static UMAP embedding...\n")
     reducer = umap.UMAP(random_state=42)
     embedding = reducer.fit_transform(xs)
-    print(".............",classes)
+    print(".............", classes)
 
     if classes is None:
         classes = sorted(list(np.unique(ys)))
     else:
         if np.setdiff1d(ys, classes).size > 0:
-            classes = np.concatenate(
-                (classes, np.setdiff1d(ys, classes))
-            )
-        classes= classes.tolist()
-        
+            classes = np.concatenate((classes, np.setdiff1d(ys, classes)))
+        classes = classes.tolist()
+
     n_classes = len(classes)
     if n_classes < 3:
         fig, ax = plt.subplots(
