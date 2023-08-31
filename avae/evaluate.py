@@ -223,7 +223,7 @@ def evaluate(
                 np.concatenate(
                     [np.array(y_test), np.array(latents_training_id)]
                 ),
-                classes,
+                classes_list,
                 "_train_eval_comparison",
             )
             vis.latent_embed_plot_tsne(
@@ -231,7 +231,7 @@ def evaluate(
                 np.concatenate(
                     [np.array(y_test), np.array(latents_training_id)]
                 ),
-                classes,
+                classes_list,
                 "_train_eval_comparison",
             )
 
