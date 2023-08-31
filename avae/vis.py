@@ -183,13 +183,12 @@ def latent_embed_plot_tsne(
     lats = TSNE(
         n_components=2, perplexity=perplexity, random_state=42
     ).fit_transform(xs)
-    print(".............", classes)
     if classes is None:
         classes = sorted(list(np.unique(ys)))
     else:
         if np.setdiff1d(ys, classes).size > 0:
             classes = np.concatenate((classes, np.setdiff1d(ys, classes)))
-        classes = classes.tolist()
+        classes = list(classes)
 
     n_classes = len(classes)
 
@@ -209,7 +208,6 @@ def latent_embed_plot_tsne(
 
     for mol_id, mol in enumerate(set(ys.tolist())):
         idx = np.where(np.array(ys.tolist()) == mol)[0]
-        print(classes, mol, sorted(list(np.unique(ys))))
 
         color = colours[classes.index(mol)]
 
@@ -260,14 +258,13 @@ def latent_embed_plot_umap(
     logging.debug("Visualising static UMAP embedding...\n")
     reducer = umap.UMAP(random_state=42)
     embedding = reducer.fit_transform(xs)
-    print(".............", classes)
 
     if classes is None:
         classes = sorted(list(np.unique(ys)))
     else:
         if np.setdiff1d(ys, classes).size > 0:
             classes = np.concatenate((classes, np.setdiff1d(ys, classes)))
-        classes = classes.tolist()
+        classes = list(classes)
 
     n_classes = len(classes)
     if n_classes < 3:
@@ -283,7 +280,6 @@ def latent_embed_plot_umap(
 
     for mol_id, mol in enumerate(set(ys.tolist())):
         idx = np.where(np.array(ys.tolist()) == mol)[0]
-        print(classes, mol)
         color = colours[classes.index(mol)]
 
         ax.scatter(
