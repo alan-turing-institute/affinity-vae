@@ -156,7 +156,10 @@ def evaluate(
     logging.info("Batch: [%d/%d]" % (b + 1, len(tests)))
 
     # ########################## VISUALISE ################################
-
+    if classes is not None:
+        classes_list = pd.read_csv(classes).columns.tolist()
+    else:
+        classes_list = []
     # visualise reconstructions - last batch
     if config.VIS_REC:
         vis.recon_plot(x, x_hat, y_test, data_dim, mode="evl")
@@ -187,14 +190,14 @@ def evaluate(
 
     # visualise embeddings
     if config.VIS_EMB:
-        vis.latent_embed_plot_umap(x_test, np.array(y_test), "_eval")
-        vis.latent_embed_plot_tsne(x_test, np.array(y_test), "_eval")
+        vis.latent_embed_plot_umap(
+            x_test, np.array(y_test), classes_list, "_eval"
+        )
+        vis.latent_embed_plot_tsne(
+            x_test, np.array(y_test), classes_list, "_eval"
+        )
 
     if config.VIS_SIM:
-        if classes is not None:
-            classes_list = pd.read_csv(classes).columns.tolist()
-        else:
-            classes_list = []
         vis.latent_space_similarity(
             x_test, np.array(y_test), mode="_eval", classes_order=classes_list
         )
@@ -220,6 +223,7 @@ def evaluate(
                 np.concatenate(
                     [np.array(y_test), np.array(latents_training_id)]
                 ),
+                classes_list,
                 "_train_eval_comparison",
             )
             vis.latent_embed_plot_tsne(
@@ -227,6 +231,7 @@ def evaluate(
                 np.concatenate(
                     [np.array(y_test), np.array(latents_training_id)]
                 ),
+                classes_list,
                 "_train_eval_comparison",
             )
 

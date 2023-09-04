@@ -18,6 +18,7 @@ from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix, f1_score
 from sklearn.metrics.pairwise import cosine_similarity
 
 from .utils import (
+    colour_per_class,
     create_grid_for_plotting,
     fill_grid_for_plottting,
     save_imshow_png,
@@ -149,7 +150,9 @@ def merge(im):
     return f"data:image/png;base64,{data}"
 
 
-def latent_embed_plot_tsne(xs, ys, mode="", epoch=0, writer=None):
+def latent_embed_plot_tsne(
+    xs, ys, classes=None, mode="", epoch=0, writer=None
+):
     """Plot static TSNE embedding.
 
     Parameters
@@ -180,8 +183,15 @@ def latent_embed_plot_tsne(xs, ys, mode="", epoch=0, writer=None):
     lats = TSNE(
         n_components=2, perplexity=perplexity, random_state=42
     ).fit_transform(xs)
+    if classes is None:
+        classes = sorted(list(np.unique(ys)))
+    else:
+        if np.setdiff1d(ys, classes).size > 0:
+            classes = np.concatenate((classes, np.setdiff1d(ys, classes)))
+        classes = list(classes)
 
-    n_classes = len(np.unique(ys))
+    n_classes = len(classes)
+
     if n_classes < 3:
         # If the number of classes are not moe than 3 the size of the figure would be too
         # small and matplotlib would through a singularity error
@@ -194,10 +204,13 @@ def latent_embed_plot_tsne(xs, ys, mode="", epoch=0, writer=None):
         )
     # When the number of classes is less than 3 the image becomes two small
 
+    colours = colour_per_class(classes)
+
     for mol_id, mol in enumerate(set(ys.tolist())):
         idx = np.where(np.array(ys.tolist()) == mol)[0]
-        cmap = plt.cm.get_cmap("tab20")
-        color = cmap(mol_id % 20)
+
+        color = colours[classes.index(mol)]
+
         plt.scatter(
             lats[idx, 0],
             lats[idx, 1],
@@ -220,7 +233,9 @@ def latent_embed_plot_tsne(xs, ys, mode="", epoch=0, writer=None):
     plt.close()
 
 
-def latent_embed_plot_umap(xs, ys, mode="", epoch=0, writer=None):
+def latent_embed_plot_umap(
+    xs, ys, classes=None, mode="", epoch=0, writer=None
+):
     """Plot static UMAP embedding.
 
     Parameters
@@ -239,11 +254,19 @@ def latent_embed_plot_umap(xs, ys, mode="", epoch=0, writer=None):
     logging.debug(
         "\n################################################################",
     )
+
     logging.debug("Visualising static UMAP embedding...\n")
     reducer = umap.UMAP(random_state=42)
     embedding = reducer.fit_transform(xs)
 
-    n_classes = len(np.unique(ys))
+    if classes is None:
+        classes = sorted(list(np.unique(ys)))
+    else:
+        if np.setdiff1d(ys, classes).size > 0:
+            classes = np.concatenate((classes, np.setdiff1d(ys, classes)))
+        classes = list(classes)
+
+    n_classes = len(classes)
     if n_classes < 3:
         fig, ax = plt.subplots(
             figsize=(int(n_classes / 2) + 7, int(n_classes / 2) + 5)
@@ -252,11 +275,12 @@ def latent_embed_plot_umap(xs, ys, mode="", epoch=0, writer=None):
         fig, ax = plt.subplots(
             figsize=(int(n_classes / 2) + 4, int(n_classes / 2) + 2)
         )
+
+    colours = colour_per_class(classes)
+
     for mol_id, mol in enumerate(set(ys.tolist())):
         idx = np.where(np.array(ys.tolist()) == mol)[0]
-
-        cmap = plt.cm.get_cmap("tab20")
-        color = cmap(mol_id % 20)
+        color = colours[classes.index(mol)]
 
         ax.scatter(
             embedding[idx, 0],
