@@ -93,7 +93,8 @@ def evaluate(
             )[-1]
             state = os.path.join("states", state)
 
-    fname = state.split(".")[0].split("_")
+    s = os.path.basename(state)
+    fname = s.split(".")[0].split("_")
     pose_dims = fname[3]
 
     logging.info("Loading model from: {}".format(state))
