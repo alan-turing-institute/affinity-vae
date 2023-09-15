@@ -111,7 +111,7 @@ class AVAELoss:
             )
         elif lookup_aff is not None and max(gamma) == 0:
             logging.warning(
-                "\nWARNING: You provided affinity matrix but no gamma. Unless "
+                "\n\nWARNING: You provided affinity matrix but no gamma. Unless "
                 "you provide gamma, affinity will be ignored and you're "
                 "running a vanilla beta-VAE.\n"
             )

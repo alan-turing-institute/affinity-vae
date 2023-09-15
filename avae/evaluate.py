@@ -244,7 +244,7 @@ def evaluate(
             classifier=classifier,
         )
         logging.info(
-            "\n------------------->>> Accuracy: Train: %f | Val: %f\n"
+            "------------------->>> Accuracy: Train: %f | Val: %f\n"
             % (train_acc, val_acc)
         )
         vis.accuracy_plot(

@@ -25,7 +25,7 @@ def set_device(gpu):
     )
     if gpu and device == "cpu":
         logging.warning(
-            "\nWARNING: no GPU available, running on CPU instead.\n"
+            "\n\nWARNING: no GPU available, running on CPU instead.\n"
         )
     return device
 

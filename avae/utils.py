@@ -46,7 +46,9 @@ def accuracy(x_train, y_train, x_val, y_val, classifier="NN"):
         Predicted validation labels.
 
     """
-    logging.info("Computing accuracy...")
+    logging.info(
+        "############################################### Computing accuracy..."
+    )
     labs = np.unique(np.concatenate((y_train, y_val)))
     le = preprocessing.LabelEncoder()
     le.fit(labs)
@@ -97,7 +99,7 @@ def accuracy(x_train, y_train, x_val, y_val, classifier="NN"):
     clf = make_pipeline(preprocessing.StandardScaler(), clf_cv)
     clf.fit(x_train, y_train)
     logging.info(
-        f"Best parameters found for {classifier}: {clf_cv.best_params_}\n"
+        f"Best parameters found for {classifier}: {clf_cv.best_params_}"
     )
 
     y_pred_train = clf.predict(x_train)
@@ -293,7 +295,7 @@ def write_config_file(time_stamp_name, data):
     yaml.dump(data, file)
     file.close()
 
-    logging.info("YAML File saved!")
+    logging.info("YAML File saved!\n")
 
 
 def colour_per_class(classes: list):
