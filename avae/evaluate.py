@@ -264,6 +264,7 @@ def evaluate(
             classes,
             mode="_eval",
         )
+        logging.info('Saving meta files with evaluation data.')
 
         metas = os.path.basename(meta)
         # save metadata with evaluation data

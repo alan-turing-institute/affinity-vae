@@ -742,7 +742,7 @@ def f1_plot(
 
     if np.setdiff1d(classes_list_eval, classes_list).size > 0:
         logging.info(
-            f"Class {np.setdiff1d(classes_list_eval, classes_list)} wont be used to compute F1 values as it was unseen in training data."
+            f"Class {np.setdiff1d(classes_list_eval, classes_list)} will not be used to compute F1 values as it was unseen in training data."
         )
 
         index = np.argwhere(np.isin(y_val, classes_list)).ravel()
