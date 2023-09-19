@@ -707,7 +707,8 @@ def f1_plot(
     epoch=0,
     writer=None,
 ):
-    """Plot F1 values.
+    """Plot F1 values. If classes list is provided, the F1 scores are calculated only for the classess in the
+    list. This avoids F1 scores being affected by unseen clases that can be added in evaluation.
 
     Parameters
     ----------
@@ -740,17 +741,20 @@ def f1_plot(
     classes_list_eval = np.unique(np.concatenate((y_val, ypred_val)))
 
     if np.setdiff1d(classes_list_eval, classes_list).size > 0:
-        ordered_class_eval = np.concatenate(
-            (classes_list, np.setdiff1d(classes_list_eval, classes_list))
+        logging.info(
+            f"Class {np.setdiff1d(classes_list_eval, classes_list)} wont be used to compute F1 values as it was unseen in training data."
         )
-    else:
-        ordered_class_eval = classes_list
+
+        index = np.argwhere(np.isin(y_val, classes_list)).ravel()
+
+        y_val = np.array(y_val)[index].tolist()
+        ypred_val = np.array(ypred_val)[index].tolist()
 
     train_f1_score = f1_score(
         y_train, ypred_train, average=None, labels=classes_list
     ).tolist()
     valid_f1_score = f1_score(
-        y_val, ypred_val, average=None, labels=ordered_class_eval
+        y_val, ypred_val, average=None, labels=classes_list
     ).tolist()
 
     if mode == "_eval":
@@ -762,7 +766,7 @@ def f1_plot(
     f1_valid_file = f"plots/f1_{label}.csv"
 
     train_df = pd.DataFrame([train_f1_score], columns=classes_list)
-    valid_df = pd.DataFrame([valid_f1_score], columns=ordered_class_eval)
+    valid_df = pd.DataFrame([valid_f1_score], columns=classes_list)
 
     train_df["epoch"] = epoch
     valid_df["epoch"] = epoch
@@ -785,17 +789,17 @@ def f1_plot(
     with plt.rc_context(
         {
             "font.weight": "bold",
-            "font.size": int(len(ordered_class_eval) / 3) + 3,
+            "font.size": int(len(classes_list) / 3) + 3,
         }
     ):
         fig, ax = plt.subplots(
             figsize=(
-                int(len(ordered_class_eval)) / 2,
-                int(len(ordered_class_eval)) / 2,
+                int(len(classes_list)) / 2,
+                int(len(classes_list)) / 2,
             )
         )
         plt.plot(classes_list, train_f1_score, label="train", marker="o")
-        plt.plot(ordered_class_eval, valid_f1_score, label=label, marker="o")
+        plt.plot(classes_list, valid_f1_score, label=label, marker="o")
         plt.xticks(rotation=45)
         plt.legend(loc="lower left")
         plt.title("F1 Score at epoch {}".format(epoch))
@@ -803,7 +807,7 @@ def f1_plot(
         plt.savefig(f"plots/f1{mode}.png", dpi=150)
 
         if writer:
-            writer.add_figure("Accuracy (Norm)", fig, epoch)
+            writer.add_figure("F1 score", fig, epoch)
 
         plt.close()
 
