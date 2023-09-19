@@ -108,7 +108,11 @@ def evaluate(
     if meta is None:
         if collect_meta:
             metas = sorted(
-                [f for f in os.listdir("states") if ".pkl" in f],
+                [
+                    f
+                    for f in os.listdir("states")
+                    if ".pkl" in f and "eval" not in f
+                ],
                 key=lambda x: int(x.split("_")[2][1:]),
             )[-1]
             meta = os.path.join("states", metas)
