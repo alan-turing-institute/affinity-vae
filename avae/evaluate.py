@@ -113,6 +113,7 @@ def evaluate(
             )[-1]
             meta = os.path.join("states", metas)
 
+    logging.info("Loading model from: {}".format(meta))
     meta_df = pd.read_pickle(meta)
 
     # create holders for latent spaces and labels
