@@ -152,7 +152,7 @@ def evaluate(
                 meta_df,
                 batch[-1],
                 x_hat,
-                lat_mu,
+                lat,
                 lat_pose,
                 lat_logvar,
                 mode="evl",
