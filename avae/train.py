@@ -18,44 +18,44 @@ from .utils_learning import add_meta, pass_batch, set_device
 
 
 def train(
-        datapath,
-        datatype,
-        restart,
-        state,
-        lim,
-        splt,
-        batch_s,
-        no_val_drop,
-        affinity,
-        classes,
-        collect_meta,
-        epochs,
-        channels,
-        depth,
-        lat_dims,
-        pose_dims,
-        learning,
-        beta_load,
-        beta_min,
-        beta_max,
-        beta_cycle,
-        beta_ratio,
-        cyc_method_beta,
-        gamma_load,
-        gamma_min,
-        gamma_max,
-        gamma_cycle,
-        gamma_ratio,
-        cyc_method_gamma,
-        recon_fn,
-        use_gpu,
-        model,
-        opt_method,
-        gaussian_blur,
-        normalise,
-        shift_min,
-        tensorboard,
-        classifier,
+    datapath,
+    datatype,
+    restart,
+    state,
+    lim,
+    splt,
+    batch_s,
+    no_val_drop,
+    affinity,
+    classes,
+    collect_meta,
+    epochs,
+    channels,
+    depth,
+    lat_dims,
+    pose_dims,
+    learning,
+    beta_load,
+    beta_min,
+    beta_max,
+    beta_cycle,
+    beta_ratio,
+    cyc_method_beta,
+    gamma_load,
+    gamma_min,
+    gamma_max,
+    gamma_cycle,
+    gamma_ratio,
+    cyc_method_gamma,
+    recon_fn,
+    use_gpu,
+    model,
+    opt_method,
+    gaussian_blur,
+    normalise,
+    shift_min,
+    tensorboard,
+    classifier,
 ):
     """Function to train an AffinityVAE model. The inputs are training configuration parameters. In this function the
     data is loaded, selected and split into training, validation and test sets, the model is initialised and trained
@@ -235,14 +235,14 @@ def train(
         # If a path for loading the beta array is not provided,
         # create it given the input
         beta_arr = (
-                cyc_annealing(
-                    epochs,
-                    cyc_method_beta,
-                    n_cycle=beta_cycle,
-                    ratio=beta_ratio,
-                ).var
-                * (beta_max - beta_min)
-                + beta_min
+            cyc_annealing(
+                epochs,
+                cyc_method_beta,
+                n_cycle=beta_cycle,
+                ratio=beta_ratio,
+            ).var
+            * (beta_max - beta_min)
+            + beta_min
         )
     else:
         beta_arr = np.load(beta_load)
@@ -253,9 +253,9 @@ def train(
             )
 
     if (
-            gamma_max == 0
-            and cyc_method_gamma != "flat"
-            and gamma_load is not None
+        gamma_max == 0
+        and cyc_method_gamma != "flat"
+        and gamma_load is not None
     ):
         raise RuntimeError(
             "The maximum value for gamma is set to 0, it is not possible to"
@@ -267,14 +267,14 @@ def train(
         # If a path for loading the gamma array is not provided,
         # create it given the input
         gamma_arr = (
-                cyc_annealing(
-                    epochs,
-                    cyc_method_gamma,
-                    n_cycle=gamma_cycle,
-                    ratio=gamma_ratio,
-                ).var
-                * (gamma_max - gamma_min)
-                + gamma_min
+            cyc_annealing(
+                epochs,
+                cyc_method_gamma,
+                n_cycle=gamma_cycle,
+                ratio=gamma_ratio,
+            ).var
+            * (gamma_max - gamma_min)
+            + gamma_min
         )
     else:
         gamma_arr = np.load(gamma_load)
@@ -440,7 +440,7 @@ def train(
 
         if writer:
             for i, loss_name in enumerate(
-                    ["Loss", "Recon loss", "KLdiv loss", "Affin loss"]
+                ["Loss", "Recon loss", "KLdiv loss", "Affin loss"]
             ):
                 writer.add_scalar(loss_name, v_history[-1][i], epoch)
 
@@ -636,15 +636,15 @@ def train(
             if not os.path.exists("states"):
                 os.mkdir("states")
             mname = (
-                    "avae_"
-                    + str(timestamp)
-                    + "_E"
-                    + str(epoch)
-                    + "_"
-                    + str(lat_dims)
-                    + "_"
-                    + str(pose_dims)
-                    + ".pt"
+                "avae_"
+                + str(timestamp)
+                + "_E"
+                + str(epoch)
+                + "_"
+                + str(lat_dims)
+                + "_"
+                + str(pose_dims)
+                + ".pt"
             )
 
             logging.info(
@@ -668,15 +668,15 @@ def train(
 
             if collect_meta:
                 filename = (
-                        "meta_"
-                        + str(timestamp)
-                        + "_E"
-                        + str(epoch)
-                        + "_"
-                        + str(lat_dims)
-                        + "_"
-                        + str(pose_dims)
-                        + ".pkl"
+                    "meta_"
+                    + str(timestamp)
+                    + "_E"
+                    + str(epoch)
+                    + "_"
+                    + str(lat_dims)
+                    + "_"
+                    + str(pose_dims)
+                    + ".pkl"
                 )
                 meta_df.to_pickle(os.path.join("states", filename))
 

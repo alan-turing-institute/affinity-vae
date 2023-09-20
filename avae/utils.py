@@ -56,7 +56,8 @@ def accuracy(x_train, y_train, x_val, y_val, classifier="NN"):
     classes_list_training = np.unique(y_train)
     if np.setdiff1d(classes_list_training, np.unique(y_val)).size > 0:
         logging.info(
-            f"Class {np.setdiff1d(classes_list_training, np.unique(y_val))}  was unseen in training data. Computing accuracy for sets of seen and unseen data")
+            f"Class {np.setdiff1d(classes_list_training, np.unique(y_val))}  was unseen in training data. Computing accuracy for sets of seen and unseen data"
+        )
 
     index = np.argwhere(np.isin(y_val, classes_list_training)).ravel()
 
@@ -112,10 +113,11 @@ def accuracy(x_train, y_train, x_val, y_val, classifier="NN"):
     y_pred_train = clf.predict(x_train)
     y_pred_val = clf.predict(x_val)
 
-
     train_acc = metrics.accuracy_score(y_train, y_pred_train)
     val_acc = metrics.accuracy_score(y_val, y_pred_val)
-    val_acc_selected = metrics.accuracy_score(np.array(y_val)[index].tolist(), np.array(y_pred_val)[index].tolist())
+    val_acc_selected = metrics.accuracy_score(
+        np.array(y_val)[index].tolist(), np.array(y_pred_val)[index].tolist()
+    )
 
     y_pred_train = le.inverse_transform(y_pred_train)
     y_pred_val = le.inverse_transform(y_pred_val)

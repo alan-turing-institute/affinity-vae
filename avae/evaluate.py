@@ -242,7 +242,13 @@ def evaluate(
             )
 
         # visualise accuracy
-        train_acc, val_acc, val_acc_selected, ypred_train, ypred_val = accuracy(
+        (
+            train_acc,
+            val_acc,
+            val_acc_selected,
+            ypred_train,
+            ypred_val,
+        ) = accuracy(
             latents_training,
             np.array(latents_training_id),
             x_test,
