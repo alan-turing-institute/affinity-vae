@@ -573,7 +573,7 @@ def accuracy_plot(
 
         plt.tight_layout()
         plt.title(
-            "Average accuracy at epoch {}: {:.1f}%".format(
+            "Average accuracy at epoch {}: {:.3f}%".format(
                 epoch, np.mean(avg_accuracy) * 100
             ),
             fontsize=10,
@@ -603,7 +603,7 @@ def accuracy_plot(
 
         plt.tight_layout()
         plt.title(
-            "Average accuracy at epoch {}: {:.1f}%".format(
+            "Average accuracy at epoch {}: {:.3f}%".format(
                 epoch, np.mean(avg_accuracy) * 100
             ),
             fontsize=12,
