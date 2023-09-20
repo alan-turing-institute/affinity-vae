@@ -242,7 +242,7 @@ def evaluate(
             )
 
         # visualise accuracy
-        train_acc, val_acc, ypred_train, ypred_val = accuracy(
+        train_acc, val_acc, val_acc_selected, ypred_train, ypred_val = accuracy(
             latents_training,
             np.array(latents_training_id),
             x_test,
@@ -250,8 +250,8 @@ def evaluate(
             classifier=classifier,
         )
         logging.info(
-            "\n------------------->>> Accuracy: Train: %f | Val: %f\n"
-            % (train_acc, val_acc)
+            "\n------------------->>> Accuracy: Train: %f | Val : %f | Val with unseen labels: %f\n"
+            % (train_acc, val_acc_selected, val_acc)
         )
         vis.accuracy_plot(
             np.array(latents_training_id),
