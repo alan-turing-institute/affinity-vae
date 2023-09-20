@@ -176,7 +176,9 @@ class AVAELoss:
             )
 
         # kldiv loss
-        kldivergence = torch.mean(-0.5 * torch.sum(1 + logvar - mu**2 - logvar.exp(), dim=1), dim=0)
+        kldivergence = torch.mean(
+            -0.5 * torch.sum(1 + logvar - mu**2 - logvar.exp(), dim=1), dim=0
+        )
 
         # affinity loss
         affin_loss = torch.Tensor([0]).to(self.device)
