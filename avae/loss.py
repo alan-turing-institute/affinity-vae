@@ -183,7 +183,9 @@ class AVAELoss:
         # affinity loss
         affin_loss = torch.Tensor([0]).to(self.device)
         if self.affinity_loss is not None:
-            affin_loss = self.affinity_loss(batch_aff, mu)
+            std = torch.exp(0.5 * logvar)
+            eps = torch.randn_like(std)
+            affin_loss = self.affinity_loss(batch_aff, eps * std + mu)
 
         # total loss
         total_loss = (
