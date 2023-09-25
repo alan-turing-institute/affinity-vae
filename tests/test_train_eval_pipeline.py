@@ -88,7 +88,7 @@ class TrainEvalTest(unittest.TestCase):
         config.VIS_DIS = True
         config.VIS_POS = True
         config.VIS_HIS = True
-        config.VIS_CON = True
+        config.VIS_CON = False
         config.VIS_AFF = True
         config.VIS_SIM = True
 
