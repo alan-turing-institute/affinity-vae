@@ -358,7 +358,7 @@ def train(
                 optimizer=optimizer,
                 beta=beta_arr,
             )
-            x_train.extend(lat.cpu().detach().numpy())  # store latents
+            x_train.extend(lat_mu.cpu().detach().numpy())  # store latents
             y_train.extend(batch[1])
             c_train.extend(lat_logvar.cpu().detach().numpy())
             if pose:
@@ -413,7 +413,7 @@ def train(
                 history=v_history,
                 beta=beta_arr,
             )
-            x_val.extend(vlat.cpu().detach().numpy())  # store latents
+            x_val.extend(v_mu.cpu().detach().numpy())  # store latents
             y_val.extend(batch[1])
             c_val.extend(v_logvar.cpu().detach().numpy())
             if pose:
@@ -463,7 +463,7 @@ def train(
                 (t, t_hat, t_mu, t_logvar, tlat, tlat_pose, _,) = pass_batch(
                     device, vae, batch, b, len(tests), epoch, epochs
                 )
-                x_test.extend(tlat.cpu().detach().numpy())  # store latents
+                x_test.extend(t_mu.cpu().detach().numpy())  # store latents
                 c_test.extend(t_logvar.cpu().detach().numpy())
                 if pose:
                     p_test.extend(tlat_pose.cpu().detach().numpy())
