@@ -133,3 +133,7 @@ configs/avae-test-config.yml
 
 # remove mac specific files
 .DS_Store
+
+# remove idea files
+
+.idea
