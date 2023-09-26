@@ -93,7 +93,8 @@ def evaluate(
             )[-1]
             state = os.path.join("states", state)
 
-    fname = state.split(".")[0].split("_")
+    s = os.path.basename(state)
+    fname = s.split(".")[0].split("_")
     pose_dims = fname[3]
 
     logging.info("Loading model from: {}".format(state))
@@ -107,11 +108,16 @@ def evaluate(
     if meta is None:
         if collect_meta:
             metas = sorted(
-                [f for f in os.listdir("states") if ".pkl" in f],
+                [
+                    f
+                    for f in os.listdir("states")
+                    if ".pkl" in f and "eval" not in f
+                ],
                 key=lambda x: int(x.split("_")[2][1:]),
             )[-1]
             meta = os.path.join("states", metas)
 
+    logging.info("Loading model from: {}".format(meta))
     meta_df = pd.read_pickle(meta)
 
     # create holders for latent spaces and labels
@@ -236,7 +242,13 @@ def evaluate(
             )
 
         # visualise accuracy
-        train_acc, val_acc, ypred_train, ypred_val = accuracy(
+        (
+            train_acc,
+            val_acc,
+            val_acc_selected,
+            ypred_train,
+            ypred_val,
+        ) = accuracy(
             latents_training,
             np.array(latents_training_id),
             x_test,
@@ -244,8 +256,8 @@ def evaluate(
             classifier=classifier,
         )
         logging.info(
-            "------------------->>> Accuracy: Train: %f | Val: %f\n"
-            % (train_acc, val_acc)
+            "------------------->>> Accuracy: Train: %f | Val : %f | Val with unseen labels: %f\n"
+            % (train_acc, val_acc_selected, val_acc)
         )
         vis.accuracy_plot(
             np.array(latents_training_id),
@@ -263,6 +275,7 @@ def evaluate(
             classes,
             mode="_eval",
         )
+        logging.info("Saving meta files with evaluation data.")
 
         metas = os.path.basename(meta)
         # save metadata with evaluation data
