@@ -40,6 +40,8 @@ def accuracy(x_train, y_train, x_val, y_val, classifier="NN"):
         Training accuracy.
     val_acc: float
         Validation accuracy.
+    val_acc_selected: float
+        Validation accuracy calculated only for labels existing in the training set (this is useful in evaluation).
     y_pred_train: np.array
         Predicted training labels.
     y_pred_val: np.array
@@ -50,6 +52,14 @@ def accuracy(x_train, y_train, x_val, y_val, classifier="NN"):
     labs = np.unique(np.concatenate((y_train, y_val)))
     le = preprocessing.LabelEncoder()
     le.fit(labs)
+
+    classes_list_training = np.unique(y_train)
+    if np.setdiff1d(classes_list_training, np.unique(y_val)).size > 0:
+        logging.info(
+            f"Class {np.setdiff1d(classes_list_training, np.unique(y_val))}  was unseen in training data. Computing accuracy for sets of seen and unseen data"
+        )
+
+    index = np.argwhere(np.isin(y_val, classes_list_training)).ravel()
 
     y_train = le.transform(y_train)
     y_val = le.transform(y_val)
@@ -102,13 +112,17 @@ def accuracy(x_train, y_train, x_val, y_val, classifier="NN"):
 
     y_pred_train = clf.predict(x_train)
     y_pred_val = clf.predict(x_val)
+
     train_acc = metrics.accuracy_score(y_train, y_pred_train)
     val_acc = metrics.accuracy_score(y_val, y_pred_val)
+    val_acc_selected = metrics.accuracy_score(
+        np.array(y_val)[index].tolist(), np.array(y_pred_val)[index].tolist()
+    )
 
     y_pred_train = le.inverse_transform(y_pred_train)
     y_pred_val = le.inverse_transform(y_pred_val)
 
-    return train_acc, val_acc, y_pred_train, y_pred_val
+    return train_acc, val_acc, val_acc_selected, y_pred_train, y_pred_val
 
 
 def create_grid_for_plotting(rows, columns, dsize, padding=0):

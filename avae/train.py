@@ -471,7 +471,7 @@ def train(
 
         # visualise accuracy: confusion and F1 scores
         if config.VIS_ACC and (epoch + 1) % config.FREQ_ACC == 0:
-            train_acc, val_acc, ypred_train, ypred_val = accuracy(
+            train_acc, val_acc, _, ypred_train, ypred_val = accuracy(
                 x_train, y_train, x_val, y_val, classifier=classifier
             )
 
@@ -667,7 +667,6 @@ def train(
             )
 
             if collect_meta:
-
                 filename = (
                     "meta_"
                     + str(timestamp)

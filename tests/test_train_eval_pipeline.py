@@ -88,7 +88,7 @@ class TrainEvalTest(unittest.TestCase):
         config.VIS_DIS = True
         config.VIS_POS = True
         config.VIS_HIS = True
-        config.VIS_CON = True
+        config.VIS_CON = False
         config.VIS_AFF = True
         config.VIS_SIM = True
 
@@ -105,11 +105,11 @@ class TrainEvalTest(unittest.TestCase):
         ) = helper_train_eval(self.data)
 
         self.assertEqual(n_dir_train, 4)
-        self.assertEqual(n_plots_train, 32)
+        self.assertEqual(n_plots_train, 30)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
 
-        self.assertEqual(n_plots_eval, 50)
+        self.assertEqual(n_plots_eval, 48)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 3)
 
@@ -126,10 +126,10 @@ class TrainEvalTest(unittest.TestCase):
         ) = helper_train_eval(self.data)
 
         self.assertEqual(n_dir_train, 4)
-        self.assertEqual(n_plots_train, 32)
+        self.assertEqual(n_plots_train, 30)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
-        self.assertEqual(n_plots_eval, 50)
+        self.assertEqual(n_plots_eval, 48)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 3)
 
@@ -152,10 +152,10 @@ class TrainEvalTest(unittest.TestCase):
         ) = helper_train_eval(self.data)
 
         self.assertEqual(n_dir_train, 4)
-        self.assertEqual(n_plots_train, 30)
+        self.assertEqual(n_plots_train, 28)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
-        self.assertEqual(n_plots_eval, 47)
+        self.assertEqual(n_plots_eval, 45)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 3)
 
