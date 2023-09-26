@@ -256,7 +256,7 @@ def evaluate(
             classifier=classifier,
         )
         logging.info(
-            "\n------------------->>> Accuracy: Train: %f | Val : %f | Val with unseen labels: %f\n"
+            "------------------->>> Accuracy: Train: %f | Val : %f | Val with unseen labels: %f\n"
             % (train_acc, val_acc_selected, val_acc)
         )
         vis.accuracy_plot(

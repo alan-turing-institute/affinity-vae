@@ -367,20 +367,20 @@ def train(
                     mode="trn",
                 )
 
-        t_history[-1] /= len(trains)
-
-        logging.info(
-            "Training : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
-            "KLdiv: %f | Affin: %f | Beta: %f"
-            % (
-                epoch + 1,
-                epochs,
-                b + 1,
-                len(trains),
-                *t_history[-1],
-                beta_arr[epoch],
+            logging.info(
+                "Training : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
+                "KLdiv: %f | Affin: %f | Beta: %f"
+                % (
+                    epoch + 1,
+                    epochs,
+                    b + 1,
+                    len(trains),
+                    *t_history[-1],
+                    beta_arr[epoch],
+                )
             )
-        )
+
+        t_history[-1] /= len(trains)
 
         # ########################## VAL ######################################
         vae.eval()
@@ -423,20 +423,20 @@ def train(
                     mode="val",
                 )
 
-        v_history[-1] /= len(vals)
-
-        logging.info(
-            "Validation : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
-            "KLdiv: %f | Affin: %f | Beta: %f"
-            % (
-                epoch + 1,
-                epochs,
-                b + 1,
-                len(vals),
-                *v_history[-1],
-                beta_arr[epoch],
+            logging.info(
+                "Validation : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
+                "KLdiv: %f | Affin: %f | Beta: %f"
+                % (
+                    epoch + 1,
+                    epochs,
+                    b + 1,
+                    len(vals),
+                    *v_history[-1],
+                    beta_arr[epoch],
+                )
             )
-        )
+
+        v_history[-1] /= len(vals)
 
         if writer:
             for i, loss_name in enumerate(
@@ -467,6 +467,9 @@ def train(
                         mode="tst",
                     )
 
+            logging.info("Evaluation : Batch: [%d/%d]" % (b + 1, len(tests)))
+        logging.info("\n")  # end of training round
+
         # ########################## VISUALISE ################################
 
         # visualise accuracy: confusion and F1 scores
@@ -476,7 +479,7 @@ def train(
             )
 
             logging.info(
-                "\n------------------->>> Accuracy: Train: %f | Val: %f\n"
+                "------------------->>> Accuracy: Train: %f | Val: %f\n"
                 % (train_acc, val_acc),
             )
             vis.accuracy_plot(
@@ -648,7 +651,7 @@ def train(
             )
 
             logging.info(
-                "\n################################################################"
+                "################################################################"
             )
 
             torch.save(
@@ -680,7 +683,7 @@ def train(
                 )
                 meta_df.to_pickle(os.path.join("states", filename))
 
-                logging.info(f"Saved meta file : {filename} for evaluation ")
+                logging.info(f"Saved meta file : {filename} for evaluation \n")
 
     if writer:
         writer.flush()
