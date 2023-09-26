@@ -135,7 +135,7 @@ def evaluate(
         x, x_hat, lat_mu, lat_logvar, lat, lat_pose, _ = pass_batch(
             device, vae, batch, b, len(tests)
         )
-        x_test.extend(lat.cpu().detach().numpy())
+        x_test.extend(lat_mu.cpu().detach().numpy())
         c_test.extend(lat_logvar.cpu().detach().numpy())
 
         # if labels are present save them otherwise save test

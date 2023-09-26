@@ -135,5 +135,4 @@ configs/avae-test-config.yml
 .DS_Store
 
 # remove idea files
-
 .idea
