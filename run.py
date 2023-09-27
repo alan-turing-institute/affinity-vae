@@ -349,6 +349,13 @@ logging.basicConfig(
     help="Visualise pose disentanglement (frequency controlled).",
 )
 @click.option(
+    "--vis_pos_class",
+    "-vpsc",
+    type=str,
+    default=None,
+    help="Example: A,B,C. your deliminator should be commas and no spaces .Classes to be used for pose interpolation (a seperate pose interpolation figure would be created for each class).",
+)
+@click.option(
     "--vis_cyc",
     "-vc",
     type=bool,
@@ -555,6 +562,7 @@ def run(
     vis_int,
     vis_dis,
     vis_pos,
+    vis_pos_class,
     vis_acc,
     vis_cyc,
     vis_aff,
@@ -582,6 +590,10 @@ def run(
     local_vars = locals().copy()
     data = load_config_params(config_file, local_vars)
 
+    if data["vis_pos_class"]:
+        data["vis_pos_class"] = data["vis_pos_class"].split(",")
+
+
     if data["debug"]:
         logging.info("Debug mode enabled")
         logging.getLogger().setLevel(logging.DEBUG)
@@ -600,6 +612,7 @@ def run(
         config.VIS_POS = True
         config.VIS_HIS = True
         config.VIS_SIM = True
+        config.VIS_POS_CLASS = data["vis_pos_class"]
 
     else:
         config.VIS_LOS = data["vis_los"]
@@ -614,6 +627,7 @@ def run(
         config.VIS_POS = data["vis_pos"]
         config.VIS_HIS = data["vis_his"]
         config.VIS_SIM = data["vis_sim"]
+        config.VIS_POS_CLASS = data["vis_pos_class"]
 
     if data["freq_all"] is not None:
         config.FREQ_EVAL = data["freq_all"]
@@ -637,6 +651,7 @@ def run(
         config.FREQ_ACC = data["freq_acc"]
         config.FREQ_STA = data["freq_sta"]
         config.FREQ_SIM = data["freq_sim"]
+
 
     if data["new_out"]:
         dir_name = f'results_{dt_name}_lat{data["latent_dims"]}_pose{data["pose_dims"]}_lr{data["learning"]}_beta{data["beta"]}_gamma{data["gamma"]}'
