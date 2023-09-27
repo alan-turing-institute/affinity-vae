@@ -175,7 +175,16 @@ def evaluate(
         vis.pose_disentanglement_plot(
             x_test, p_test, vae, data_dim, device, mode="_eval"
         )
-
+        vis.pose_interpolation_plot(
+            x_test,
+            y_test,
+            config.VIS_POS_CLASS,
+            p_test,
+            vae,
+            data_dim,
+            device,
+            mode="_eval",
+        )
     # visualise interpolations
     if config.VIS_INT:
         vis.interpolations_plot(

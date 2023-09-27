@@ -605,6 +605,16 @@ def train(
                 x_train, p_train, vae, data_dim, device
             )
 
+            vis.pose_interpolation_plot(
+                x_train,
+                y_train,
+                config.VIS_POS_CLASS,
+                p_train,
+                vae,
+                data_dim,
+                device,
+            )
+
         # visualise interpolations
         if config.VIS_INT and (epoch + 1) % config.FREQ_INT == 0:
             if len(tests) != 0:
