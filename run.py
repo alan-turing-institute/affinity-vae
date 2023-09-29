@@ -349,7 +349,7 @@ logging.basicConfig(
     help="Visualise pose disentanglement (frequency controlled).",
 )
 @click.option(
-    "--vis_pos_class",
+    "--vis_pose_class",
     "-vpsc",
     type=str,
     default=None,
@@ -562,7 +562,7 @@ def run(
     vis_int,
     vis_dis,
     vis_pos,
-    vis_pos_class,
+    vis_pose_class,
     vis_acc,
     vis_cyc,
     vis_aff,
@@ -590,8 +590,8 @@ def run(
     local_vars = locals().copy()
     data = load_config_params(config_file, local_vars)
 
-    if data["vis_pos_class"]:
-        data["vis_pos_class"] = data["vis_pos_class"].split(",")
+    if data["vis_pose_class"]:
+        data["vis_pose_class"] = data["vis_pose_class"].split(",")
 
     if data["debug"]:
         logging.info("Debug mode enabled")
@@ -611,7 +611,7 @@ def run(
         config.VIS_POS = True
         config.VIS_HIS = True
         config.VIS_SIM = True
-        config.VIS_POS_CLASS = data["vis_pos_class"]
+        config.VIS_POSE_CLASS = data["vis_pose_class"]
 
     else:
         config.VIS_LOS = data["vis_los"]
@@ -626,7 +626,7 @@ def run(
         config.VIS_POS = data["vis_pos"]
         config.VIS_HIS = data["vis_his"]
         config.VIS_SIM = data["vis_sim"]
-        config.VIS_POS_CLASS = data["vis_pos_class"]
+        config.VIS_POSE_CLASS = data["vis_pose_class"]
 
     if data["freq_all"] is not None:
         config.FREQ_EVAL = data["freq_all"]
