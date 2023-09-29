@@ -593,7 +593,6 @@ def run(
     if data["vis_pos_class"]:
         data["vis_pos_class"] = data["vis_pos_class"].split(",")
 
-
     if data["debug"]:
         logging.info("Debug mode enabled")
         logging.getLogger().setLevel(logging.DEBUG)
@@ -651,7 +650,6 @@ def run(
         config.FREQ_ACC = data["freq_acc"]
         config.FREQ_STA = data["freq_sta"]
         config.FREQ_SIM = data["freq_sim"]
-
 
     if data["new_out"]:
         dir_name = f'results_{dt_name}_lat{data["latent_dims"]}_pose{data["pose_dims"]}_lr{data["learning"]}_beta{data["beta"]}_gamma{data["gamma"]}'
