@@ -150,7 +150,6 @@ def train(
         splt=splt,
         batch_s=batch_s,
         no_val_drop=no_val_drop,
-        collect_meta=collect_meta,
         eval=False,
         affinity=affinity,
         classes=classes,
