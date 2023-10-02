@@ -585,7 +585,7 @@ def train(
                 xs, ys, classes_list, epoch=epoch, writer=writer
             )
 
-            if collect_meta:
+            if config.VIS_DYN:
                 # merge img and rec into one image for display in altair
                 meta_df["image"] = meta_df["image"].apply(vis.merge)
                 vis.dyn_latentembed_plot(meta_df, epoch, embedding="umap")

@@ -600,6 +600,7 @@ def run(
         config.VIS_POS = True
         config.VIS_HIS = True
         config.VIS_SIM = True
+        config.VIS_DYN = True
 
     else:
         config.VIS_LOS = data["vis_los"]
@@ -614,6 +615,7 @@ def run(
         config.VIS_POS = data["vis_pos"]
         config.VIS_HIS = data["vis_his"]
         config.VIS_SIM = data["vis_sim"]
+        config.VIS_DYN = data["dynamic"]
 
     if data["freq_all"] is not None:
         config.FREQ_EVAL = data["freq_all"]

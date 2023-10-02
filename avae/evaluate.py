@@ -212,7 +212,7 @@ def evaluate(
     ].to_numpy()
     latents_training_id = meta_df[meta_df["mode"] == "trn"]["id"]
 
-    if collect_meta:
+    if config.VIS_DYN:
         # merge img and rec into one image for display in altair
         meta_df["image"] = meta_df["image"].apply(vis.merge)
         vis.dyn_latentembed_plot(meta_df, 0, embedding="umap", mode="_eval")
