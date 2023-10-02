@@ -20,7 +20,6 @@ def evaluate(
     splt,
     batch_s,
     classes,
-    collect_meta,
     use_gpu,
     gaussian_blur,
     normalise,
@@ -48,8 +47,6 @@ def evaluate(
         Batch size.
     classes: list
         List of classes to be selected from the data for the training and validation set.
-    collect_meta: bool
-        If True, the meta data for visualisation will be collected and returned.
     use_gpu: bool
         If True, the model will be trained on GPU.
     gaussian_blur: bool

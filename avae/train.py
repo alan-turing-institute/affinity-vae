@@ -28,7 +28,6 @@ def train(
     no_val_drop,
     affinity,
     classes,
-    collect_meta,
     epochs,
     channels,
     depth,
@@ -80,8 +79,6 @@ def train(
         Path to the affinity matrix.
     classes: list
         List of classes to be selected from the data for the training and validation set.
-    collect_meta: bool
-        If True, the meta data for visualisation will be collected and returned.
     epochs: int
         Number of epochs to train the model.
     channels: int
