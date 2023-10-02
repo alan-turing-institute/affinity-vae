@@ -303,8 +303,7 @@ def train(
     # ########################## TRAINING LOOP ################################
     for epoch in range(e_start, epochs):
 
-        if collect_meta:
-            meta_df = pd.DataFrame()
+        meta_df = pd.DataFrame()
 
         # populate loss with new epoch
         t_history.append(np.zeros(4))
@@ -355,17 +354,17 @@ def train(
             if pose:
                 p_train.extend(lat_pos.cpu().detach().numpy())
 
-            if collect_meta:  # store meta for plots
-                meta_df = add_meta(
-                    data_dim,
-                    meta_df,
-                    batch[-1],
-                    x_hat,
-                    lat_mu,
-                    lat_pos,
-                    lat_logvar,
-                    mode="trn",
-                )
+            # store meta for plots and accuracy
+            meta_df = add_meta(
+                data_dim,
+                meta_df,
+                batch[-1],
+                x_hat,
+                lat_mu,
+                lat_pos,
+                lat_logvar,
+                mode="trn",
+            )
 
             logging.info(
                 "Training : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
@@ -411,17 +410,16 @@ def train(
             if pose:
                 p_val.extend(vlat_pos.cpu().detach().numpy())
 
-            if collect_meta:  # store meta for plots
-                meta_df = add_meta(
-                    data_dim,
-                    meta_df,
-                    batch[-1],
-                    v_hat,
-                    v_mu,
-                    vlat_pos,
-                    v_logvar,
-                    mode="val",
-                )
+            meta_df = add_meta(
+                data_dim,
+                meta_df,
+                batch[-1],
+                v_hat,
+                v_mu,
+                vlat_pos,
+                v_logvar,
+                mode="val",
+            )
 
             logging.info(
                 "Validation : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
@@ -455,17 +453,17 @@ def train(
                 if pose:
                     p_test.extend(tlat_pose.cpu().detach().numpy())
 
-                if collect_meta:  # store meta for plots
-                    meta_df = add_meta(
-                        data_dim,
-                        meta_df,
-                        batch[-1],
-                        t_hat,
-                        t_mu,
-                        tlat_pose,
-                        t_logvar,
-                        mode="tst",
-                    )
+                # store meta for plots and classification
+                meta_df = add_meta(
+                    data_dim,
+                    meta_df,
+                    batch[-1],
+                    t_hat,
+                    t_mu,
+                    tlat_pose,
+                    t_logvar,
+                    mode="tst",
+                )
 
             logging.info("Evaluation : Batch: [%d/%d]" % (b + 1, len(tests)))
         logging.info("\n")  # end of training round
@@ -669,21 +667,20 @@ def train(
                 f"Saved model state: {mname} for restarting and evaluation "
             )
 
-            if collect_meta:
-                filename = (
-                    "meta_"
-                    + str(timestamp)
-                    + "_E"
-                    + str(epoch)
-                    + "_"
-                    + str(lat_dims)
-                    + "_"
-                    + str(pose_dims)
-                    + ".pkl"
-                )
-                meta_df.to_pickle(os.path.join("states", filename))
+            filename = (
+                "meta_"
+                + str(timestamp)
+                + "_E"
+                + str(epoch)
+                + "_"
+                + str(lat_dims)
+                + "_"
+                + str(pose_dims)
+                + ".pkl"
+            )
+            meta_df.to_pickle(os.path.join("states", filename))
 
-                logging.info(f"Saved meta file : {filename} for evaluation \n")
+            logging.info(f"Saved meta file : {filename} for evaluation \n")
 
     if writer:
         writer.flush()
