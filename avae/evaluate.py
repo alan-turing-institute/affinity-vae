@@ -184,7 +184,7 @@ def evaluate(
         vis.pose_interpolation_plot(
             x_test,
             y_test,
-            config.VIS_POS_CLASS,
+            config.VIS_POSE_CLASS,
             p_test,
             vae,
             data_dim,

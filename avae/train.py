@@ -611,7 +611,7 @@ def train(
             vis.pose_interpolation_plot(
                 x_train,
                 y_train,
-                config.VIS_POS_CLASS,
+                config.VIS_POSE_CLASS,
                 p_train,
                 vae,
                 data_dim,
