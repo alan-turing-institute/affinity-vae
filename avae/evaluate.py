@@ -71,7 +71,6 @@ def evaluate(
         lim,
         splt,
         batch_s,
-        collect_meta=collect_meta,
         eval=True,
         gaussian_blur=gaussian_blur,
         normalise=normalise,
