@@ -64,7 +64,6 @@ class TrainEvalTest(unittest.TestCase):
             "tensorboard": True,
             "classifier": "NN",
             "new_out": False,
-            "dynamic": True,
             "opt_method": "adam",
         }
 
@@ -91,6 +90,7 @@ class TrainEvalTest(unittest.TestCase):
         config.VIS_CON = False
         config.VIS_AFF = True
         config.VIS_SIM = True
+        config.VIS_DYN = True
 
     def test_model_a_mrc(self):
         self.data["model"] = "a"
