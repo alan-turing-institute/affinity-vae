@@ -29,6 +29,8 @@ class DataTest(unittest.TestCase):
     def test_load_eval_data(self):
         """Test loading evaluation data."""
 
+        sh = (32, 32, 32)
+
         shutil.copytree(
             os.path.join(self.test_data, "test"),
             os.path.join(self.test_dir, "eval"),
@@ -44,6 +46,7 @@ class DataTest(unittest.TestCase):
             gaussian_blur=True,
             normalise=True,
             shift_min=True,
+            rescale=sh,
         )
         print(os.getcwd())
 
@@ -51,6 +54,7 @@ class DataTest(unittest.TestCase):
         assert len(out) == 1
         eval_data = out
         assert isinstance(eval_data, DataLoader)
+        assert data_dim == sh
 
         # test ProteinDataset
         eval_batch = list(eval_data)[0]
@@ -63,6 +67,8 @@ class DataTest(unittest.TestCase):
     def test_load_train_data(self):
         """Test loading training data."""
         shutil.copytree(self.test_data, os.path.join(self.test_dir, "train"))
+
+        sh = (32, 32, 32)
 
         out = load_data(
             "./train",
@@ -77,6 +83,7 @@ class DataTest(unittest.TestCase):
             gaussian_blur=True,
             normalise=True,
             shift_min=True,
+            rescale=False,
         )
 
         # test load_data
@@ -84,6 +91,7 @@ class DataTest(unittest.TestCase):
         train_data, val_data, test_data, lookup, data_dim = out
         assert len(train_data) >= len(val_data)
         assert isinstance(train_data, DataLoader)
+        assert data_dim == sh
 
         # test ProtenDataset
         train_batch = list(train_data)[0]

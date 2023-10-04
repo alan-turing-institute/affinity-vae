@@ -60,6 +60,7 @@ class TrainEvalTest(unittest.TestCase):
             "gaussian_blur": True,
             "normalise": True,
             "shift_min": True,
+            "rescale": (32, 32, 32),
             "classifier": "NN",
         }
 
@@ -196,6 +197,7 @@ def helper_train_eval(data):
         gaussian_blur=data["gaussian_blur"],
         normalise=data["normalise"],
         shift_min=data["shift_min"],
+        rescale=data["rescale"],
         classifier=data["classifier"],
     )
     n_dir_train = len(next(os.walk(temp_dir.name))[1])
@@ -217,6 +219,7 @@ def helper_train_eval(data):
         gaussian_blur=data["gaussian_blur"],
         normalise=data["normalise"],
         shift_min=data["shift_min"],
+        rescale=data["rescale"],
         classifier=data["classifier"],
     )
 

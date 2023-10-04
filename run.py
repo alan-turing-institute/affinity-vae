@@ -488,6 +488,14 @@ logging.basicConfig(
     is_flag=True,
     help="Shift the minimum of the data to one zero and the maximum to one",
 )
+@click.option(
+    "--rescale",
+    "-res",
+    type=int,
+    default=None,
+    is_flag=False,
+    help="Rescale images to given value (tuple, one value per dim).",
+)
 def run(
     config_file,
     datapath,
@@ -552,6 +560,7 @@ def run(
     gaussian_blur,
     normalise,
     shift_min,
+    rescale,
     classifier,
 ):
 
@@ -751,6 +760,7 @@ def run(
                 gaussian_blur=data["gaussian_blur"],
                 normalise=data["normalise"],
                 shift_min=data["shift_min"],
+                rescale=data["rescale"],
                 classifier=data["classifier"],
             )
         else:
@@ -768,6 +778,7 @@ def run(
                 gaussian_blur=data["gaussian_blur"],
                 normalise=data["normalise"],
                 shift_min=data["shift_min"],
+                rescale=data["rescale"],
                 classifier=data["classifier"],
             )
             # TODO also make sure image is correct size, maybe in dataloader?
