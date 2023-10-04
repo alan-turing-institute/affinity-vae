@@ -94,6 +94,8 @@ class TrainEvalTest(unittest.TestCase):
 
     def test_model_a_mrc(self):
         self.data["model"] = "a"
+        config.VIS_POSE_VIS = ["1b23", "1dkg"]
+
         (
             n_dir_train,
             n_plots_train,
@@ -115,6 +117,8 @@ class TrainEvalTest(unittest.TestCase):
 
     def test_model_b_mrc(self):
         self.data["model"] = "b"
+        config.VIS_POSE_VIS = ["1b23", "1dkg"]
+
         (
             n_dir_train,
             n_plots_train,
@@ -137,6 +141,8 @@ class TrainEvalTest(unittest.TestCase):
         self.data["model"] = "a"
         self.data["datatype"] = "npy"
         self.data["datapath"] = self.testdata_npy
+        config.VIS_POSE_VIS = ["2", "5"]
+
         self.data["affinity"] = os.path.join(
             self.testdata_npy, "affinity_an.csv"
         )
@@ -161,7 +167,6 @@ class TrainEvalTest(unittest.TestCase):
 
 
 def helper_train_eval(data):
-
     temp_dir = tempfile.TemporaryDirectory()
     os.chdir(temp_dir.name)
 

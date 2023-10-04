@@ -1136,7 +1136,20 @@ def latent_disentamglement_plot(
         save_imshow_png(f"disentanglement-latent_{mode}.png", grid_for_napari)
 
 
-def pose_disentanglement_plot(lats, poses, vae, data_dim, device, mode="trn"):
+def pose_interpolation_plot(
+    x, y, pose_vis_class, poses, vae, data_dim, device, mode="trn"
+):
+
+    for i in pose_vis_class:
+        class_reps_x = np.take(x, [np.where(np.array(y) == i)[0][0]], axis=0)
+        pose_disentanglement_plot(
+            class_reps_x, poses, vae, data_dim, device, label=i, mode="trn"
+        )
+
+
+def pose_disentanglement_plot(
+    lats, poses, vae, data_dim, device, label="avg", mode="trn"
+):
     """Visualise pose disentanglement.
 
     Parameters
@@ -1207,9 +1220,13 @@ def pose_disentanglement_plot(lats, poses, vae, data_dim, device, mode="trn"):
     )
 
     if data_dim == 3:
-        save_mrc_file(f"disentanglement-pose_{mode}.mrc", grid_for_napari)
+        save_mrc_file(
+            f"disentanglement-pose_{mode}_{label}.mrc", grid_for_napari
+        )
     elif data_dim == 2:
-        save_imshow_png(f"disentanglement-pose_{mode}.png", grid_for_napari)
+        save_imshow_png(
+            f"disentanglement-pose_{mode}_{label}.png", grid_for_napari
+        )
 
 
 def interpolations_plot(
