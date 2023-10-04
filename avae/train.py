@@ -559,10 +559,6 @@ def train(
                 classes_order=classes_list,
             )
 
-        if config.VIS_CON and (epoch + 1) % config.FREQ_CON == 0:
-            vis.confidence_plot(x_train, y_train, c_train, suffix="trn")
-            vis.confidence_plot(x_val, y_val, c_val, suffix="val")
-
         # visualise embeddings
         if config.VIS_EMB and (epoch + 1) % config.FREQ_EMB == 0:
             if len(tests) != 0:

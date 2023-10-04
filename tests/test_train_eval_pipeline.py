@@ -75,7 +75,6 @@ class TrainEvalTest(unittest.TestCase):
         config.FREQ_POS = 5
         config.FREQ_EVAL = 5
         config.FREQ_STA = 5
-        config.FREQ_CON = 5
         config.FREQ_SIM = 5
 
         config.VIS_CYC = True
@@ -87,7 +86,6 @@ class TrainEvalTest(unittest.TestCase):
         config.VIS_DIS = True
         config.VIS_POS = True
         config.VIS_HIS = True
-        config.VIS_CON = False
         config.VIS_AFF = True
         config.VIS_SIM = True
         config.VIS_DYN = True
