@@ -20,7 +20,6 @@ def evaluate(
     splt,
     batch_s,
     classes,
-    collect_meta,
     use_gpu,
     gaussian_blur,
     normalise,
@@ -48,8 +47,6 @@ def evaluate(
         Batch size.
     classes: list
         List of classes to be selected from the data for the training and validation set.
-    collect_meta: bool
-        If True, the meta data for visualisation will be collected and returned.
     use_gpu: bool
         If True, the model will be trained on GPU.
     gaussian_blur: bool
@@ -71,7 +68,6 @@ def evaluate(
         lim,
         splt,
         batch_s,
-        collect_meta=collect_meta,
         eval=True,
         gaussian_blur=gaussian_blur,
         normalise=normalise,
@@ -106,16 +102,15 @@ def evaluate(
     # ########################## EVALUATE ################################
 
     if meta is None:
-        if collect_meta:
-            metas = sorted(
-                [
-                    f
-                    for f in os.listdir("states")
-                    if ".pkl" in f and "eval" not in f
-                ],
-                key=lambda x: int(x.split("_")[2][1:]),
-            )[-1]
-            meta = os.path.join("states", metas)
+        metas = sorted(
+            [
+                f
+                for f in os.listdir("states")
+                if ".pkl" in f and "eval" not in f
+            ],
+            key=lambda x: int(x.split("_")[2][1:]),
+        )[-1]
+        meta = os.path.join("states", metas)
 
     logging.info("Loading model from: {}".format(meta))
     meta_df = pd.read_pickle(meta)
@@ -146,17 +141,16 @@ def evaluate(
         if pose_dims != 0:
             p_test.extend(lat_pose.cpu().detach().numpy())
 
-        if collect_meta:  # store meta for plots
-            meta_df = add_meta(
-                data_dim,
-                meta_df,
-                batch[-1],
-                x_hat,
-                lat_mu,
-                lat_pose,
-                lat_logvar,
-                mode="evl",
-            )
+        meta_df = add_meta(
+            data_dim,
+            meta_df,
+            batch[-1],
+            x_hat,
+            lat_mu,
+            lat_pose,
+            lat_logvar,
+            mode="evl",
+        )
 
         logging.debug("Batch: [%d/%d]" % (b + 1, len(tests)))
     logging.info("Batch: [%d/%d]" % (b + 1, len(tests)))
@@ -218,76 +212,65 @@ def evaluate(
         )
 
     # ############################# Predict #############################
+    # get training latent space from metadata for comparison and accuracy estimation
+    latents_training = meta_df[meta_df["mode"] == "trn"][
+        [col for col in meta_df if col.startswith("lat")]
+    ].to_numpy()
+    latents_training_id = meta_df[meta_df["mode"] == "trn"]["id"]
 
-    if collect_meta:
+    if config.VIS_DYN:
         # merge img and rec into one image for display in altair
         meta_df["image"] = meta_df["image"].apply(vis.merge)
         vis.dyn_latentembed_plot(meta_df, 0, embedding="umap", mode="_eval")
         vis.dyn_latentembed_plot(meta_df, 0, embedding="tsne", mode="_eval")
 
-        # get training latent space from metadata for comparison and accuracy estimation
-        latents_training = meta_df[meta_df["mode"] == "trn"][
-            [col for col in meta_df if col.startswith("lat")]
-        ].to_numpy()
-        latents_training_id = meta_df[meta_df["mode"] == "trn"]["id"]
+    # visualise embeddings
+    if config.VIS_EMB:
+        vis.latent_embed_plot_umap(
+            np.concatenate([x_test, latents_training]),
+            np.concatenate([np.array(y_test), np.array(latents_training_id)]),
+            classes_list,
+            "_train_eval_comparison",
+        )
+        vis.latent_embed_plot_tsne(
+            np.concatenate([x_test, latents_training]),
+            np.concatenate([np.array(y_test), np.array(latents_training_id)]),
+            classes_list,
+            "_train_eval_comparison",
+        )
 
-        # visualise embeddings
-        if config.VIS_EMB:
-            vis.latent_embed_plot_umap(
-                np.concatenate([x_test, latents_training]),
-                np.concatenate(
-                    [np.array(y_test), np.array(latents_training_id)]
-                ),
-                classes_list,
-                "_train_eval_comparison",
-            )
-            vis.latent_embed_plot_tsne(
-                np.concatenate([x_test, latents_training]),
-                np.concatenate(
-                    [np.array(y_test), np.array(latents_training_id)]
-                ),
-                classes_list,
-                "_train_eval_comparison",
-            )
+    # visualise accuracy
+    (train_acc, val_acc, val_acc_selected, ypred_train, ypred_val,) = accuracy(
+        latents_training,
+        np.array(latents_training_id),
+        x_test,
+        np.array(y_test),
+        classifier=classifier,
+    )
+    logging.info(
+        "------------------->>> Accuracy: Train: %f | Val : %f | Val with unseen labels: %f\n"
+        % (train_acc, val_acc_selected, val_acc)
+    )
+    vis.accuracy_plot(
+        np.array(latents_training_id),
+        ypred_train,
+        y_test,
+        ypred_val,
+        classes,
+        mode="_eval",
+    )
+    vis.f1_plot(
+        np.array(latents_training_id),
+        ypred_train,
+        y_test,
+        ypred_val,
+        classes,
+        mode="_eval",
+    )
+    logging.info("Saving meta files with evaluation data.")
 
-        # visualise accuracy
-        (
-            train_acc,
-            val_acc,
-            val_acc_selected,
-            ypred_train,
-            ypred_val,
-        ) = accuracy(
-            latents_training,
-            np.array(latents_training_id),
-            x_test,
-            np.array(y_test),
-            classifier=classifier,
-        )
-        logging.info(
-            "------------------->>> Accuracy: Train: %f | Val : %f | Val with unseen labels: %f\n"
-            % (train_acc, val_acc_selected, val_acc)
-        )
-        vis.accuracy_plot(
-            np.array(latents_training_id),
-            ypred_train,
-            y_test,
-            ypred_val,
-            classes,
-            mode="_eval",
-        )
-        vis.f1_plot(
-            np.array(latents_training_id),
-            ypred_train,
-            y_test,
-            ypred_val,
-            classes,
-            mode="_eval",
-        )
-        logging.info("Saving meta files with evaluation data.")
-
-        metas = os.path.basename(meta)
-        # save metadata with evaluation data
-        meta_df.to_pickle(
-            os.path.join("states", metas.split(".")[0] + "_eval.pkl")
-        )
+    metas = os.path.basename(meta)
+    # save metadata with evaluation data
+    meta_df.to_pickle(
+        os.path.join("states", metas.split(".")[0] + "_eval.pkl")
+    )

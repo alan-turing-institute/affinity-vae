@@ -611,6 +611,7 @@ def run(
         config.VIS_POS = True
         config.VIS_HIS = True
         config.VIS_SIM = True
+        config.VIS_DYN = True
         config.VIS_POSE_CLASS = data["vis_pose_class"]
 
     else:
@@ -626,6 +627,7 @@ def run(
         config.VIS_POS = data["vis_pos"]
         config.VIS_HIS = data["vis_his"]
         config.VIS_SIM = data["vis_sim"]
+        config.VIS_DYN = data["dynamic"]
         config.VIS_POSE_CLASS = data["vis_pose_class"]
 
     if data["freq_all"] is not None:
@@ -694,7 +696,6 @@ def run_pipeline(data):
             no_val_drop=data["no_val_drop"],
             affinity=data["affinity"],
             classes=data["classes"],
-            collect_meta=data["dynamic"],
             epochs=data["epochs"],
             channels=data["channels"],
             depth=data["depth"],
@@ -733,7 +734,6 @@ def run_pipeline(data):
             splt=data["split"],
             batch_s=data["batch"],
             classes=data["classes"],
-            collect_meta=data["dynamic"],
             use_gpu=data["gpu"],
             gaussian_blur=data["gaussian_blur"],
             normalise=data["normalise"],

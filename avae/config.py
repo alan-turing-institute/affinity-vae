@@ -10,6 +10,7 @@ VIS_CYC = False
 VIS_AFF = False
 VIS_HIS = False
 VIS_SIM = False
+VIS_DYN = False
 VIS_POSE_CLASS = []
 
 FREQ_ACC = 10
@@ -62,7 +63,7 @@ DEFAULT_RUN_CONFIGS = {
     "freq_sim": FREQ_SIM,
     "freq_all": None,
     "eval": False,
-    "dynamic": False,
+    "dynamic": VIS_DYN,
     "vis_los": VIS_LOS,
     "vis_acc": VIS_ACC,
     "vis_rec": VIS_REC,
