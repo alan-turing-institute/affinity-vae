@@ -29,7 +29,7 @@ def load_data(
     gaussian_blur=False,
     normalise=False,
     shift_min=False,
-    rescale=False,
+    rescale=None,
 ):
     """Loads all data needed for training, testing and evaluation. Loads MRC files from a given path, selects subset of
     classes if requested, splits it into train / val  and test in batch sets, loads affinity matrix. Returns train,
@@ -205,7 +205,7 @@ class Dataset_reader(Dataset):
         gaussian_blur=False,
         normalise=False,
         shift_min=False,
-        rescale=False,
+        rescale=None,
         lim=None,
         datatype="mrc",
     ):
