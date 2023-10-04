@@ -1,3 +1,5 @@
+import logging
+
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -108,11 +110,10 @@ class AVAELoss:
                 "--affinity parameter."
             )
         elif lookup_aff is not None and max(gamma) == 0:
-            print(
-                "\nWARNING: You provided affinity matrix but no gamma. Unless "
+            logging.warning(
+                "\n\nWARNING: You provided affinity matrix but no gamma. Unless "
                 "you provide gamma, affinity will be ignored and you're "
-                "running a vanilla beta-VAE.\n",
-                flush=True,
+                "running a vanilla beta-VAE.\n"
             )
             self.affinity_loss = None
 

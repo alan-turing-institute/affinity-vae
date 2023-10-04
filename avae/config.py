@@ -10,6 +10,8 @@ VIS_CYC = False
 VIS_AFF = False
 VIS_HIS = False
 VIS_SIM = False
+VIS_DYN = False
+VIS_POSE_CLASS = []
 
 FREQ_ACC = 10
 FREQ_REC = 10
@@ -61,7 +63,7 @@ DEFAULT_RUN_CONFIGS = {
     "freq_sim": FREQ_SIM,
     "freq_all": None,
     "eval": False,
-    "dynamic": False,
+    "dynamic": VIS_DYN,
     "vis_los": VIS_LOS,
     "vis_acc": VIS_ACC,
     "vis_rec": VIS_REC,
@@ -70,6 +72,7 @@ DEFAULT_RUN_CONFIGS = {
     "vis_int": VIS_INT,
     "vis_dis": VIS_DIS,
     "vis_pos": VIS_POS,
+    "vis_pose_class": VIS_POSE_CLASS,
     "vis_cyc": VIS_CYC,
     "vis_aff": VIS_AFF,
     "vis_his": VIS_HIS,
@@ -81,6 +84,9 @@ DEFAULT_RUN_CONFIGS = {
     "normalise": False,
     "shift_min": False,
     "rescale": False,
+    "tensorboard": False,
     "classifier": "NN",
     "datatype": "mrc",
+    "new_out": False,
+    "debug": False,
 }

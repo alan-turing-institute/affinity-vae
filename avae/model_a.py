@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -352,9 +354,8 @@ def set_device(gpu):
         "cuda:0" if gpu and torch.cuda.is_available() else "cpu"
     )
     if gpu and device == "cpu":
-        print(
-            "\nWARNING: no GPU available, running on CPU instead.\n",
-            flush=True,
+        logging.warning(
+            "\n\nWARNING: no GPU available, running on CPU instead.\n"
         )
     return device
 

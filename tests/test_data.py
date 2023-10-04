@@ -41,7 +41,6 @@ class DataTest(unittest.TestCase):
             datatype="mrc",
             lim=None,
             batch_s=32,
-            collect_meta=False,
             eval=True,
             gaussian_blur=True,
             normalise=True,
@@ -58,7 +57,7 @@ class DataTest(unittest.TestCase):
 
         # test ProteinDataset
         eval_batch = list(eval_data)[0]
-        xs, ys, aff = eval_batch
+        xs, ys, aff, meta = eval_batch
         assert len(xs) == len(ys) == len(aff)
         assert (
             np.all(aff.numpy()) == 0
@@ -77,7 +76,6 @@ class DataTest(unittest.TestCase):
             splt=30,
             batch_s=16,
             no_val_drop=True,
-            collect_meta=False,
             eval=False,
             affinity="./train/affinity_fsc_10.csv",
             gaussian_blur=True,
@@ -95,7 +93,7 @@ class DataTest(unittest.TestCase):
 
         # test ProtenDataset
         train_batch = list(train_data)[0]
-        xs, ys, aff = train_batch
+        xs, ys, aff, meta = train_batch
         assert len(xs) == len(ys) == len(aff)
         assert len(np.unique(aff.numpy())) == 4
 

@@ -4,22 +4,15 @@ import warnings
 from datetime import datetime
 
 import click
-import yaml
 
 from avae import config
 from avae.evaluate import evaluate
 from avae.train import train
+from avae.utils import load_config_params, write_config_file
 
-if not os.path.exists("logs"):
-    os.mkdir("logs")
 dt_name = datetime.now().strftime("%H_%M_%d_%m_%Y")
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[
-        logging.FileHandler("logs/avae_run_log_" + dt_name + ".log"),
-        logging.StreamHandler(),
-    ],
+    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
 )
 
 
@@ -38,6 +31,14 @@ logging.basicConfig(
     type=str,
     default=None,
     help="Type of the data: mrc, npy",
+)
+@click.option(
+    "--debug",
+    "-dbg",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Run in debug mode.",
 )
 @click.option(
     "--restart",
@@ -70,6 +71,14 @@ logging.basicConfig(
 )
 @click.option(
     "--split", "-sp", type=int, default=None, help="Train/val split in %."
+)
+@click.option(
+    "--new_out",
+    "-newo",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Create new output directory where to save the results.",
 )
 @click.option(
     "--no_val_drop",
@@ -340,6 +349,13 @@ logging.basicConfig(
     help="Visualise pose disentanglement (frequency controlled).",
 )
 @click.option(
+    "--vis_pose_class",
+    "-vpsc",
+    type=str,
+    default=None,
+    help="Example: A,B,C. your deliminator should be commas and no spaces .Classes to be used for pose interpolation (a seperate pose interpolation figure would be created for each class).",
+)
+@click.option(
     "--vis_cyc",
     "-vc",
     type=bool,
@@ -496,6 +512,14 @@ logging.basicConfig(
     is_flag=False,
     help="Rescale images to given value (tuple, one value per dim).",
 )
+@click.option(
+    "--tensorboard",
+    "-tb",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Log metrics and figures to tensorboard during training",
+)
 def run(
     config_file,
     datapath,
@@ -546,6 +570,7 @@ def run(
     vis_int,
     vis_dis,
     vis_pos,
+    vis_pose_class,
     vis_acc,
     vis_cyc,
     vis_aff,
@@ -561,230 +586,171 @@ def run(
     normalise,
     shift_min,
     rescale,
+    tensorboard,
     classifier,
+    new_out,
+    debug,
 ):
 
     warnings.simplefilter("ignore", FutureWarning)
+
     # read config file and command line arguments and assign to local variables that are used in the rest of the code
+    logging.info("Reading submission configuration file" + config_file)
     local_vars = locals().copy()
-    print(local_vars)
+    data = load_config_params(config_file, local_vars)
 
-    if config_file is not None:
-        with open(config_file, "r") as f:
-            logging.info("Reading submission configuration file" + config_file)
-            data = yaml.load(f, Loader=yaml.FullLoader)
-        # returns JSON object as
-        print(data.get("gaussian_blur"))
+    if data["vis_pose_class"]:
+        data["vis_pose_class"] = data["vis_pose_class"].split(",")
 
-        for key, val in local_vars.items():
-            if (
-                val is not None
-                and isinstance(val, (int, float, bool, str))
-                or data.get(key) is None
-            ):
-                logging.warning(
-                    "Command line argument "
-                    + key
-                    + " is overwriting config file value to: "
-                    + str(val)
-                )
-                data[key] = val
-            else:
-                logging.info(
-                    "Setting "
-                    + key
-                    + " to config file value: "
-                    + str(data[key])
-                )
+    if data["debug"]:
+        logging.info("Debug mode enabled")
+        logging.getLogger().setLevel(logging.DEBUG)
+        logging.getLogger("matplotlib.font_manager").disabled = True
+
+    if data["vis_all"]:
+        config.VIS_LOS = True
+        config.VIS_ACC = True
+        config.VIS_REC = True
+        # config.VIS_CON = True #TODO fix out of memory issue in this plot
+        config.VIS_CYC = True
+        config.VIS_AFF = True
+        config.VIS_EMB = True
+        config.VIS_INT = True
+        config.VIS_DIS = True
+        config.VIS_POS = True
+        config.VIS_HIS = True
+        config.VIS_SIM = True
+        config.VIS_DYN = True
+        config.VIS_POSE_CLASS = data["vis_pose_class"]
+
     else:
-        # if no config file is provided, use command line arguments
-        data = local_vars
+        config.VIS_LOS = data["vis_los"]
+        config.VIS_ACC = data["vis_acc"]
+        config.VIS_REC = data["vis_rec"]
+        config.VIS_CON = data["vis_con"]
+        config.VIS_CYC = data["vis_cyc"]
+        config.VIS_AFF = data["vis_aff"]
+        config.VIS_EMB = data["vis_emb"]
+        config.VIS_INT = data["vis_int"]
+        config.VIS_DIS = data["vis_dis"]
+        config.VIS_POS = data["vis_pos"]
+        config.VIS_HIS = data["vis_his"]
+        config.VIS_SIM = data["vis_sim"]
+        config.VIS_DYN = data["dynamic"]
+        config.VIS_POSE_CLASS = data["vis_pose_class"]
 
-    # Check for missing values and set to default values
-    for key, val in data.items():
-        if (val is None or val == "None") and key != "config_file":
-            #  make sure data variables are provided
-            if key == "data_path":
-                logging.error(
-                    "No value set for "
-                    + key
-                    + " in config file or command line arguments. Please set a value for this variable."
-                )
-                raise ValueError(
-                    "No value set for "
-                    + key
-                    + " in config file or command line arguments. Please set a value for this variable."
-                )
-            elif key == "affinity" or key == "classes":
-                logging.warning(
-                    "No value set for "
-                    + key
-                    + " in config file or command line arguments. Setting to default value."
-                )
-                filename_default = os.path.join(data["datapath"], key + ".csv")
+    if data["freq_all"] is not None:
+        config.FREQ_EVAL = data["freq_all"]
+        config.FREQ_STA = data["freq_all"]
+        config.FREQ_ACC = data["freq_all"]
+        config.FREQ_REC = data["freq_all"]
+        config.FREQ_CON = data["freq_all"]
+        config.FREQ_EMB = data["freq_all"]
+        config.FREQ_INT = data["freq_all"]
+        config.FREQ_DIS = data["freq_all"]
+        config.FREQ_POS = data["freq_all"]
+        config.FREQ_SIM = data["freq_all"]
+    else:
+        config.FREQ_EVAL = data["freq_eval"]
+        config.FREQ_REC = data["freq_rec"]
+        config.FREQ_CON = data["freq_con"]
+        config.FREQ_EMB = data["freq_emb"]
+        config.FREQ_INT = data["freq_int"]
+        config.FREQ_DIS = data["freq_dis"]
+        config.FREQ_POS = data["freq_pos"]
+        config.FREQ_ACC = data["freq_acc"]
+        config.FREQ_STA = data["freq_sta"]
+        config.FREQ_SIM = data["freq_sim"]
 
-                if os.path.isfile(filename_default):
-                    data[key] = filename_default
-                else:
-                    data[key] = None
+    if data["new_out"]:
+        dir_name = f'results_{dt_name}_lat{data["latent_dims"]}_pose{data["pose_dims"]}_lr{data["learning"]}_beta{data["beta"]}_gamma{data["gamma"]}'
+        if not os.path.exists(dir_name):
+            os.mkdir(dir_name)
+        os.chdir(dir_name)
 
-                logging.info(
-                    "Setting up "
-                    + key
-                    + " in config file to "
-                    + str(data[key])
-                )
+    if not os.path.exists("logs"):
+        os.mkdir("logs")
 
-            elif key == "state":
-                logging.warning(
-                    "No value set for "
-                    + key
-                    + " in config file or command line arguments. Loading the latest state if in evaluation mode."
-                )
-            elif key == "meta":
-                logging.warning(
-                    "No value set for "
-                    + key
-                    + " in config file or command line arguments. Loading the latest meta if in evaluation mode."
-                )
-            else:
-                # set missing variables to default value
-                logging.warning(
-                    "No value set for "
-                    + key
-                    + " in config file or command line arguments. Setting to default value."
-                )
-                data[key] = config.DEFAULT_RUN_CONFIGS[key]
-                logging.info(
-                    "Setting " + key + " to default value: " + str(data[key])
-                )
+    # setup logger inside the  directory where we are running the code
+    fileh = logging.FileHandler("logs/avae_run_log_" + dt_name + ".log", "a")
+    logging.getLogger().addHandler(fileh)
+
+    logging.info(
+        "Saving final submission config file to: "
+        + "avae_final_config"
+        + dt_name
+        + ".yaml"
+    )
+
+    write_config_file(dt_name, data)
 
     try:
-        if data["vis_all"]:
-            config.VIS_LOS = True
-            config.VIS_ACC = True
-            config.VIS_REC = True
-            config.VIS_CON = True
-            config.VIS_CYC = True
-            config.VIS_AFF = True
-            config.VIS_EMB = True
-            config.VIS_INT = True
-            config.VIS_DIS = True
-            config.VIS_POS = True
-            config.VIS_HIS = True
-            config.VIS_SIM = True
+        run_pipeline(data)
 
-        else:
-            config.VIS_LOS = data["vis_los"]
-            config.VIS_ACC = data["vis_acc"]
-            config.VIS_REC = data["vis_rec"]
-            config.VIS_CON = data["vis_con"]
-            config.VIS_CYC = data["vis_cyc"]
-            config.VIS_AFF = data["vis_aff"]
-            config.VIS_EMB = data["vis_emb"]
-            config.VIS_INT = data["vis_int"]
-            config.VIS_DIS = data["vis_dis"]
-            config.VIS_POS = data["vis_pos"]
-            config.VIS_HIS = data["vis_his"]
-            config.VIS_SIM = data["vis_sim"]
+    except Exception as e:
+        logging.exception("An exception was thrown!", e)
 
-        if data["freq_all"] is not None:
-            config.FREQ_EVAL = data["freq_all"]
-            config.FREQ_STA = data["freq_all"]
-            config.FREQ_ACC = data["freq_all"]
-            config.FREQ_REC = data["freq_all"]
-            config.FREQ_CON = data["freq_all"]
-            config.FREQ_EMB = data["freq_all"]
-            config.FREQ_INT = data["freq_all"]
-            config.FREQ_DIS = data["freq_all"]
-            config.FREQ_POS = data["freq_all"]
-            config.FREQ_SIM = data["freq_all"]
-        else:
-            config.FREQ_EVAL = data["freq_eval"]
-            config.FREQ_REC = data["freq_rec"]
-            config.FREQ_CON = data["freq_con"]
-            config.FREQ_EMB = data["freq_emb"]
-            config.FREQ_INT = data["freq_int"]
-            config.FREQ_DIS = data["freq_dis"]
-            config.FREQ_POS = data["freq_pos"]
-            config.FREQ_ACC = data["freq_acc"]
-            config.FREQ_STA = data["freq_sta"]
-            config.FREQ_SIM = data["freq_sim"]
 
-        logging.info(
-            "Saving final submission config file to: "
-            + "avae_final_config"
-            + dt_name
-            + ".yaml"
+def run_pipeline(data):
+
+    if not data["eval"]:
+        train(
+            datapath=data["datapath"],
+            datatype=data["datatype"],
+            restart=data["restart"],
+            state=data["state"],
+            lim=data["limit"],
+            splt=data["split"],
+            batch_s=data["batch"],
+            no_val_drop=data["no_val_drop"],
+            affinity=data["affinity"],
+            classes=data["classes"],
+            epochs=data["epochs"],
+            channels=data["channels"],
+            depth=data["depth"],
+            lat_dims=data["latent_dims"],
+            pose_dims=data["pose_dims"],
+            learning=data["learning"],
+            beta_load=data["beta_load"],
+            beta_min=data["beta_min"],
+            beta_max=data["beta"],
+            beta_cycle=data["beta_cycle"],
+            beta_ratio=data["beta_ratio"],
+            cyc_method_beta=data["cyc_method_beta"],
+            gamma_load=data["gamma_load"],
+            gamma_min=data["gamma_min"],
+            gamma_max=data["gamma"],
+            gamma_cycle=data["gamma_cycle"],
+            gamma_ratio=data["gamma_ratio"],
+            cyc_method_gamma=data["cyc_method_gamma"],
+            recon_fn=data["loss_fn"],
+            use_gpu=data["gpu"],
+            model=data["model"],
+            opt_method=data["opt_method"],
+            gaussian_blur=data["gaussian_blur"],
+            normalise=data["normalise"],
+            shift_min=data["shift_min"],
+            rescale=data["rescale"],
+            tensorboard=data["tensorboard"],
+            classifier=data["classifier"],
         )
-        file = open("avae_final_config" + dt_name + ".yaml", "w")
-        yaml.dump(data, file)
-        file.close()
-        logging.info("YAML File saved!")
-
-        if not data["eval"]:
-            train(
-                datapath=data["datapath"],
-                datatype=data["datatype"],
-                restart=data["restart"],
-                state=data["state"],
-                lim=data["limit"],
-                splt=data["split"],
-                batch_s=data["batch"],
-                no_val_drop=data["no_val_drop"],
-                affinity=data["affinity"],
-                classes=data["classes"],
-                collect_meta=data["dynamic"],
-                epochs=data["epochs"],
-                channels=data["channels"],
-                depth=data["depth"],
-                lat_dims=data["latent_dims"],
-                pose_dims=data["pose_dims"],
-                learning=data["learning"],
-                beta_load=data["beta_load"],
-                beta_min=data["beta_min"],
-                beta_max=data["beta"],
-                beta_cycle=data["beta_cycle"],
-                beta_ratio=data["beta_ratio"],
-                cyc_method_beta=data["cyc_method_beta"],
-                gamma_load=data["gamma_load"],
-                gamma_min=data["gamma_min"],
-                gamma_max=data["gamma"],
-                gamma_cycle=data["gamma_cycle"],
-                gamma_ratio=data["gamma_ratio"],
-                cyc_method_gamma=data["cyc_method_gamma"],
-                recon_fn=data["loss_fn"],
-                use_gpu=data["gpu"],
-                model=data["model"],
-                opt_method=data["opt_method"],
-                gaussian_blur=data["gaussian_blur"],
-                normalise=data["normalise"],
-                shift_min=data["shift_min"],
-                rescale=data["rescale"],
-                classifier=data["classifier"],
-            )
-        else:
-            evaluate(
-                datapath=data["datapath"],
-                datatype=data["datatype"],
-                state=data["state"],
-                meta=data["meta"],
-                lim=data["limit"],
-                splt=data["split"],
-                batch_s=data["batch"],
-                classes=data["classes"],
-                collect_meta=data["dynamic"],
-                use_gpu=data["gpu"],
-                gaussian_blur=data["gaussian_blur"],
-                normalise=data["normalise"],
-                shift_min=data["shift_min"],
-                rescale=data["rescale"],
-                classifier=data["classifier"],
-            )
-            # TODO also make sure image is correct size, maybe in dataloader?
-
-    except Exception:
-        logging.exception("An exception was thrown!")
+    else:
+        evaluate(
+            datapath=data["datapath"],
+            datatype=data["datatype"],
+            state=data["state"],
+            meta=data["meta"],
+            lim=data["limit"],
+            splt=data["split"],
+            batch_s=data["batch"],
+            classes=data["classes"],
+            use_gpu=data["gpu"],
+            gaussian_blur=data["gaussian_blur"],
+            normalise=data["normalise"],
+            shift_min=data["shift_min"],
+            rescale=data["rescale"],
+            classifier=data["classifier"],
+        )
 
 
 if __name__ == "__main__":

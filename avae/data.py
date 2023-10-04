@@ -1,3 +1,4 @@
+import logging
 import os
 import random
 
@@ -22,7 +23,6 @@ def load_data(
     splt: int = 20,
     batch_s: int = 64,
     no_val_drop: bool = False,
-    collect_meta: bool = False,
     eval: bool = True,
     affinity=None,
     classes=None,
@@ -49,8 +49,6 @@ def load_data(
         Batch size.
     no_val_drop: bool
         If True, the last batch of validation data will not be dropped if it is smaller than batch size.
-    collect_meta: bool
-        If True, the meta data for visualisation will be collected and returned.
     eval: bool
         If True, the data will be loaded only for evaluation.
     affinity: str
@@ -95,7 +93,6 @@ def load_data(
             shift_min=shift_min,
             rescale=rescale,
             lim=lim,
-            collect_m=collect_meta,
             datatype=datatype,
         )
 
@@ -157,11 +154,15 @@ def load_data(
                     batch_s, len(train_data), len(val_data), splt
                 )
             )
-        print("\nData size:", len(data), flush=True)
-        print("\nClass list:", data.final_classes, flush=True)
-        print("Train / val split:", len(train_data), len(val_data), flush=True)
-        print("Train / val batches:", len(trains), len(vals), flush=True)
-        print(flush=True)
+        logging.info("############################################### DATA")
+        logging.info("Data size: {}".format(len(data)))
+        logging.info("Class list: {}".format(data.final_classes))
+        logging.info(
+            "Train / val split: {}, {}".format(len(train_data), len(val_data))
+        )
+        logging.info(
+            "Train / val batches: {}, {}\n".format(len(trains), len(vals))
+        )
 
         if affinity is not None:
             lookup = lookup.to_numpy(dtype=np.float32)
@@ -178,16 +179,15 @@ def load_data(
             shift_min=shift_min,
             rescale=rescale,
             lim=lim,
-            collect_m=collect_meta,
             datatype=datatype,
         )
 
-        print("Eval data size:", len(data), flush=True)
+        logging.info("############################################### EVAL")
+        logging.info("Eval data size: {}".format(len(data)))
         tests = DataLoader(
             data, batch_size=batch_s, num_workers=0, shuffle=True
         )
-        print("Eval batches:", len(tests), flush=True)
-        print(flush=True)
+        logging.info("Eval batches: {}\n".format(len(tests)))
 
     if eval:
         return tests, data.dim()
@@ -207,7 +207,6 @@ class Dataset_reader(Dataset):
         shift_min=False,
         rescale=False,
         lim=None,
-        collect_m=False,
         datatype="mrc",
     ):
         super().__init__()
@@ -217,7 +216,6 @@ class Dataset_reader(Dataset):
         self.gaussian_blur = gaussian_blur
         self.rescale = rescale
         self.transform = transform
-        self.collect_meta = collect_m
         self.amatrix = amatrix
         self.root_dir = root_dir
 
@@ -280,23 +278,18 @@ class Dataset_reader(Dataset):
             # in evaluation mode - test set
             aff = 0  # cannot be None, but not used anywhere during evaluation
 
-        if self.collect_meta:
-            # file info and metadata
-            meta = "_".join(filename.split(".")[0].split("_")[1:])
-            avg = np.around(np.average(x), decimals=4)
-            img = format(
-                x, len(data.shape)
-            )  # used for dynamic preview in Altair
-            meta = {
-                "filename": filename,
-                "id": y,
-                "meta": meta,
-                "avg": avg,
-                "image": img,
-            }
-            return x, y, aff, meta
-        else:
-            return x, y, aff
+        # file info and metadata
+        meta = "_".join(filename.split(".")[0].split("_")[1:])
+        avg = np.around(np.average(x), decimals=4)
+        img = format(x, len(data.shape))  # used for dynamic preview in Altair
+        meta = {
+            "filename": filename,
+            "id": y,
+            "meta": meta,
+            "avg": avg,
+            "image": img,
+        }
+        return x, y, aff, meta
 
     def read(self, filename):
 

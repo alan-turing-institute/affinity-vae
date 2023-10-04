@@ -130,3 +130,9 @@ dmypy.json
 
 # not change default config
 configs/avae-test-config.yml
+
+# remove mac specific files
+.DS_Store
+
+# remove pycharm specific files
+.idea/

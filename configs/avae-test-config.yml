@@ -78,3 +78,6 @@ freq_dis: 10  # frequency of latent disentanglement visualisation
 freq_pos: 10  # frequency of pose disentanglement visualisation
 freq_sim: 10  # frequency of similarity matrix visualisation
 freq_all: 10  # sets all above to the same value (inc freq_sta and freq_eval)
+
+#### debug parameters
+debug: false

@@ -1,9 +1,11 @@
 import datetime
+import logging
 import os
 
 import numpy as np
 import pandas as pd
 import torch
+from torch.utils.tensorboard import SummaryWriter
 
 from . import config, vis
 from .cyc_annealing import cyc_annealing
@@ -26,7 +28,6 @@ def train(
     no_val_drop,
     affinity,
     classes,
-    collect_meta,
     epochs,
     channels,
     depth,
@@ -53,6 +54,7 @@ def train(
     normalise,
     shift_min,
     rescale,
+    tensorboard,
     classifier,
 ):
     """Function to train an AffinityVAE model. The inputs are training configuration parameters. In this function the
@@ -78,8 +80,6 @@ def train(
         Path to the affinity matrix.
     classes: list
         List of classes to be selected from the data for the training and validation set.
-    collect_meta: bool
-        If True, the meta data for visualisation will be collected and returned.
     epochs: int
         Number of epochs to train the model.
     channels: int
@@ -127,6 +127,8 @@ def train(
         In True, the input data is normalised before being passed to the model.
     shift_min: bool
         If True, the input data is shifted to have a minimum value of 0 and max of 1.
+    tensorboard: bool
+        If True, log metrics and figures using tensorboard.
     classifier: str
         The method to use on the latent space classification. Can be neural network (NN), k nearest neighbourgs (KNN) or logistic regression (LR).
     """
@@ -146,7 +148,6 @@ def train(
         splt=splt,
         batch_s=batch_s,
         no_val_drop=no_val_drop,
-        collect_meta=collect_meta,
         eval=False,
         affinity=affinity,
         classes=classes,
@@ -292,18 +293,15 @@ def train(
         recon_fn=recon_fn,
     )
 
-    print(
-        "Epoch: [0/%d] | Batch: [0/%d] | Loss: -- | Recon: -- | "
-        "KLdiv: -- | Affin: -- | Beta: --" % (epochs, len(trains)),
-        end="\r",
-        flush=True,
-    )
+    if tensorboard:
+        writer = SummaryWriter()
+    else:
+        writer = None
 
     # ########################## TRAINING LOOP ################################
     for epoch in range(e_start, epochs):
 
-        if collect_meta:
-            meta_df = pd.DataFrame()
+        meta_df = pd.DataFrame()
 
         # populate loss with new epoch
         t_history.append(np.zeros(4))
@@ -354,32 +352,32 @@ def train(
             if pose:
                 p_train.extend(lat_pos.cpu().detach().numpy())
 
-            if collect_meta:  # store meta for plots
-                meta_df = add_meta(
-                    data_dim,
-                    meta_df,
-                    batch[-1],
-                    x_hat,
-                    lat_mu,
-                    lat_pos,
-                    lat_logvar,
-                    mode="trn",
+            # store meta for plots and accuracy
+            meta_df = add_meta(
+                data_dim,
+                meta_df,
+                batch[-1],
+                x_hat,
+                lat_mu,
+                lat_pos,
+                lat_logvar,
+                mode="trn",
+            )
+
+            logging.info(
+                "Training : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
+                "KLdiv: %f | Affin: %f | Beta: %f"
+                % (
+                    epoch + 1,
+                    epochs,
+                    b + 1,
+                    len(trains),
+                    *t_history[-1],
+                    beta_arr[epoch],
                 )
+            )
 
         t_history[-1] /= len(trains)
-        print(
-            "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
-            "KLdiv: %f | Affin: %f | Beta: %f"
-            % (
-                epoch + 1,
-                epochs,
-                b + 1,
-                len(trains),
-                *t_history[-1],
-                beta_arr[epoch],
-            ),
-            flush=True,
-        )
 
         # ########################## VAL ######################################
         vae.eval()
@@ -410,32 +408,37 @@ def train(
             if pose:
                 p_val.extend(vlat_pos.cpu().detach().numpy())
 
-            if collect_meta:  # store meta for plots
-                meta_df = add_meta(
-                    data_dim,
-                    meta_df,
-                    batch[-1],
-                    v_hat,
-                    v_mu,
-                    vlat_pos,
-                    v_logvar,
-                    mode="val",
+            meta_df = add_meta(
+                data_dim,
+                meta_df,
+                batch[-1],
+                v_hat,
+                v_mu,
+                vlat_pos,
+                v_logvar,
+                mode="val",
+            )
+
+            logging.info(
+                "Validation : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
+                "KLdiv: %f | Affin: %f | Beta: %f"
+                % (
+                    epoch + 1,
+                    epochs,
+                    b + 1,
+                    len(vals),
+                    *v_history[-1],
+                    beta_arr[epoch],
                 )
+            )
 
         v_history[-1] /= len(vals)
-        print(
-            "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
-            "KLdiv: %f | Affin: %f | Beta: %f"
-            % (
-                epoch + 1,
-                epochs,
-                b + 1,
-                len(vals),
-                *v_history[-1],
-                beta_arr[epoch],
-            ),
-            flush=True,
-        )
+
+        if writer:
+            for i, loss_name in enumerate(
+                ["Loss", "Recon loss", "KLdiv loss", "Affin loss"]
+            ):
+                writer.add_scalar(loss_name, v_history[-1][i], epoch)
 
         # ########################## TEST #####################################
         if (epoch + 1) % config.FREQ_EVAL == 0:
@@ -448,46 +451,51 @@ def train(
                 if pose:
                     p_test.extend(tlat_pose.cpu().detach().numpy())
 
-                if collect_meta:  # store meta for plots
-                    meta_df = add_meta(
-                        data_dim,
-                        meta_df,
-                        batch[-1],
-                        t_hat,
-                        t_mu,
-                        tlat_pose,
-                        t_logvar,
-                        mode="tst",
-                    )
+                # store meta for plots and classification
+                meta_df = add_meta(
+                    data_dim,
+                    meta_df,
+                    batch[-1],
+                    t_hat,
+                    t_mu,
+                    tlat_pose,
+                    t_logvar,
+                    mode="tst",
+                )
+
+            logging.info("Evaluation : Batch: [%d/%d]" % (b + 1, len(tests)))
+        logging.info("\n")  # end of training round
 
         # ########################## VISUALISE ################################
 
         # visualise accuracy: confusion and F1 scores
         if config.VIS_ACC and (epoch + 1) % config.FREQ_ACC == 0:
-            train_acc, val_acc, ypred_train, ypred_val = accuracy(
+            train_acc, val_acc, _, ypred_train, ypred_val = accuracy(
                 x_train, y_train, x_val, y_val, classifier=classifier
             )
-            print(
-                "Epoch: [%d/%d] |   Gamma: %f | Beta: %f"
-                % (
-                    epoch + 1,
-                    epochs,
-                    gamma_arr[epoch],
-                    beta_arr[epoch],
-                )
-            )
 
-            print(
-                "\n------------------->>> Accuracy: Train: %f | Val: %f\n"
+            logging.info(
+                "------------------->>> Accuracy: Train: %f | Val: %f\n"
                 % (train_acc, val_acc),
-                flush=True,
             )
             vis.accuracy_plot(
-                y_train, ypred_train, y_val, ypred_val, classes, epoch=epoch
+                y_train,
+                ypred_train,
+                y_val,
+                ypred_val,
+                classes,
+                epoch=epoch,
+                writer=writer,
             )
 
             vis.f1_plot(
-                y_train, ypred_train, y_val, ypred_val, classes, epoch=epoch
+                y_train,
+                ypred_train,
+                y_val,
+                ypred_val,
+                classes,
+                epoch=epoch,
+                writer=writer,
             )
 
         # visualise loss
@@ -512,8 +520,24 @@ def train(
 
         # visualise reconstructions - last batch
         if config.VIS_REC and (epoch + 1) % config.FREQ_REC == 0:
-            vis.recon_plot(x, x_hat, y_train, data_dim, mode="trn")
-            vis.recon_plot(v, v_hat, y_val, data_dim, mode="val")
+            vis.recon_plot(
+                x,
+                x_hat,
+                y_train,
+                data_dim,
+                mode="trn",
+                epoch=epoch,
+                writer=writer,
+            )
+            vis.recon_plot(
+                v,
+                v_hat,
+                y_val,
+                data_dim,
+                mode="val",
+                epoch=epoch,
+                writer=writer,
+            )
 
         # visualise mean and logvar similarity matrix
         if config.VIS_SIM and (epoch + 1) % config.FREQ_SIM == 0:
@@ -553,10 +577,14 @@ def train(
             else:
                 xs = np.r_[x_train, x_val]
                 ys = np.r_[y_train, y_val]
-            vis.latent_embed_plot_tsne(xs, ys)
-            vis.latent_embed_plot_umap(xs, ys)
+            vis.latent_embed_plot_tsne(
+                xs, ys, classes_list, epoch=epoch, writer=writer
+            )
+            vis.latent_embed_plot_umap(
+                xs, ys, classes_list, epoch=epoch, writer=writer
+            )
 
-            if collect_meta:
+            if config.VIS_DYN:
                 # merge img and rec into one image for display in altair
                 meta_df["image"] = meta_df["image"].apply(vis.merge)
                 vis.dyn_latentembed_plot(meta_df, epoch, embedding="umap")
@@ -574,6 +602,16 @@ def train(
         if pose and config.VIS_POS and (epoch + 1) % config.FREQ_POS == 0:
             vis.pose_disentanglement_plot(
                 x_train, p_train, vae, data_dim, device
+            )
+
+            vis.pose_interpolation_plot(
+                x_train,
+                y_train,
+                config.VIS_POSE_CLASS,
+                p_train,
+                vae,
+                data_dim,
+                device,
             )
 
         # visualise interpolations
@@ -618,13 +656,8 @@ def train(
                 + ".pt"
             )
 
-            print(
-                "\n################################################################",
-                flush=True,
-            )
-            print(
-                "Saving model state for restarting and evaluation ...\n",
-                flush=True,
+            logging.info(
+                "################################################################"
             )
 
             torch.save(
@@ -638,19 +671,25 @@ def train(
                 },
                 os.path.join("states", mname),
             )
+            logging.info(
+                f"Saved model state: {mname} for restarting and evaluation "
+            )
 
-            if collect_meta:
-                meta_df.to_pickle(
-                    os.path.join(
-                        "states",
-                        "meta_"
-                        + str(timestamp)
-                        + "_E"
-                        + str(epoch)
-                        + "_"
-                        + str(lat_dims)
-                        + "_"
-                        + str(pose_dims)
-                        + ".pkl",
-                    )
-                )
+            filename = (
+                "meta_"
+                + str(timestamp)
+                + "_E"
+                + str(epoch)
+                + "_"
+                + str(lat_dims)
+                + "_"
+                + str(pose_dims)
+                + ".pkl"
+            )
+            meta_df.to_pickle(os.path.join("states", filename))
+
+            logging.info(f"Saved meta file : {filename} for evaluation \n")
+
+    if writer:
+        writer.flush()
+        writer.close()

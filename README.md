@@ -79,6 +79,7 @@ Options:
   --config_file PATH
   -d, --datapath TEXT             Path to training data.
   -dtype, --datatype TEXT         Type of the data: mrc, npy
+  -dbg, --debug                   Run in debug mode.
   -res, --restart                 Is the calculation restarting from a
                                   checkpoint.
   -st, --state TEXT               The saved model state to be loaded for
@@ -88,6 +89,8 @@ Options:
   -lm, --limit INTEGER            Limit the number of samples loaded (default
                                   None).
   -sp, --split INTEGER            Train/val split in %.
+  -newo, --new_out                Create new output directory where to save
+                                  the results.
   -nd, --no_val_drop              Do not drop last validate batch if if it is
                                   smaller than batch_size.
   -af, --affinity TEXT            Path to affinity matrix for training.
@@ -154,6 +157,11 @@ Options:
                                   controlled).
   -vps, --vis_pos                 Visualise pose disentanglement (frequency
                                   controlled).
+  -vpsc, --vis_pose_class TEXT    Example: A,B,C. your deliminator should be
+                                  commas and no spaces .Classes to be used for
+                                  pose interpolation (a seperate pose
+                                  interpolation figure would be created for
+                                  each class).
   -vc, --vis_cyc                  Visualise cyclical parameters (once per
                                   run).
   -va, --vis_aff                  Visualise affinity matrix (once per run).
@@ -191,6 +199,8 @@ Options:
                                   and the maximum to one
   -res --rescale                  Rescale images to given value (tuple, one
                                   value per dim).
+  -tb, --tensorboard              Log metrics and figures to tensorboard
+                                  during training
   --help                          Show this message and exit.
 ```
 

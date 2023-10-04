@@ -1,4 +1,5 @@
 import copy
+import logging
 import os.path
 import random
 
@@ -17,6 +18,7 @@ from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix, f1_score
 from sklearn.metrics.pairwise import cosine_similarity
 
 from .utils import (
+    colour_per_class,
     create_grid_for_plotting,
     fill_grid_for_plottting,
     save_imshow_png,
@@ -100,10 +102,9 @@ def format(im, data_dim):
         im = np.copy(im.squeeze(dim=0).cpu().detach().numpy())
         # .astype(np.uint8)
     else:
-        print(
-            "WARNING: Wrong data format, please pass either a single "
+        logging.warning(
+            "\n\nWARNING: Wrong data format, please pass either a single "
             "unsqueezed tensor or a batch to image formatter. Exiting.\n",
-            flush=True,
         )
         return
     im *= 255
@@ -132,10 +133,9 @@ def merge(im):
     """
     i = im.split("&")
     if len(i) != 2:
-        print(
-            "WARNING: Image format corrupt. Number of images in meta_df: {}. "
+        logging.warning(
+            "\n\nWARNING: Image format corrupt. Number of images in meta_df: {}. "
             "Exiting. \n".format(len(i)),
-            flush=True,
         )
         return
 
@@ -150,7 +150,9 @@ def merge(im):
     return f"data:image/png;base64,{data}"
 
 
-def latent_embed_plot_tsne(xs, ys, mode=""):
+def latent_embed_plot_tsne(
+    xs, ys, classes=None, mode="", epoch=0, writer=None
+):
     """Plot static TSNE embedding.
 
     Parameters
@@ -161,12 +163,15 @@ def latent_embed_plot_tsne(xs, ys, mode=""):
         List of labels.
     mode: str
         Added data mode to the name of the saved figure (e.g train, valid, eval).
+    epoch: int
+        Current epoch
+    writer: SummaryWriter
+        Tensorboard summary writer
     """
-    print(
-        "\n################################################################",
-        flush=True,
+    logging.info(
+        "################################################################",
     )
-    print("Visualising static TSNE embedding...\n", flush=True)
+    logging.info("Visualising static TSNE embedding...\n")
 
     xs = np.asarray(xs)
     ys = np.asarray(ys)
@@ -178,8 +183,15 @@ def latent_embed_plot_tsne(xs, ys, mode=""):
     lats = TSNE(
         n_components=2, perplexity=perplexity, random_state=42
     ).fit_transform(xs)
+    if classes is None:
+        classes = sorted(list(np.unique(ys)))
+    else:
+        if np.setdiff1d(ys, classes).size > 0:
+            classes = np.concatenate((classes, np.setdiff1d(ys, classes)))
+        classes = list(classes)
 
-    n_classes = len(np.unique(ys))
+    n_classes = len(classes)
+
     if n_classes < 3:
         # If the number of classes are not moe than 3 the size of the figure would be too
         # small and matplotlib would through a singularity error
@@ -192,10 +204,13 @@ def latent_embed_plot_tsne(xs, ys, mode=""):
         )
     # When the number of classes is less than 3 the image becomes two small
 
+    colours = colour_per_class(classes)
+
     for mol_id, mol in enumerate(set(ys.tolist())):
         idx = np.where(np.array(ys.tolist()) == mol)[0]
-        cmap = plt.cm.get_cmap("tab20")
-        color = cmap(mol_id % 20)
+
+        color = colours[classes.index(mol)]
+
         plt.scatter(
             lats[idx, 0],
             lats[idx, 1],
@@ -211,10 +226,16 @@ def latent_embed_plot_tsne(xs, ys, mode=""):
     plt.ylabel("TSNE-2")
     plt.tight_layout()
     plt.savefig(f"plots/embedding_TSNE{mode}.png")
+
+    if writer:
+        writer.add_figure("TSNE embedding", fig, epoch)
+
     plt.close()
 
 
-def latent_embed_plot_umap(xs, ys, mode=""):
+def latent_embed_plot_umap(
+    xs, ys, classes=None, mode="", epoch=0, writer=None
+):
     """Plot static UMAP embedding.
 
     Parameters
@@ -225,16 +246,27 @@ def latent_embed_plot_umap(xs, ys, mode=""):
         List of labels.
     mode: str
         Added data mode to the name of the saved figure (e.g train, valid, eval).
+    epoch: int
+        Current epoch
+    writer: SummaryWriter
+        Tensorboard summary writer
     """
-    print(
-        "\n################################################################",
-        flush=True,
+    logging.info(
+        "################################################################",
     )
-    print("Visualising static UMAP embedding...\n", flush=True)
+
+    logging.info("Visualising static UMAP embedding...\n")
     reducer = umap.UMAP(random_state=42)
     embedding = reducer.fit_transform(xs)
 
-    n_classes = len(np.unique(ys))
+    if classes is None:
+        classes = sorted(list(np.unique(ys)))
+    else:
+        if np.setdiff1d(ys, classes).size > 0:
+            classes = np.concatenate((classes, np.setdiff1d(ys, classes)))
+        classes = list(classes)
+
+    n_classes = len(classes)
     if n_classes < 3:
         fig, ax = plt.subplots(
             figsize=(int(n_classes / 2) + 7, int(n_classes / 2) + 5)
@@ -243,11 +275,12 @@ def latent_embed_plot_umap(xs, ys, mode=""):
         fig, ax = plt.subplots(
             figsize=(int(n_classes / 2) + 4, int(n_classes / 2) + 2)
         )
+
+    colours = colour_per_class(classes)
+
     for mol_id, mol in enumerate(set(ys.tolist())):
         idx = np.where(np.array(ys.tolist()) == mol)[0]
-
-        cmap = plt.cm.get_cmap("tab20")
-        color = cmap(mol_id % 20)
+        color = colours[classes.index(mol)]
 
         ax.scatter(
             embedding[idx, 0],
@@ -264,6 +297,10 @@ def latent_embed_plot_umap(xs, ys, mode=""):
     plt.ylabel("UMAP-2")
     plt.tight_layout()
     plt.savefig(f"plots/embedding_UMAP{mode}.png")
+
+    if writer:
+        writer.add_figure("UMAP embedding", fig, epoch)
+
     plt.close()
 
 
@@ -281,13 +318,10 @@ def dyn_latentembed_plot(df, epoch, embedding="umap", mode=""):
     mode: str
         Added data mode to the name of the saved figure (e.g train, valid, eval).
     """
-    print(
-        "\n################################################################",
-        flush=True,
+    logging.info(
+        "################################################################",
     )
-    print(
-        "Visualising dynamic embedding {}...\n".format(embedding), flush=True
-    )
+    logging.info("Visualising dynamic embedding {}...\n".format(embedding))
 
     epoch += 1
     latentspace = df[[col for col in df if col.startswith("lat")]].to_numpy()
@@ -429,13 +463,11 @@ def dyn_latentembed_plot(df, epoch, embedding="umap", mode=""):
 
 
 def confidence_plot(x, y, s, suffix=None):
-    print(
-        "\n################################################################",
-        flush=True,
+    logging.info(
+        "################################################################",
     )
-    print(
+    logging.info(
         "Visualising class-average confidence metrics " + suffix + "...\n",
-        flush=True,
     )
     cmap = plt.get_cmap("jet")
     cols = [cmap(i) for i in np.linspace(0, 1, len(x[0]))]
@@ -477,7 +509,14 @@ def confidence_plot(x, y, s, suffix=None):
 
 
 def accuracy_plot(
-    y_train, ypred_train, y_val, ypred_val, classes=None, mode="", epoch=0
+    y_train,
+    ypred_train,
+    y_val,
+    ypred_val,
+    classes=None,
+    mode="",
+    epoch=0,
+    writer=None,
 ):
     """Plot confusion matrix .
 
@@ -497,13 +536,14 @@ def accuracy_plot(
         Added data mode to the name of the saved figures (e.g train, valid, eval).
     epoch: int
         Current epoch.
+    writer: SummaryWriter
+        Tensorboard summary writer
     """
-    print(
-        "\n################################################################",
-        flush=True,
+    logging.info(
+        "################################################################",
     )
 
-    print("Visualising accuracy: confusion and F1 scores ...\n", flush=True)
+    logging.info("Visualising accuracy: confusion and F1 scores ...\n")
 
     if classes is not None:
         classes_list = pd.read_csv(classes).columns.tolist()
@@ -533,7 +573,7 @@ def accuracy_plot(
 
         plt.tight_layout()
         plt.title(
-            "Average accuracy at epoch {}: {:.1f}%".format(
+            "Average accuracy at epoch {}: {:.3f}%".format(
                 epoch, np.mean(avg_accuracy) * 100
             ),
             fontsize=10,
@@ -543,6 +583,10 @@ def accuracy_plot(
             os.mkdir("plots")
 
         plt.savefig(f"plots/confusion_train{mode}.png", dpi=300)
+
+        if writer:
+            writer.add_figure("Accuracy", fig, epoch)
+
         plt.close()
 
         fig, ax = plt.subplots(
@@ -559,7 +603,7 @@ def accuracy_plot(
 
         plt.tight_layout()
         plt.title(
-            "Average accuracy at epoch {}: {:.1f}%".format(
+            "Average accuracy at epoch {}: {:.3f}%".format(
                 epoch, np.mean(avg_accuracy) * 100
             ),
             fontsize=12,
@@ -570,6 +614,10 @@ def accuracy_plot(
         plt.xlabel("Predicted label (%)")
         plt.ylabel("True label (%)")
         plt.savefig(f"plots/confusion_train{mode}_norm.png", dpi=300)
+
+        if writer:
+            writer.add_figure("Accuracy (Norm)", fig, epoch)
+
         plt.close()
 
     classes_list_eval = np.unique(np.concatenate((y_val, ypred_val)))
@@ -657,8 +705,10 @@ def f1_plot(
     classes=None,
     mode="",
     epoch=0,
+    writer=None,
 ):
-    """Plot F1 values.
+    """Plot F1 values. If classes list is provided, the F1 scores are calculated only for the classess in the
+    list. This avoids F1 scores being affected by unseen clases that can be added in evaluation.
 
     Parameters
     ----------
@@ -676,12 +726,13 @@ def f1_plot(
         Added data mode to the name of the saved figures (e.g train, valid, eval).
     epoch: int
         Epoch number.
+    writer: SummaryWriter
+        Tensorboard summary writer
     """
-    print(
-        "\n################################################################",
-        flush=True,
+    logging.info(
+        "################################################################",
     )
-    print("Visualising F1 scores ...\n", flush=True)
+    logging.info("Visualising F1 scores ...\n")
     if classes is not None:
         classes_list = pd.read_csv(classes).columns.tolist()
     else:
@@ -690,17 +741,20 @@ def f1_plot(
     classes_list_eval = np.unique(np.concatenate((y_val, ypred_val)))
 
     if np.setdiff1d(classes_list_eval, classes_list).size > 0:
-        ordered_class_eval = np.concatenate(
-            (classes_list, np.setdiff1d(classes_list_eval, classes_list))
+        logging.info(
+            f"Class {np.setdiff1d(classes_list_eval, classes_list)} will not be used to compute F1 values as it was unseen in training data."
         )
-    else:
-        ordered_class_eval = classes_list
+
+        index = np.argwhere(np.isin(y_val, classes_list)).ravel()
+
+        y_val = np.array(y_val)[index].tolist()
+        ypred_val = np.array(ypred_val)[index].tolist()
 
     train_f1_score = f1_score(
         y_train, ypred_train, average=None, labels=classes_list
     ).tolist()
     valid_f1_score = f1_score(
-        y_val, ypred_val, average=None, labels=ordered_class_eval
+        y_val, ypred_val, average=None, labels=classes_list
     ).tolist()
 
     if mode == "_eval":
@@ -712,7 +766,7 @@ def f1_plot(
     f1_valid_file = f"plots/f1_{label}.csv"
 
     train_df = pd.DataFrame([train_f1_score], columns=classes_list)
-    valid_df = pd.DataFrame([valid_f1_score], columns=ordered_class_eval)
+    valid_df = pd.DataFrame([valid_f1_score], columns=classes_list)
 
     train_df["epoch"] = epoch
     valid_df["epoch"] = epoch
@@ -735,22 +789,26 @@ def f1_plot(
     with plt.rc_context(
         {
             "font.weight": "bold",
-            "font.size": int(len(ordered_class_eval) / 3) + 3,
+            "font.size": int(len(classes_list) / 3) + 3,
         }
     ):
         fig, ax = plt.subplots(
             figsize=(
-                int(len(ordered_class_eval)) / 2,
-                int(len(ordered_class_eval)) / 2,
+                int(len(classes_list)) / 2,
+                int(len(classes_list)) / 2,
             )
         )
         plt.plot(classes_list, train_f1_score, label="train", marker="o")
-        plt.plot(ordered_class_eval, valid_f1_score, label=label, marker="o")
+        plt.plot(classes_list, valid_f1_score, label=label, marker="o")
         plt.xticks(rotation=45)
         plt.legend(loc="lower left")
         plt.title("F1 Score at epoch {}".format(epoch))
         plt.ylabel("F1 Score")
         plt.savefig(f"plots/f1{mode}.png", dpi=150)
+
+        if writer:
+            writer.add_figure("F1 score", fig, epoch)
+
         plt.close()
 
 
@@ -769,11 +827,10 @@ def loss_plot(epochs, beta, gamma, train_loss, val_loss=None, p=None):
         List of 7 hyperparameters: batch size, depth, "
                 "channel init, latent dimension, learning rate, beta, gamma.
     """
-    print(
-        "\n################################################################",
-        flush=True,
+    logging.info(
+        "################################################################",
     )
-    print("Visualising loss ...\n", flush=True)
+    logging.info("Visualising loss ...\n")
 
     train_loss = np.transpose(np.asarray(train_loss))
     if val_loss is not None:
@@ -819,12 +876,11 @@ def loss_plot(epochs, beta, gamma, train_loss, val_loss=None, p=None):
 
     if p is not None:
         if len(p) != 7:
-            print(
-                "WARNING: Function vis.loss_plot is expecting 'p' parameter "
+            logging.warning(
+                "\n\nWARNING: Function vis.loss_plot is expecting 'p' parameter "
                 "to be a list of 7 hyperparameters: batch size, depth, "
                 "channel init, latent dimension, learning rate, beta, gamma. "
                 "Exiting.\n",
-                flush=True,
             )
             return
         plt.title(
@@ -890,7 +946,7 @@ def loss_plot(epochs, beta, gamma, train_loss, val_loss=None, p=None):
     plt.close()
 
 
-def recon_plot(img, rec, label, data_dim, mode="trn"):
+def recon_plot(img, rec, label, data_dim, mode="trn", epoch=0, writer=None):
     """Visualise reconstructions.
 
     Parameters
@@ -901,13 +957,15 @@ def recon_plot(img, rec, label, data_dim, mode="trn"):
         Reconstructed images.
     mode: str
         Type of image in the training set: trn or val.
-
+    epoch: int
+        Current epoch
+    writer: SummaryWriter
+        Tensorboard summary writer
     """
-    print(
-        "\n################################################################",
-        flush=True,
+    logging.info(
+        "################################################################",
     )
-    print("Visualising reconstructions " + mode + "...\n", flush=True)
+    logging.info("Visualising reconstructions " + mode + "...\n")
 
     fname_in = str(mode) + "_recon_in.png"
     fname_out = str(mode) + "_recon_out.png"
@@ -922,8 +980,20 @@ def recon_plot(img, rec, label, data_dim, mode="trn"):
     img_2d = torchvision.utils.make_grid(img_2d.cpu(), 10, 2).numpy()
     rec_2d = torchvision.utils.make_grid(rec_2d.detach().cpu(), 10, 2).numpy()
 
-    save_imshow_png(fname_in, np.transpose(img_2d, (1, 2, 0)))
-    save_imshow_png(fname_out, np.transpose(rec_2d, (1, 2, 0)))
+    save_imshow_png(
+        fname_in,
+        np.transpose(img_2d, (1, 2, 0)),
+        writer=writer,
+        figname="Recon. (In)",
+        epoch=epoch,
+    )
+    save_imshow_png(
+        fname_out,
+        np.transpose(rec_2d, (1, 2, 0)),
+        writer=writer,
+        figname="Recon. (Out)",
+        epoch=epoch,
+    )
 
     if data_dim == 3:
         rec = rec.detach().cpu().numpy()
@@ -951,7 +1021,7 @@ def recon_plot(img, rec, label, data_dim, mode="trn"):
             dtype=np.float32,
         )
 
-        print("Molecules in the reconstructions are  ...", flush=True)
+        logging.info("Molecules in the reconstructions are  ...")
         for k in range(number_of_columns):
             # select 10 images at random
             rand_select = np.random.randint(
@@ -959,7 +1029,7 @@ def recon_plot(img, rec, label, data_dim, mode="trn"):
             )  #
             img = img[rand_select, :, :, :, :]
             rec = rec[rand_select, :, :, :, :]
-            print(f"column {k} : {label[rand_select]}", flush=True)
+            logging.info(f"column {k} : {label[rand_select]}")
 
             # stack the images together with their reconstruction
             rec_img = np.hstack((img, rec))
@@ -976,10 +1046,17 @@ def recon_plot(img, rec, label, data_dim, mode="trn"):
                     ] = rec_img[i, j, :, :, :]
 
         save_mrc_file(str(mode) + "_recon_in.mrc", grid_for_napari)
+        logging.info("\n")
 
 
 def latent_disentamglement_plot(
-    lats, vae, device, data_dim, poses=None, mode="trn"
+    lats,
+    vae,
+    device,
+    data_dim,
+    poses=None,
+    mode="trn",
+    writer=None,
 ):
     """Visualise latent content disentanglement.
 
@@ -993,12 +1070,13 @@ def latent_disentamglement_plot(
         Device to run the model on.
     poses: list
         List of pose vectors.
+    writer: SummaryWriter
+        Tensorboard summary writer
     """
-    print(
-        "\n################################################################",
-        flush=True,
+    logging.info(
+        "################################################################"
     )
-    print("Visualising latent content disentanglement ...\n", flush=True)
+    logging.info("Visualising latent content disentanglement ...\n")
     number_of_samples = 7
     padding = 0
     lats = np.asarray(lats)
@@ -1036,10 +1114,9 @@ def latent_disentamglement_plot(
             recon = vae.decoder(lat_grid, None)
     dsize = recon.shape[-data_dim:]
     if len(dsize) == 0:
-        print(
-            "WARNING: All images need to be the same size to create "
+        logging.warning(
+            "\n\nWARNING: All images need to be the same size to create "
             "interpolation plot. Exiting.\n",
-            flush=True,
         )
         return
 
@@ -1059,7 +1136,20 @@ def latent_disentamglement_plot(
         save_imshow_png(f"disentanglement-latent_{mode}.png", grid_for_napari)
 
 
-def pose_disentanglement_plot(lats, poses, vae, data_dim, device, mode="trn"):
+def pose_interpolation_plot(
+    x, y, pose_vis_class, poses, vae, data_dim, device, mode="trn"
+):
+
+    for i in pose_vis_class:
+        class_reps_x = np.take(x, [np.where(np.array(y) == i)[0][0]], axis=0)
+        pose_disentanglement_plot(
+            class_reps_x, poses, vae, data_dim, device, label=i, mode="trn"
+        )
+
+
+def pose_disentanglement_plot(
+    lats, poses, vae, data_dim, device, label="avg", mode="trn"
+):
     """Visualise pose disentanglement.
 
     Parameters
@@ -1073,11 +1163,10 @@ def pose_disentanglement_plot(lats, poses, vae, data_dim, device, mode="trn"):
     device: torch.device
         Device to run the model on.
     """
-    print(
-        "\n################################################################",
-        flush=True,
+    logging.info(
+        "################################################################",
     )
-    print("Visualising pose disentanglement ...\n", flush=True)
+    logging.info("Visualising pose disentanglement ...\n")
 
     number_of_samples = 7
     padding = 0
@@ -1111,10 +1200,9 @@ def pose_disentanglement_plot(lats, poses, vae, data_dim, device, mode="trn"):
 
     dsize = recon.shape[-data_dim:]
     if len(dsize) == 0:
-        print(
-            "WARNING: All images need to be the same size to create "
+        logging.warning(
+            "\n\nWARNING: All images need to be the same size to create "
             "interpolation plot. Exiting.\n",
-            flush=True,
         )
         return
 
@@ -1132,9 +1220,13 @@ def pose_disentanglement_plot(lats, poses, vae, data_dim, device, mode="trn"):
     )
 
     if data_dim == 3:
-        save_mrc_file(f"disentanglement-pose_{mode}.mrc", grid_for_napari)
+        save_mrc_file(
+            f"disentanglement-pose_{mode}_{label}.mrc", grid_for_napari
+        )
     elif data_dim == 2:
-        save_imshow_png(f"disentanglement-pose_{mode}.png", grid_for_napari)
+        save_imshow_png(
+            f"disentanglement-pose_{mode}_{label}.png", grid_for_napari
+        )
 
 
 def interpolations_plot(
@@ -1155,11 +1247,10 @@ def interpolations_plot(
     poses: list
         List of pose vectors.
     """
-    print(
-        "\n################################################################",
-        flush=True,
+    logging.info(
+        "################################################################",
     )
-    print("Visualising interpolations ...\n", flush=True)
+    logging.info("Visualising interpolations ...\n")
     lats = np.asarray(lats)
     classes = np.asarray(classes)
     if poses is not None:
@@ -1167,10 +1258,9 @@ def interpolations_plot(
 
     class_ids = np.unique(classes)
     if len(class_ids) <= 3:
-        print(
-            "WARNING: Interpolation plot needs at least 4 distinct classes, "
+        logging.warning(
+            "\n\nWARNING: Interpolation plot needs at least 4 distinct classes, "
             "cannot visualise interpolations. Exiting.\n",
-            flush=True,
         )
         return
 
@@ -1237,10 +1327,9 @@ def interpolations_plot(
             recon = vae.decoder(latents, None)
     dsize = recon.shape[-data_dim:]
     if len(dsize) == 0:
-        print(
-            "WARNING: All images need to be the same size to create "
+        logging.warning(
+            "\n\nWARNING: All images need to be the same size to create "
             "interpolation plot. Exiting.\n",
-            flush=True,
         )
         return
 
@@ -1272,11 +1361,10 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
     selected_classes : list
         All classes selected by the user for training in classes.csv
     """
-    print(
-        "\n################################################################",
-        flush=True,
+    logging.info(
+        "################################################################",
     )
-    print("Visualising affinity matrix ...\n", flush=True)
+    logging.info("Visualising affinity matrix ...\n")
 
     with plt.rc_context(
         {"font.weight": "bold", "font.size": int(len(all_classes) / 3) + 3}
@@ -1331,11 +1419,10 @@ def plot_classes_distribution(data, category):
         The category of the data (train, test, val)
     """
 
-    print(
-        "\n################################################################",
-        flush=True,
+    logging.info(
+        "################################################################",
     )
-    print("Visualising classes distribution " + category + "...\n", flush=True)
+    logging.info("Visualising classes distribution " + category + "...\n")
 
     fig, ax = plt.subplots(figsize=(9, 9))
     labels, counts = np.unique(data, return_counts=True)
@@ -1364,11 +1451,10 @@ def plot_cyc_variable(array: list, variable_name: str):
     variable_name : str
         Name of the variable
     """
-    print(
-        "\n################################################################",
-        flush=True,
+    logging.info(
+        "################################################################",
     )
-    print(f"Visualising {variable_name} ...\n", flush=True)
+    logging.info(f"Visualising {variable_name} ...\n")
     plt.plot(array, linewidth=3)
     plt.ylabel(rf"$\{variable_name}$", fontsize=16)
     plt.xlabel("Epochs", fontsize=16)
@@ -1400,11 +1486,10 @@ def latent_space_similarity(
         Order of the classes in the matrix
 
     """
-    print(
-        "\n################################################################",
-        flush=True,
+    logging.info(
+        "################################################################",
     )
-    print("Visualising the latent space similarity matrix ...\n", flush=True)
+    logging.info("Visualising the latent space similarity matrix ...\n")
 
     # get same label order as affinity matrix
     cosine_sim_matrix = cosine_similarity(latent_space)
