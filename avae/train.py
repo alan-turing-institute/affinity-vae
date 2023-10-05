@@ -53,6 +53,7 @@ def train(
     gaussian_blur,
     normalise,
     shift_min,
+    rescale,
     tensorboard,
     classifier,
 ):
@@ -153,6 +154,7 @@ def train(
         gaussian_blur=gaussian_blur,
         normalise=normalise,
         shift_min=shift_min,
+        rescale=rescale,
     )
     dshape = list(trains)[0][0].shape[2:]
     pose = not (pose_dims == 0)

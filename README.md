@@ -194,6 +194,8 @@ Options:
   -nrm, --normalise               Normalise data
   -sftm, --shift_min              Shift the minimum of the data to one zero
                                   and the maximum to one
+  -res --rescale                  Rescale images to given value (tuple, one
+                                  value per dim).
   -tb, --tensorboard              Log metrics and figures to tensorboard
                                   during training
   --help                          Show this message and exit.

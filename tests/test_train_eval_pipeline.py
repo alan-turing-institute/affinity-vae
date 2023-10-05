@@ -61,6 +61,7 @@ class TrainEvalTest(unittest.TestCase):
             "gaussian_blur": True,
             "normalise": True,
             "shift_min": True,
+            "rescale": 32,
             "tensorboard": True,
             "classifier": "NN",
             "new_out": False,

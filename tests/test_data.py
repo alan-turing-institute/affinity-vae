@@ -29,6 +29,8 @@ class DataTest(unittest.TestCase):
     def test_load_eval_data(self):
         """Test loading evaluation data."""
 
+        sh = 32
+
         shutil.copytree(
             os.path.join(self.test_data, "test"),
             os.path.join(self.test_dir, "eval"),
@@ -43,6 +45,7 @@ class DataTest(unittest.TestCase):
             gaussian_blur=True,
             normalise=True,
             shift_min=True,
+            rescale=sh,
         )
         print(os.getcwd())
 
@@ -59,9 +62,13 @@ class DataTest(unittest.TestCase):
             np.all(aff.numpy()) == 0
         )  # this is expected only for eval without affinity
 
+        assert xs[0].shape[-1] == sh
+
     def test_load_train_data(self):
         """Test loading training data."""
         shutil.copytree(self.test_data, os.path.join(self.test_dir, "train"))
+
+        sh = 32
 
         out = load_data(
             "./train",
@@ -75,6 +82,7 @@ class DataTest(unittest.TestCase):
             gaussian_blur=True,
             normalise=True,
             shift_min=True,
+            rescale=sh,
         )
 
         # test load_data
@@ -88,6 +96,7 @@ class DataTest(unittest.TestCase):
         xs, ys, aff, meta = train_batch
         assert len(xs) == len(ys) == len(aff)
         assert len(np.unique(aff.numpy())) == 4
+        assert xs[0].shape[-1] == sh
 
         # test affinity matrix
         assert isinstance(lookup, np.ndarray)

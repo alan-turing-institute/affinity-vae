@@ -5,7 +5,8 @@ import random
 import mrcfile
 import numpy as np
 import pandas as pd
-from torch import from_numpy
+from scipy.ndimage import zoom
+from torch import Tensor
 from torch.utils.data import DataLoader, Dataset, Subset
 from torchvision import transforms
 
@@ -28,6 +29,7 @@ def load_data(
     gaussian_blur=False,
     normalise=False,
     shift_min=False,
+    rescale=None,
 ):
     """Loads all data needed for training, testing and evaluation. Loads MRC files from a given path, selects subset of
     classes if requested, splits it into train / val  and test in batch sets, loads affinity matrix. Returns train,
@@ -89,6 +91,7 @@ def load_data(
             gaussian_blur=gaussian_blur,
             normalise=normalise,
             shift_min=shift_min,
+            rescale=rescale,
             lim=lim,
             datatype=datatype,
         )
@@ -174,6 +177,7 @@ def load_data(
             gaussian_blur=gaussian_blur,
             normalise=normalise,
             shift_min=shift_min,
+            rescale=rescale,
             lim=lim,
             datatype=datatype,
         )
@@ -201,6 +205,7 @@ class Dataset_reader(Dataset):
         gaussian_blur=False,
         normalise=False,
         shift_min=False,
+        rescale=None,
         lim=None,
         datatype="mrc",
     ):
@@ -209,6 +214,7 @@ class Dataset_reader(Dataset):
         self.shift_min = shift_min
         self.normalise = normalise
         self.gaussian_blur = gaussian_blur
+        self.rescale = rescale
         self.transform = transform
         self.amatrix = amatrix
         self.root_dir = root_dir
@@ -296,8 +302,12 @@ class Dataset_reader(Dataset):
 
     def voxel_transformation(self, x):
 
+        if self.rescale is not None:
+            sh = tuple([self.rescale / s for s in x.shape])
+            x = zoom(x, sh)
+
         # convert numpy to torch tensor
-        x = from_numpy(x)
+        x = Tensor(x)
 
         # unsqueeze adds a dimension for batch processing the data
         x = x.unsqueeze(0)

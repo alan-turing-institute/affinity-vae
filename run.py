@@ -490,6 +490,14 @@ logging.basicConfig(
     help="Shift the minimum of the data to one zero and the maximum to one",
 )
 @click.option(
+    "--rescale",
+    "-res",
+    type=int,
+    default=None,
+    is_flag=False,
+    help="Rescale images to given value (tuple, one value per dim).",
+)
+@click.option(
     "--tensorboard",
     "-tb",
     type=bool,
@@ -560,6 +568,7 @@ def run(
     gaussian_blur,
     normalise,
     shift_min,
+    rescale,
     tensorboard,
     classifier,
     new_out,
@@ -700,6 +709,7 @@ def run_pipeline(data):
             gaussian_blur=data["gaussian_blur"],
             normalise=data["normalise"],
             shift_min=data["shift_min"],
+            rescale=data["rescale"],
             tensorboard=data["tensorboard"],
             classifier=data["classifier"],
         )
@@ -717,6 +727,7 @@ def run_pipeline(data):
             gaussian_blur=data["gaussian_blur"],
             normalise=data["normalise"],
             shift_min=data["shift_min"],
+            rescale=data["rescale"],
             classifier=data["classifier"],
         )
 

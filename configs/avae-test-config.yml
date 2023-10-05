@@ -12,6 +12,7 @@ split: 20
 shift_mean: False
 gaussian_blur: False
 normalise: False
+rescale: False
 
 #### Network parameters
 
