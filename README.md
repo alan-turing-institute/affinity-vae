@@ -148,7 +148,6 @@ Options:
                                   (frequency controlled).
   -vr, --vis_rec                  Visualise reconstructions (frequency
                                   controlled).
-  -vcn, --vis_con                 Visualise per-class confidence metrics
   -ve, --vis_emb                  Visualise latent space embedding (frequency
                                   controlled).
   -vi, --vis_int                  Visualise interpolations (frequency
@@ -175,8 +174,6 @@ Options:
                                   matrix.
   -fr, --freq_rec INTEGER         Frequency at which to visualise
                                   reconstructions
-  -fr, --freq_con INTEGER         Frequency at which to visualise per-class
-                                  confidence metrics
   -fe, --freq_emb INTEGER         Frequency at which to visualise the latent
                                   space embedding.
   -fi, --freq_int INTEGER         Frequency at which to visualise latent

@@ -309,14 +309,6 @@ logging.basicConfig(
     help="Visualise reconstructions (frequency controlled).",
 )
 @click.option(
-    "--vis_con",
-    "-vcn",
-    type=bool,
-    default=None,
-    is_flag=True,
-    help="Visualise per-class confidence metrics",
-)
-@click.option(
     "--vis_emb",
     "-ve",
     type=bool,
@@ -422,13 +414,6 @@ logging.basicConfig(
     type=int,
     default=None,
     help="Frequency at which to visualise reconstructions ",
-)
-@click.option(
-    "--freq_con",
-    "-fr",
-    type=int,
-    default=None,
-    help="Frequency at which to visualise per-class confidence metrics ",
 )
 @click.option(
     "--freq_emb",
@@ -548,7 +533,6 @@ def run(
     freq_sta,
     freq_emb,
     freq_rec,
-    freq_con,
     freq_int,
     freq_dis,
     freq_pos,
@@ -556,7 +540,6 @@ def run(
     freq_sim,
     freq_all,
     vis_rec,
-    vis_con,
     vis_los,
     vis_emb,
     vis_int,
@@ -602,7 +585,6 @@ def run(
         config.VIS_LOS = True
         config.VIS_ACC = True
         config.VIS_REC = True
-        # config.VIS_CON = True #TODO fix out of memory issue in this plot
         config.VIS_CYC = True
         config.VIS_AFF = True
         config.VIS_EMB = True
@@ -618,7 +600,6 @@ def run(
         config.VIS_LOS = data["vis_los"]
         config.VIS_ACC = data["vis_acc"]
         config.VIS_REC = data["vis_rec"]
-        config.VIS_CON = data["vis_con"]
         config.VIS_CYC = data["vis_cyc"]
         config.VIS_AFF = data["vis_aff"]
         config.VIS_EMB = data["vis_emb"]
@@ -635,7 +616,6 @@ def run(
         config.FREQ_STA = data["freq_all"]
         config.FREQ_ACC = data["freq_all"]
         config.FREQ_REC = data["freq_all"]
-        config.FREQ_CON = data["freq_all"]
         config.FREQ_EMB = data["freq_all"]
         config.FREQ_INT = data["freq_all"]
         config.FREQ_DIS = data["freq_all"]
@@ -644,7 +624,6 @@ def run(
     else:
         config.FREQ_EVAL = data["freq_eval"]
         config.FREQ_REC = data["freq_rec"]
-        config.FREQ_CON = data["freq_con"]
         config.FREQ_EMB = data["freq_emb"]
         config.FREQ_INT = data["freq_int"]
         config.FREQ_DIS = data["freq_dis"]

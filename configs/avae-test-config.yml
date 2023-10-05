@@ -56,7 +56,6 @@ freq_eval: 10 # frequency of test evaluation (if test present)
 vis_los:  false  # loss on/off (every epoch from epoch 2)
 vis_acc:  false  # confusion matrices and F1 scores on/off (frequency controlled)
 vis_rec:  false  # reconstructions on/off (frequency controlled)
-vis_con:  false  # per-class confidence metrics on/off (frequency controlled)
 vis_emb:  false  # latent embeddings on/off (frequency controlled)
 vis_int:  false  # latent interpolations on/off (frequency controlled)
 vis_dis:  false  # latent disentanglement on/off (frequency controlled)
@@ -70,7 +69,6 @@ dynamic: true    # dynamic embedding visualisations on/off (freq same as freq_em
 
 freq_acc: 10  # frequency of accuracy visualisation
 freq_rec: 10  # frequency of reconstruction visualisation
-freq_con: 10  # frequency of per-class confidence metric visualisation
 freq_emb: 10  # frequency of latent embedding visualisation
 freq_int: 10  # frequency of latent interpolation visualisation
 freq_dis: 10  # frequency of latent disentanglement visualisation
