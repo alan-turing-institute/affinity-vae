@@ -305,7 +305,9 @@ def write_config_file(time_stamp_name, data):
     for key, val in data.items():
         logging.info("Parameter " + key + " set to value: " + str(data[key]))
 
-    file = open("avae_final_config" + time_stamp_name + ".yaml", "w")
+    if not os.path.exists("configs"):
+        os.mkdir("configs")
+    file = open("configs/avae_final_config" + time_stamp_name + ".yaml", "w")
     yaml.dump(data, file)
     file.close()
 
