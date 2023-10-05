@@ -364,7 +364,7 @@ def train(
 
             logging.info(
                 "Training : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
-                "KLdiv: %f | Affin: %f | Beta: %f"
+                "KLdiv: %f | Affin: %f | Beta: %f | Gamma: %f"
                 % (
                     epoch + 1,
                     epochs,
@@ -372,6 +372,7 @@ def train(
                     len(trains),
                     *t_history[-1],
                     beta_arr[epoch],
+                    gamma_arr[epoch],
                 )
             )
 
@@ -419,7 +420,7 @@ def train(
 
             logging.info(
                 "Validation : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
-                "KLdiv: %f | Affin: %f | Beta: %f"
+                "KLdiv: %f | Affin: %f | Beta: %f | Gamma: %f"
                 % (
                     epoch + 1,
                     epochs,
@@ -427,6 +428,7 @@ def train(
                     len(vals),
                     *v_history[-1],
                     beta_arr[epoch],
+                    gamma_arr[epoch],
                 )
             )
 
