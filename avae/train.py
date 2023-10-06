@@ -435,36 +435,7 @@ def train(
                 )
             )
 
-        early_stop = early_stopping(v_history, model)
-
-        if early_stop:
-            print("Early stopping")
-            filename = (
-                str(timestamp)
-                + "_E"
-                + str(epoch)
-                + "_"
-                + str(lat_dims)
-                + "_"
-                + str(pose_dims)
-            )
-            meta_df.to_pickle(
-                os.path.join("states", f"meta_{filename}_early_stopping.pkl")
-            )
-
-            torch.save(
-                {
-                    "epoch": epoch + 1,
-                    "model_state_dict": vae.state_dict(),
-                    "model_class_object": vae,
-                    "optimizer_state_dict": optimizer.state_dict(),
-                    "t_loss_history": t_history,
-                    "v_loss_history": v_history,
-                },
-                os.path.join("states", f"avae_{filename}_early_stopping.pt"),
-            )
-
-            break
+        early_stop = early_stopping(v_history, 10)
 
         v_history[-1] /= len(vals)
 
@@ -475,7 +446,7 @@ def train(
                 writer.add_scalar(loss_name, v_history[-1][i], epoch)
 
         # ########################## TEST #####################################
-        if (epoch + 1) % config.FREQ_EVAL == 0:
+        if (epoch + 1) % config.FREQ_EVAL == 0 or early_stop:
             for b, batch in enumerate(tests):  # tests empty if no 'test' dir
                 (t, t_hat, t_mu, t_logvar, tlat, tlat_pose, _,) = pass_batch(
                     device, vae, batch, b, len(tests), epoch, epochs
@@ -503,7 +474,9 @@ def train(
         # ########################## VISUALISE ################################
 
         # visualise accuracy: confusion and F1 scores
-        if config.VIS_ACC and (epoch + 1) % config.FREQ_ACC == 0:
+        if (config.VIS_ACC and (epoch + 1) % config.FREQ_ACC == 0) or (
+            config.VIS_ACC and early_stop
+        ):
             train_acc, val_acc, _, ypred_train, ypred_val = accuracy(
                 x_train, y_train, x_val, y_val, classifier=classifier
             )
@@ -553,7 +526,9 @@ def train(
             )
 
         # visualise reconstructions - last batch
-        if config.VIS_REC and (epoch + 1) % config.FREQ_REC == 0:
+        if (config.VIS_REC and (epoch + 1) % config.FREQ_REC) == 0 or (
+            config.VIS_REC and early_stop
+        ):
             vis.recon_plot(
                 x,
                 x_hat,
@@ -574,7 +549,9 @@ def train(
             )
 
         # visualise mean and logvar similarity matrix
-        if config.VIS_SIM and (epoch + 1) % config.FREQ_SIM == 0:
+        if (config.VIS_SIM and (epoch + 1) % config.FREQ_SIM == 0) or (
+            config.VIS_SIM and early_stop
+        ):
             if classes is not None:
                 classes_list = pd.read_csv(classes).columns.tolist()
             else:
@@ -596,7 +573,11 @@ def train(
             )
 
         # visualise embeddings
-        if config.VIS_EMB and (epoch + 1) % config.FREQ_EMB == 0:
+        if (
+            config.VIS_EMB
+            and (epoch + 1) % config.FREQ_EMB == 0
+            or (config.VIS_EMB and early_stop)
+        ):
             if len(tests) != 0:
                 xs = np.r_[x_train, x_val, x_test]
                 ys = np.r_[
@@ -621,7 +602,9 @@ def train(
                 vis.dyn_latentembed_plot(meta_df, epoch, embedding="tsne")
 
         # visualise latent disentanglement
-        if config.VIS_DIS and (epoch + 1) % config.FREQ_DIS == 0:
+        if (config.VIS_DIS and (epoch + 1) % config.FREQ_DIS == 0) or (
+            config.VIS_DIS and early_stop
+        ):
             if not pose:
                 p_train = None
             vis.latent_disentamglement_plot(
@@ -645,7 +628,9 @@ def train(
             )
 
         # visualise interpolations
-        if config.VIS_INT and (epoch + 1) % config.FREQ_INT == 0:
+        if (config.VIS_INT and (epoch + 1) % config.FREQ_INT == 0) or (
+            config.VIS_INT and early_stop
+        ):
             if len(tests) != 0:
                 xs = np.r_[x_train, x_val, x_test]
                 ys = np.r_[y_train, y_val, np.ones(len(x_test))]
@@ -671,20 +656,22 @@ def train(
             )
 
         # ########################## SAVE STATE ###############################
-        if (epoch + 1) % config.FREQ_STA == 0:
+        if (epoch + 1) % config.FREQ_STA == 0 or early_stop:
             if not os.path.exists("states"):
                 os.mkdir("states")
-            mname = (
-                "avae_"
-                + str(timestamp)
+
+            filename = (
+                +str(timestamp)
                 + "_E"
                 + str(epoch)
                 + "_"
                 + str(lat_dims)
                 + "_"
                 + str(pose_dims)
-                + ".pt"
             )
+
+            if early_stop:
+                filename += "_early_stopping"
 
             logging.info(
                 "################################################################"
@@ -699,24 +686,13 @@ def train(
                     "t_loss_history": t_history,
                     "v_loss_history": v_history,
                 },
-                os.path.join("states", mname),
+                os.path.join("states", f"avae_{filename}.pt"),
             )
             logging.info(
-                f"Saved model state: {mname} for restarting and evaluation "
+                f"Saved model state: avae_{filename}.pt for restarting and evaluation "
             )
 
-            filename = (
-                "meta_"
-                + str(timestamp)
-                + "_E"
-                + str(epoch)
-                + "_"
-                + str(lat_dims)
-                + "_"
-                + str(pose_dims)
-                + ".pkl"
-            )
-            meta_df.to_pickle(os.path.join("states", filename))
+            meta_df.to_pickle(os.path.join("states", f"meta_{filename}.pkl"))
 
             logging.info(f"Saved meta file : {filename} for evaluation \n")
 
