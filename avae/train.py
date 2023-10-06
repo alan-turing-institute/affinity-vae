@@ -661,7 +661,7 @@ def train(
                 os.mkdir("states")
 
             filename = (
-                +str(timestamp)
+                str(timestamp)
                 + "_E"
                 + str(epoch)
                 + "_"
