@@ -14,7 +14,7 @@ from .loss import AVAELoss
 from .model_a import AffinityVAE as AffinityVAE_A
 from .model_b import AffinityVAE as AffinityVAE_B
 from .utils import accuracy
-from .utils_learning import add_meta, pass_batch, set_device
+from .utils_learning import add_meta, early_stopping, pass_batch, set_device
 
 
 def train(
@@ -299,6 +299,7 @@ def train(
         writer = None
 
     # ########################## TRAINING LOOP ################################
+
     for epoch in range(e_start, epochs):
 
         meta_df = pd.DataFrame()
@@ -433,6 +434,37 @@ def train(
                     gamma_arr[epoch],
                 )
             )
+
+        early_stop = early_stopping(v_history, model)
+
+        if early_stop:
+            print("Early stopping")
+            filename = (
+                str(timestamp)
+                + "_E"
+                + str(epoch)
+                + "_"
+                + str(lat_dims)
+                + "_"
+                + str(pose_dims)
+            )
+            meta_df.to_pickle(
+                os.path.join("states", f"meta_{filename}_early_stopping.pkl")
+            )
+
+            torch.save(
+                {
+                    "epoch": epoch + 1,
+                    "model_state_dict": vae.state_dict(),
+                    "model_class_object": vae,
+                    "optimizer_state_dict": optimizer.state_dict(),
+                    "t_loss_history": t_history,
+                    "v_loss_history": v_history,
+                },
+                os.path.join("states", f"avae_{filename}_early_stopping.pt"),
+            )
+
+            break
 
         v_history[-1] /= len(vals)
 

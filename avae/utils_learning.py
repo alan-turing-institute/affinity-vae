@@ -209,3 +209,21 @@ def add_meta(
         [meta_df, meta], ignore_index=False
     )  # ignore index doesn't overwrite
     return meta_df
+
+
+def early_stopping(val_loss, patience):
+    """
+    Returns true if validation loss doesn't improve after a given patience.
+
+    """
+
+    early_stopping = False
+    if patience < len(val_loss):
+
+        loss_history = val_loss[-patience:-1]
+
+        if loss_history.index(min(loss_history)) == 0:
+
+            early_stopping = True
+
+    return early_stopping
