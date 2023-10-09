@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -15,6 +16,8 @@ from .model_a import AffinityVAE as AffinityVAE_A
 from .model_b import AffinityVAE as AffinityVAE_B
 from .utils import accuracy
 from .utils_learning import add_meta, early_stopping, pass_batch, set_device
+
+warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
 
 
 def train(
@@ -435,7 +438,10 @@ def train(
                 )
             )
 
-        early_stop = early_stopping(v_history, 10)
+        if beta_arr[epoch] == beta_max and gamma_arr[epoch] == gamma_max:
+            early_stop = early_stopping([loss[0] for loss in v_history], 10)
+        else:
+            early_stop = False
 
         v_history[-1] /= len(vals)
 
