@@ -211,19 +211,55 @@ def add_meta(
     return meta_df
 
 
-def early_stopping(val_loss, patience):
+def early_stopping(val_loss, patience, condition="total_loss"):
     """
-    Returns true if validation loss doesn't improve after a given patience.
+    Early stopping function. Returns true if validation loss doesn't improve after a given patience.
+    Depending on the condition, evaluation of loss improuvement can be done on
+    the total loss, reconstruction loss, KL divergence or affinity loss.
 
+    Parameters
+    ----------
+    val_loss: list
+        List of validation losses.
+    patience: int
+        Number of previous epochs to use on the evaluation of loss improvement.
+    condition: str
+        Condition to evaluate loss improvement. Can be "total_loss", "reco_loss", "kldiv_loss" or "affinity_loss" or "all".
     """
+    if condition not in [
+        "total_loss",
+        "reco_loss",
+        "kldiv_loss",
+        "affinity_loss",
+        "all",
+    ]:
+        raise ValueError(
+            "condition must be 'total_loss', 'reco_loss', 'kldiv_loss', 'affinity_loss' or 'all'"
+        )
 
-    early_stopping = False
+    stop = False
     if patience < len(val_loss):
 
-        loss_history = val_loss[-patience:-1]
+        total_val_loss = [v[0] for v in val_loss][-patience:-1]
+        val_loss_reco = [v[1] for v in val_loss][-patience:-1]
+        val_loss_kl = [v[2] for v in val_loss][-patience:-1]
+        val_loss_affinity = [v[3] for v in val_loss][-patience:-1]
 
-        if loss_history.index(min(loss_history)) == 0:
+        if total_val_loss.index(min(total_val_loss)) == 0 and (
+            condition == "total_loss" or condition == "all"
+        ):
+            stop = True
+        elif (condition == "reco_loss" or condition == "all") and (
+            val_loss_reco.index(min(val_loss_reco)) == 0
+        ):
+            stop = True
+        elif (condition == "kldiv_loss" or condition == "all") and (
+            val_loss_kl.index(min(val_loss_kl)) == 0
+        ):
+            stop = True
+        elif (condition == "affinity_loss" or condition == "all") and (
+            val_loss_affinity.index(min(val_loss_affinity)) == 0
+        ):
+            stop = True
 
-            early_stopping = True
-
-    return early_stopping
+    return stop
