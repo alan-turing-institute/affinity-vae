@@ -439,7 +439,7 @@ def train(
             )
 
         if beta_arr[epoch] == beta_max and gamma_arr[epoch] == gamma_max:
-            early_stop = early_stopping([loss[0] for loss in v_history], 10)
+            early_stop = early_stopping(v_history, 10)
         else:
             early_stop = False
 
