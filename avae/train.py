@@ -1,7 +1,6 @@
 import datetime
 import logging
 import os
-import warnings
 
 import numpy as np
 import pandas as pd
@@ -15,9 +14,12 @@ from .loss import AVAELoss
 from .model_a import AffinityVAE as AffinityVAE_A
 from .model_b import AffinityVAE as AffinityVAE_B
 from .utils import accuracy
-from .utils_learning import add_meta, early_stopping, pass_batch, set_device
-
-warnings.filterwarnings("ignore", message=".*The 'nopython' keyword.*")
+from .utils_learning import (
+    add_meta,
+    early_stopping_trigger,
+    pass_batch,
+    set_device,
+)
 
 
 def train(
@@ -59,6 +61,8 @@ def train(
     rescale,
     tensorboard,
     classifier,
+    early_stopping,
+    es_loss_trigger,
 ):
     """Function to train an AffinityVAE model. The inputs are training configuration parameters. In this function the
     data is loaded, selected and split into training, validation and test sets, the model is initialised and trained
@@ -134,6 +138,10 @@ def train(
         If True, log metrics and figures using tensorboard.
     classifier: str
         The method to use on the latent space classification. Can be neural network (NN), k nearest neighbourgs (KNN) or logistic regression (LR).
+    early_stopping_trigger: bool
+        If True, the training will stop when the validation loss stops improving.
+    es_loss_trigger: str
+        The loss to use for early stopping. Can be 'total_loss', 'reco_loss', 'kldiv_loss', 'affinity_loss' or 'all'."
     """
     torch.manual_seed(42)
 
@@ -435,9 +443,11 @@ def train(
         )
 
         if beta_arr[epoch] == beta_max and gamma_arr[epoch] == gamma_max:
-            early_stop = early_stopping(v_history, 10)
+            stop = early_stopping_trigger(
+                v_history, 10, trigger=es_loss_trigger
+            )
         else:
-            early_stop = False
+            stop = False
 
         v_history[-1] /= len(vals)
 
@@ -448,7 +458,7 @@ def train(
                 writer.add_scalar(loss_name, v_history[-1][i], epoch)
 
         # ########################## TEST #####################################
-        if (epoch + 1) % config.FREQ_EVAL == 0 or early_stop:
+        if (epoch + 1) % config.FREQ_EVAL == 0 or stop:
             for b, batch in enumerate(tests):  # tests empty if no 'test' dir
                 (t, t_hat, t_mu, t_logvar, tlat, tlat_pose, _,) = pass_batch(
                     device, vae, batch, b, len(tests), epoch, epochs
@@ -477,7 +487,7 @@ def train(
 
         # visualise accuracy: confusion and F1 scores
         if (config.VIS_ACC and (epoch + 1) % config.FREQ_ACC == 0) or (
-            config.VIS_ACC and early_stop
+            config.VIS_ACC and stop
         ):
             train_acc, val_acc, _, ypred_train, ypred_val = accuracy(
                 x_train, y_train, x_val, y_val, classifier=classifier
@@ -529,7 +539,7 @@ def train(
 
         # visualise reconstructions - last batch
         if (config.VIS_REC and (epoch + 1) % config.FREQ_REC) == 0 or (
-            config.VIS_REC and early_stop
+            config.VIS_REC and stop
         ):
             vis.recon_plot(
                 x,
@@ -552,7 +562,7 @@ def train(
 
         # visualise mean and logvar similarity matrix
         if (config.VIS_SIM and (epoch + 1) % config.FREQ_SIM == 0) or (
-            config.VIS_SIM and early_stop
+            config.VIS_SIM and stop
         ):
             if classes is not None:
                 classes_list = pd.read_csv(classes).columns.tolist()
@@ -578,7 +588,7 @@ def train(
         if (
             config.VIS_EMB
             and (epoch + 1) % config.FREQ_EMB == 0
-            or (config.VIS_EMB and early_stop)
+            or (config.VIS_EMB and stop)
         ):
             if len(tests) != 0:
                 xs = np.r_[x_train, x_val, x_test]
@@ -605,7 +615,7 @@ def train(
 
         # visualise latent disentanglement
         if (config.VIS_DIS and (epoch + 1) % config.FREQ_DIS == 0) or (
-            config.VIS_DIS and early_stop
+            config.VIS_DIS and stop
         ):
             if not pose:
                 p_train = None
@@ -631,7 +641,7 @@ def train(
 
         # visualise interpolations
         if (config.VIS_INT and (epoch + 1) % config.FREQ_INT == 0) or (
-            config.VIS_INT and early_stop
+            config.VIS_INT and stop
         ):
             if len(tests) != 0:
                 xs = np.r_[x_train, x_val, x_test]
@@ -658,7 +668,7 @@ def train(
             )
 
         # ########################## SAVE STATE ###############################
-        if (epoch + 1) % config.FREQ_STA == 0 or early_stop:
+        if (epoch + 1) % config.FREQ_STA == 0 or stop:
             if not os.path.exists("states"):
                 os.mkdir("states")
 
@@ -672,7 +682,7 @@ def train(
                 + str(pose_dims)
             )
 
-            if early_stop:
+            if stop:
                 filename += "_early_stopping"
 
             logging.info(
@@ -697,6 +707,10 @@ def train(
             meta_df.to_pickle(os.path.join("states", f"meta_{filename}.pkl"))
 
             logging.info(f"Saved meta file : {filename} for evaluation \n")
+
+        if stop and early_stopping_trigger:
+            logging.info("Early stopping at epoch %d" % (epoch + 1))
+            break
 
     if writer:
         writer.flush()

@@ -211,7 +211,7 @@ def add_meta(
     return meta_df
 
 
-def early_stopping(val_loss, patience, trigger="all"):
+def early_stopping_trigger(val_loss, patience, trigger="all"):
     """
     Early stopping function. Returns true if validation loss doesn't improve after a given patience.
     Depending on the condition, evaluation of loss improuvement can be done on
