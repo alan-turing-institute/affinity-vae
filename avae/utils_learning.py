@@ -246,20 +246,24 @@ def early_stopping_trigger(val_loss, patience, trigger="all"):
         val_loss_affinity = [v[3] for v in val_loss][-patience:]
 
         if total_val_loss.index(min(total_val_loss)) == 0 and (
-            trigger == "total_loss" or trigger == "all"
+            trigger == "total_loss"
         ):
+            logging.info('Early stopping triggered on "total_loss"')
             stop = True
         elif (trigger == "reco_loss" or trigger == "all") and (
             val_loss_reco.index(min(val_loss_reco)) == 0
         ):
+            logging.info('Early stopping triggered on "reco_loss"')
             stop = True
         elif (trigger == "kldiv_loss" or trigger == "all") and (
             val_loss_kl.index(min(val_loss_kl)) == 0
         ):
+            logging.info('Early stopping triggered on "kldiv_loss"')
             stop = True
         elif (trigger == "affinity_loss" or trigger == "all") and (
             val_loss_affinity.index(min(val_loss_affinity)) == 0
         ):
+            logging.info('Early stopping triggered on "affinity_loss"')
             stop = True
 
     return stop
