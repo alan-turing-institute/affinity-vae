@@ -66,6 +66,8 @@ class TrainEvalTest(unittest.TestCase):
             "classifier": "NN",
             "new_out": False,
             "opt_method": "adam",
+            "early_stopping": False,
+            "es_trigger": "all",
         }
 
         config.FREQ_ACC = 5
