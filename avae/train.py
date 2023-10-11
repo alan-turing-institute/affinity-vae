@@ -708,7 +708,7 @@ def train(
 
             logging.info(f"Saved meta file : {filename} for evaluation \n")
 
-        if stop and early_stopping_trigger:
+        if stop and early_stopping:
             logging.info("Early stopping at epoch %d" % (epoch + 1))
             break
 

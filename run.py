@@ -730,7 +730,7 @@ def run_pipeline(data):
             tensorboard=data["tensorboard"],
             classifier=data["classifier"],
             early_stopping=data["early_stopping"],
-            es_trigger=data["es_trigger"],
+            es_loss_trigger=data["es_trigger"],
         )
     else:
         evaluate(
