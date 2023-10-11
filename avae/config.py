@@ -85,4 +85,6 @@ DEFAULT_RUN_CONFIGS = {
     "datatype": "mrc",
     "new_out": False,
     "debug": False,
+    "early_stopping": False,
+    "es_trigger": "all",
 }

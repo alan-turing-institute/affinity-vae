@@ -505,6 +505,21 @@ logging.basicConfig(
     is_flag=True,
     help="Log metrics and figures to tensorboard during training",
 )
+@click.option(
+    "--early_stopping",
+    "-es",
+    type=bool,
+    default=None,
+    is_flag=True,
+    help="Early stop the training if the validation loss does not improve for a given number of epochs (10).",
+)
+@click.option(
+    "--es_trigger",
+    "-estrig",
+    type=str,
+    default=None,
+    help="Condition to trigger early stopping based on loss improvement. Can be 'total_loss', 'reco_loss', 'kldiv_loss', 'affinity_loss' or 'all'.",
+)
 def run(
     config_file,
     datapath,
@@ -573,6 +588,8 @@ def run(
     classifier,
     new_out,
     debug,
+    early_stopping,
+    es_trigger,
 ):
 
     warnings.simplefilter("ignore", FutureWarning)
@@ -712,6 +729,8 @@ def run_pipeline(data):
             rescale=data["rescale"],
             tensorboard=data["tensorboard"],
             classifier=data["classifier"],
+            early_stopping=data["early_stopping"],
+            es_trigger=data["es_trigger"],
         )
     else:
         evaluate(
