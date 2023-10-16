@@ -23,6 +23,8 @@ FREQ_SIM = 10
 FREQ_EVAL = 10
 FREQ_STA = 10
 
+MIN_TRAIN = 0.5
+
 DEFAULT_RUN_CONFIGS = {
     "limit": None,
     "restart": False,
@@ -87,4 +89,5 @@ DEFAULT_RUN_CONFIGS = {
     "debug": False,
     "early_stopping": False,
     "es_trigger": "all",
+    "es_patience": 10,
 }

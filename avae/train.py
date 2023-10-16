@@ -63,6 +63,7 @@ def train(
     classifier,
     early_stopping,
     es_loss_trigger,
+    es_patience,
 ):
     """Function to train an AffinityVAE model. The inputs are training configuration parameters. In this function the
     data is loaded, selected and split into training, validation and test sets, the model is initialised and trained
@@ -142,6 +143,9 @@ def train(
         If True, the training will stop when the validation loss stops improving.
     es_loss_trigger: str
         The loss to use for early stopping. Can be 'total_loss', 'reco_loss', 'kldiv_loss', 'affinity_loss' or 'all'."
+    es_patioence: int
+        Number of previous epochs to use on the evaluation of loss improvement.
+
     """
     torch.manual_seed(42)
 
@@ -442,9 +446,14 @@ def train(
             )
         )
 
-        if beta_arr[epoch] == beta_max and gamma_arr[epoch] == gamma_max:
+        # make sure parameters are not cycling and that 20% of the epochs have run.
+        if (
+            beta_arr[epoch] == beta_max
+            and gamma_arr[epoch] == gamma_max
+            and epoch > epochs * config.MIN_TRAIN
+        ):
             stop = early_stopping_trigger(
-                v_history, 10, trigger=es_loss_trigger
+                v_history, patience=es_patience, trigger=es_loss_trigger
             )
         else:
             stop = False

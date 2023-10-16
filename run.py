@@ -520,6 +520,20 @@ logging.basicConfig(
     default=None,
     help="Condition to trigger early stopping based on loss improvement. Can be 'total_loss', 'reco_loss', 'kldiv_loss', 'affinity_loss' or 'all'.",
 )
+@click.option(
+    "--es_patience",
+    "-espatience",
+    type=str,
+    default=None,
+    help="Number of previous epochs to use on the evaluation of loss improvement.",
+)
+@click.option(
+    "--minimum_train",
+    "-mintrain",
+    type=float,
+    default=None,
+    help="Minimum fraction of the training to run before evaluation for early stopping.",
+)
 def run(
     config_file,
     datapath,
@@ -590,6 +604,8 @@ def run(
     debug,
     early_stopping,
     es_trigger,
+    es_patience,
+    minimum_train,
 ):
 
     warnings.simplefilter("ignore", FutureWarning)
@@ -657,6 +673,9 @@ def run(
         config.FREQ_ACC = data["freq_acc"]
         config.FREQ_STA = data["freq_sta"]
         config.FREQ_SIM = data["freq_sim"]
+
+    if data["minimum_train"] is not None:
+        config.MIN_TRAIN = data["minimum_train"]
 
     if data["new_out"]:
         dir_name = f'results_{dt_name}_lat{data["latent_dims"]}_pose{data["pose_dims"]}_lr{data["learning"]}_beta{data["beta"]}_gamma{data["gamma"]}'
@@ -731,6 +750,7 @@ def run_pipeline(data):
             classifier=data["classifier"],
             early_stopping=data["early_stopping"],
             es_loss_trigger=data["es_trigger"],
+            es_patience=data["es_patience"],
         )
     else:
         evaluate(
