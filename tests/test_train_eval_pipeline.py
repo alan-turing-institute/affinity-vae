@@ -68,6 +68,7 @@ class TrainEvalTest(unittest.TestCase):
             "opt_method": "adam",
             "early_stopping": False,
             "es_trigger": "all",
+            "es_patience": 10,
         }
 
         config.FREQ_ACC = 5
@@ -92,6 +93,8 @@ class TrainEvalTest(unittest.TestCase):
         config.VIS_AFF = True
         config.VIS_SIM = True
         config.VIS_DYN = True
+
+        config.MIN_TRAIN = 3
 
     def test_model_a_mrc(self):
         self.data["model"] = "a"

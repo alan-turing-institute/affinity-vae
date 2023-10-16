@@ -523,7 +523,7 @@ logging.basicConfig(
 @click.option(
     "--es_patience",
     "-espatience",
-    type=str,
+    type=int,
     default=None,
     help="Number of previous epochs to use on the evaluation of loss improvement.",
 )
