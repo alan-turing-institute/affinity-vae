@@ -50,9 +50,11 @@ class AffinityLoss:
         loss : torch.Tensor
             The affinity loss.
         """
-        # first calculate the affinity ,for the real classes
-        c = torch.combinations(y_true, r=2, with_replacement=False).to(
-            self.device
+        # first calculate the affinity, for the real classes
+        c = (
+            torch.combinations(y_true, r=2, with_replacement=False)
+            .to(self.device)
+            .long()
         )
         affinity = self.lookup[c[:, 0], c[:, 1]].to(self.device)
 
