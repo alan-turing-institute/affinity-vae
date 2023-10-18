@@ -90,4 +90,5 @@ DEFAULT_RUN_CONFIGS = {
     "early_stopping": False,
     "es_trigger": "all",
     "es_patience": 10,
+    "minimum_train": MIN_TRAIN,
 }
