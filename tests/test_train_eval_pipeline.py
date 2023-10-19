@@ -68,7 +68,7 @@ class TrainEvalTest(unittest.TestCase):
             "opt_method": "adam",
             "early_stopping": False,
             "es_trigger": "all",
-            "es_patience": 10,
+            "es_patience": 5,
         }
 
         config.FREQ_ACC = 5
