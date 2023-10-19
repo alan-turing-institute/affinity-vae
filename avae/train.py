@@ -311,8 +311,8 @@ def train(
     stopper = EarlyStopping(
         loss_type=es_loss_trigger,
         patience=es_patience,
-        max_delta=1,
-        max_divergence=20,
+        max_delta=0.01,
+        max_divergence=0.2,
         min_epochs=config.MIN_TRAIN * epochs,
     )
     # ########################## TRAINING LOOP ################################

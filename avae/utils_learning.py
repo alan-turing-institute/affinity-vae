@@ -224,9 +224,9 @@ class EarlyStopping:
     patience: int
         Number of previous epochs to use on the evaluation of loss improvement.
     max_delta: float
-        Minimum change in loss to be considered as an improvement.
+        Minimum change in loss to be considered as an improvement (ratio).
     max_divergence: float
-        Max change in validation loss with respect to the trainin loss.
+        Max change in validation loss with respect to the trainin loss (ratio).
     min_epochs: int
         Minimum number of epochs to run before early stopping can be triggered.
 
