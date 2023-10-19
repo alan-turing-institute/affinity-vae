@@ -308,10 +308,10 @@ def train(
     else:
         writer = None
 
-    early_stopping = EarlyStopping(
+    stopper = EarlyStopping(
         loss_type=es_loss_trigger,
         patience=es_patience,
-        max_delta=5,
+        max_delta=1,
         max_divergence=20,
         min_epochs=config.MIN_TRAIN * epochs,
     )
@@ -450,14 +450,16 @@ def train(
 
         # make sure parameters are not cycling in the loss for evaluation
         if (
-            beta_arr[epoch] == beta_max and gamma_arr[epoch] == gamma_max
-        ) and (
-            beta_arr[epoch - es_patience] == beta_max
-            and gamma_arr[epoch - es_patience] == gamma_max
+            (beta_arr[epoch] == beta_max and gamma_arr[epoch] == gamma_max)
+            and (
+                beta_arr[epoch - es_patience] == beta_max
+                and gamma_arr[epoch - es_patience] == gamma_max
+            )
+            and stopper.stop is False
         ):
-            stop = early_stopping.early_stop(v_history, t_history)
+            plot_all = stopper.early_stop(v_history, t_history)
         else:
-            stop = False
+            plot_all = False
 
         v_history[-1] /= len(vals)
 
@@ -468,7 +470,8 @@ def train(
                 writer.add_scalar(loss_name, v_history[-1][i], epoch)
 
         # ########################## TEST #####################################
-        if (epoch + 1) % config.FREQ_EVAL == 0 or stop:
+        # TODO: centralised the plotting logic.
+        if (epoch + 1) % config.FREQ_EVAL == 0 or plot_all:
             for b, batch in enumerate(tests):  # tests empty if no 'test' dir
                 (t, t_hat, t_mu, t_logvar, tlat, tlat_pose, _,) = pass_batch(
                     device, vae, batch, b, len(tests), epoch, epochs
@@ -497,7 +500,7 @@ def train(
 
         # visualise accuracy: confusion and F1 scores
         if (config.VIS_ACC and (epoch + 1) % config.FREQ_ACC == 0) or (
-            config.VIS_ACC and stop
+            config.VIS_ACC and plot_all
         ):
             train_acc, val_acc, _, ypred_train, ypred_val = accuracy(
                 x_train, y_train, x_val, y_val, classifier=classifier
@@ -549,7 +552,7 @@ def train(
 
         # visualise reconstructions - last batch
         if (config.VIS_REC and (epoch + 1) % config.FREQ_REC) == 0 or (
-            config.VIS_REC and stop
+            config.VIS_REC and plot_all
         ):
             vis.recon_plot(
                 x,
@@ -572,7 +575,7 @@ def train(
 
         # visualise mean and logvar similarity matrix
         if (config.VIS_SIM and (epoch + 1) % config.FREQ_SIM == 0) or (
-            config.VIS_SIM and stop
+            config.VIS_SIM and plot_all
         ):
             if classes is not None:
                 classes_list = pd.read_csv(classes).columns.tolist()
@@ -598,7 +601,7 @@ def train(
         if (
             config.VIS_EMB
             and (epoch + 1) % config.FREQ_EMB == 0
-            or (config.VIS_EMB and stop)
+            or (config.VIS_EMB and plot_all)
         ):
             if len(tests) != 0:
                 xs = np.r_[x_train, x_val, x_test]
@@ -625,7 +628,7 @@ def train(
 
         # visualise latent disentanglement
         if (config.VIS_DIS and (epoch + 1) % config.FREQ_DIS == 0) or (
-            config.VIS_DIS and stop
+            config.VIS_DIS and plot_all
         ):
             if not pose:
                 p_train = None
@@ -634,7 +637,12 @@ def train(
             )
 
         # visualise pose disentanglement
-        if pose and config.VIS_POS and (epoch + 1) % config.FREQ_POS == 0:
+        if (
+            pose
+            and config.VIS_POS
+            and (epoch + 1) % config.FREQ_POS == 0
+            or (config.VIS_INT and plot_all)
+        ):
             vis.pose_disentanglement_plot(
                 x_train, p_train, vae, data_dim, device
             )
@@ -651,7 +659,7 @@ def train(
 
         # visualise interpolations
         if (config.VIS_INT and (epoch + 1) % config.FREQ_INT == 0) or (
-            config.VIS_INT and stop
+            config.VIS_INT and plot_all
         ):
             if len(tests) != 0:
                 xs = np.r_[x_train, x_val, x_test]
@@ -678,7 +686,7 @@ def train(
             )
 
         # ########################## SAVE STATE ###############################
-        if (epoch + 1) % config.FREQ_STA == 0 or stop:
+        if (epoch + 1) % config.FREQ_STA == 0 or plot_all:
             if not os.path.exists("states"):
                 os.mkdir("states")
 
@@ -692,7 +700,7 @@ def train(
                 + str(pose_dims)
             )
 
-            if stop:
+            if plot_all:
                 filename += "_early_stopping"
 
             logging.info(
@@ -718,7 +726,7 @@ def train(
 
             logging.info(f"Saved meta file : {filename} for evaluation \n")
 
-        if stop and early_stopping:
+        if stopper.stop and early_stopping:
             logging.info("Early stopping at epoch %d" % (epoch + 1))
             break
 
