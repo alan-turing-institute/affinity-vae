@@ -255,6 +255,7 @@ class EarlyStopping:
         self.max_delta = max_delta
         self.max_divergence = max_divergence
         self.min_epochs = min_epochs
+        self.stop = False
 
     def early_stop(self, val_loss, train_loss):
         """
@@ -270,7 +271,6 @@ class EarlyStopping:
             List of validation losses.
         """
 
-        stop = False
         if self.patience < len(val_loss) and len(val_loss) > self.min_epochs:
 
             total_val_loss = [v[0] for v in val_loss][-self.patience :]
@@ -287,25 +287,25 @@ class EarlyStopping:
 
                 if self.__evaluate_loss(total_val_loss, total_train_loss):
                     logging.info('Early stopping triggered on "total_loss"')
-                    stop = True
+                    self.stop = True
 
             elif self.trigger == "reco_loss" or self.trigger == "all":
 
                 if self.__evaluate_loss(val_loss_reco, val_train_reco):
                     logging.info('Early stopping triggered on "reco_loss"')
-                    stop = True
+                    self.stop = True
 
             elif self.trigger == "kldiv_loss" or self.trigger == "all":
                 if self.__evaluate_loss(val_loss_kl, val_train_kl):
                     logging.info('Early stopping triggered on "kldiv_loss"')
-                    stop = True
+                    self.stop = True
 
             elif self.trigger == "affinity_loss" or self.trigger == "all":
                 if self.__evaluate_loss(val_loss_affinity, val_train_affinity):
                     logging.info('Early stopping triggered on "affinity_loss"')
-                    stop = True
+                    self.stop = True
 
-        return stop
+        return self.stop
 
     def __evaluate_loss(self, valid_loss, train_loss):
 
