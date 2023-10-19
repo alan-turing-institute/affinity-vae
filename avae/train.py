@@ -14,12 +14,7 @@ from .loss import AVAELoss
 from .model_a import AffinityVAE as AffinityVAE_A
 from .model_b import AffinityVAE as AffinityVAE_B
 from .utils import accuracy
-from .utils_learning import (
-    add_meta,
-    early_stopping_trigger,
-    pass_batch,
-    set_device,
-)
+from .utils_learning import EarlyStopping, add_meta, pass_batch, set_device
 
 
 def train(
@@ -313,6 +308,13 @@ def train(
     else:
         writer = None
 
+    early_stopping = EarlyStopping(
+        loss_type=es_loss_trigger,
+        patience=es_patience,
+        max_delta=5,
+        max_divergence=20,
+        min_epochs=config.MIN_TRAIN * epochs,
+    )
     # ########################## TRAINING LOOP ################################
 
     for epoch in range(e_start, epochs):
@@ -446,15 +448,14 @@ def train(
             )
         )
 
-        # make sure parameters are not cycling and that 20% of the epochs have run.
+        # make sure parameters are not cycling in the loss for evaluation
         if (
-            beta_arr[epoch] == beta_max
-            and gamma_arr[epoch] == gamma_max
-            and epoch > epochs * config.MIN_TRAIN
+            beta_arr[epoch] == beta_max and gamma_arr[epoch] == gamma_max
+        ) and (
+            beta_arr[epoch - es_patience] == beta_max
+            and gamma_arr[epoch - es_patience] == gamma_max
         ):
-            stop = early_stopping_trigger(
-                v_history, patience=es_patience, trigger=es_loss_trigger
-            )
+            stop = early_stopping.early_stop(v_history, t_history)
         else:
             stop = False
 

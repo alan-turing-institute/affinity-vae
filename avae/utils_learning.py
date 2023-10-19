@@ -211,59 +211,127 @@ def add_meta(
     return meta_df
 
 
-def early_stopping_trigger(val_loss, patience, trigger="all"):
+class EarlyStopping:
     """
-    Early stopping function. Returns true if validation loss doesn't improve after a given patience.
+    Early stopping class. Returns true if validation loss doesn't improve after a given patience.
     Depending on the condition, evaluation of loss improuvement can be done on
     the total loss, reconstruction loss, KL divergence or affinity loss.
 
     Parameters
     ----------
-    val_loss: list
-        List of validation losses.
-    patience: int
-        Number of previous epochs to use on the evaluation of loss improvement.
     trigger: str
         Condition to evaluate loss improvement. Can be "total_loss", "reco_loss", "kldiv_loss" or "affinity_loss" or "all".
+    patience: int
+        Number of previous epochs to use on the evaluation of loss improvement.
+    max_delta: float
+        Minimum change in loss to be considered as an improvement.
+    max_divergence: float
+        Max change in validation loss with respect to the trainin loss.
+    min_epochs: int
+        Minimum number of epochs to run before early stopping can be triggered.
+
     """
-    if trigger not in [
-        "total_loss",
-        "reco_loss",
-        "kldiv_loss",
-        "affinity_loss",
-        "all",
-    ]:
-        raise ValueError(
-            "early stopping trigger must be 'total_loss', 'reco_loss', 'kldiv_loss', 'affinity_loss' or 'all'"
-        )
 
-    stop = False
-    if patience < len(val_loss):
+    def __init__(
+        self,
+        loss_type: str,
+        patience: int,
+        max_delta: float,
+        max_divergence: float,
+        min_epochs: int,
+    ):
+        if loss_type not in [
+            "total_loss",
+            "reco_loss",
+            "kldiv_loss",
+            "affinity_loss",
+            "all",
+        ]:
+            raise ValueError(
+                "early stopping trigger must be 'total_loss', 'reco_loss', 'kldiv_loss', 'affinity_loss' or 'all'"
+            )
+        self.trigger = loss_type
+        self.patience = patience
+        self.max_delta = max_delta
+        self.max_divergence = max_divergence
+        self.min_epochs = min_epochs
 
-        total_val_loss = [v[0] for v in val_loss][-patience:]
-        val_loss_reco = [v[1] for v in val_loss][-patience:]
-        val_loss_kl = [v[2] for v in val_loss][-patience:]
-        val_loss_affinity = [v[3] for v in val_loss][-patience:]
+    def early_stop(self, val_loss, train_loss):
+        """
+        Early stopping function. Returns true if validation loss doesn't improve after a given patience.
+        Depending on the condition, evaluation of loss improuvement can be done on
+        the total loss, reconstruction loss, KL divergence or affinity loss.
 
-        if total_val_loss.index(min(total_val_loss)) == 0 and (
-            trigger == "total_loss"
-        ):
-            logging.info('Early stopping triggered on "total_loss"')
-            stop = True
-        elif (trigger == "reco_loss" or trigger == "all") and (
-            val_loss_reco.index(min(val_loss_reco)) == 0
-        ):
-            logging.info('Early stopping triggered on "reco_loss"')
-            stop = True
-        elif (trigger == "kldiv_loss" or trigger == "all") and (
-            val_loss_kl.index(min(val_loss_kl)) == 0
-        ):
-            logging.info('Early stopping triggered on "kldiv_loss"')
-            stop = True
-        elif (trigger == "affinity_loss" or trigger == "all") and (
-            val_loss_affinity.index(min(val_loss_affinity)) == 0
-        ):
-            logging.info('Early stopping triggered on "affinity_loss"')
+        Parameters
+        ----------
+        val_loss: list
+            List of validation losses.
+        train_loss: list
+            List of validation losses.
+        """
+
+        stop = False
+        if self.patience < len(val_loss) and len(val_loss) > self.min_epochs:
+
+            total_val_loss = [v[0] for v in val_loss][-self.patience :]
+            val_loss_reco = [v[1] for v in val_loss][-self.patience :]
+            val_loss_kl = [v[2] for v in val_loss][-self.patience :]
+            val_loss_affinity = [v[3] for v in val_loss][-self.patience :]
+
+            total_train_loss = [v[0] for v in train_loss][-self.patience :]
+            val_train_reco = [v[1] for v in train_loss][-self.patience :]
+            val_train_kl = [v[2] for v in train_loss][-self.patience :]
+            val_train_affinity = [v[3] for v in train_loss][-self.patience :]
+
+            if self.trigger == "total_loss":
+
+                if self.__evaluate_loss(total_val_loss, total_train_loss):
+                    logging.info('Early stopping triggered on "total_loss"')
+                    stop = True
+
+            elif self.trigger == "reco_loss" or self.trigger == "all":
+
+                if self.__evaluate_loss(val_loss_reco, val_train_reco):
+                    logging.info('Early stopping triggered on "reco_loss"')
+                    stop = True
+
+            elif self.trigger == "kldiv_loss" or self.trigger == "all":
+                if self.__evaluate_loss(val_loss_kl, val_train_kl):
+                    logging.info('Early stopping triggered on "kldiv_loss"')
+                    stop = True
+
+            elif self.trigger == "affinity_loss" or self.trigger == "all":
+                if self.__evaluate_loss(val_loss_affinity, val_train_affinity):
+                    logging.info('Early stopping triggered on "affinity_loss"')
+                    stop = True
+
+        return stop
+
+    def __evaluate_loss(self, valid_loss, train_loss):
+
+        stop = False
+        if valid_loss.index(min(valid_loss)) == 0:
+            logging.info(
+                "Early stopping triggered: validation loss is increasing"
+            )
             stop = True
 
-    return stop
+        if max(valid_loss) < min(valid_loss) + self.max_delta * min(
+            valid_loss
+        ):
+            logging.info(
+                "Early stopping triggered: validation loss is not improving"
+            )
+            stop = True
+
+        diff_loses = (np.array(valid_loss) - np.array(train_loss)).tolist()
+        if diff_loses.index(min(diff_loses)) == 0 and valid_loss.max() > max(
+            train_loss
+        ) + self.max_divergence * max(train_loss):
+            logging.info(
+                "Early stopping triggered: validation loss is diverging from training loss"
+            )
+
+            stop = True
+
+        return stop
