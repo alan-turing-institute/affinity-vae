@@ -302,7 +302,8 @@ class Dataset_reader(Dataset):
 
     def voxel_transformation(self, x):
 
-        if self.rescale is not None:
+        if self.rescale:
+            x = np.asarray(x, dtype=np.float32)
             sh = tuple([self.rescale / s for s in x.shape])
             x = zoom(x, sh)
 
