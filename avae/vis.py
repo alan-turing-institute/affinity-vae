@@ -95,7 +95,7 @@ def format(im, data_dim):
         )  # .astype(np.uint8)
     elif len(im.shape) == 4 and data_dim == 2:
         batch = True
-        im = np.sum(np.copy(im.squeeze(dim=0).cpu().detach().numpy()), axis=-1)
+        im = np.copy(im.squeeze(dim=1).cpu().detach().numpy())
         # .astype(np.uint8)
     elif len(im.shape) == 3 and data_dim == 2:
         batch = False
