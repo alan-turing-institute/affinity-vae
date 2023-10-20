@@ -582,9 +582,6 @@ def run(
     local_vars = locals().copy()
     data = load_config_params(config_file, local_vars)
 
-    if data["vis_pose_class"]:
-        data["vis_pose_class"] = data["vis_pose_class"].split(",")
-
     if data["debug"]:
         logging.info("Debug mode enabled")
         logging.getLogger().setLevel(logging.DEBUG)

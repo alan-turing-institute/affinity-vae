@@ -602,7 +602,7 @@ def train(
                 x_train, p_train, vae, data_dim, device
             )
 
-            vis.pose_interpolation_plot(
+            vis.pose_class_disentanglement_plot(
                 x_train,
                 y_train,
                 config.VIS_POSE_CLASS,
