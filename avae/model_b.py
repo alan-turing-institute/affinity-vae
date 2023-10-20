@@ -1,7 +1,28 @@
+import logging
+
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+from .base import SpatialDims
+
+
+def set_layer_dim(ndim):
+    global CONV
+    global TCONV
+    global BNORM
+    if ndim == SpatialDims.TWO:
+        CONV = nn.Conv2d
+        TCONV = nn.ConvTranspose2d
+        BNORM = nn.BatchNorm2d
+    elif ndim == SpatialDims.THREE:
+        CONV = nn.Conv3d
+        TCONV = nn.ConvTranspose3d
+        BNORM = nn.BatchNorm3d
+    else:
+        logging.error("Data must be 2D or 3D.")
+        exit(1)
 
 
 class Encoder(nn.Module):
@@ -38,7 +59,7 @@ class Encoder(nn.Module):
         for d in range(depth):
             sh = c * (d + 1)
             self.conv_enc.append(
-                nn.Conv3d(
+                CONV(
                     in_channels=prev_sh,
                     out_channels=sh,
                     kernel_size=3,
@@ -46,25 +67,22 @@ class Encoder(nn.Module):
                     stride=2,
                 )
             )
-            self.norm_enc.append(nn.BatchNorm3d(sh))
+            self.norm_enc.append(BNORM(sh))
             prev_sh = sh
 
         # define fully connected layers
         chf = 1 if depth == 0 else c * depth  # allow for no conv layers
         self.fc_mu = nn.Linear(
-            in_features=chf * bottom_dim[0] * bottom_dim[1] * bottom_dim[2],
+            in_features=chf * np.prod(bottom_dim),
             out_features=latent_dims,
         )
         self.fc_logvar = nn.Linear(
-            in_features=chf * bottom_dim[0] * bottom_dim[1] * bottom_dim[2],
+            in_features=chf * np.prod(bottom_dim),
             out_features=latent_dims,
         )
         if self.pose:
             self.fc_pose = nn.Linear(
-                in_features=chf
-                * bottom_dim[0]
-                * bottom_dim[1]
-                * bottom_dim[2],
+                in_features=chf * np.prod(bottom_dim),
                 out_features=pose_dims,
             )
 
@@ -143,7 +161,7 @@ class Decoder(nn.Module):
         for d in range(depth, 0, -1):
             sh = self.c * (d - 1) if d != 1 else 1
             self.conv_dec.append(
-                nn.ConvTranspose3d(
+                TCONV(
                     in_channels=prev_sh,
                     out_channels=sh,
                     kernel_size=4,
@@ -151,7 +169,7 @@ class Decoder(nn.Module):
                     padding=1,
                 )
             )
-            self.norm_dec.append(nn.BatchNorm3d(sh))
+            self.norm_dec.append(BNORM(sh))
             prev_sh = sh
 
         # define fully connected layers
@@ -161,18 +179,12 @@ class Decoder(nn.Module):
         if self.pose:
             self.fc = nn.Linear(
                 in_features=pose_dims + latent_dims,
-                out_features=self.chf
-                * bottom_dim[0]
-                * bottom_dim[1]
-                * bottom_dim[2],
+                out_features=self.chf * np.prod(bottom_dim),
             )
         else:
             self.fc = nn.Linear(
                 in_features=latent_dims,
-                out_features=self.chf
-                * bottom_dim[0]
-                * bottom_dim[1]
-                * bottom_dim[2],
+                out_features=self.chf * np.prod(bottom_dim),
             )
 
     def forward(self, x, x_pose):
@@ -202,13 +214,7 @@ class Decoder(nn.Module):
             x = self.fc(torch.cat((x, x_pose), -1))
         else:
             x = self.fc(x)
-        x = x.view(
-            x.size(0),
-            self.chf,
-            self.bottom_dim[0],
-            self.bottom_dim[1],
-            self.bottom_dim[2],
-        )
+        x = x.view(x.size(0), self.chf, *self.bottom_dim)
         for d in range(self.depth - 1):
             x = self.norm_dec[d](F.relu(self.conv_dec[d](x)))
         x = torch.sigmoid(self.conv_dec[-1](x))
@@ -252,6 +258,7 @@ class AffinityVAE(nn.Module):
             "Input size not compatible with --depth. Input must be divisible "
             "by {}.".format(2**depth)
         )
+        set_layer_dim(len(input_size))
         self.bottom_dim = tuple([int(i / (2**depth)) for i in input_size])
         self.pose = not (pose_dims == 0)
 
