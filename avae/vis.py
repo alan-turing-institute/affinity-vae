@@ -1136,14 +1136,23 @@ def latent_disentamglement_plot(
         save_imshow_png(f"disentanglement-latent_{mode}.png", grid_for_napari)
 
 
-def pose_interpolation_plot(
+def pose_class_disentanglement_plot(
     x, y, pose_vis_class, poses, vae, data_dim, device, mode="trn"
 ):
-
+    pose_vis_class = pose_vis_class.replace(" ", "").split(",")
     for i in pose_vis_class:
-        class_reps_x = np.take(x, [np.where(np.array(y) == i)[0][0]], axis=0)
+        class_reps_x = np.take(x, np.where(np.array(y) == i)[0], axis=0)
+        class_reps_poses = np.take(
+            poses, np.where(np.array(y) == i)[0], axis=0
+        )
         pose_disentanglement_plot(
-            class_reps_x, poses, vae, data_dim, device, label=i, mode="trn"
+            class_reps_x,
+            class_reps_poses,
+            vae,
+            data_dim,
+            device,
+            label=i,
+            mode="trn",
         )
 
 
@@ -1166,7 +1175,12 @@ def pose_disentanglement_plot(
     logging.info(
         "################################################################",
     )
-    logging.info("Visualising pose disentanglement ...\n")
+    if label == "avg":
+        logging.info("Visualising pose disentanglement ...\n")
+    else:
+        logging.info(
+            "Visualising pose disentanglement for class {}...\n".format(label)
+        )
 
     number_of_samples = 7
     padding = 0
