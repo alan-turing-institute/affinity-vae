@@ -271,17 +271,20 @@ class EarlyStopping:
             List of validation losses.
         """
 
-        if self.patience < len(val_loss) and len(val_loss) > self.min_epochs:
+        if (
+            self.patience < len(val_loss[0])
+            and len(val_loss[0]) > self.min_epochs
+        ):
 
-            total_val_loss = [v[0] for v in val_loss][-self.patience :]
-            val_loss_reco = [v[1] for v in val_loss][-self.patience :]
-            val_loss_kl = [v[2] for v in val_loss][-self.patience :]
-            val_loss_affinity = [v[3] for v in val_loss][-self.patience :]
+            total_val_loss = [v for v in val_loss[0]][-self.patience :]
+            val_loss_reco = [v for v in val_loss[1]][-self.patience :]
+            val_loss_kl = [v for v in val_loss[2]][-self.patience :]
+            val_loss_affinity = [v for v in val_loss[3]][-self.patience :]
 
-            total_train_loss = [v[0] for v in train_loss][-self.patience :]
-            val_train_reco = [v[1] for v in train_loss][-self.patience :]
-            val_train_kl = [v[2] for v in train_loss][-self.patience :]
-            val_train_affinity = [v[3] for v in train_loss][-self.patience :]
+            total_train_loss = [v for v in train_loss[0]][-self.patience :]
+            val_train_reco = [v for v in train_loss[1]][-self.patience :]
+            val_train_kl = [v for v in train_loss[2]][-self.patience :]
+            val_train_affinity = [v for v in train_loss[3]][-self.patience :]
 
             if self.trigger == "total_loss":
 
@@ -320,12 +323,14 @@ class EarlyStopping:
             valid_loss
         ):
             logging.info(
-                "Early stopping triggered: validation loss is not improving"
+                "Early stopping triggered: validation loss is not improving. Fluctuation is within {:.2f}% of minimum validation loss.".format(
+                    (max(valid_loss) - min(valid_loss)) / min(valid_loss) * 100
+                )
             )
             stop = True
 
         diff_loses = (np.array(valid_loss) - np.array(train_loss)).tolist()
-        if diff_loses.index(min(diff_loses)) == 0 and valid_loss.max() > max(
+        if diff_loses.index(min(diff_loses)) == 0 and max(valid_loss) > max(
             train_loss
         ) + self.max_divergence * max(train_loss):
             logging.info(
