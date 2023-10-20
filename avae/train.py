@@ -602,6 +602,7 @@ def train(
                 x_train, p_train, vae, data_dim, device
             )
 
+        if pose and config.VIS_POSE_CLASS:
             vis.pose_class_disentanglement_plot(
                 x_train,
                 y_train,
