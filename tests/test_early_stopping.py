@@ -145,7 +145,7 @@ class EarlyStopTest(unittest.TestCase):
 
     def test_early_stopping_fluctuating_loss(self):
 
-        recon_loss_val = np.random.uniform(1, 1.1, 100)
+        recon_loss_val = np.random.uniform(1, 1.01, 100)
 
         # total loss
         total_loss_val = (
@@ -167,19 +167,19 @@ class EarlyStopTest(unittest.TestCase):
 
     def test_early_stopping_decreasing_loss_within_tolerance(self):
 
-        recon_loss_val = np.random.uniform(1, 1.005, 100)
+        kldivergence_val = np.random.uniform(1, 1.1, 100)
 
         affin_loss_val = np.linspace(0.1, 0.0009, 100)
 
         # total loss
         total_loss_val = (
-            recon_loss_val + self.kldivergence_val + affin_loss_val
+            self.recon_loss_val + kldivergence_val + affin_loss_val
         )
 
         loss_val = [
             total_loss_val,
-            recon_loss_val,
-            self.kldivergence_val,
+            self.recon_loss_val,
+            kldivergence_val,
             affin_loss_val,
         ]
 
