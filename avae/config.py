@@ -10,7 +10,7 @@ VIS_AFF = False
 VIS_HIS = False
 VIS_SIM = False
 VIS_DYN = False
-VIS_POSE_CLASS = []
+VIS_POSE_CLASS = False
 
 FREQ_ACC = 10
 FREQ_REC = 10

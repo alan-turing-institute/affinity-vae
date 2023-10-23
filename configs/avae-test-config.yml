@@ -61,6 +61,7 @@ vis_emb:  false  # latent embeddings on/off (frequency controlled)
 vis_int:  false  # latent interpolations on/off (frequency controlled)
 vis_dis:  false  # latent disentanglement on/off (frequency controlled)
 vis_pos:  false  # pose disentanglement on/off (frequency controlled)
+vis_pose_class: false # comma separated string eg. 1,2
 vis_cyc:  false  # beta for cyclic anealing on/off (once per run)
 vis_aff: false   # affinity matrix on/off (once per run)
 vis_his:  false  # class distribution histogram on/off (once per run)
