@@ -98,7 +98,7 @@ class TrainEvalTest(unittest.TestCase):
 
     def test_model_a_mrc(self):
         self.data["model"] = "a"
-        config.VIS_POSE_VIS = ["1b23", "1dkg"]
+        config.VIS_POSE_CLASS = "1b23,1dkg"
 
         (
             n_dir_train,
@@ -111,17 +111,17 @@ class TrainEvalTest(unittest.TestCase):
         ) = helper_train_eval(self.data)
 
         self.assertEqual(n_dir_train, 4)
-        self.assertEqual(n_plots_train, 30)
+        self.assertEqual(n_plots_train, 32)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
 
-        self.assertEqual(n_plots_eval, 48)
+        self.assertEqual(n_plots_eval, 50)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 3)
 
     def test_model_b_mrc(self):
         self.data["model"] = "b"
-        config.VIS_POSE_VIS = ["1b23", "1dkg"]
+        config.VIS_POSE_CLASS = "1b23,1dkg"
 
         (
             n_dir_train,
@@ -134,10 +134,10 @@ class TrainEvalTest(unittest.TestCase):
         ) = helper_train_eval(self.data)
 
         self.assertEqual(n_dir_train, 4)
-        self.assertEqual(n_plots_train, 30)
+        self.assertEqual(n_plots_train, 32)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
-        self.assertEqual(n_plots_eval, 48)
+        self.assertEqual(n_plots_eval, 50)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 3)
 
@@ -145,7 +145,7 @@ class TrainEvalTest(unittest.TestCase):
         self.data["model"] = "a"
         self.data["datatype"] = "npy"
         self.data["datapath"] = self.testdata_npy
-        config.VIS_POSE_VIS = ["2", "5"]
+        config.VIS_POSE_CLASS = "2,5"
 
         self.data["affinity"] = os.path.join(
             self.testdata_npy, "affinity_an.csv"
@@ -162,10 +162,38 @@ class TrainEvalTest(unittest.TestCase):
         ) = helper_train_eval(self.data)
 
         self.assertEqual(n_dir_train, 4)
-        self.assertEqual(n_plots_train, 28)
+        self.assertEqual(n_plots_train, 30)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
-        self.assertEqual(n_plots_eval, 45)
+        self.assertEqual(n_plots_eval, 47)
+        self.assertEqual(n_latent_eval, 4)
+        self.assertEqual(n_states_eval, 3)
+
+    def test_model_b_npy(self):
+        self.data["model"] = "b"
+        self.data["datatype"] = "npy"
+        self.data["datapath"] = self.testdata_npy
+        config.VIS_POSE_CLASS = "2,5"
+
+        self.data["affinity"] = os.path.join(
+            self.testdata_npy, "affinity_an.csv"
+        )
+        self.data["classes"] = os.path.join(self.testdata_npy, "classes.csv")
+        (
+            n_dir_train,
+            n_plots_train,
+            n_latent_train,
+            n_states_train,
+            n_plots_eval,
+            n_latent_eval,
+            n_states_eval,
+        ) = helper_train_eval(self.data)
+
+        self.assertEqual(n_dir_train, 4)
+        self.assertEqual(n_plots_train, 30)
+        self.assertEqual(n_latent_train, 2)
+        self.assertEqual(n_states_train, 2)
+        self.assertEqual(n_plots_eval, 47)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 3)
 
