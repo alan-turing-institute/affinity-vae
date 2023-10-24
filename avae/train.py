@@ -382,6 +382,8 @@ def train(
                 mode="trn",
             )
 
+        t_history[-1] /= len(trains)
+
         logging.info(
             "Training : Epoch: [%d/%d] | Loss: %f | Recon: %f | "
             "KLdiv: %f | Affin: %f | Beta: %f | Gamma: %f"
@@ -393,8 +395,6 @@ def train(
                 gamma_arr[epoch],
             )
         )
-
-        t_history[-1] /= len(trains)
 
         # ########################## VAL ######################################
         vae.eval()
@@ -436,6 +436,8 @@ def train(
                 mode="val",
             )
 
+        v_history[-1] /= len(vals)
+
         logging.info(
             "Validation : Epoch: [%d/%d] | Loss: %f | Recon: %f | "
             "KLdiv: %f | Affin: %f | Beta: %f | Gamma: %f"
@@ -460,8 +462,6 @@ def train(
             plot_all = stopper.early_stop(v_history, t_history)
         else:
             plot_all = False
-
-        v_history[-1] /= len(vals)
 
         if writer:
             for i, loss_name in enumerate(
