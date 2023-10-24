@@ -283,24 +283,24 @@ class EarlyStopping:
             val_train_kl = [v[2] for v in train_loss][-self.patience :]
             val_train_affinity = [v[3] for v in train_loss][-self.patience :]
 
-            if self.trigger == "total_loss":
+            if self.trigger == "total_loss" or self.trigger == "all":
 
                 if self.__evaluate_loss(total_val_loss, total_train_loss):
                     logging.info('Early stopping triggered on "total_loss"')
                     self.stop = True
 
-            elif self.trigger == "reco_loss" or self.trigger == "all":
+            if self.trigger == "reco_loss" or self.trigger == "all":
 
                 if self.__evaluate_loss(val_loss_reco, val_train_reco):
                     logging.info('Early stopping triggered on "reco_loss"')
                     self.stop = True
 
-            elif self.trigger == "kldiv_loss" or self.trigger == "all":
+            if self.trigger == "kldiv_loss" or self.trigger == "all":
                 if self.__evaluate_loss(val_loss_kl, val_train_kl):
                     logging.info('Early stopping triggered on "kldiv_loss"')
                     self.stop = True
 
-            elif self.trigger == "affinity_loss" or self.trigger == "all":
+            if self.trigger == "affinity_loss" or self.trigger == "all":
                 if self.__evaluate_loss(val_loss_affinity, val_train_affinity):
                     logging.info('Early stopping triggered on "affinity_loss"')
                     self.stop = True
