@@ -88,7 +88,7 @@ DEFAULT_RUN_CONFIGS = {
     "new_out": False,
     "debug": False,
     "early_stopping": False,
-    "es_trigger": "all",
+    "es_trigger": "total_loss",
     "es_patience": 10,
     "minimum_train": MIN_TRAIN,
 }
