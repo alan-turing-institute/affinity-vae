@@ -41,19 +41,24 @@ class EarlyStopTest(unittest.TestCase):
             min_epochs=20,
         )
 
-        recon_loss_train = np.linspace(10, 0.001, 100)
-        kldivergence_train = np.linspace(0.1, 0.001, 100)
-        affin_loss_train = np.linspace(0.1, 0.001, 100)
+        self.recon_loss_train = np.linspace(10, 0.001, 100)
+        self.kldivergence_train = np.linspace(0.1, 0.001, 100)
+        self.affin_loss_train = np.linspace(0.1, 0.001, 100)
         # total loss
-        total_loss_train = (
-            recon_loss_train + kldivergence_train + affin_loss_train
+        self.total_loss_train = (
+            self.recon_loss_train
+            + self.kldivergence_train
+            + self.affin_loss_train
         )
 
         self.loss_train = [
-            total_loss_train,
-            recon_loss_train,
-            kldivergence_train,
-            affin_loss_train,
+            [
+                self.total_loss_train[i],
+                self.recon_loss_train[i],
+                self.kldivergence_train[i],
+                self.affin_loss_train[i],
+            ]
+            for i in range(len(self.total_loss_train))
         ]
 
         self.recon_loss_val = np.linspace(10, 0.001, 100)
@@ -67,10 +72,13 @@ class EarlyStopTest(unittest.TestCase):
         )
 
         self.loss_val = [
-            self.total_loss_val,
-            self.recon_loss_val,
-            self.kldivergence_val,
-            self.affin_loss_val,
+            [
+                self.total_loss_val[i],
+                self.recon_loss_val[i],
+                self.kldivergence_val[i],
+                self.affin_loss_val[i],
+            ]
+            for i in range(len(self.total_loss_val))
         ]
 
     def test_early_stopping_decreasing_loss(self):
@@ -105,10 +113,13 @@ class EarlyStopTest(unittest.TestCase):
         )
 
         loss_val = [
-            total_loss_val,
-            self.recon_loss_val,
-            kldivergence_val,
-            affin_loss_val,
+            [
+                total_loss_val[i],
+                self.recon_loss_val[i],
+                kldivergence_val[i],
+                affin_loss_val[i],
+            ]
+            for i in range(len(total_loss_val))
         ]
 
         stop_total = self.stopper_total.early_stop(loss_val, self.loss_train)
@@ -131,10 +142,13 @@ class EarlyStopTest(unittest.TestCase):
         )
 
         loss_val = [
-            total_loss_val,
-            self.recon_loss_val,
-            kldivergence_val,
-            self.affin_loss_val,
+            [
+                total_loss_val[i],
+                self.recon_loss_val[i],
+                kldivergence_val[i],
+                self.affin_loss_val[i],
+            ]
+            for i in range(len(total_loss_val))
         ]
 
         stop_total = self.stopper_total.early_stop(loss_val, self.loss_train)
@@ -153,10 +167,13 @@ class EarlyStopTest(unittest.TestCase):
         )
 
         loss_val = [
-            total_loss_val,
-            recon_loss_val,
-            self.kldivergence_val,
-            self.affin_loss_val,
+            [
+                total_loss_val[i],
+                recon_loss_val[i],
+                self.kldivergence_val[i],
+                self.affin_loss_val[i],
+            ]
+            for i in range(len(total_loss_val))
         ]
 
         stop_total = self.stopper_total.early_stop(loss_val, self.loss_train)
@@ -177,10 +194,13 @@ class EarlyStopTest(unittest.TestCase):
         )
 
         loss_val = [
-            total_loss_val,
-            self.recon_loss_val,
-            kldivergence_val,
-            affin_loss_val,
+            [
+                total_loss_val[i],
+                self.recon_loss_val[i],
+                kldivergence_val[i],
+                affin_loss_val[i],
+            ]
+            for i in range(len(total_loss_val))
         ]
 
         stop_recon = self.stopper_reco.early_stop(loss_val, self.loss_train)
