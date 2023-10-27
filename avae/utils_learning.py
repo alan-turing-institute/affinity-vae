@@ -130,6 +130,7 @@ def pass_batch(
 
     # forward
     x = x.to(torch.float32)
+
     x_hat, lat_mu, lat_logvar, lat, lat_pose = vae(x)
     if loss is not None:
         history_loss = loss(x, x_hat, lat_mu, lat_logvar, e, batch_aff=aff)
@@ -155,6 +156,69 @@ def pass_batch(
         optimizer.zero_grad()
 
     return x, x_hat, lat_mu, lat_logvar, lat, lat_pose, history
+
+
+def pass_batch_cnn(
+    device,
+    vae,
+    batch,
+    b,
+    batches,
+    e=None,
+    epochs=None,
+    history=[],
+    loss=None,
+    optimizer=None,
+    beta=None,
+):
+    if bool(history == []) ^ bool(loss is None):
+        raise RuntimeError(
+            "When validating, both 'loss' and 'history' parameters must be "
+            "present in 'pass_batch' function."
+        )
+    if bool(e is None) ^ bool(epochs is None):
+        raise RuntimeError(
+            "Function 'pass_batch' expects both 'e' and 'epoch' parameters."
+        )
+    if e is None and epochs is None:
+        e = 1
+        epochs = 1
+
+    # to device
+    x = batch[0]
+    x = x.to(device)
+    aff = batch[2]
+    aff = aff.to(device)
+
+    # forward
+    x = x.to(torch.float32)
+
+    # x_hat, lat_mu, lat_logvar, lat, lat_pose = vae(x)
+    lat_mu, lat_logvar, lat_pose = vae(x)
+    if loss is not None:
+        history_loss = loss(x, None, lat_mu, lat_logvar, e, batch_aff=aff)
+
+        if beta is None:
+            raise RuntimeError(
+                "Please pass beta value to pass_batch function."
+            )
+
+        # record loss
+        for i in range(len(history[-1])):
+            history[-1][i] += history_loss[i].item()
+        logging.debug(
+            "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
+            "KLdiv: %f | Affin: %f | Beta: %f"
+            % (e + 1, epochs, b + 1, batches, *history_loss, beta[e])
+        )
+
+    # backwards
+    if optimizer is not None:
+        history_loss[0].backward()
+        optimizer.step()
+        optimizer.zero_grad()
+
+    return x, x, lat_mu, lat_logvar, None, lat_pose, history
 
 
 def add_meta(

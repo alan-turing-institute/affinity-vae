@@ -193,3 +193,50 @@ class AVAELoss:
         )
 
         return total_loss, recon_loss, kldivergence, affin_loss
+
+
+class CNNLoss:
+    def __init__(self, device, beta, gamma, lookup_aff=None):
+        self.device = device
+        self.beta = beta
+
+        self.affinity_loss = None
+        self.gamma = gamma
+
+        if lookup_aff is not None and max(gamma) != 0:
+            self.affinity_loss = AffinityLoss(lookup_aff, device)
+
+        elif lookup_aff is None and max(gamma) != 0:
+            raise RuntimeError(
+                "Affinity matrix is needed to compute Affinity loss"
+                ". Although you've set gamma, you have not provided --af/"
+                "--affinity parameter."
+            )
+        elif lookup_aff is not None and max(gamma) == 0:
+            logging.warning(
+                "\n\nWARNING: You provided affinity matrix but no gamma. Unless "
+                "you provide gamma, affinity will be ignored and you're "
+                "running a vanilla beta-VAE.\n"
+            )
+            self.affinity_loss = None
+
+    def __call__(self, x, recon_x, mu, logvar, epoch, batch_aff=None):
+        if self.affinity_loss is not None and batch_aff is None:
+            raise RuntimeError(
+                "aVAE loss function requires affinity ids for the batch."
+            )
+
+        # kldiv loss
+        kldivergence = -0.5 * torch.mean(1 + logvar - mu.pow(2) - logvar.exp())
+
+        # affinity loss
+        affin_loss = torch.Tensor([0]).to(self.device)
+        if self.affinity_loss is not None:
+            affin_loss = self.affinity_loss(batch_aff, mu)
+
+        # total loss
+        total_loss = (
+            +self.beta[epoch] * kldivergence + self.gamma[epoch] * affin_loss
+        )
+
+        return total_loss, torch.Tensor([0]), kldivergence, affin_loss

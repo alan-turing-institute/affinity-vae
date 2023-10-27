@@ -10,11 +10,14 @@ from torch.utils.tensorboard import SummaryWriter
 from . import config, vis
 from .cyc_annealing import cyc_annealing
 from .data import load_data
-from .loss import AVAELoss
+from .loss import AVAELoss, CNNLoss  # CNN import
 from .model_a import AffinityVAE as AffinityVAE_A
+from .model_a import Encoder as Encoder_A  # CNN import
 from .model_b import AffinityVAE as AffinityVAE_B
+from .model_b import Encoder as Encoder_B  # CNN import
 from .utils import accuracy
-from .utils_learning import add_meta, pass_batch, set_device
+from .utils_learning import pass_batch_cnn  # CNN import
+from .utils_learning import add_meta, set_device  # , pass_batch
 
 
 def train(
@@ -164,8 +167,10 @@ def train(
 
     if model == "a":
         affinityVAE = AffinityVAE_A
+        Encoder = Encoder_A
     elif model == "b":
         affinityVAE = AffinityVAE_B
+        Encoder = Encoder_B
     else:
         raise ValueError("Invalid model type", model, "must be a or b")
 
@@ -177,7 +182,14 @@ def train(
         pose_dims=pose_dims,
     )
 
+    bottom_dim = tuple([int(i / (2**depth)) for i in dshape])
+    cnn = Encoder(channels, depth, bottom_dim, lat_dims, pose_dims=pose_dims)
+
     vae.to(device)
+    cnn.to(device)
+    print(vae)
+    print(cnn)
+    vae = cnn
 
     if opt_method == "adam":
         optimizer = torch.optim.Adam(
@@ -293,6 +305,9 @@ def train(
         recon_fn=recon_fn,
     )
 
+    cnn_loss = CNNLoss(device, beta_arr, gamma_arr, lookup_aff=lookup)
+    loss = cnn_loss
+
     if tensorboard:
         writer = SummaryWriter()
     else:
@@ -333,7 +348,7 @@ def train(
                 lat,
                 lat_pos,
                 t_history,
-            ) = pass_batch(
+            ) = pass_batch_cnn(
                 device,
                 vae,
                 batch,
@@ -391,7 +406,7 @@ def train(
                 vlat,
                 vlat_pos,
                 v_history,
-            ) = pass_batch(
+            ) = pass_batch_cnn(
                 device,
                 vae,
                 batch,
@@ -445,7 +460,15 @@ def train(
         # ########################## TEST #####################################
         if (epoch + 1) % config.FREQ_EVAL == 0:
             for b, batch in enumerate(tests):  # tests empty if no 'test' dir
-                (t, t_hat, t_mu, t_logvar, tlat, tlat_pose, _,) = pass_batch(
+                (
+                    t,
+                    t_hat,
+                    t_mu,
+                    t_logvar,
+                    tlat,
+                    tlat_pose,
+                    _,
+                ) = pass_batch_cnn(
                     device, vae, batch, b, len(tests), epoch, epochs
                 )
                 x_test.extend(t_mu.cpu().detach().numpy())  # store latents
