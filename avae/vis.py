@@ -306,6 +306,9 @@ def latent_embed_plot_umap(
     else:
         logging.info("Visualising static UMAP embedding " + mode + "...\n")
 
+    xs = np.asarray(xs)
+    ys = np.asarray(ys)
+
     if len(xs.shape) != 2:
         logging.error("Embedding only accepts 2D arrays.")
         exit(1)
