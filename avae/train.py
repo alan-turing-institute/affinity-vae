@@ -573,6 +573,8 @@ def train(
                     y_val,
                     np.full(shape=len(x_test), fill_value="test"),
                 ]
+                if pose:
+                    ps = np.r_[p_train, p_val, p_test]
             else:
                 xs = np.r_[x_train, x_val]
                 ys = np.r_[y_train, y_val]
