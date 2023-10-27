@@ -259,7 +259,16 @@ def latent_embed_plot_tsne(
                 histtype="step",
                 stacked=True,
                 fill=False,
+                label=mol[:4],
             )
+        plt.legend(
+            prop={"size": 10},
+            bbox_to_anchor=(1.05, 1),
+            loc="upper left",
+            fontsize=16,
+        )
+        plt.xlabel("dim 1")
+        plt.ylabel("freq")
 
     plt.tight_layout()
     plt.savefig(f"plots/embedding_TSNE{mode}.png")
@@ -368,7 +377,16 @@ def latent_embed_plot_umap(
                 histtype="step",
                 stacked=True,
                 fill=False,
+                label=mol[:4],
             )
+        plt.legend(
+            prop={"size": 10},
+            bbox_to_anchor=(1.05, 1),
+            loc="upper left",
+            fontsize=16,
+        )
+        plt.xlabel("dim 1")
+        plt.ylabel("freq")
 
     plt.tight_layout()
     plt.savefig(f"plots/embedding_UMAP{mode}.png")
