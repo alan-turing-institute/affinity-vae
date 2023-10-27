@@ -176,6 +176,7 @@ def train(
         lat_dims,
         pose_dims=pose_dims,
     )
+    logging.info(vae)
 
     vae.to(device)
 
