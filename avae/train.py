@@ -33,6 +33,7 @@ def train(
     depth,
     lat_dims,
     pose_dims,
+    bnorm,
     learning,
     beta_load,
     beta_min,
@@ -175,6 +176,7 @@ def train(
         dshape,
         lat_dims,
         pose_dims=pose_dims,
+        bnorm=bnorm,
     )
     logging.info(vae)
 

@@ -150,6 +150,13 @@ logging.basicConfig(
     "a standard beta-VAE.",
 )
 @click.option(
+    "--bnorm",
+    "-bn",
+    type=bool,
+    default=None,
+    help="Batch normalisation is on if True.",
+)
+@click.option(
     "--beta",
     "-be",
     type=float,
@@ -523,6 +530,7 @@ def run(
     channels,
     latent_dims,
     pose_dims,
+    bnorm,
     beta,
     beta_load,
     gamma_load,
@@ -686,6 +694,7 @@ def run_pipeline(data):
             depth=data["depth"],
             lat_dims=data["latent_dims"],
             pose_dims=data["pose_dims"],
+            bnorm=data["bnorm"],
             learning=data["learning"],
             beta_load=data["beta_load"],
             beta_min=data["beta_min"],

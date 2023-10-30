@@ -31,6 +31,7 @@ DEFAULT_RUN_CONFIGS = {
     "channels": 64,
     "latent_dims": 8,
     "pose_dims": 1,
+    "bnorm": True,
     "no_val_drop": True,
     "epochs": 20,
     "batch": 128,

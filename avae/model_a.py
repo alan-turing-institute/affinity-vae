@@ -37,6 +37,7 @@ class Encoder(nn.Module):
         unflat_shape,
         flat_shape,
         conv,
+        bnorm=None,
     ):
         super(Encoder, self).__init__()
         self.encoder = nn.Sequential()
@@ -53,6 +54,8 @@ class Encoder(nn.Module):
                 )
             )
             self.encoder.append(nn.ReLU(True))
+            if bnorm is not None:
+                self.encoder.append(bnorm(filters[d]))
             input_channel = filters[d]
 
         self.encoder.append(nn.Flatten())
@@ -126,6 +129,7 @@ class Decoder(nn.Module):
         unflat_shape,
         flat_shape,
         conv_T,
+        bnorm=None,
     ):
         super(Decoder, self).__init__()
 
@@ -161,6 +165,8 @@ class Decoder(nn.Module):
                     )
 
                 self.decoder.append(nn.ReLU(True))
+                if bnorm is not None:
+                    self.decoder.append(bnorm(filters[d - 1]))
         self.decoder.append(
             conv_T(
                 in_channels=filters[0],
@@ -230,6 +236,7 @@ class AffinityVAE(nn.Module):
         input_size,
         latent_dims,
         pose_dims=0,
+        bnorm=False,
     ):
         super(AffinityVAE, self).__init__()
         assert all(
@@ -258,9 +265,15 @@ class AffinityVAE(nn.Module):
         if ndim == SpatialDims.TWO:
             conv = nn.Conv2d
             conv_T = nn.ConvTranspose2d
+            if bnorm:
+                bnorm = nn.BatchNorm2d
         elif ndim == SpatialDims.THREE:
             conv = nn.Conv3d
             conv_T = nn.ConvTranspose3d
+            if bnorm:
+                bnorm = nn.BatchNorm3d
+        if not bnorm:
+            bnorm = None
 
         self.encoder = Encoder(
             depth,
@@ -270,6 +283,7 @@ class AffinityVAE(nn.Module):
             self.unflat_shape,
             self.flat_shape,
             conv,
+            bnorm=bnorm,
         )
 
         self.decoder = Decoder(
@@ -280,6 +294,7 @@ class AffinityVAE(nn.Module):
             self.unflat_shape,
             self.flat_shape,
             conv_T,
+            bnorm=bnorm,
         )
 
     def forward(self, x):
