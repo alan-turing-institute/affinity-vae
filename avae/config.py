@@ -42,6 +42,7 @@ DEFAULT_RUN_CONFIGS = {
     "beta_load": None,
     "gamma_load": None,
     "loss_fn": "MSE",
+    "klreduction": "mean",
     "beta_min": 0.0,
     "beta_cycle": 4,
     "beta_ratio": 0.5,

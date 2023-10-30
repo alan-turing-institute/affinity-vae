@@ -37,6 +37,7 @@ freq_sta: 10  # frequency of state saves
 beta:  1
 gamma:  2
 loss_fn:  MSE
+klreduction: mean
 
 #### Cyclical annealing parameters for beta
 beta_min: 0
