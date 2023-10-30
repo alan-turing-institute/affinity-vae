@@ -566,6 +566,10 @@ def train(
 
         # visualise embeddings
         if config.VIS_EMB and (epoch + 1) % config.FREQ_EMB == 0:
+            if classes is not None:
+                classes_list = pd.read_csv(classes).columns.tolist()
+            else:
+                classes_list = []
             if len(tests) != 0:
                 xs = np.r_[x_train, x_val, x_test]
                 ys = np.r_[
