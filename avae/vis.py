@@ -171,7 +171,10 @@ def latent_embed_plot_tsne(
     logging.info(
         "################################################################",
     )
-    logging.info("Visualising static TSNE embedding...\n")
+    if not mode:
+        logging.info("Visualising static TSNE embedding...\n")
+    else:
+        logging.info("Visualising static TSNE embedding " + mode + "...\n")
 
     xs = np.asarray(xs)
     ys = np.asarray(ys)
@@ -180,9 +183,27 @@ def latent_embed_plot_tsne(
     if len(ys) < perplexity:
         perplexity = len(ys) - 1
 
-    lats = TSNE(
-        n_components=2, perplexity=perplexity, random_state=42
-    ).fit_transform(xs)
+    if len(xs.shape) != 2:
+        logging.error("Embedding only accepts 2D arrays.")
+        exit(1)
+    if xs.shape[-1] == 1:
+        logging.warning(
+            "Data contains 1 dimension, cannot create embedding,"
+            " plotting histogram instead...\n"
+        )
+    if xs.shape[-1] == 2:
+        logging.warning(
+            "Data already contains 2 dimensions, cannot create"
+            " embedding, plotting scatter of original data...\n"
+        )
+
+    if xs.shape[-1] > 2:
+        lats = TSNE(
+            n_components=2, perplexity=perplexity, random_state=42
+        ).fit_transform(xs)
+    elif xs.shape[-1] == 2 or xs.shape[-1] == 1:
+        lats = xs
+
     if classes is None:
         classes = sorted(list(np.unique(ys)))
     else:
@@ -203,27 +224,52 @@ def latent_embed_plot_tsne(
             figsize=(int(n_classes / 2) + 4, int(n_classes / 2) + 2)
         )
     # When the number of classes is less than 3 the image becomes two small
-
     colours = colour_per_class(classes)
 
-    for mol_id, mol in enumerate(set(ys.tolist())):
-        idx = np.where(np.array(ys.tolist()) == mol)[0]
+    if xs.shape[-1] != 1:
 
-        color = colours[classes.index(mol)]
+        for mol_id, mol in enumerate(set(ys.tolist())):
+            idx = np.where(np.array(ys.tolist()) == mol)[0]
 
-        plt.scatter(
-            lats[idx, 0],
-            lats[idx, 1],
-            s=24,
-            label=mol[:4],
-            facecolor=color,
-            edgecolor=color,
-            alpha=0.2,
+            color = colours[classes.index(mol)]
+
+            plt.scatter(
+                lats[idx, 0],
+                lats[idx, 1],
+                s=24,
+                label=mol[:4],
+                facecolor=color,
+                edgecolor=color,
+                alpha=0.2,
+            )
+
+        ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=16)
+        plt.xlabel("TSNE-1")
+        plt.ylabel("TSNE-2")
+
+    if xs.shape[-1] == 1:
+
+        for mol_id, mol in enumerate(set(ys.tolist())):
+            idx = np.where(np.array(ys.tolist()) == mol)[0]
+            cols = colours[classes.index(mol)]
+            plt.hist(
+                lats[idx],
+                100,
+                color=cols,
+                histtype="step",
+                stacked=True,
+                fill=False,
+                label=mol[:4],
+            )
+        plt.legend(
+            prop={"size": 10},
+            bbox_to_anchor=(1.05, 1),
+            loc="upper left",
+            fontsize=16,
         )
+        plt.xlabel("dim 1")
+        plt.ylabel("freq")
 
-    ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=16)
-    plt.xlabel("TSNE-1")
-    plt.ylabel("TSNE-2")
     plt.tight_layout()
     plt.savefig(f"plots/embedding_TSNE{mode}.png")
 
@@ -255,9 +301,33 @@ def latent_embed_plot_umap(
         "################################################################",
     )
 
-    logging.info("Visualising static UMAP embedding...\n")
-    reducer = umap.UMAP(random_state=42)
-    embedding = reducer.fit_transform(xs)
+    if not mode:
+        logging.info("Visualising static UMAP embedding...\n")
+    else:
+        logging.info("Visualising static UMAP embedding " + mode + "...\n")
+
+    xs = np.asarray(xs)
+    ys = np.asarray(ys)
+
+    if len(xs.shape) != 2:
+        logging.error("Embedding only accepts 2D arrays.")
+        exit(1)
+    if xs.shape[-1] == 1:
+        logging.warning(
+            "Data contains 1 dimension, cannot create embedding,"
+            " plotting histogram instead...\n"
+        )
+    if xs.shape[-1] == 2:
+        logging.warning(
+            "Data already contains 2 dimensions, cannot create"
+            " embedding, plotting scatter of original data...\n"
+        )
+
+    if xs.shape[-1] > 2:
+        reducer = umap.UMAP(random_state=42)
+        embedding = reducer.fit_transform(xs)
+    elif xs.shape[-1] == 2 or xs.shape[-1] == 1:
+        embedding = xs
 
     if classes is None:
         classes = sorted(list(np.unique(ys)))
@@ -278,23 +348,49 @@ def latent_embed_plot_umap(
 
     colours = colour_per_class(classes)
 
-    for mol_id, mol in enumerate(set(ys.tolist())):
-        idx = np.where(np.array(ys.tolist()) == mol)[0]
-        color = colours[classes.index(mol)]
+    if xs.shape[-1] != 1:
 
-        ax.scatter(
-            embedding[idx, 0],
-            embedding[idx, 1],
-            s=24,
-            label=mol[:4],
-            facecolor=color,
-            edgecolor=color,
-            alpha=0.2,
+        for mol_id, mol in enumerate(set(ys.tolist())):
+            idx = np.where(np.array(ys.tolist()) == mol)[0]
+            color = colours[classes.index(mol)]
+
+            ax.scatter(
+                embedding[idx, 0],
+                embedding[idx, 1],
+                s=24,
+                label=mol[:4],
+                facecolor=color,
+                edgecolor=color,
+                alpha=0.2,
+            )
+
+        ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=16)
+        plt.xlabel("UMAP-1")
+        plt.ylabel("UMAP-2")
+
+    if xs.shape[-1] == 1:
+
+        for mol_id, mol in enumerate(set(ys.tolist())):
+            idx = np.where(np.array(ys.tolist()) == mol)[0]
+            cols = colours[classes.index(mol)]
+            plt.hist(
+                embedding[idx],
+                100,
+                color=cols,
+                histtype="step",
+                stacked=True,
+                fill=False,
+                label=mol[:4],
+            )
+        plt.legend(
+            prop={"size": 10},
+            bbox_to_anchor=(1.05, 1),
+            loc="upper left",
+            fontsize=16,
         )
+        plt.xlabel("dim 1")
+        plt.ylabel("freq")
 
-    ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=16)
-    plt.xlabel("UMAP-1")
-    plt.ylabel("UMAP-2")
     plt.tight_layout()
     plt.savefig(f"plots/embedding_UMAP{mode}.png")
 

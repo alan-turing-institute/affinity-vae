@@ -573,15 +573,25 @@ def train(
                     y_val,
                     np.full(shape=len(x_test), fill_value="test"),
                 ]
+                if pose:
+                    ps = np.r_[p_train, p_val, p_test]
             else:
                 xs = np.r_[x_train, x_val]
                 ys = np.r_[y_train, y_val]
-            vis.latent_embed_plot_tsne(
-                xs, ys, classes_list, epoch=epoch, writer=writer
-            )
+                if pose:
+                    ps = np.r_[p_train, p_val]
+
+            vis.latent_embed_plot_tsne(xs, ys, epoch=epoch, writer=writer)
             vis.latent_embed_plot_umap(
                 xs, ys, classes_list, epoch=epoch, writer=writer
             )
+            if pose:
+                vis.latent_embed_plot_tsne(
+                    ps, ys, epoch=epoch, writer=writer, mode="pose"
+                )
+                vis.latent_embed_plot_umap(
+                    ps, ys, epoch=epoch, writer=writer, mode="pose"
+                )
 
             if config.VIS_DYN:
                 # merge img and rec into one image for display in altair
