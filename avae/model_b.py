@@ -46,15 +46,19 @@ class Encoder(nn.Module):
         Number of bottleneck pose dimensions.
     """
 
-    def __init__(self, capacity, depth, bottom_dim, latent_dims, pose_dims=0):
+    def __init__(
+        self, capacity, depth, bottom_dim, latent_dims, pose_dims=0, bnorm=True
+    ):
         super(Encoder, self).__init__()
         c = capacity
         self.depth = depth
         self.pose = not (pose_dims == 0)
+        self.bnorm = bnorm
 
         # iteratively define convolution and batch normalisation layers
         self.conv_enc = nn.ModuleList()
-        self.norm_enc = nn.ModuleList()
+        if self.bnorm:
+            self.norm_enc = nn.ModuleList()
         prev_sh = 1
         for d in range(depth):
             sh = c * (d + 1)
@@ -67,7 +71,8 @@ class Encoder(nn.Module):
                     stride=2,
                 )
             )
-            self.norm_enc.append(BNORM(sh))
+            if self.bnorm:
+                self.norm_enc.append(BNORM(sh))
             prev_sh = sh
 
         # define fully connected layers
@@ -115,7 +120,10 @@ class Encoder(nn.Module):
             pose dimensions.
         """
         for d in range(self.depth):
-            x = self.norm_enc[d](F.relu(self.conv_enc[d](x)))
+            if self.bnorm:
+                x = self.norm_enc[d](F.relu(self.conv_enc[d](x)))
+            else:
+                x = F.relu(self.conv_enc[d](x))
         x = x.view(x.size(0), -1)
         x_mu = self.fc_mu(x)
         x_logvar = self.fc_logvar(x)
@@ -147,16 +155,20 @@ class Decoder(nn.Module):
         Number of bottleneck pose dimensions.
     """
 
-    def __init__(self, capacity, depth, bottom_dim, latent_dims, pose_dims=0):
+    def __init__(
+        self, capacity, depth, bottom_dim, latent_dims, pose_dims=0, bnorm=True
+    ):
         super(Decoder, self).__init__()
         self.c = capacity
         self.depth = depth
         self.bottom_dim = bottom_dim
         self.pose = not (pose_dims == 0)
+        self.bnorm = bnorm
 
         #  iteratively define deconvolution and batch normalisation layers
         self.conv_dec = nn.ModuleList()
-        self.norm_dec = nn.ModuleList()
+        if self.bnorm:
+            self.norm_dec = nn.ModuleList()
         prev_sh = self.c * depth
         for d in range(depth, 0, -1):
             sh = self.c * (d - 1) if d != 1 else 1
@@ -169,7 +181,8 @@ class Decoder(nn.Module):
                     padding=1,
                 )
             )
-            self.norm_dec.append(BNORM(sh))
+            if self.bnorm:
+                self.norm_dec.append(BNORM(sh))
             prev_sh = sh
 
         # define fully connected layers
@@ -216,7 +229,10 @@ class Decoder(nn.Module):
             x = self.fc(x)
         x = x.view(x.size(0), self.chf, *self.bottom_dim)
         for d in range(self.depth - 1):
-            x = self.norm_dec[d](F.relu(self.conv_dec[d](x)))
+            if self.bnorm:
+                x = self.norm_dec[d](F.relu(self.conv_dec[d](x)))
+            else:
+                x = F.relu(self.conv_dec[d](x))
         x = torch.sigmoid(self.conv_dec[-1](x))
         return x
 
@@ -250,6 +266,7 @@ class AffinityVAE(nn.Module):
         input_size,
         latent_dims,
         pose_dims=0,
+        bnorm=True,
     ):
         super(AffinityVAE, self).__init__()
         assert all(
@@ -268,6 +285,7 @@ class AffinityVAE(nn.Module):
             self.bottom_dim,
             latent_dims,
             pose_dims=pose_dims,
+            bnorm=bnorm,
         )
         self.decoder = Decoder(
             capacity,
@@ -275,6 +293,7 @@ class AffinityVAE(nn.Module):
             self.bottom_dim,
             latent_dims,
             pose_dims=pose_dims,
+            bnorm=bnorm,
         )
 
     def forward(self, x):
