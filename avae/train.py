@@ -34,6 +34,7 @@ def train(
     lat_dims,
     pose_dims,
     bnorm,
+    klred,
     learning,
     beta_load,
     beta_min,
@@ -294,6 +295,7 @@ def train(
         gamma=gamma_arr,
         lookup_aff=lookup,
         recon_fn=recon_fn,
+        klred=klred,
     )
 
     if tensorboard:

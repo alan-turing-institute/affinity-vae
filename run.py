@@ -157,6 +157,13 @@ logging.basicConfig(
     help="Batch normalisation is on if True.",
 )
 @click.option(
+    "--klreduction",
+    "-kr",
+    type=str,
+    default=None,
+    help="Mean or sum reduction on KLD term.",
+)
+@click.option(
     "--beta",
     "-be",
     type=float,
@@ -531,6 +538,7 @@ def run(
     latent_dims,
     pose_dims,
     bnorm,
+    klreduction,
     beta,
     beta_load,
     gamma_load,
@@ -695,6 +703,7 @@ def run_pipeline(data):
             lat_dims=data["latent_dims"],
             pose_dims=data["pose_dims"],
             bnorm=data["bnorm"],
+            klred=data["klreduction"],
             learning=data["learning"],
             beta_load=data["beta_load"],
             beta_min=data["beta_min"],
