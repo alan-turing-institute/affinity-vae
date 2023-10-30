@@ -608,13 +608,13 @@ def train(
             if not pose:
                 p_train = None
             vis.latent_disentamglement_plot(
-                x_train, vae, device, data_dim, poses=p_train
+                x_train, vae, device, data_dim, poses=p_train, epoch=epoch
             )
 
         # visualise pose disentanglement
         if pose and config.VIS_POS and (epoch + 1) % config.FREQ_POS == 0:
             vis.pose_disentanglement_plot(
-                x_train, p_train, vae, data_dim, device
+                x_train, p_train, vae, data_dim, device, epoch=epoch
             )
 
         if (
@@ -657,6 +657,7 @@ def train(
                 device,
                 data_dim,
                 poses=ps,  # do we need val and test here?
+                epoch=epoch,
             )
 
         # ########################## SAVE STATE ###############################

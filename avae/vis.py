@@ -272,6 +272,9 @@ def latent_embed_plot_tsne(
 
     plt.tight_layout()
     plt.savefig(f"plots/embedding_TSNE{mode}.png")
+    if not os.path.exists("plots/plots_per_epoch"):
+        os.mkdir("plots/plots_per_epoch")
+    plt.savefig(f"plots/plots_per_epoch/embedding_TSNE_{epoch}.png")
 
     if writer:
         writer.add_figure("TSNE embedding", fig, epoch)
@@ -393,6 +396,9 @@ def latent_embed_plot_umap(
 
     plt.tight_layout()
     plt.savefig(f"plots/embedding_UMAP{mode}.png")
+    if not os.path.exists("plots/plots_per_epoch"):
+        os.mkdir("plots/plots_per_epoch")
+    plt.savefig(f"plots/plots_per_epoch/embedding_UMAP{mode}_{epoch}.png")
 
     if writer:
         writer.add_figure("UMAP embedding", fig, epoch)
@@ -680,6 +686,10 @@ def accuracy_plot(
 
         plt.savefig(f"plots/confusion_train{mode}.png", dpi=300)
 
+        if not os.path.exists("plots/plots_per_epoch"):
+            os.mkdir("plots/plots_per_epoch")
+        plt.savefig(f"plots/plots_per_epoch/confusion_train{mode}_{epoch}.png")
+
         if writer:
             writer.add_figure("Accuracy", fig, epoch)
 
@@ -710,6 +720,12 @@ def accuracy_plot(
         plt.xlabel("Predicted label (%)")
         plt.ylabel("True label (%)")
         plt.savefig(f"plots/confusion_train{mode}_norm.png", dpi=300)
+
+        if not os.path.exists("plots/plots_per_epoch"):
+            os.mkdir("plots/plots_per_epoch")
+        plt.savefig(
+            f"plots/plots_per_epoch/confusion_train{mode}_norm_{epoch}.png"
+        )
 
         if writer:
             writer.add_figure("Accuracy (Norm)", fig, epoch)
@@ -766,6 +782,10 @@ def accuracy_plot(
             fontsize=12,
         )
         plt.savefig(figure_name + ".png", dpi=300)
+
+        if not os.path.exists("plots/plots_per_epoch"):
+            os.mkdir("plots/plots_per_epoch")
+        plt.savefig(f"plots/plots_per_epoch/confusion_valid_{epoch}.png")
         plt.close()
 
         fig, ax = plt.subplots(
@@ -790,6 +810,10 @@ def accuracy_plot(
         plt.xlabel("Predicted label (%)")
         plt.ylabel("True label (%)")
         plt.savefig(figure_name + "_norm.png", dpi=300)
+
+        if not os.path.exists("plots/plots_per_epoch"):
+            os.mkdir("plots/plots_per_epoch")
+        plt.savefig(f"plots/plots_per_epoch/confusion_valid_norm_{epoch}.png")
         plt.close()
 
 
@@ -901,6 +925,10 @@ def f1_plot(
         plt.title("F1 Score at epoch {}".format(epoch))
         plt.ylabel("F1 Score")
         plt.savefig(f"plots/f1{mode}.png", dpi=150)
+
+        if not os.path.exists("plots/plots_per_epoch"):
+            os.mkdir("plots/plots_per_epoch")
+        plt.savefig(f"plots/plots_per_epoch/f1{mode}_{epoch}.png")
 
         if writer:
             writer.add_figure("F1 score", fig, epoch)
@@ -1083,8 +1111,28 @@ def recon_plot(img, rec, label, data_dim, mode="trn", epoch=0, writer=None):
         figname="Recon. (In)",
         epoch=epoch,
     )
+    if not os.path.exists("plots/plots_per_epoch"):
+        os.mkdir("plots/plots_per_epoch")
+    save_imshow_png(
+        f"plots_per_epoch/{fname_in[:-4]}_{epoch}.png",
+        np.transpose(img_2d, (1, 2, 0)),
+        writer=writer,
+        figname="Recon. (In)",
+        epoch=epoch,
+    )
+
     save_imshow_png(
         fname_out,
+        np.transpose(rec_2d, (1, 2, 0)),
+        writer=writer,
+        figname="Recon. (Out)",
+        epoch=epoch,
+    )
+
+    if not os.path.exists("plots/plots_per_epoch"):
+        os.mkdir("plots/plots_per_epoch")
+    save_imshow_png(
+        f"plots_per_epoch/{fname_out[:-4]}_{epoch}.png",
         np.transpose(rec_2d, (1, 2, 0)),
         writer=writer,
         figname="Recon. (Out)",
@@ -1142,6 +1190,10 @@ def recon_plot(img, rec, label, data_dim, mode="trn", epoch=0, writer=None):
                     ] = rec_img[i, j, :, :, :]
 
         save_mrc_file(str(mode) + "_recon_in.mrc", grid_for_napari)
+        save_mrc_file(
+            "plots_per_epoch/" + str(mode) + f"_recon_in_{epoch}.mrc",
+            grid_for_napari,
+        )
         logging.info("\n")
 
 
@@ -1152,6 +1204,7 @@ def latent_disentamglement_plot(
     data_dim,
     poses=None,
     mode="trn",
+    epoch=0,
     writer=None,
 ):
     """Visualise latent content disentanglement.
@@ -1233,8 +1286,20 @@ def latent_disentamglement_plot(
 
     if data_dim == 3:
         save_mrc_file(f"disentanglement-latent_{mode}.mrc", grid_for_napari)
+        if not os.path.exists("plots/plots_per_epoch"):
+            os.mkdir("plots/plots_per_epoch")
+        save_mrc_file(
+            f"plots_per_epoch/disentanglement-latent_{mode}_{epoch}.mrc",
+            grid_for_napari,
+        )
     elif data_dim == 2:
         save_imshow_png(f"disentanglement-latent_{mode}.png", grid_for_napari)
+        if not os.path.exists("plots/plots_per_epoch"):
+            os.mkdir("plots/plots_per_epoch")
+        save_imshow_png(
+            f"plots_per_epoch/disentanglement-latent_{mode}_{epoch}.png",
+            grid_for_napari,
+        )
 
 
 def pose_class_disentanglement_plot(
@@ -1258,7 +1323,14 @@ def pose_class_disentanglement_plot(
 
 
 def pose_disentanglement_plot(
-    lats, poses, vae, data_dim, device, label="avg", mode="trn"
+    lats,
+    poses,
+    vae,
+    data_dim,
+    device,
+    label="avg",
+    mode="trn",
+    epoch=0,
 ):
     """Visualise pose disentanglement.
 
@@ -1343,14 +1415,33 @@ def pose_disentanglement_plot(
         save_mrc_file(
             f"disentanglement-pose_{mode}_{label}.mrc", grid_for_napari
         )
+        if not os.path.exists("plots/plots_per_epoch"):
+            os.mkdir("plots/plots_per_epoch")
+        save_mrc_file(
+            f"plots_per_epoch/disentanglement-pose_{mode}_{label}_{epoch}.mrc",
+            grid_for_napari,
+        )
     elif data_dim == 2:
         save_imshow_png(
             f"disentanglement-pose_{mode}_{label}.png", grid_for_napari
         )
+        if not os.path.exists("plots/plots_per_epoch"):
+            os.mkdir("plots/plots_per_epoch")
+        save_imshow_png(
+            f"plots_per_epoch/disentanglement-pose_{mode}_{label}_{epoch}.png",
+            grid_for_napari,
+        )
 
 
 def interpolations_plot(
-    lats, classes, vae, device, data_dim, poses=None, mode="trn"
+    lats,
+    classes,
+    vae,
+    device,
+    data_dim,
+    poses=None,
+    mode="trn",
+    epoch=0,
 ):
     """Visualise interpolations.
 
@@ -1463,8 +1554,17 @@ def interpolations_plot(
 
     if data_dim == 3:
         save_mrc_file(f"interpolations_{mode}.mrc", grid_for_napari)
+        if not os.path.exists("plots/plots_per_epoch"):
+            os.mkdir("plots/plots_per_epoch")
+        save_mrc_file(
+            f"plots_per_epoch/interpolations_{mode}_{epoch}.mrc",
+            grid_for_napari,
+        )
     elif data_dim == 2:
         save_imshow_png(f"interpolations_{mode}.png", grid_for_napari)
+        if not os.path.exists("plots/plots_per_epoch"):
+            os.mkdir("plots/plots_per_epoch")
+        save_imshow_png(f"interpolations_{mode}_{epoch}.png", grid_for_napari)
 
 
 def plot_affinity_matrix(lookup, all_classes, selected_classes):
@@ -1660,6 +1760,11 @@ def latent_space_similarity(
     if not os.path.exists("plots"):
         os.mkdir("plots")
     plt.savefig(f"plots/similarity_mean{mode}.png", dpi=300)
+    if not os.path.exists("plots/plots_per_epoch"):
+        os.mkdir("plots/plots_per_epoch")
+    plt.savefig(
+        f"plots/plots_per_epoch/similarity_mean{mode}_{epoch}.png", dpi=300
+    )
     plt.close()
 
     # Visualize average cosine similarity matrix
@@ -1677,4 +1782,9 @@ def latent_space_similarity(
     if not os.path.exists("plots"):
         os.mkdir("plots")
     plt.savefig(f"plots/similarity_std{mode}.png", dpi=300)
+    if not os.path.exists("plots/plots_per_epoch"):
+        os.mkdir("plots/plots_per_epoch")
+    plt.savefig(
+        f"plots/plots_per_epoch/similarity_std{mode}_{epoch}.png", dpi=300
+    )
     plt.close()
