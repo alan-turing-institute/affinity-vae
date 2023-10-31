@@ -247,7 +247,6 @@ class AffinityVAE(nn.Module):
         )
         self.bottom_dim = tuple([int(i / (2**depth)) for i in input_size])
         self.pose = not (pose_dims == 0)
-        capacity = 8
         self.filters = [capacity * 2**x for x in range(depth)]
 
         self.unflat_shape = tuple(
