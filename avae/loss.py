@@ -193,9 +193,8 @@ class AVAELoss:
             )
         elif self.klred == "sum":
             kldivergence = torch.mean(
-                -0.5
-                * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), axis=1),
-                axis=0,
+                -0.5 * torch.sum(1 + logvar - mu**2 - logvar.exp(), dim=1),
+                dim=0,
             )
         else:
             raise RuntimeError(
@@ -215,4 +214,9 @@ class AVAELoss:
             + self.gamma[epoch] * affin_loss
         )
 
-        return total_loss, recon_loss, kldivergence, affin_loss
+        return (
+            total_loss,
+            recon_loss,
+            kldivergence * self.beta[epoch],
+            affin_loss * self.gamma[epoch],
+        )

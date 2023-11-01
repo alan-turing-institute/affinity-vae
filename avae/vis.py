@@ -977,10 +977,10 @@ def loss_plot(epochs, beta, gamma, train_loss, val_loss=None, p=None):
     plt.clf()
     plt.ticklabel_format(useOffset=False)
 
-    train_loss[-2] = train_loss[-2] * beta
-    val_loss[-2] = val_loss[-2] * beta
-    val_loss[-1] = val_loss[-1] * gamma
-    train_loss[-1] = train_loss[-1] * gamma
+    train_loss[-2] = train_loss[-2]  # * beta
+    val_loss[-2] = val_loss[-2]  # * beta
+    val_loss[-1] = val_loss[-1]  # * gamma
+    train_loss[-1] = train_loss[-1]  # * gamma
 
     for i, loss in enumerate(train_loss):
         s = "-"
