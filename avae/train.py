@@ -611,56 +611,56 @@ def train(
                 vis.dyn_latentembed_plot(meta_df, epoch, embedding="umap")
                 vis.dyn_latentembed_plot(meta_df, epoch, embedding="tsne")
 
-        # visualise latent disentanglement
-        if config.VIS_DIS and (epoch + 1) % config.FREQ_DIS == 0:
-            if not pose:
-                p_train = None
-            vis.latent_disentamglement_plot(
-                x_train, vae, device, data_dim, poses=p_train
-            )
-
-        # visualise pose disentanglement
-        if pose and config.VIS_POS and (epoch + 1) % config.FREQ_POS == 0:
-            vis.pose_disentanglement_plot(
-                x_train, p_train, vae, data_dim, device
-            )
-
-        if pose and config.VIS_POSE_CLASS:
-            vis.pose_class_disentanglement_plot(
-                x_train,
-                y_train,
-                config.VIS_POSE_CLASS,
-                p_train,
-                vae,
-                data_dim,
-                device,
-            )
-
-        # visualise interpolations
-        if config.VIS_INT and (epoch + 1) % config.FREQ_INT == 0:
-            if len(tests) != 0:
-                xs = np.r_[x_train, x_val, x_test]
-                ys = np.r_[y_train, y_val, np.ones(len(x_test))]
-                if pose:
-                    ps = np.r_[p_train, p_val, p_test]
-                else:
-                    ps = None
-            else:
-                xs = np.r_[x_train, x_val]
-                ys = np.r_[y_train, y_val]
-                if pose:
-                    ps = np.r_[p_train, p_val]
-                else:
-                    ps = None
-
-            vis.interpolations_plot(
-                xs,
-                ys,
-                vae,
-                device,
-                data_dim,
-                poses=ps,  # do we need val and test here?
-            )
+        # # visualise latent disentanglement
+        # if config.VIS_DIS and (epoch + 1) % config.FREQ_DIS == 0:
+        #     if not pose:
+        #         p_train = None
+        #     vis.latent_disentamglement_plot(
+        #         x_train, vae, device, data_dim, poses=p_train
+        #     )
+        #
+        # # visualise pose disentanglement
+        # if pose and config.VIS_POS and (epoch + 1) % config.FREQ_POS == 0:
+        #     vis.pose_disentanglement_plot(
+        #         x_train, p_train, vae, data_dim, device
+        #     )
+        #
+        # if pose and config.VIS_POSE_CLASS:
+        #     vis.pose_class_disentanglement_plot(
+        #         x_train,
+        #         y_train,
+        #         config.VIS_POSE_CLASS,
+        #         p_train,
+        #         vae,
+        #         data_dim,
+        #         device,
+        #     )
+        #
+        # # visualise interpolations
+        # if config.VIS_INT and (epoch + 1) % config.FREQ_INT == 0:
+        #     if len(tests) != 0:
+        #         xs = np.r_[x_train, x_val, x_test]
+        #         ys = np.r_[y_train, y_val, np.ones(len(x_test))]
+        #         if pose:
+        #             ps = np.r_[p_train, p_val, p_test]
+        #         else:
+        #             ps = None
+        #     else:
+        #         xs = np.r_[x_train, x_val]
+        #         ys = np.r_[y_train, y_val]
+        #         if pose:
+        #             ps = np.r_[p_train, p_val]
+        #         else:
+        #             ps = None
+        #
+        #     vis.interpolations_plot(
+        #         xs,
+        #         ys,
+        #         vae,
+        #         device,
+        #         data_dim,
+        #         poses=ps,  # do we need val and test here?
+        #     )
 
         # ########################## SAVE STATE ###############################
         if (epoch + 1) % config.FREQ_STA == 0:
