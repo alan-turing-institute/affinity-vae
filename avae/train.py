@@ -373,7 +373,6 @@ def train(
             % (
                 epoch + 1,
                 epochs,
-                len(trains),
                 *t_history[-1],
                 beta_arr[epoch],
                 gamma_arr[epoch],
@@ -427,7 +426,6 @@ def train(
             % (
                 epoch + 1,
                 epochs,
-                len(vals),
                 *v_history[-1],
                 beta_arr[epoch],
                 gamma_arr[epoch],
