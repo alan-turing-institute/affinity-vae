@@ -5,6 +5,15 @@ import matplotlib.pyplot as plt
 import mrcfile
 import numpy as np
 import yaml
+from pydantic import (
+    BaseModel,
+    FilePath,
+    NonNegativeInt,
+    PositiveInt,
+    conbool,
+    confloat,
+    constr,
+)
 from sklearn import metrics, preprocessing
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
@@ -205,113 +214,6 @@ def save_mrc_file(fname, array):
         os.mkdir("plots")
     with mrcfile.new("plots/" + fname, overwrite=True) as mrc:
         mrc.set_data(array)
-
-
-def load_config_params(config_file, local_vars):
-
-    if config_file is not None:
-        with open(config_file, "r") as f:
-            data = yaml.load(f, Loader=yaml.FullLoader)
-        # returns JSON object as
-
-        for key, val in local_vars.items():
-            if (
-                val is not None
-                and isinstance(val, (int, float, bool, str))
-                or data.get(key) is None
-            ):
-                logging.warning(
-                    "Command line argument "
-                    + key
-                    + " is overwriting config file value to: "
-                    + str(val)
-                )
-                data[key] = val
-            else:
-                logging.info(
-                    "Setting "
-                    + key
-                    + " to config file value: "
-                    + str(data[key])
-                )
-    else:
-        # if no config file is provided, use command line arguments
-        data = local_vars
-
-        # Check for missing values and set to default values
-    for key, val in data.items():
-        if (val is None or val == "None") and key != "config_file":
-            #  make sure data variables are provided
-            if key == "data_path":
-                logging.error(
-                    "No value set for "
-                    + key
-                    + " in config file or command line arguments. Please set a value for this variable."
-                )
-                raise ValueError(
-                    "No value set for "
-                    + key
-                    + " in config file or command line arguments. Please set a value for this variable."
-                )
-            elif key == "affinity" or key == "classes":
-                logging.warning(
-                    "No value set for "
-                    + key
-                    + " in config file or command line arguments. Setting to default value."
-                )
-                filename_default = os.path.join(data["datapath"], key + ".csv")
-
-                if os.path.isfile(filename_default):
-                    data[key] = filename_default
-                else:
-                    data[key] = None
-
-                logging.info(
-                    "Setting up "
-                    + key
-                    + " in config file to "
-                    + str(data[key])
-                )
-
-            elif key == "state":
-                logging.warning(
-                    "No value set for "
-                    + key
-                    + " in config file or command line arguments. Loading the latest state if in evaluation mode."
-                )
-            elif key == "meta":
-                logging.warning(
-                    "No value set for "
-                    + key
-                    + " in config file or command line arguments. Loading the latest meta if in evaluation mode."
-                )
-            else:
-                # set missing variables to default value
-                logging.warning(
-                    "No value set for "
-                    + key
-                    + " in config file or command line arguments. Setting to default value."
-                )
-                data[key] = config.DEFAULT_RUN_CONFIGS[key]
-                logging.info(
-                    "Setting " + key + " to default value: " + str(data[key])
-                )
-
-    return data
-
-
-def write_config_file(time_stamp_name, data):
-    # record final configuration in logger and save to yaml file
-    for key, val in data.items():
-        logging.info("Parameter " + key + " set to value: " + str(data[key]))
-
-    if not os.path.exists("configs"):
-        os.mkdir("configs")
-    file = open("configs/avae_final_config" + time_stamp_name + ".yaml", "w")
-    yaml.dump(data, file)
-    file.close()
-
-    logging.info("YAML File saved!\n")
 
 
 def colour_per_class(classes: list):

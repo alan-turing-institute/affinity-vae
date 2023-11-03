@@ -6,9 +6,9 @@ from datetime import datetime
 import click
 
 from avae import config
+from avae.config import load_config_params, write_config_file
 from avae.evaluate import evaluate
 from avae.train import train
-from avae.utils import load_config_params, write_config_file
 
 dt_name = datetime.now().strftime("%H_%M_%d_%m_%Y")
 logging.basicConfig(
