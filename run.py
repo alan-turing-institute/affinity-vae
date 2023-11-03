@@ -348,6 +348,13 @@ logging.basicConfig(
     help="Example: A,B,C. your deliminator should be commas and no spaces .Classes to be used for pose interpolation (a seperate pose interpolation figure would be created for each class).",
 )
 @click.option(
+    "--vis_z_n_int",
+    "-vzni",
+    type=str,
+    default=None,
+    help="Number of Latent interpolation classes to to be printed, number of interpolation steps in each  plot. Example: 1,10. 1 plot with 10 interpolation steps between two classes.  your deliminator should be commas and no spaces.",
+)
+@click.option(
     "--vis_cyc",
     "-vc",
     type=bool,
@@ -554,6 +561,7 @@ def run(
     vis_dis,
     vis_pos,
     vis_pose_class,
+    vis_z_n_int,
     vis_acc,
     vis_cyc,
     vis_aff,
@@ -601,6 +609,7 @@ def run(
         config.VIS_SIM = True
         config.VIS_DYN = True
         config.VIS_POSE_CLASS = data["vis_pose_class"]
+        config.VIS_Z_N_INT = data["vis_z_n_int"]
 
     else:
         config.VIS_LOS = data["vis_los"]
@@ -616,6 +625,7 @@ def run(
         config.VIS_SIM = data["vis_sim"]
         config.VIS_DYN = data["dynamic"]
         config.VIS_POSE_CLASS = data["vis_pose_class"]
+        config.VIS_Z_N_INT = data["vis_z_n_int"]
 
     if data["freq_all"] is not None:
         config.FREQ_EVAL = data["freq_all"]

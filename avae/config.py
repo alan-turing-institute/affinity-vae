@@ -11,6 +11,7 @@ VIS_HIS = False
 VIS_SIM = False
 VIS_DYN = False
 VIS_POSE_CLASS = False
+VIS_Z_N_INT = "1,10"
 
 FREQ_ACC = 10
 FREQ_REC = 10
@@ -69,6 +70,7 @@ DEFAULT_RUN_CONFIGS = {
     "vis_dis": VIS_DIS,
     "vis_pos": VIS_POS,
     "vis_pose_class": VIS_POSE_CLASS,
+    "vis_z_n_int": VIS_Z_N_INT,
     "vis_cyc": VIS_CYC,
     "vis_aff": VIS_AFF,
     "vis_his": VIS_HIS,

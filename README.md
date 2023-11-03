@@ -161,6 +161,8 @@ Options:
                                   pose interpolation (a seperate pose
                                   interpolation figure would be created for
                                   each class).
+  -vzni, --vis_z_n_int TEXT       Example: A,B,C. your deliminator should be 
+                                  commas and no spaces .Classes to be used for pose interpolation (a seperate pose interpolation figure would be created for each class).
   -vc, --vis_cyc                  Visualise cyclical parameters (once per
                                   run).
   -va, --vis_aff                  Visualise affinity matrix (once per run).

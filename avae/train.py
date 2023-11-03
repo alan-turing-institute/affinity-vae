@@ -607,6 +607,8 @@ def train(
                 x_train, vae, device, data_dim, poses=p_train
             )
 
+            vis.latent_4enc_interpolate_plot(batch,  vae, device, config.VIS_Z_N_INT,  poses=p_train)
+
         # visualise pose disentanglement
         if pose and config.VIS_POS and (epoch + 1) % config.FREQ_POS == 0:
             vis.pose_disentanglement_plot(

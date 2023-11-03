@@ -1145,6 +1145,74 @@ def recon_plot(img, rec, label, data_dim, mode="trn", epoch=0, writer=None):
         logging.info("\n")
 
 
+
+def latent_4enc_interpolate_plot(x, vae,device, plots_config, poses=None):
+    """Visualise the interpolation of latent space between 4 randomly selected encodings.
+    The number of plots and the number of interpolation steps is modifyable. 
+
+    Parameters
+    ----------
+    x: torch.Tensor
+        A sample batch. we extract 4 random images from this 
+    vae: torch.nn.Module
+        Affinity vae model.
+    device: torch.device
+        Device to run the model on.
+    plots_config: List
+        A list containing the number of plots to be generated and the number of interpolation steps. 
+    poses: list
+        List of pose vectors.
+    """
+    logging.info(
+        "################################################################",
+    )
+    logging.info("Visualising Latent Interpolation between 4 randomly selected encodings ...\n") 
+    
+    enc = []
+    # Number of plots (each have 4 random corners)
+    plots_config = plots_config.replace(" ", "").split(",")
+    
+    # Number of interpolation steps
+    num_steps = int(plots_config[1])
+
+    if poses is not None: 
+        pose_mean = np.mean(poses)
+
+    for num_fig in range(int(plots_config[0])):
+        draw_four = random.sample(range(len(x[0])), k=4)
+
+        for i in draw_four:
+            img = x[0][i]
+
+            with torch.no_grad():
+                _, _, _, z, _ = vae(img[np.newaxis,...].to(device=device))
+            enc.append(z.cpu())
+
+        fig, axes = plt.subplots(num_steps, num_steps, figsize=(num_steps*2, num_steps*2))
+
+        for i in range(num_steps):
+            for j in range(num_steps):
+                t1, t2 = i /(num_steps-1), j / (num_steps-1)
+
+                # Linear interpolation in latent space
+                interpolated_encoding = (1 - t1) * ((1 - t2) * enc[0] + t2 * enc[1]) + t1 * ((1 - t2) * enc[2] + t2 * enc[3])
+
+                # Decode the interpolated encoding to generate an image
+                with torch.no_grad():
+                    decoded_image = vae.decoder(interpolated_encoding.to(device=device), torch.Tensor(1, 1)+pose_mean)
+
+                axes[i, j].imshow(decoded_image.cpu().squeeze().numpy(), cmap='gray')
+                axes[i, j].axis('off')
+    
+        # Adjust spacing between subplots
+        plt.subplots_adjust(wspace=0, hspace=0)
+
+        # Save the figure
+        plt.savefig(f"plots/z_interpolate_{num_fig}.png")
+
+
+
+
 def latent_disentamglement_plot(
     lats,
     vae,
