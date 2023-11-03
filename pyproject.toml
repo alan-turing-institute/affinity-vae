@@ -1,14 +1,124 @@
 [build-system]
-requires = [
-  "setuptools >= 42",
-  "wheel",
-  "setuptools_scm[toml]>=3.4"
-]
+requires = ["setuptools>=61.2", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "affinivae"
+version = "0.0.1"
+description = "Affinity-VAE"
+authors = [{name = "Alan R. Lowe", email = "alowe@turing.ac.uk"}]
+license = {text = "BSD 3-Clause"}
+classifiers = [
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Scientific/Engineering :: Image Recognition",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Operating System :: MacOS",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "altair",
+    "click",
+    "mrcfile",
+    "matplotlib",
+    "numpy",
+    "scipy",
+    "pillow",
+    "pandas",
+    "pyyaml",
+    "requests",
+    "scikit-image",
+    "scikit-learn",
+    "tensorboard",
+    "torch",
+    "torchvision",
+    "umap-learn",
+]
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[project.urls]
+Homepage = "https://github.com/alan-turing-institute/affinity-vae"
+
+[tool.hatch]
+version.path = "avae/__init__.py"
+envs.default.dependencies = [
+  "pytest",
+  "pytest-cov",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest >=6",
+    "pytest-cov >=3",
+    "pre-commit",
+]
+dev = [
+    "pytest >=6",
+    "pytest-cov >=3",
+    "pre-commit",
+]
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = ["-ra", "--showlocals"]#, "--strict-markers", "--strict-config"]
+xfail_strict = true
+filterwarnings = [ # NEED TO FIX THESE WARNINGS ISSUE X
+    "error",
+    "ignore:jsonschema.RefResolver is deprecated as of v4.18.0, in favor of the:DeprecationWarning",
+    "ignore:The 'nopython' keyword argument was not supplied to the 'numba.jit' decorator.",
+    "ignore:Tensorflow not installed; ParametricUMAP will be unavailable",
+    "ignore:pkg_resources is deprecated as an API",
+    "ignore:Deprecated call to `pkg_resources.declare_namespace('mpl_toolkits')`",
+    "ignore:The get_cmap function was deprecated in Matplotlib 3.7 and will be removed two minor releases later.",
+    "ignore:Maximum iterations (500) reached and the optimization hasn't converged yet", # FIX THESE WARNINGS ISSUE x
+    "ignore:Could not initialize NNPACK!.",
+    "ignore:Mean of empty slice.",
+    "ignore:invalid value encountered in divide",
+    "ignore:Degrees of freedom <= 0 for slice",
+    "ignore:Scoring failed. The score on this train-test partition for these parameters will be set to nan.",
+    "ignore:One or more of the test scores are non-finite:",
+]
+
+log_cli_level = "INFO"
+testpaths = [
+  "tests",
+]
+[tool.setuptools]
+include-package-data = true
+license-files = ["LICENSE.md"]
+
+[tool.setuptools.packages]
+find = {namespaces = false}
+
+[tool.tox]
+isolated_build = "true"
+
+[tool.tox.envlist]
+extend-ignore = [
+  "PLR",    # Design related pylint codes
+  "E501",   # Line too long
+]
+
+src = ["avae"]
+unfixable = [
+  "F841", # Would remove unused variables
+]
+exclude = []
+flake8-unused-arguments.ignore-variadic-names = true
 
 [tool.black]
 target-version = ['py38', 'py39', 'py310']
 line-length = 79
+skip-string-normalization = true
+include = '\.pyi?$'
 exclude = '''
 (
   /(
