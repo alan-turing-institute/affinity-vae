@@ -29,7 +29,15 @@ source env/bin/activate
 python -m pip install -e .
 ```
 
-> Note: This is the preffered option for running on Turing macOS laptops.
+If you are developing code, you should be able to run precommits and tests,
+thefore the best installation option after setting up the virtual environment
+is:
+
+```
+python -m pip install -e ."[test]"
+```
+
+> Note: This is the preferred option for running on Turing macOS laptops.
 
 > Warning: M1 macOS can not do
 > [pytorch paralelisation](https://github.com/pytorch/pytorch/issues/70344). A
