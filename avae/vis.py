@@ -1145,72 +1145,113 @@ def recon_plot(img, rec, label, data_dim, mode="trn", epoch=0, writer=None):
         logging.info("\n")
 
 
-
-def latent_4enc_interpolate_plot(x, vae,device, plots_config, poses=None):
+def latent_4enc_interpolate_plot(
+    x, vae, device, data_dim, plots_config, poses=None, mode="trn"
+):
     """Visualise the interpolation of latent space between 4 randomly selected encodings.
-    The number of plots and the number of interpolation steps is modifyable. 
+    The number of plots and the number of interpolation steps is modifyable.
 
     Parameters
     ----------
     x: torch.Tensor
-        A sample batch. we extract 4 random images from this 
+        A sample batch. we extract 4 random images from this
     vae: torch.nn.Module
         Affinity vae model.
     device: torch.device
         Device to run the model on.
+    data_dim: int
+        the size of spatial dimensions of the input data (2:2D, 3:3D)
     plots_config: List
-        A list containing the number of plots to be generated and the number of interpolation steps. 
+        A list containing the number of plots to be generated and the number of interpolation steps.
     poses: list
         List of pose vectors.
+    mode: str
+        Mode of evaluation (trn: Training, vld: Validation, eval: Evaluation )
     """
     logging.info(
         "################################################################",
     )
-    logging.info("Visualising Latent Interpolation between 4 randomly selected encodings ...\n") 
-    
+    logging.info(
+        "Visualising Latent Interpolation between 4 randomly selected encodings ...\n"
+    )
+    padding = 0
     enc = []
+    decoded_images = []
+    dsize = x[0].shape[-data_dim:]
+    classes = list(set(x[1]))
+    class_indecies = []
+    for i in range(len(classes)):
+        class_indecies.append(
+            [j for j, c in enumerate(x[1]) if c == classes[i]]
+        )
+
     # Number of plots (each have 4 random corners)
     plots_config = plots_config.replace(" ", "").split(",")
-    
+
     # Number of interpolation steps
     num_steps = int(plots_config[1])
 
-    if poses is not None: 
+    if poses is not None:
         pose_mean = np.mean(poses)
 
     for num_fig in range(int(plots_config[0])):
-        draw_four = random.sample(range(len(x[0])), k=4)
+        enc = []
+        decoded_images = []
+
+        draw_four = random.sample(range(len(classes)), k=4)
 
         for i in draw_four:
-            img = x[0][i]
+            img = x[0][random.sample(class_indecies[i], k=1)[0]]
 
             with torch.no_grad():
-                _, _, _, z, _ = vae(img[np.newaxis,...].to(device=device))
+                _, _, _, z, _ = vae(img[np.newaxis, ...].to(device=device))
             enc.append(z.cpu())
 
-        fig, axes = plt.subplots(num_steps, num_steps, figsize=(num_steps*2, num_steps*2))
+        fig, axes = plt.subplots(
+            num_steps, num_steps, figsize=(num_steps * 2, num_steps * 2)
+        )
 
         for i in range(num_steps):
             for j in range(num_steps):
-                t1, t2 = i /(num_steps-1), j / (num_steps-1)
+                t1, t2 = i / (num_steps - 1), j / (num_steps - 1)
 
                 # Linear interpolation in latent space
-                interpolated_encoding = (1 - t1) * ((1 - t2) * enc[0] + t2 * enc[1]) + t1 * ((1 - t2) * enc[2] + t2 * enc[3])
+                interpolated_encoding = (1 - t1) * (
+                    (1 - t2) * enc[0] + t2 * enc[1]
+                ) + t1 * ((1 - t2) * enc[2] + t2 * enc[3])
 
                 # Decode the interpolated encoding to generate an image
                 with torch.no_grad():
-                    decoded_image = vae.decoder(interpolated_encoding.to(device=device), torch.Tensor(1, 1)+pose_mean)
+                    decoded_image = vae.decoder(
+                        interpolated_encoding.to(device=device),
+                        (torch.Tensor(1, 1) + pose_mean).to(device=device),
+                    )
 
-                axes[i, j].imshow(decoded_image.cpu().squeeze().numpy(), cmap='gray')
-                axes[i, j].axis('off')
-    
-        # Adjust spacing between subplots
-        plt.subplots_adjust(wspace=0, hspace=0)
+                decoded_images.append(decoded_image.cpu().squeeze().numpy())
 
-        # Save the figure
-        plt.savefig(f"plots/z_interpolate_{num_fig}.png")
+        decoded_images = np.reshape(
+            np.array(decoded_images), (num_steps, num_steps, *dsize)
+        )
+        grid_for_napari = create_grid_for_plotting(
+            num_steps, num_steps, dsize, padding
+        )
+        grid_for_napari = fill_grid_for_plottting(
+            num_steps,
+            num_steps,
+            grid_for_napari,
+            dsize,
+            decoded_images,
+            padding,
+        )
 
-
+        if data_dim == 3:
+            save_mrc_file(
+                f"latent_interpolate_{mode}_{num_fig}.mrc", grid_for_napari
+            )
+        elif data_dim == 2:
+            save_imshow_png(
+                f"latent_interpolate_{mode}_{num_fig}.png", grid_for_napari
+            )
 
 
 def latent_disentamglement_plot(
@@ -1232,8 +1273,12 @@ def latent_disentamglement_plot(
         Affinity vae model.
     device: torch.device
         Device to run the model on.
+    data_dim: int
+        the size of spatial dimensions of the input data (2:2D, 3:3D)
     poses: list
         List of pose vectors.
+    mode: str
+        Mode of evaluation (trn: Training, vld: Validation, eval: Evaluation )
     writer: SummaryWriter
         Tensorboard summary writer
     """
@@ -1303,6 +1348,28 @@ def latent_disentamglement_plot(
 def pose_class_disentanglement_plot(
     x, y, pose_vis_class, poses, vae, data_dim, device, mode="trn"
 ):
+    """Visualise Pose interpolation per class. This function creates a pose interpolatoion
+    plot for all classes listed in pose_vis_class.
+
+    Parameters
+    ----------
+    x: list
+        List of latent vectors.
+    y: List
+        List of the labels associated with each latent vector in x
+    pose_vis_class: str
+        Classes to be used for pose interpolation (a seperate pose interpolation figure would be created for each class)."
+    poses: list
+        List of pose vectors.
+    vae: torch.nn.Module
+        Affinity vae model.
+    data_dim: int
+        the size of spatial dimensions of the input data (2:2D, 3:3D)
+    device: torch.device
+        Device to run the model on.
+    mode: str
+        Mode of evaluation (trn: Training, vld: Validation, eval: Evaluation )
+    """
     pose_vis_class = pose_vis_class.replace(" ", "").split(",")
     for i in pose_vis_class:
         class_reps_x = np.take(x, np.where(np.array(y) == i)[0], axis=0)
@@ -1333,6 +1400,8 @@ def pose_disentanglement_plot(
         List of pose vectors.
     vae: torch.nn.Module
         Affinity vae model.
+    data_dim: int
+        the size of spatial dimensions of the input data (2:2D, 3:3D)
     device: torch.device
         Device to run the model on.
     """
@@ -1422,8 +1491,12 @@ def interpolations_plot(
         Affinity vae model.
     device: torch.device
         Device to run the model on.
+    data_dim: int
+        the size of spatial dimensions of the input data (2:2D, 3:3D)
     poses: list
         List of pose vectors.
+    mode: str
+        Mode of evaluation (trn: Training, vld: Validation, eval: Evaluation )
     """
     logging.info(
         "################################################################",

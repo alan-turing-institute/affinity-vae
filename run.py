@@ -345,7 +345,7 @@ logging.basicConfig(
     "-vpsc",
     type=str,
     default=None,
-    help="Example: A,B,C. your deliminator should be commas and no spaces .Classes to be used for pose interpolation (a seperate pose interpolation figure would be created for each class).",
+    help="Example: A,B,C. your deliminator should be commas and no spaces. Classes to be used for pose interpolation (a seperate pose interpolation figure would be created for each class).",
 )
 @click.option(
     "--vis_z_n_int",

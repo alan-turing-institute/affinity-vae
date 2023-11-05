@@ -381,6 +381,24 @@ def train(
 
         t_history[-1] /= len(trains)
 
+        # visualise latent disentanglement
+        if config.VIS_DIS and (epoch + 1) % config.FREQ_DIS == 0:
+            if not pose:
+                p_train = None
+            vis.latent_disentamglement_plot(
+                x_train, vae, device, data_dim, poses=p_train
+            )
+
+            vis.latent_4enc_interpolate_plot(
+                batch,
+                vae,
+                device,
+                data_dim,
+                config.VIS_Z_N_INT,
+                poses=p_train,
+                mode="trn",
+            )
+
         # ########################## VAL ######################################
         vae.eval()
         for b, batch in enumerate(vals):
@@ -601,13 +619,15 @@ def train(
 
         # visualise latent disentanglement
         if config.VIS_DIS and (epoch + 1) % config.FREQ_DIS == 0:
-            if not pose:
-                p_train = None
-            vis.latent_disentamglement_plot(
-                x_train, vae, device, data_dim, poses=p_train
+            vis.latent_4enc_interpolate_plot(
+                batch,
+                vae,
+                device,
+                data_dim,
+                config.VIS_Z_N_INT,
+                poses=p_train,
+                mode="vld",
             )
-
-            vis.latent_4enc_interpolate_plot(batch,  vae, device, config.VIS_Z_N_INT,  poses=p_train)
 
         # visualise pose disentanglement
         if pose and config.VIS_POS and (epoch + 1) % config.FREQ_POS == 0:
