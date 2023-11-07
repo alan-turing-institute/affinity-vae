@@ -1,107 +1,138 @@
+import logging
+import os
+
 import yaml
 from pydantic import (
     BaseModel,
     DirectoryPath,
     Field,
     FilePath,
-    Float,
-    NonNegativeInt,
+    PositiveFloat,
     PositiveInt,
-    StringConstraints,
-    conbool,
-    confloat,
+    ValidationError,
 )
 
 
 class AffinityConfig(BaseModel):
-    affinity: FilePath = None
+    affinity: FilePath = Field(None, description="Path to affinity file")
     batch: PositiveInt = Field(128, description="Batch size")
-    beta: Float = Field(1, description="Beta value")
+    beta: float = Field(1, description="Beta value")
     beta_cycle: PositiveInt = Field(4, description="Beta cycle")
-    beta_load: FilePath = None
-    beta_min: Float = Field(0, description="Minimum betvalue")
-    beta_ratio: Float = Field(0, description="Beta value")
+    beta_load: FilePath = Field(None, description="Path to beta file")
+    beta_min: float = Field(0, description="Minimum betvalue")
+    beta_ratio: PositiveFloat = Field(0, description="Beta value")
     channels: PositiveInt = Field(64, description="First layer channels")
-    classes: FilePath = None
+    classes: FilePath = Field(None, description="Path to classes file")
     classifier: str = Field(
         "NN",
-        regex='^(KNN|NN|LR)$',
+        pattern='^(KNN|NN|LR)$',
         description="Method to classify the latent space. Options "
         "are: KNN (nearest neighbour), NN (neural network), LR (Logistic Regression).",
     )
-    config_file: FilePath = None
+    config_file: FilePath = Field(None, description="Path to config file")
     cyc_method_beta: str = Field(
         'flat',
-        regex='^(cycle_sigmoid|flat|cycle_linear|cycle_cosine|ramp)$',
+        pattern='^(cycle_sigmoid|flat|cycle_linear|cycle_cosine|ramp)$',
     )
     cyc_method_gamma: str = Field(
         'flat',
-        regex='^(cycle_sigmoid|flat|cycle_linear|cycle_cosine|ramp)$',
+        pattern='^(cycle_sigmoid|flat|cycle_linear|cycle_cosine|ramp)$',
     )
-    datapath: DirectoryPath = None
-    datatype: str = Field(regex='^npy|$')
-    debug: conbool()
-    depth: PositiveInt
-    dynamic: conbool()
-    epochs: PositiveInt
-    eval: conbool()
-    freq_acc: PositiveInt
-    freq_all: PositiveInt
-    freq_dis: PositiveInt
-    freq_emb: PositiveInt
-    freq_eval: PositiveInt
-    freq_int: PositiveInt
-    freq_pos: PositiveInt
-    freq_rec: PositiveInt
-    freq_sim: PositiveInt
-    freq_sta: PositiveInt
-    gamma: confloat(ge=0)
-    gamma_cycle: PositiveInt
-    gamma_load: FilePath = None
-    gamma_min: NonNegativeInt
-    gamma_ratio: confloat(ge=0, le=1)
-    gaussian_blur: conbool()
-    gpu: conbool()
-    latent_dims: PositiveInt
-    learning: confloat(ge=0)
-    limit: PositiveInt
-    loss_fn: constr(min_length=1)
-    meta: type(None)
-    model: constr(min_length=1)
-    new_out: conbool()
-    no_val_drop: conbool()
-    normalise: conbool()
-    opt_method: constr(min_length=1)
-    pose_dims: PositiveInt
-    rescale: conbool()
-    restart: conbool()
-    shift_min: conbool()
-    split: PositiveInt
-    state: type(None)
-    tensorboard: conbool()
-    vis_acc: conbool()
-    vis_aff: conbool()
-    vis_all: conbool()
-    vis_cyc: conbool()
-    vis_dis: conbool()
-    vis_emb: conbool()
-    vis_his: conbool()
-    vis_int: conbool()
-    vis_los: conbool()
-    vis_pos: conbool()
-    vis_pose_class: conlist(conint(ge=0), min_items=1)
-    vis_rec: conbool()
-    vis_sim: conbool()
+    datapath: DirectoryPath = Field(None, description="Path to data directory")
+    datatype: str = Field('mrc', pattern='^npy|mrc$', description="Data type")
+    debug: bool = Field(False, description="Debug mode")
+    depth: PositiveInt = Field(3, description="Number of layers")
+    dynamic: bool = Field(False, description="Dynamic visualisation")
+    epochs: PositiveInt = Field(20, description="Number of epochs")
+    eval: bool = Field(False, description="Evaluation mode")
+    freq_acc: PositiveInt = Field(
+        10, description="Frequency (in epochs) of accuracy plot"
+    )
+    freq_all: PositiveInt = Field(
+        None, description="Frequency (in epochs) of all plots"
+    )
+    freq_dis: PositiveInt = Field(
+        10, description="Frequency (in epochs) of disentanglement plot"
+    )
+    freq_emb: PositiveInt = Field(
+        10, description="Frequency (in epochs) of embedding plot"
+    )
+    freq_eval: PositiveInt = Field(
+        10, description="Frequency (in epochs) of evaluation"
+    )
+    freq_int: PositiveInt = Field(
+        10, description="Frequency (in epochs) of interpolation plot"
+    )
+    freq_pos: PositiveInt = Field(
+        10, description="Frequency (in epochs) of pose plot"
+    )
+    freq_rec: PositiveInt = Field(
+        10, description="Frequency (in epochs) of reconstruction plot"
+    )
+    freq_sim: PositiveInt = Field(
+        10, description="Frequency (in epochs) of similarity plot"
+    )
+    freq_sta: PositiveInt = Field(
+        10, description="Frequency (in epochs) of states saved."
+    )
+    gamma: float = Field(2, description="Gamma value")
+    gamma_cycle: PositiveInt = Field(4, description="Gamma cycle")
+    gamma_load: FilePath = Field(None, description="Path to gamma array file")
+    gamma_min: float = Field(0, description="Minimum gamma value")
+    gamma_ratio: float = Field(0.5, description="Gamma ratio")
+    gaussian_blur: bool = Field(False, description=" Apply gaussian blur")
+    gpu: bool = Field(True, description="Use GPU")
+    latent_dims: PositiveInt = Field(8, description="Latent space dimensions")
+    learning: PositiveFloat = Field(0.001, description="Learning rate")
+    limit: PositiveInt = Field(None, description="Limit number of samples")
+    loss_fn: str = Field('MSE', description="Loss function")
+    meta: FilePath = Field(None, description="Path to meta file")
+    model: str = Field('a', description="Type of model to use")
+    new_out: bool = Field(False, description="Create new output directory")
+    no_val_drop: bool = Field(
+        True,
+        description="Do not drop last validation batch if is smaller than batch size",
+    )
+    normalise: bool = Field(False, description="Normalise data")
+    opt_method: str = Field(
+        'adam',
+        description="Optimisation method.It can be adam/sgd/asgd",
+        pattern='^(adam|sgd|asgd)$',
+    )
+    pose_dims: PositiveInt = Field(1, description="Pose dimensions")
+    rescale: bool = Field(False, description="Rescale data")
+    restart: bool = Field(False, description="Restart training")
+    shift_min: bool = Field(
+        False, description="Scale data with min-max transformation"
+    )
+    split: PositiveInt = Field(20, description="Split ratio")
+    state: FilePath = Field(None, description="Path to state file")
+    tensorboard: bool = Field(False, description="Use tensorboard")
+    vis_acc: bool = Field(False, description="Visualise accuracy")
+    vis_aff: bool = Field(False, description="Visualise affinity")
+    vis_all: bool = Field(False, description="Visualise all")
+    vis_cyc: bool = Field(False, description="Visualise beta/gamma cycle")
+    vis_dis: bool = Field(False, description="Visualise disentanglement")
+    vis_emb: bool = Field(False, description="Visualise embedding")
+    vis_his: bool = Field(False, description="Visualise history")
+    vis_int: bool = Field(False, description="Visualise interpolation")
+    vis_los: bool = Field(False, description="Visualise loss")
+    vis_pos: bool = Field(False, description="Visualise pose")
+    vis_pose_class: str = Field(
+        False, description="Visualise pose classification"
+    )
+    vis_rec: bool = Field(False, description="Visualise reconstruction")
+    vis_sim: bool = Field(False, description="Visualise similarity")
 
 
 def load_config_params(config_file, local_vars):
 
     if config_file is not None:
         with open(config_file, "r") as f:
-            config_data = yaml.safe_load(f, Loader=yaml.FullLoader)
+            config_data = yaml.safe_load(f)
 
         try:
-            data = AppConfig(**config_data)
+            data = AffinityConfig(**config_data)
             print("Config file is valid!")
         except ValidationError as e:
             print("Config file is invalid:")
@@ -120,7 +151,7 @@ def load_config_params(config_file, local_vars):
                     + " is overwriting config file value to: "
                     + str(val)
                 )
-                data[key] = val
+                data.key = val
             else:
                 logging.info(
                     "Setting "
