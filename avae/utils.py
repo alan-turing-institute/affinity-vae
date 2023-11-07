@@ -4,24 +4,12 @@ import os.path
 import matplotlib.pyplot as plt
 import mrcfile
 import numpy as np
-import yaml
-from pydantic import (
-    BaseModel,
-    FilePath,
-    NonNegativeInt,
-    PositiveInt,
-    conbool,
-    confloat,
-    constr,
-)
 from sklearn import metrics, preprocessing
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import make_pipeline
-
-from . import config
 
 
 def accuracy(x_train, y_train, x_val, y_val, classifier="NN"):
