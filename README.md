@@ -24,7 +24,7 @@ You can install the libraries needed for this package on a
 with the following:
 
 ```
-python3 -m venv env
+python -m venv env
 source env/bin/activate
 python -m pip install -e .
 ```
