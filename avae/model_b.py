@@ -250,6 +250,7 @@ class AffinityVAE(nn.Module):
         input_size,
         latent_dims,
         pose_dims=0,
+        device=None,
     ):
         super(AffinityVAE, self).__init__()
         assert all(
@@ -261,6 +262,7 @@ class AffinityVAE(nn.Module):
         set_layer_dim(len(input_size))
         self.bottom_dim = tuple([int(i / (2**depth)) for i in input_size])
         self.pose = not (pose_dims == 0)
+        self.device = device
 
         self.encoder = Encoder(
             capacity,
@@ -345,6 +347,7 @@ class AffinityVAE(nn.Module):
                 # plt.imshow(ims[i][0])
                 # plt.show()
             x_recon = torch.Tensor(ims)
+            x_recon.to(self.device)
         return x_recon, latent_mu, latent_logvar, latent, latent_pose
 
     def sample(self, mu, logvar):

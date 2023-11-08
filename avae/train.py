@@ -175,6 +175,7 @@ def train(
         dshape,
         lat_dims,
         pose_dims=pose_dims,
+        device=device,
     )
     logging.info(vae)
 
