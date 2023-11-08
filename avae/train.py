@@ -162,6 +162,7 @@ def train(
 
     # ############################### MODEL ###############################
     device = set_device(use_gpu)
+    filters = np.array(filters.replace(" ", "").split(","), dtype=np.int64)
 
     vae = AffinityVAE(
         dshape,

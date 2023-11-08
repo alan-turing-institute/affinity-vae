@@ -135,6 +135,14 @@ logging.basicConfig(
     help="First layer channels (default 64).",
 )
 @click.option(
+    "--filters",
+    "-fl",
+    type=str,
+    default=None,
+    help="Comma-separated list of filters for the network. Either provide "
+    "filters, or capacity and depth.",
+)
+@click.option(
     "--latent_dims",
     "-ld",
     type=int,
@@ -535,6 +543,7 @@ def run(
     batch,
     depth,
     channels,
+    filters,
     latent_dims,
     pose_dims,
     bnorm,

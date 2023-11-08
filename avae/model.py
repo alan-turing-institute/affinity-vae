@@ -52,19 +52,17 @@ class Encoder(nn.Module):
         bnorm=True,
     ):
         super(Encoder, self).__init__()
-        # TODO these checks should be perfomed on the model level when abstract
-        # TODO that way we don't have to require as many parameters of Encoder
         self.filters = []
         if capacity is None and filters is None:
             raise RuntimeError(
                 "Pass either capacity or filters when definining avae.Encoder."
             )
         elif filters is not None and len(filters) != 0:
-            if 0 in self.filters:
+            if 0 in filters:
                 raise RuntimeError("Filter list cannot contain zeros.")
             self.filters = filters
             if depth is not None:
-                logging.WARNING(
+                logging.warning(
                     "You've passed 'filters' parameter as well as 'depth'. Filters take"
                     " priority so 'depth' and 'capacity' will be disregarded."
                 )
@@ -87,7 +85,7 @@ class Encoder(nn.Module):
             "by {}.".format(2**depth)
         )
 
-        bottom_dim = tuple([int(i / (2**depth)) for i in input_size])
+        bottom_dim = tuple([int(i / (2 ** len(filters))) for i in input_size])
         self.bnorm = bnorm
         self.pose = not (pose_dims == 0)
 
@@ -206,19 +204,17 @@ class Decoder(nn.Module):
     ):
 
         super(Decoder, self).__init__()
-        # TODO these checks should be perfomed on the model level when abstract
-        # TODO that way we don't have to require as many parameters of Encoder
         self.filters = []
         if capacity is None and filters is None:
             raise RuntimeError(
                 "Pass either capacity or filters when definining avae.Decoder."
             )
         elif filters is not None and len(filters) != 0:
-            if 0 in self.filters:
+            if 0 in filters:
                 raise RuntimeError("Filter list cannot contain zeros.")
             self.filters = filters
             if depth is not None:
-                logging.WARNING(
+                logging.warning(
                     "You've passed 'filters' parameter as well as 'depth'. Filters take"
                     " priority so 'depth' and 'capacity' will be disregarded."
                 )
@@ -241,7 +237,9 @@ class Decoder(nn.Module):
             "by {}.".format(2**depth)
         )
 
-        self.bottom_dim = tuple([int(i / (2**depth)) for i in input_size])
+        self.bottom_dim = tuple(
+            [int(i / (2 ** len(filters))) for i in input_size]
+        )
         self.pose = not (pose_dims == 0)
         self.bnorm = bnorm
 
