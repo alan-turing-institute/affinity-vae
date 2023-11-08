@@ -26,68 +26,79 @@ def set_layer_dim(ndim):
 
 
 class Encoder(nn.Module):
-    """Affinity encoder. Includes optional pose component in the architecture.
-
-    Parameters
-    ----------
-    capacity : int
-        The capacity of the network - initial number of nodes doubled at each
-        depth.
-    depth : int
-        The depth of the network - number of downsampling layers.
-    bottom_dim: tuple (X, Y) or tuple (X, Y, Z)
-        Tuple representing the size after downsampling for each image
-        dimension X, Y and Z.
-    latent_dims: int
-        Number of bottleneck latent dimensions.
-    pose: bool
-        Determines whether pose component is on or off.
-    pose_dims : int
-        Number of bottleneck pose dimensions.
-    """
-
     def __init__(
-        self, capacity, depth, bottom_dim, latent_dims, pose_dims=0, bnorm=True
+        self,
+        bottom_dim,
+        latent_dims,
+        pose_dims=0,
+        capacity=None,
+        depth=None,
+        filters=None,
+        bnorm=True,
     ):
         super(Encoder, self).__init__()
-        c = capacity
-        self.depth = depth
-        self.pose = not (pose_dims == 0)
+
+        # TODO these checks should be perfomed on the model level when abstract
+        # TODO that way we don't have to require as many parameters of Encoder
+        if capacity is None and filters is None:
+            raise RuntimeError(
+                "Pass either capacity or filters when definining avae.Encoder."
+            )
+        elif filters is not None and len(filters) != 0:
+            if 0 in self.filters:
+                raise RuntimeError("Filter list cannot contain zeros.")
+            self.filters = filters
+            if depth is not None:
+                logging.WARNING(
+                    "You've passed 'filters' parameter as well as 'depth'. Filters take"
+                    " priority so 'depth' and 'capacity' will be disregarded."
+                )
+        elif capacity is not None:
+            if depth is None:
+                raise RuntimeError(
+                    "When passing initial 'capacity' parameter in avae.Encoder,"
+                    " provide 'depth' parameter too."
+                )
+            self.filters = [capacity * 2**x for x in range(depth)]
+        else:
+            raise RuntimeError(
+                "You must provide either capacity or filters when definity ave.Encoder."
+            )
+
         self.bnorm = bnorm
+        self.pose = not (pose_dims == 0)
 
         # iteratively define convolution and batch normalisation layers
         self.conv_enc = nn.ModuleList()
         if self.bnorm:
             self.norm_enc = nn.ModuleList()
-        prev_sh = 1
-        for d in range(depth):
-            sh = c * (d + 1)
+
+        for d in range(len(self.filters)):
             self.conv_enc.append(
                 CONV(
-                    in_channels=prev_sh,
-                    out_channels=sh,
+                    in_channels=(self.filters[d - 1] if d != 0 else 1),
+                    out_channels=self.filters[d],
                     kernel_size=3,
-                    padding=1,
                     stride=2,
+                    padding=1,
                 )
             )
             if self.bnorm:
-                self.norm_enc.append(BNORM(sh))
-            prev_sh = sh
+                self.norm_enc.append(BNORM(self.filters[d]))
 
         # define fully connected layers
-        chf = 1 if depth == 0 else c * depth  # allow for no conv layers
+        ch = 1 if depth == 0 else self.filters[-1]  # allow for no conv layers
         self.fc_mu = nn.Linear(
-            in_features=chf * np.prod(bottom_dim),
+            in_features=ch * np.prod(bottom_dim),
             out_features=latent_dims,
         )
         self.fc_logvar = nn.Linear(
-            in_features=chf * np.prod(bottom_dim),
+            in_features=ch * np.prod(bottom_dim),
             out_features=latent_dims,
         )
         if self.pose:
             self.fc_pose = nn.Linear(
-                in_features=chf * np.prod(bottom_dim),
+                in_features=ch * np.prod(bottom_dim),
                 out_features=pose_dims,
             )
 
@@ -119,7 +130,7 @@ class Encoder(nn.Module):
             mini-batch and 'pose_dims' defines the number of
             pose dimensions.
         """
-        for d in range(self.depth):
+        for d in range(len(self.filters)):
             if self.bnorm:
                 x = self.norm_enc[d](F.relu(self.conv_enc[d](x)))
             else:
@@ -156,11 +167,44 @@ class Decoder(nn.Module):
     """
 
     def __init__(
-        self, capacity, depth, bottom_dim, latent_dims, pose_dims=0, bnorm=True
+        self,
+        bottom_dim,
+        latent_dims,
+        pose_dims=0,
+        capacity=None,
+        depth=None,
+        filters=None,
+        bnorm=True,
     ):
         super(Decoder, self).__init__()
-        self.c = capacity
-        self.depth = depth
+
+        # TODO these checks should be perfomed on the model level when abstract
+        # TODO that way we don't have to require as many parameters of Encoder
+        if capacity is None and filters is None:
+            raise RuntimeError(
+                "Pass either capacity or filters when definining avae.Decoder."
+            )
+        elif filters is not None and len(filters) != 0:
+            if 0 in self.filters:
+                raise RuntimeError("Filter list cannot contain zeros.")
+            self.filters = filters
+            if depth is not None:
+                logging.WARNING(
+                    "You've passed 'filters' parameter as well as 'depth'. Filters take"
+                    " priority so 'depth' and 'capacity' will be disregarded."
+                )
+        elif capacity is not None:
+            if depth is None:
+                raise RuntimeError(
+                    "When passing initial 'capacity' parameter in avae.Encoder,"
+                    " provide 'depth' parameter too."
+                )
+            self.filters = [capacity * 2**x for x in range(depth)]
+        else:
+            raise RuntimeError(
+                "You must provide either capacity or filters when definity ave.Decoder."
+            )
+
         self.bottom_dim = bottom_dim
         self.pose = not (pose_dims == 0)
         self.bnorm = bnorm
@@ -169,35 +213,33 @@ class Decoder(nn.Module):
         self.conv_dec = nn.ModuleList()
         if self.bnorm:
             self.norm_dec = nn.ModuleList()
-        prev_sh = self.c * depth
-        for d in range(depth, 0, -1):
-            sh = self.c * (d - 1) if d != 1 else 1
+
+        for d in reversed(range(len(self.filters))):
             self.conv_dec.append(
                 TCONV(
-                    in_channels=prev_sh,
-                    out_channels=sh,
+                    in_channels=self.filters[d],
+                    out_channels=(self.filters[d - 1] if d != 0 else 1),
                     kernel_size=4,
                     stride=2,
                     padding=1,
                 )
             )
-            if self.bnorm:
-                self.norm_dec.append(BNORM(sh))
-            prev_sh = sh
+            if self.bnorm and d != 0:
+                self.norm_dec.append(BNORM(self.filters[d - 1]))
 
         # define fully connected layers
-        self.chf = (
-            1 if depth == 0 else self.c * depth
+        self.ch = (
+            1 if depth == 0 else self.filters[-1]
         )  # allow for no convolutions
         if self.pose:
             self.fc = nn.Linear(
                 in_features=pose_dims + latent_dims,
-                out_features=self.chf * np.prod(bottom_dim),
+                out_features=self.ch * np.prod(self.bottom_dim),
             )
         else:
             self.fc = nn.Linear(
                 in_features=latent_dims,
-                out_features=self.chf * np.prod(bottom_dim),
+                out_features=self.ch * np.prod(self.bottom_dim),
             )
 
     def forward(self, x, x_pose):
@@ -227,8 +269,8 @@ class Decoder(nn.Module):
             x = self.fc(torch.cat((x, x_pose), -1))
         else:
             x = self.fc(x)
-        x = x.view(x.size(0), self.chf, *self.bottom_dim)
-        for d in range(self.depth - 1):
+        x = x.view(x.size(0), self.ch, *self.bottom_dim)
+        for d in range(len(self.filters) - 1):
             if self.bnorm:
                 x = self.norm_dec[d](F.relu(self.conv_dec[d](x)))
             else:
@@ -280,19 +322,20 @@ class AffinityVAE(nn.Module):
         self.pose = not (pose_dims == 0)
 
         self.encoder = Encoder(
-            capacity,
-            depth,
             self.bottom_dim,
             latent_dims,
             pose_dims=pose_dims,
+            capacity=capacity,
+            depth=depth,
             bnorm=bnorm,
         )
+
         self.decoder = Decoder(
-            capacity,
-            depth,
             self.bottom_dim,
             latent_dims,
             pose_dims=pose_dims,
+            capacity=capacity,
+            depth=depth,
             bnorm=bnorm,
         )
 
