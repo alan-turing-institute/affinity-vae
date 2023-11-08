@@ -37,7 +37,14 @@ is:
 python -m pip install -e ."[test]"
 ```
 
-> Note: This is the preferred option for running on Turing macOS laptops.
+run tests locally from this same working directory as installation (root of this
+repository):
+
+```
+python -m pytest -s -W ignore
+```
+
+> Note: This is the preferred option for running on macOS laptops.
 
 > Warning: M1 macOS can not do
 > [pytorch paralelisation](https://github.com/pytorch/pytorch/issues/70344). A
