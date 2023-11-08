@@ -383,6 +383,29 @@ def train(
                 )
             )
 
+        import matplotlib.pyplot as plt
+
+        if not os.path.exists("decoding"):
+            os.mkdir("decoding")
+
+        class_reps_x = np.take(
+            x_train, np.where(np.array(y_train) == "3")[0], axis=0
+        )
+        class_reps_p = np.take(
+            p_train, np.where(np.array(y_train) == "3")[0], axis=0
+        )
+        x_mean = np.mean(class_reps_x, axis=0)
+        p_mean = np.mean(class_reps_p, axis=0)
+        with torch.no_grad():
+            x = torch.FloatTensor(np.array(x_mean))
+            x = x.to(device)
+            p = torch.FloatTensor(np.array(p_mean))
+            p = p.to(device)
+        x = vae.decoder(x, p)
+        plt.imshow(x[0].detach().cpu().numpy())
+        plt.savefig("decoding/im.png")
+        plt.savefig(f"decoding/im-{epoch}.png")
+        plt.close()
         t_history[-1] /= len(trains)
 
         # ########################## VAL ######################################
