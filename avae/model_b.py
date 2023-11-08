@@ -343,6 +343,7 @@ class AffinityVAE(nn.Module):
                     axes=(-2, -1),
                     order=1,
                     reshape=False,
+                    mode="reflect",
                 )
                 # plt.imshow(ims[i][0])
                 # plt.show()
