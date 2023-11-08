@@ -348,7 +348,7 @@ class AffinityVAE(nn.Module):
                 # plt.imshow(ims[i][0])
                 # plt.show()
             x_recon = torch.Tensor(ims)
-            x_recon.to(self.device)
+            x_recon = x_recon.to(self.device)
         return x_recon, latent_mu, latent_logvar, latent, latent_pose
 
     def sample(self, mu, logvar):
