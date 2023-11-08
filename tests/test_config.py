@@ -10,12 +10,10 @@ from tests import testdata_mrc, testdata_npy
 
 
 class ConfigTest(unittest.TestCase):
-    def __init__(self, methodName: str = ...):
-        super().__init__(methodName)
-
     def setUp(self) -> None:
         """Setup data and output directories."""
-
+        self._orig_dir = os.getcwd()
+        self.temp_dir = tempfile.TemporaryDirectory()
         self.config = os.path.join(
             os.path.dirname(configs.__file__), "avae-test-config.yml"
         )
@@ -61,6 +59,10 @@ class ConfigTest(unittest.TestCase):
 
         self.default_model = AffinityConfig()
 
+    def tearDown(self):
+        os.chdir(self._orig_dir)
+        self.temp_dir.cleanup()
+
     def test_validate_config(self):
 
         data = load_config_params(
@@ -103,17 +105,19 @@ class ConfigTest(unittest.TestCase):
             load_config_params(local_vars=self.data_local)
 
     def test_write_config_file(self):
-        temp_dir = tempfile.TemporaryDirectory()
 
         data = load_config_params(
             config_file=self.config, local_vars=self.data_local
         )
-        os.chdir(temp_dir.name)
+        os.chdir(self.temp_dir.name)
 
         write_config_file(settings.date_time_run, data)
 
         files = glob.glob(
-            temp_dir.name + "/configs/*" + settings.date_time_run + "*.yaml"
+            self.temp_dir.name
+            + "/configs/*"
+            + settings.date_time_run
+            + "*.yaml"
         )
 
         data_from_output = load_config_params(config_file=files[0])
@@ -125,5 +129,3 @@ class ConfigTest(unittest.TestCase):
         data['classes'] = data_from_output['classes']
 
         self.assertEqual(data_from_output, data)
-
-        temp_dir.cleanup()
