@@ -13,12 +13,12 @@ from tests import testdata_mrc
 class DataTest(unittest.TestCase):
     def setUp(self) -> None:
         """Setup data and output directories."""
+        self._orig_dir = os.getcwd()
         self.test_data = os.path.dirname(testdata_mrc.__file__)
         self.test_dir = tempfile.mkdtemp(prefix="avae_")
         print(self.test_data, self.test_dir)
 
         # Change to test directory
-        self._orig_dir = os.getcwd()
         os.chdir(self.test_dir)
 
     def tearDown(self):
