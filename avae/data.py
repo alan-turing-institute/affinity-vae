@@ -10,7 +10,7 @@ from torch import Tensor
 from torch.utils.data import DataLoader, Dataset, Subset
 from torchvision import transforms
 
-from . import config
+from . import settings
 from .vis import format, plot_affinity_matrix, plot_classes_distribution
 
 np.random.seed(42)
@@ -97,7 +97,7 @@ def load_data(
         )
 
         # ################# Visualising affinity matrix ###################
-        if affinity is not None and config.VIS_AFF:
+        if affinity is not None and settings.VIS_AFF:
             plot_affinity_matrix(
                 lookup=lookup,
                 all_classes=lookup.columns.tolist(),
@@ -123,7 +123,7 @@ def load_data(
         train_y = [y[1] for _, y in enumerate(train_data)]
         val_y = [y[1] for _, y in enumerate(val_data)]
 
-        if config.VIS_HIS:
+        if settings.VIS_HIS:
             plot_classes_distribution(train_y, "train")
             plot_classes_distribution(val_y, "validation")
 
