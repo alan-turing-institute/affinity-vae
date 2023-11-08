@@ -11,7 +11,6 @@ from tests import testdata_mrc, testdata_npy
 class ConfigTest(unittest.TestCase):
     def __init__(self, methodName: str = ...):
         super().__init__(methodName)
-        self.defaul_model = None
 
     def setUp(self) -> None:
         """Setup data and output directories."""
@@ -32,7 +31,13 @@ class ConfigTest(unittest.TestCase):
             "vis_sim": True,
         }
 
-        self.data_local_missing = {
+        self.datapath_local_missing = {
+            "affinity": os.path.join(
+                os.path.dirname(testdata_mrc.__file__), "affinity_fsc_10.csv"
+            ),
+            "classes": os.path.join(
+                os.path.dirname(testdata_npy.__file__), "classes.csv"
+            ),
             "split": 5,
             "epochs": 100,
         }
@@ -87,3 +92,11 @@ class ConfigTest(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             load_config_params(local_vars=self.data_local_fail_wrong_type)
+
+        with self.assertRaises(ValueError):
+            load_config_params(local_vars=self.datapath_local_missing)
+
+        # wrong input for classifier
+        self.data_local['classifier'] = 'LS'
+        with self.assertRaises(TypeError):
+            load_config_params(local_vars=self.data_local)
