@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import Optional
 
 import yaml
 from pydantic import (
@@ -21,7 +22,9 @@ class AffinityConfig(BaseModel):
     batch: PositiveInt = Field(128, description="Batch size")
     beta: float = Field(1, description="Beta value")
     beta_cycle: PositiveInt = Field(4, description="Beta cycle")
-    beta_load: FilePath = Field(None, description="Path to beta file")
+    beta_load: Optional[FilePath] = Field(
+        None, description="Path to beta file"
+    )
     beta_min: float = Field(0, description="Minimum betvalue")
     beta_ratio: PositiveFloat = Field(0, description="Beta value")
     channels: PositiveInt = Field(64, description="First layer channels")
@@ -32,7 +35,9 @@ class AffinityConfig(BaseModel):
         description="Method to classify the latent space. Options "
         "are: KNN (nearest neighbour), NN (neural network), LR (Logistic Regression).",
     )
-    config_file: FilePath = Field(None, description="Path to config file")
+    config_file: Optional[FilePath] = Field(
+        None, description="Path to config file"
+    )
     cyc_method_beta: str = Field(
         'flat',
         pattern='^(cycle_sigmoid|flat|cycle_linear|cycle_cosine|ramp)$',
@@ -80,7 +85,9 @@ class AffinityConfig(BaseModel):
     )
     gamma: float = Field(2, description="Gamma value")
     gamma_cycle: PositiveInt = Field(4, description="Gamma cycle")
-    gamma_load: FilePath = Field(None, description="Path to gamma array file")
+    gamma_load: Optional[FilePath] = Field(
+        None, description="Path to gamma array file"
+    )
     gamma_min: float = Field(0, description="Minimum gamma value")
     gamma_ratio: float = Field(0.5, description="Gamma ratio")
     gaussian_blur: bool = Field(False, description=" Apply gaussian blur")
@@ -89,7 +96,7 @@ class AffinityConfig(BaseModel):
     learning: PositiveFloat = Field(0.001, description="Learning rate")
     limit: PositiveInt = Field(None, description="Limit number of samples")
     loss_fn: str = Field('MSE', description="Loss function")
-    meta: FilePath = Field(None, description="Path to meta file")
+    meta: Optional[FilePath] = Field(None, description="Path to meta file")
     model: str = Field('a', description="Type of model to use")
     new_out: bool = Field(False, description="Create new output directory")
     no_val_drop: bool = Field(
@@ -109,7 +116,7 @@ class AffinityConfig(BaseModel):
         False, description="Scale data with min-max transformation"
     )
     split: PositiveInt = Field(20, description="Split ratio")
-    state: FilePath = Field(None, description="Path to state file")
+    state: Optional[FilePath] = Field(None, description="Path to state file")
     tensorboard: bool = Field(False, description="Use tensorboard")
     vis_acc: bool = Field(False, description="Visualise accuracy")
     vis_aff: bool = Field(False, description="Visualise affinity")

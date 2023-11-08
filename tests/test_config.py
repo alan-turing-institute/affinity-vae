@@ -1,8 +1,9 @@
+import glob
 import os
+import tempfile
 import unittest
 
-import pydantic
-
+import avae.settings as settings
 import configs
 from avae.config import AffinityConfig, load_config_params, write_config_file
 from tests import testdata_mrc, testdata_npy
@@ -100,3 +101,29 @@ class ConfigTest(unittest.TestCase):
         self.data_local['classifier'] = 'LS'
         with self.assertRaises(TypeError):
             load_config_params(local_vars=self.data_local)
+
+    def test_write_config_file(self):
+        temp_dir = tempfile.TemporaryDirectory()
+
+        data = load_config_params(
+            config_file=self.config, local_vars=self.data_local
+        )
+        os.chdir(temp_dir.name)
+
+        write_config_file(settings.date_time_run, data)
+
+        files = glob.glob(
+            temp_dir.name + "/configs/*" + settings.date_time_run + "*.yaml"
+        )
+
+        data_from_output = load_config_params(config_file=files[0])
+
+        self.assertEqual(len(files), 1)
+
+        data['datapath'] = data_from_output['datapath']
+        data['affinity'] = data_from_output['affinity']
+        data['classes'] = data_from_output['classes']
+
+        self.assertEqual(data_from_output, data)
+
+        temp_dir.cleanup()
