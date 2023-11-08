@@ -163,10 +163,8 @@ def load_config_params(config_file=None, local_vars={}):
 
     # check for command line input values and overwrite config file values
     for key, val in local_vars.items():
-        if (
-            val is not None
-            and isinstance(val, (int, float, bool, str))
-            or getattr(data, key) is None
+        if (val is not None and isinstance(val, (int, float, bool, str))) or (
+            val is not None and getattr(data, key) is None
         ):
             logging.warning(
                 "Command line argument "
