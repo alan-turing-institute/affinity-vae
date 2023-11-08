@@ -13,6 +13,7 @@ from pydantic import (
 )
 
 
+# Model configuration
 class AffinityConfig(BaseModel):
     affinity: FilePath = Field(None, description="Path to affinity file")
     batch: PositiveInt = Field(128, description="Batch size")
@@ -119,13 +120,28 @@ class AffinityConfig(BaseModel):
     vis_los: bool = Field(False, description="Visualise loss")
     vis_pos: bool = Field(False, description="Visualise pose")
     vis_pose_class: str = Field(
-        False, description="Visualise pose classification"
+        None, description="Visualise pose classification"
     )
     vis_rec: bool = Field(False, description="Visualise reconstruction")
     vis_sim: bool = Field(False, description="Visualise similarity")
 
 
-def load_config_params(config_file, local_vars):
+def load_config_params(config_file=None, local_vars={}):
+    """
+    Load configuration parameters from config file and command line arguments.
+
+    Parameters
+    ----------
+    config_file : str
+        Path to config file.
+    local_vars : dict
+        Dictionary of command line arguments.
+
+    Returns
+    -------
+    data : dict
+        Dictionary of configuration parameters.
+    """
 
     if config_file is not None:
         with open(config_file, "r") as f:
@@ -133,38 +149,46 @@ def load_config_params(config_file, local_vars):
 
         try:
             data = AffinityConfig(**config_data)
-            print("Config file is valid!")
+            logging.info("Config file is valid!")
         except ValidationError as e:
-            print("Config file is invalid:")
-            print(e)
-        # returns JSON object as
+            logging.info("Config file is invalid:")
+            logging.info(e)
+            raise RuntimeError("Config file is invalid:" + str(e))
 
-        for key, val in local_vars.items():
-            if (
-                val is not None
-                and isinstance(val, (int, float, bool, str))
-                or data.get(key) is None
-            ):
-                logging.warning(
-                    "Command line argument "
-                    + key
-                    + " is overwriting config file value to: "
-                    + str(val)
-                )
-                data.key = val
-            else:
-                logging.info(
-                    "Setting "
-                    + key
-                    + " to config file value: "
-                    + str(data[key])
-                )
     else:
-        # if no config file is provided, use command line arguments
-        data = local_vars
+        # if no config file is provided, start from default and update with command line arguments
+        data = AffinityConfig()
 
-        # Check for missing values and set to default values
-    for key, val in data.items():
+    # check for command line input values and overwrite config file values
+    for key, val in local_vars.items():
+        if (
+            val is not None
+            and isinstance(val, (int, float, bool, str))
+            or getattr(data, key) is None
+        ):
+            logging.warning(
+                "Command line argument "
+                + key
+                + " is overwriting config file value to: "
+                + str(val)
+            )
+            # update model with command line arguments
+            try:
+                data.model_validate({key: val})
+                setattr(data, key, val)
+            except ValidationError as e:
+                logging.info(e)
+                raise ValidationError("Config file is invalid:" + str(e))
+        else:
+            logging.info(
+                "Setting "
+                + key
+                + " to config file value: "
+                + str(getattr(data, key))
+            )
+
+    # Check for missing values and set to default values
+    for key, val in data.model_dump().items():
         if (val is None or val == "None") and key != "config_file":
             #  make sure data variables are provided
             if key == "data_path":
@@ -184,18 +208,27 @@ def load_config_params(config_file, local_vars):
                     + key
                     + " in config file or command line arguments. Setting to default value."
                 )
+
                 filename_default = os.path.join(data["datapath"], key + ".csv")
 
                 if os.path.isfile(filename_default):
-                    data[key] = filename_default
+                    try:
+                        data.model_validate({key: filename_default})
+                        setattr(data, key, val)
+                    except ValidationError as e:
+                        logging.info(e)
+                        raise ValidationError(
+                            "Affinity and classes values are invalid:" + str(e)
+                        )
+
                 else:
-                    data[key] = None
+                    setattr(data, key, val)
 
                 logging.info(
                     "Setting up "
                     + key
                     + " in config file to "
-                    + str(data[key])
+                    + str(getattr(data, key))
                 )
 
             elif key == "state":
@@ -215,14 +248,11 @@ def load_config_params(config_file, local_vars):
                 logging.warning(
                     "No value set for "
                     + key
-                    + " in config file or command line arguments. Setting to default value."
-                )
-                data[key] = config.DEFAULT_RUN_CONFIGS[key]
-                logging.info(
-                    "Setting " + key + " to default value: " + str(data[key])
+                    + " in config file or command line arguments. Default values will be used."
                 )
 
-    return data
+    # return data as dictionary
+    return data.model_dump()
 
 
 def write_config_file(time_stamp_name, data):
@@ -237,93 +267,3 @@ def write_config_file(time_stamp_name, data):
     file.close()
 
     logging.info("YAML File saved!\n")
-
-
-VIS_LOS = False
-VIS_ACC = False
-VIS_REC = False
-VIS_EMB = False
-VIS_INT = False
-VIS_DIS = False
-VIS_POS = False
-VIS_CYC = False
-VIS_AFF = False
-VIS_HIS = False
-VIS_SIM = False
-VIS_DYN = False
-VIS_POSE_CLASS = False
-
-FREQ_ACC = 10
-FREQ_REC = 10
-FREQ_EMB = 10
-FREQ_INT = 10
-FREQ_DIS = 10
-FREQ_POS = 10
-FREQ_SIM = 10
-
-FREQ_EVAL = 10
-FREQ_STA = 10
-
-DEFAULT_RUN_CONFIGS = {
-    "limit": None,
-    "restart": False,
-    "split": 20,
-    "depth": 3,
-    "channels": 64,
-    "latent_dims": 8,
-    "pose_dims": 1,
-    "no_val_drop": True,
-    "epochs": 20,
-    "batch": 128,
-    "learning": 0.001,
-    "gpu": True,
-    "beta": 1.0,
-    "gamma": 2,
-    "beta_load": None,
-    "gamma_load": None,
-    "loss_fn": "MSE",
-    "beta_min": 0.0,
-    "beta_cycle": 4,
-    "beta_ratio": 0.5,
-    "cyc_method_beta": "flat",
-    "gamma_min": 0.0,
-    "gamma_cycle": 4,
-    "gamma_ratio": 0.5,
-    "cyc_method_gamma": "flat",
-    "freq_eval": FREQ_EVAL,
-    "freq_sta": FREQ_STA,
-    "freq_emb": FREQ_EMB,
-    "freq_rec": FREQ_REC,
-    "freq_int": FREQ_INT,
-    "freq_dis": FREQ_DIS,
-    "freq_pos": FREQ_POS,
-    "freq_acc": FREQ_ACC,
-    "freq_sim": FREQ_SIM,
-    "freq_all": None,
-    "eval": False,
-    "dynamic": VIS_DYN,
-    "vis_los": VIS_LOS,
-    "vis_acc": VIS_ACC,
-    "vis_rec": VIS_REC,
-    "vis_emb": VIS_EMB,
-    "vis_int": VIS_INT,
-    "vis_dis": VIS_DIS,
-    "vis_pos": VIS_POS,
-    "vis_pose_class": VIS_POSE_CLASS,
-    "vis_cyc": VIS_CYC,
-    "vis_aff": VIS_AFF,
-    "vis_his": VIS_HIS,
-    "vis_sim": VIS_SIM,
-    "vis_all": False,
-    "model": "a",
-    "opt_method": "adam",
-    "gaussian_blur": False,
-    "normalise": False,
-    "shift_min": False,
-    "rescale": False,
-    "tensorboard": False,
-    "classifier": "NN",
-    "datatype": "mrc",
-    "new_out": False,
-    "debug": False,
-}
