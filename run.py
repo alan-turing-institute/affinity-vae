@@ -600,7 +600,6 @@ def run(
         config.VIS_HIS = True
         config.VIS_SIM = True
         config.VIS_DYN = True
-        config.VIS_POSE_CLASS = data["vis_pose_class"]
 
     else:
         config.VIS_LOS = data["vis_los"]
@@ -615,7 +614,6 @@ def run(
         config.VIS_HIS = data["vis_his"]
         config.VIS_SIM = data["vis_sim"]
         config.VIS_DYN = data["dynamic"]
-        config.VIS_POSE_CLASS = data["vis_pose_class"]
 
     if data["freq_all"] is not None:
         config.FREQ_EVAL = data["freq_all"]
@@ -637,6 +635,8 @@ def run(
         config.FREQ_ACC = data["freq_acc"]
         config.FREQ_STA = data["freq_sta"]
         config.FREQ_SIM = data["freq_sim"]
+
+    config.VIS_POSE_CLASS = data["vis_pose_class"]
 
     if data["new_out"]:
         dir_name = f'results_{dt_name}_lat{data["latent_dims"]}_pose{data["pose_dims"]}_lr{data["learning"]}_beta{data["beta"]}_gamma{data["gamma"]}'
