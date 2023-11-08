@@ -264,7 +264,7 @@ class Decoder(nn.Module):
                 )
             )
             if self.bnorm and d != 0:
-                self.norm_dec.append(BNORM(self.filters))
+                self.norm_dec.append(BNORM(self.filters[d - 1]))
 
         # define fully connected layers
         self.ch = (

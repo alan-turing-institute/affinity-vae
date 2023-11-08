@@ -30,6 +30,7 @@ def train(
     epochs,
     channels,
     depth,
+    filters,
     lat_dims,
     pose_dims,
     bnorm,
@@ -49,7 +50,6 @@ def train(
     cyc_method_gamma,
     recon_fn,
     use_gpu,
-    model,
     opt_method,
     gaussian_blur,
     normalise,
@@ -168,7 +168,8 @@ def train(
         lat_dims,
         pose_dims=pose_dims,
         capacity=channels,
-        depth=depth,  # TODO add filters
+        depth=depth,
+        filters=filters,
         bnorm=bnorm,
     )
     logging.info(vae)
