@@ -94,7 +94,9 @@ class AffinityConfig(BaseModel):
     gpu: bool = Field(True, description="Use GPU")
     latent_dims: PositiveInt = Field(8, description="Latent space dimensions")
     learning: PositiveFloat = Field(0.001, description="Learning rate")
-    limit: PositiveInt = Field(None, description="Limit number of samples")
+    limit: Optional[PositiveInt] = Field(
+        None, description="Limit number of samples"
+    )
     loss_fn: str = Field('MSE', description="Loss function")
     meta: Optional[FilePath] = Field(None, description="Path to meta file")
     model: str = Field('a', description="Type of model to use")
