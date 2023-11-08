@@ -12,6 +12,8 @@ from pydantic import (
     ValidationError,
 )
 
+import avae.settings as settings
+
 
 # Model configuration
 class AffinityConfig(BaseModel):
@@ -101,7 +103,7 @@ class AffinityConfig(BaseModel):
         pattern='^(adam|sgd|asgd)$',
     )
     pose_dims: PositiveInt = Field(1, description="Pose dimensions")
-    rescale: bool = Field(False, description="Rescale data")
+    rescale: float = Field(None, description="Rescale data")
     restart: bool = Field(False, description="Restart training")
     shift_min: bool = Field(
         False, description="Scale data with min-max transformation"
@@ -191,7 +193,7 @@ def load_config_params(config_file=None, local_vars={}):
     for key, val in data.model_dump().items():
         if (val is None or val == "None") and key != "config_file":
             #  make sure data variables are provided
-            if key == "data_path":
+            if key == "datapath":
                 logging.error(
                     "No value set for "
                     + key
@@ -209,7 +211,9 @@ def load_config_params(config_file=None, local_vars={}):
                     + " in config file or command line arguments. Setting to default value."
                 )
 
-                filename_default = os.path.join(data["datapath"], key + ".csv")
+                filename_default = os.path.join(
+                    getattr(data, 'datapath'), key + ".csv"
+                )
 
                 if os.path.isfile(filename_default):
                     try:
@@ -267,3 +271,57 @@ def write_config_file(time_stamp_name, data):
     file.close()
 
     logging.info("YAML File saved!\n")
+
+
+def setup_visualisation_config(data):
+
+    if data["vis_all"]:
+        settings.VIS_LOS = True
+        settings.VIS_ACC = True
+        settings.VIS_REC = True
+        settings.VIS_CYC = True
+        settings.VIS_AFF = True
+        settings.VIS_EMB = True
+        settings.VIS_INT = True
+        settings.VIS_DIS = True
+        settings.VIS_POS = True
+        settings.VIS_HIS = True
+        settings.VIS_SIM = True
+        settings.VIS_DYN = True
+
+    else:
+        settings.VIS_LOS = data["vis_los"]
+        settings.VIS_ACC = data["vis_acc"]
+        settings.VIS_REC = data["vis_rec"]
+        settings.VIS_CYC = data["vis_cyc"]
+        settings.VIS_AFF = data["vis_aff"]
+        settings.VIS_EMB = data["vis_emb"]
+        settings.VIS_INT = data["vis_int"]
+        settings.VIS_DIS = data["vis_dis"]
+        settings.VIS_POS = data["vis_pos"]
+        settings.VIS_HIS = data["vis_his"]
+        settings.VIS_SIM = data["vis_sim"]
+        settings.VIS_DYN = data["dynamic"]
+
+    if data["freq_all"] is not None:
+        settings.FREQ_EVAL = data["freq_all"]
+        settings.FREQ_STA = data["freq_all"]
+        settings.FREQ_ACC = data["freq_all"]
+        settings.FREQ_REC = data["freq_all"]
+        settings.FREQ_EMB = data["freq_all"]
+        settings.FREQ_INT = data["freq_all"]
+        settings.FREQ_DIS = data["freq_all"]
+        settings.FREQ_POS = data["freq_all"]
+        settings.FREQ_SIM = data["freq_all"]
+    else:
+        settings.FREQ_EVAL = data["freq_eval"]
+        settings.FREQ_REC = data["freq_rec"]
+        settings.FREQ_EMB = data["freq_emb"]
+        settings.FREQ_INT = data["freq_int"]
+        settings.FREQ_DIS = data["freq_dis"]
+        settings.FREQ_POS = data["freq_pos"]
+        settings.FREQ_ACC = data["freq_acc"]
+        settings.FREQ_STA = data["freq_sta"]
+        settings.FREQ_SIM = data["freq_sim"]
+
+    settings.VIS_POSE_CLASS = data["vis_pose_class"]
