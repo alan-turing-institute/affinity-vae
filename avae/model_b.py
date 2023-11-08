@@ -325,6 +325,26 @@ class AffinityVAE(nn.Module):
         latent = self.sample(latent_mu, latent_logvar)
         # decode
         x_recon = self.decoder(latent, latent_pose)  # pose set to None if pd=0
+        if self.pose:
+            from scipy.ndimage import rotate
+
+            # import matplotlib.pyplot as plt
+            ims = x_recon.cpu().detach().numpy()
+            theta = latent_pose.cpu().detach().numpy()
+            for i, im in enumerate(ims):
+                # print(theta[i][0]*360)
+                # plt.imshow(ims[i][0])
+                # plt.show()
+                ims[i] = rotate(
+                    im[0],
+                    angle=theta[i][0] * 360,
+                    axes=(-2, -1),
+                    order=1,
+                    reshape=False,
+                )
+                # plt.imshow(ims[i][0])
+                # plt.show()
+            x_recon = torch.Tensor(ims)
         return x_recon, latent_mu, latent_logvar, latent, latent_pose
 
     def sample(self, mu, logvar):
