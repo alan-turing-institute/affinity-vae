@@ -11,8 +11,7 @@ from . import config, vis
 from .cyc_annealing import cyc_annealing
 from .data import load_data
 from .loss import AVAELoss
-from .model_a import AffinityVAE as AffinityVAE_A
-from .model_b import AffinityVAE as AffinityVAE_B
+from .model import AffinityVAE
 from .utils import accuracy
 from .utils_learning import add_meta, pass_batch, set_device
 
@@ -164,19 +163,12 @@ def train(
     # ############################### MODEL ###############################
     device = set_device(use_gpu)
 
-    if model == "a":
-        affinityVAE = AffinityVAE_A
-    elif model == "b":
-        affinityVAE = AffinityVAE_B
-    else:
-        raise ValueError("Invalid model type", model, "must be a or b")
-
-    vae = affinityVAE(
-        channels,
-        depth,
+    vae = AffinityVAE(
         dshape,
         lat_dims,
         pose_dims=pose_dims,
+        capacity=channels,
+        depth=depth,  # TODO add filters
         bnorm=bnorm,
     )
     logging.info(vae)
