@@ -133,6 +133,14 @@ from avae.train import train
     help="First layer channels (default 64).",
 )
 @click.option(
+    "--filters",
+    "-fl",
+    type=str,
+    default=None,
+    help="Comma-separated list of filters for the network. Either provide "
+    "filters, or capacity and depth.",
+)
+@click.option(
     "--latent_dims",
     "-ld",
     type=int,
@@ -146,6 +154,20 @@ from avae.train import train
     default=None,
     help="If pose on, number of pose dimensions. If 0 and gamma=0 it becomes"
     "a standard beta-VAE.",
+)
+@click.option(
+    "--bnorm",
+    "-bn",
+    type=bool,
+    default=None,
+    help="Batch normalisation is on if True.",
+)
+@click.option(
+    "--klreduction",
+    "-kr",
+    type=str,
+    default=None,
+    help="Mean or sum reduction on KLD term.",
 )
 @click.option(
     "--beta",
@@ -519,8 +541,11 @@ def run(
     batch,
     depth,
     channels,
+    filters,
     latent_dims,
     pose_dims,
+    bnorm,
+    klreduction,
     beta,
     beta_load,
     gamma_load,
@@ -636,8 +661,11 @@ def run_pipeline(data):
             epochs=data["epochs"],
             channels=data["channels"],
             depth=data["depth"],
+            filters=data["filters"],
             lat_dims=data["latent_dims"],
             pose_dims=data["pose_dims"],
+            bnorm=data["bnorm"],
+            klred=data["klreduction"],
             learning=data["learning"],
             beta_load=data["beta_load"],
             beta_min=data["beta_min"],
@@ -653,7 +681,6 @@ def run_pipeline(data):
             cyc_method_gamma=data["cyc_method_gamma"],
             recon_fn=data["loss_fn"],
             use_gpu=data["gpu"],
-            model=data["model"],
             opt_method=data["opt_method"],
             gaussian_blur=data["gaussian_blur"],
             normalise=data["normalise"],

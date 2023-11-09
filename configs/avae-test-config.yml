@@ -18,8 +18,10 @@ rescale: False
 
 depth:  3
 channels:  64
+filters: None   # [8, 16, 32, 64]
 latent_dims:  8
 pose_dims: 1
+bnorm: true
 model: a
 
 #### Training parameters
@@ -36,6 +38,7 @@ freq_sta: 10  # frequency of state saves
 beta:  1
 gamma:  2
 loss_fn:  MSE
+klreduction: mean
 
 #### Cyclical annealing parameters for beta
 beta_min: 0
