@@ -85,7 +85,9 @@ class Encoder(nn.Module):
             "by {}.".format(2**depth)
         )
 
-        bottom_dim = tuple([int(i / (2 ** len(filters))) for i in input_size])
+        bottom_dim = tuple(
+            [int(i / (2 ** len(self.filters))) for i in input_size]
+        )
         self.bnorm = bnorm
         self.pose = not (pose_dims == 0)
 
@@ -238,7 +240,7 @@ class Decoder(nn.Module):
         )
 
         self.bottom_dim = tuple(
-            [int(i / (2 ** len(filters))) for i in input_size]
+            [int(i / (2 ** len(self.filters))) for i in input_size]
         )
         self.pose = not (pose_dims == 0)
         self.bnorm = bnorm
