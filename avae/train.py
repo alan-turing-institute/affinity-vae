@@ -10,8 +10,10 @@ from torch.utils.tensorboard import SummaryWriter
 from . import settings, vis
 from .cyc_annealing import cyc_annealing
 from .data import load_data
+from .decoders import DecoderA, DecoderB
+from .encoders import EncoderA, EncoderB
 from .loss import AVAELoss
-from .model import AffinityVAE
+from .models import AffinityVAE
 from .utils import accuracy
 from .utils_learning import add_meta, pass_batch, set_device
 
@@ -50,6 +52,7 @@ def train(
     cyc_method_gamma,
     recon_fn,
     use_gpu,
+    model,
     opt_method,
     gaussian_blur,
     normalise,
@@ -159,16 +162,20 @@ def train(
     if filters is not None:
         filters = np.array(filters.replace(" ", "").split(","), dtype=np.int64)
 
-    vae = AffinityVAE(
-        dshape,
-        lat_dims,
-        pose_dims=pose_dims,
-        capacity=channels,
-        depth=depth,
-        filters=filters,
-        bnorm=bnorm,
-    )
+    if model == "a":
+        encoder = EncoderA(dshape, 8, depth, lat_dims, pose_dims)
+        decoder = DecoderA(dshape, 8, depth, lat_dims, pose_dims)
+    elif model == "b":
+        encoder = EncoderB(dshape, channels, depth, lat_dims, pose_dims)
+        decoder = DecoderB(dshape, channels, depth, lat_dims, pose_dims)
+    else:
+        raise ValueError("Invalid model type", model, "must be a or b")
+
+    vae = AffinityVAE(encoder, decoder)
+
     logging.info(vae)
+
+    logging.info(vae.parameters())
 
     vae.to(device)
 
