@@ -17,15 +17,16 @@ Thiyagalingam J, Burnley T, Basham M & Lowe AR
 
 ### Installing with pip + virtual environments
 
-> Note: This has been tested in the `refactor` branch.
+> Note: This has been tested in the `develop` branch.
 
 You can install the libraries needed for this package on a
 [fresh virtual environment](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/)
 with the following:
 
 ```
-python3 -m venv env
+python -m venv env
 source env/bin/activate
+python -m pip install --upgrade pip
 python -m pip install -e .
 ```
 
