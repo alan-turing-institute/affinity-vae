@@ -89,7 +89,7 @@ class EncoderB(AbstractEncoder):
             "by {}.".format(2**depth)
         )
         CONV, _, BNORM = set_layer_dim(len(input_size))
-        bottom_dim = tuple([int(i / (2**depth)) for i in input_size])
+        self.bottom_dim = tuple([int(i / (2**depth)) for i in input_size])
 
         c = capacity
         self.depth = depth
@@ -116,16 +116,16 @@ class EncoderB(AbstractEncoder):
         # define fully connected layers
         chf = 1 if depth == 0 else c * depth  # allow for no conv layers
         self.fc_mu = nn.Linear(
-            in_features=chf * np.prod(bottom_dim),
+            in_features=chf * np.prod(self.bottom_dim),
             out_features=latent_dims,
         )
         self.fc_logvar = nn.Linear(
-            in_features=chf * np.prod(bottom_dim),
+            in_features=chf * np.prod(self.bottom_dim),
             out_features=latent_dims,
         )
         if self.pose:
             self.fc_pose = nn.Linear(
-                in_features=chf * np.prod(bottom_dim),
+                in_features=chf * np.prod(self.bottom_dim),
                 out_features=pose_dims,
             )
 

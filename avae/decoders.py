@@ -31,7 +31,7 @@ class DecoderA(AbstractDecoder):
 
         ndim = len(unflat_shape[1:])
 
-        conv_T, _, _ = set_layer_dim(ndim)
+        _, conv_T, _ = set_layer_dim(ndim)
 
         self.decoder = nn.Sequential()
 
@@ -108,7 +108,7 @@ class DecoderB(AbstractDecoder):
             "by {}.".format(2**depth)
         )
         _, TCONV, BNORM = set_layer_dim(len(input_size))
-        bottom_dim = tuple([int(i / (2**depth)) for i in input_size])
+        self.bottom_dim = tuple([int(i / (2**depth)) for i in input_size])
 
         #  iteratively define deconvolution and batch normalisation layers
         self.conv_dec = nn.ModuleList()
@@ -135,12 +135,12 @@ class DecoderB(AbstractDecoder):
         if self.pose:
             self.fc = nn.Linear(
                 in_features=pose_dims + latent_dims,
-                out_features=self.chf * np.prod(bottom_dim),
+                out_features=self.chf * np.prod(self.bottom_dim),
             )
         else:
             self.fc = nn.Linear(
                 in_features=latent_dims,
-                out_features=self.chf * np.prod(bottom_dim),
+                out_features=self.chf * np.prod(self.bottom_dim),
             )
 
     def forward(self, x, x_pose):
