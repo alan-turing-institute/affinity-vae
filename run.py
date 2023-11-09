@@ -681,6 +681,7 @@ def run_pipeline(data):
             cyc_method_gamma=data["cyc_method_gamma"],
             recon_fn=data["loss_fn"],
             use_gpu=data["gpu"],
+            model=data["model"],
             opt_method=data["opt_method"],
             gaussian_blur=data["gaussian_blur"],
             normalise=data["normalise"],
