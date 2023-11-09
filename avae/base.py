@@ -2,6 +2,7 @@ import enum
 from abc import ABC, abstractmethod
 
 import torch
+import torch.nn as nn
 
 
 class SpatialDims(enum.IntEnum):
@@ -10,30 +11,29 @@ class SpatialDims(enum.IntEnum):
 
 
 # Abstract Encoder
-class AbstractEncoder(ABC):
+class AbstractEncoder(nn.Module, ABC):
     @abstractmethod
     def forward(self, x):
         pass
 
 
 # Abstract Decoder
-class AbstractDecoder(ABC):
+class AbstractDecoder(nn.Module, ABC):
     @abstractmethod
     def forward(self, x, x_pose):
         pass
 
 
 # Abstract AffinityVAE
-class AbstractAffinityVAE(ABC, torch.nn.Module):
+class AbstractAffinityVAE(torch.nn.Module):
     def __init__(self, encoder, decoder, **kwargs):
         super().__init__()
         self.encoder = encoder
         self.decoder = decoder
-        self.init_model(**kwargs)
 
-    @abstractmethod
-    def init_model(self, **kwargs):
-        pass
+    # @abstractmethod
+    # def init_model(self, **kwargs):
+    #     pass
 
     def forward(self, x):
         mu, log_var, pose = self.encoder(x)
