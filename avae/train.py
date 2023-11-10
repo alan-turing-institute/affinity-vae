@@ -1,4 +1,3 @@
-import datetime
 import logging
 import os
 
@@ -7,11 +6,12 @@ import pandas as pd
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
+from avae.decoders.decoders import Decoder, DecoderA, DecoderB
+from avae.encoders.encoders import Encoder, EncoderA, EncoderB
+
 from . import settings, vis
 from .cyc_annealing import cyc_annealing
 from .data import load_data
-from .decoders import DecoderA, DecoderB
-from .encoders import EncoderA, EncoderB
 from .loss import AVAELoss
 from .models import AffinityVAE
 from .utils import accuracy
@@ -163,13 +163,20 @@ def train(
         filters = np.array(filters.replace(" ", "").split(","), dtype=np.int64)
 
     if model == "a":
-        encoder = EncoderA(dshape, 8, depth, lat_dims, pose_dims)
-        decoder = DecoderA(dshape, 8, depth, lat_dims, pose_dims)
+        encoder = EncoderA(dshape, channels, depth, lat_dims, pose_dims)
+        decoder = DecoderA(dshape, channels, depth, lat_dims, pose_dims)
     elif model == "b":
         encoder = EncoderB(dshape, channels, depth, lat_dims, pose_dims)
         decoder = DecoderB(dshape, channels, depth, lat_dims, pose_dims)
+    elif model == "u":
+        encoder = Encoder(
+            dshape, channels, depth, lat_dims, pose_dims, filters, bnorm
+        )
+        decoder = Decoder(
+            dshape, channels, depth, lat_dims, pose_dims, filters, bnorm
+        )
     else:
-        raise ValueError("Invalid model type", model, "must be a or b")
+        raise ValueError("Invalid model type", model, "must be a or b or c")
 
     vae = AffinityVAE(encoder, decoder)
 

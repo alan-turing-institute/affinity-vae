@@ -4,11 +4,9 @@ from abc import ABC, abstractmethod
 import torch
 import torch.nn as nn
 
-from avae.base import AbstractAffinityVAE, AbstractDecoder, AbstractEncoder
+from avae.base import AbstractAffinityVAE
 
 from .base import SpatialDims
-
-# Define abstract classes for Encoder, Decoder, and AffinityVAE (as shown in the previous code)
 
 
 def set_layer_dim(ndim):
@@ -72,13 +70,27 @@ class AffinityVAE(AbstractAffinityVAE):
         self.encoder = encoder
         self.decoder = decoder
 
-    def forward(self, x):
-        mu, log_var, pose = self.encoder(x)
-        z = self.reparameterize(mu, log_var)
-        x = self.decoder(z, pose)
-        return x, mu, log_var, z, pose
+        if self.encoder.pose != self.decoder.pose:
+            logging.error("Encoder and decoder pose must be the same.")
+            raise RuntimeError("Encoder and decoder pose must be the same.")
 
-    def reparameterize(self, mu, log_var):
+        self.pose = self.encoder.pose
+
+    def forward(self, x):
+        if self.pose:
+            latent_mu, latent_logvar, latent_pose = self.encoder(x)
+        else:
+            latent_mu, latent_logvar = self.encoder(x)
+            latent_pose = None
+            # reparametrise
+        latent = self.reparametrise(latent_mu, latent_logvar)
+        # decode
+        x_recon = self.decoder(latent, latent_pose)  # pose set to None if pd=0
+        return x_recon, latent_mu, latent_logvar, latent, latent_pose
+
+        # encode
+
+    def reparametrise(self, mu, log_var):
         if self.training:
             std = torch.exp(0.5 * log_var)
             eps = torch.randn_like(std)
