@@ -176,13 +176,11 @@ def train(
             dshape, channels, depth, lat_dims, pose_dims, filters, bnorm
         )
     else:
-        raise ValueError("Invalid model type", model, "must be a or b or c")
+        raise ValueError("Invalid model type", model, "must be a or b or u")
 
     vae = AffinityVAE(encoder, decoder)
 
     logging.info(vae)
-
-    logging.info(vae.parameters())
 
     vae.to(device)
 
