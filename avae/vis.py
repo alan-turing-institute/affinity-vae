@@ -1373,9 +1373,12 @@ def pose_class_disentanglement_plot(
     pose_vis_class = pose_vis_class.replace(" ", "").split(",")
     for i in pose_vis_class:
         class_reps_x = np.take(x, np.where(np.array(y) == i)[0], axis=0)
+        class_reps_x_indx = np.random.choice(class_reps_x.shape[0])
+        class_reps_x = class_reps_x[class_reps_x_indx,:]
         class_reps_poses = np.take(
             poses, np.where(np.array(y) == i)[0], axis=0
         )
+        class_reps_poses = class_reps_poses[class_reps_x_indx,:]
         pose_disentanglement_plot(
             class_reps_x,
             class_reps_poses,
