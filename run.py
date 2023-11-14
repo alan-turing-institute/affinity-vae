@@ -1,19 +1,17 @@
 import logging
 import os
 import warnings
-from datetime import datetime
 
 import click
 
-from avae import config
+import avae.settings as settings
+from avae.config import (
+    load_config_params,
+    setup_visualisation_config,
+    write_config_file,
+)
 from avae.evaluate import evaluate
 from avae.train import train
-from avae.utils import load_config_params, write_config_file
-
-dt_name = datetime.now().strftime("%H_%M_%d_%m_%Y")
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
-)
 
 
 @click.command(name="Affinity Trainer")
@@ -595,61 +593,11 @@ def run(
         logging.getLogger().setLevel(logging.DEBUG)
         logging.getLogger("matplotlib.font_manager").disabled = True
 
-    if data["vis_all"]:
-        config.VIS_LOS = True
-        config.VIS_ACC = True
-        config.VIS_REC = True
-        config.VIS_CYC = True
-        config.VIS_AFF = True
-        config.VIS_EMB = True
-        config.VIS_INT = True
-        config.VIS_DIS = True
-        config.VIS_POS = True
-        config.VIS_HIS = True
-        config.VIS_SIM = True
-        config.VIS_DYN = True
-        config.VIS_POSE_CLASS = data["vis_pose_class"]
-        config.VIS_Z_N_INT = data["vis_z_n_int"]
-
-    else:
-        config.VIS_LOS = data["vis_los"]
-        config.VIS_ACC = data["vis_acc"]
-        config.VIS_REC = data["vis_rec"]
-        config.VIS_CYC = data["vis_cyc"]
-        config.VIS_AFF = data["vis_aff"]
-        config.VIS_EMB = data["vis_emb"]
-        config.VIS_INT = data["vis_int"]
-        config.VIS_DIS = data["vis_dis"]
-        config.VIS_POS = data["vis_pos"]
-        config.VIS_HIS = data["vis_his"]
-        config.VIS_SIM = data["vis_sim"]
-        config.VIS_DYN = data["dynamic"]
-        config.VIS_POSE_CLASS = data["vis_pose_class"]
-        config.VIS_Z_N_INT = data["vis_z_n_int"]
-
-    if data["freq_all"] is not None:
-        config.FREQ_EVAL = data["freq_all"]
-        config.FREQ_STA = data["freq_all"]
-        config.FREQ_ACC = data["freq_all"]
-        config.FREQ_REC = data["freq_all"]
-        config.FREQ_EMB = data["freq_all"]
-        config.FREQ_INT = data["freq_all"]
-        config.FREQ_DIS = data["freq_all"]
-        config.FREQ_POS = data["freq_all"]
-        config.FREQ_SIM = data["freq_all"]
-    else:
-        config.FREQ_EVAL = data["freq_eval"]
-        config.FREQ_REC = data["freq_rec"]
-        config.FREQ_EMB = data["freq_emb"]
-        config.FREQ_INT = data["freq_int"]
-        config.FREQ_DIS = data["freq_dis"]
-        config.FREQ_POS = data["freq_pos"]
-        config.FREQ_ACC = data["freq_acc"]
-        config.FREQ_STA = data["freq_sta"]
-        config.FREQ_SIM = data["freq_sim"]
+    # visualisation global settings defined from config file
+    setup_visualisation_config(data)
 
     if data["new_out"]:
-        dir_name = f'results_{dt_name}_lat{data["latent_dims"]}_pose{data["pose_dims"]}_lr{data["learning"]}_beta{data["beta"]}_gamma{data["gamma"]}'
+        dir_name = f'results_{settings.date_time_run}_lat{data["latent_dims"]}_pose{data["pose_dims"]}_lr{data["learning"]}_beta{data["beta"]}_gamma{data["gamma"]}'
         if not os.path.exists(dir_name):
             os.mkdir(dir_name)
         os.chdir(dir_name)
@@ -658,17 +606,19 @@ def run(
         os.mkdir("logs")
 
     # setup logger inside the  directory where we are running the code
-    fileh = logging.FileHandler("logs/avae_run_log_" + dt_name + ".log", "a")
+    fileh = logging.FileHandler(
+        "logs/avae_run_log_" + settings.date_time_run + ".log", "a"
+    )
     logging.getLogger().addHandler(fileh)
 
     logging.info(
         "Saving final submission config file to: "
         + "avae_final_config"
-        + dt_name
+        + settings.date_time_run
         + ".yaml"
     )
 
-    write_config_file(dt_name, data)
+    write_config_file(settings.date_time_run, data)
 
     try:
         run_pipeline(data)
