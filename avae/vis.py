@@ -1443,7 +1443,8 @@ def pose_class_disentanglement_plot(
         if data_dim == 3:
             save_mrc_file(f"pose_interpolate_{mode}_{i}.mrc", grid_for_napari)
         elif data_dim == 2:
-            save_imshow_png(f"pose_interpolate_{mode}_{i}.png", grid_for_napari
+            save_imshow_png(
+                f"pose_interpolate_{mode}_{i}.png", grid_for_napari
             )
 
 
