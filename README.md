@@ -39,17 +39,17 @@ conda activate affinity_env
 conda install --yes python=3.10
 conda install --yes numpy
 conda install --yes requests
-conda install -c anaconda pandas
-conda install -c anaconda scikit-image
-conda install -c anaconda scikit-learn
-conda install -c anaconda scipy
-conda install -c anaconda pillow
-conda install -c conda-forge mrcfile
-conda install -c conda-forge altair
-conda install -c conda-forge umap-learn
-conda install -c conda-forge matplotlib
-conda install -c anaconda click
-conda install pytorch torchvision pytorch-cuda=11.6 -c pytorch -c nvidia
+conda install -c anaconda pandas --yes
+conda install -c anaconda scikit-image --yes
+conda install -c anaconda scikit-learn --yes
+conda install -c anaconda scipy --yes
+conda install -c anaconda pillow --yes
+conda install -c conda-forge mrcfile --yes
+conda install -c conda-forge altair --yes
+conda install -c conda-forge umap-learn --yes
+conda install -c conda-forge matplotlib --yes
+conda install -c anaconda click --yes
+conda install pytorch torchvision pytorch-cuda=11.6 -c pytorch -c nvidia  --yes
 ```
 
 if the follwoing error  occurs:

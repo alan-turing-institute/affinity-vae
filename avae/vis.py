@@ -1190,7 +1190,6 @@ def latent_4enc_interpolate_plot(
 
     # Number of interpolation steps
     num_steps = int(plots_config[1])
-
     if poses is not None:
         pose_mean = np.mean(poses)
 
@@ -1224,7 +1223,9 @@ def latent_4enc_interpolate_plot(
                 with torch.no_grad():
                     decoded_image = vae.decoder(
                         interpolated_encoding.to(device=device),
-                        (torch.Tensor(1, 1) + pose_mean).to(device=device),
+                        (torch.Tensor(1, poses[0].shape[0]) + pose_mean).to(
+                            device=device
+                        ),
                     )
 
                 decoded_images.append(decoded_image.cpu().squeeze().numpy())
@@ -1370,24 +1371,80 @@ def pose_class_disentanglement_plot(
     mode: str
         Mode of evaluation (trn: Training, vld: Validation, eval: Evaluation )
     """
+    logging.info(
+        "Visualising pose disentanglement for each class {}...\n".format(
+            "".join(pose_vis_class)
+        )
+    )
+    if poses is None:
+        logging.warning(
+            "Pose interpolation cannot be done if pose dimension is not specified"
+        )
+
+    # number of pose interpolation steps, prefarably odd
+    number_of_samples = 7
+    padding = 0
+
+    x = np.asarray(x)
+
+    poses = np.asarray(poses)
+    pos_dims = poses.shape[-1]
     pose_vis_class = pose_vis_class.replace(" ", "").split(",")
+
     for i in pose_vis_class:
-        class_reps_x = np.take(x, np.where(np.array(y) == i)[0], axis=0)
-        class_reps_x_indx = np.random.choice(class_reps_x.shape[0])
-        class_reps_x = class_reps_x[class_reps_x_indx,:]
-        class_reps_poses = np.take(
-            poses, np.where(np.array(y) == i)[0], axis=0
+
+        class_x = np.take(x, np.where(np.array(y) == i)[0], axis=0)
+        class_x_indx = np.random.choice(class_x.shape[0])
+        enc = class_x[class_x_indx, :]
+
+        class_pos = np.take(poses, np.where(np.array(y) == i)[0], axis=0)
+        class_pos_mean = np.mean(class_pos, axis=0)
+        class_pos_stds = np.std(class_pos, axis=0)
+
+        lat_dims = enc.shape[0]
+        lat_grid = np.zeros((pos_dims * number_of_samples, lat_dims)) + enc
+        pos_grid = np.zeros((pos_dims * number_of_samples, pos_dims))
+
+        # Generate vectors representing single transversals along each lat_dim
+        for p_dim in range(pos_dims):
+            for grid_spot in range(number_of_samples):
+                means = copy.deepcopy(class_pos_mean)
+                means[p_dim] += class_pos_stds[p_dim] * (
+                    -1.2 + 0.4 * grid_spot
+                )
+                pos_grid[p_dim * number_of_samples + grid_spot, :] = means
+
+        # Decode interpolated vectors
+        with torch.no_grad():
+            lat_grid = torch.FloatTensor(np.array(lat_grid))
+            lat_grid = lat_grid.to(device)
+            pos_grid = torch.FloatTensor(np.array(pos_grid))
+            pos_grid = pos_grid.to(device)
+            decoded_grid = vae.decoder(lat_grid, pos_grid)
+
+        dsize = decoded_grid.shape[-data_dim:]
+
+        decoded_grid = np.reshape(
+            np.array(decoded_grid.cpu()),
+            (pos_dims, number_of_samples, *dsize),
         )
-        class_reps_poses = class_reps_poses[class_reps_x_indx,:]
-        pose_disentanglement_plot(
-            class_reps_x,
-            class_reps_poses,
-            vae,
-            data_dim,
-            device,
-            label=i,
-            mode="trn",
+        grid_for_napari = create_grid_for_plotting(
+            pos_dims, number_of_samples, dsize, padding
         )
+        grid_for_napari = fill_grid_for_plottting(
+            pos_dims,
+            number_of_samples,
+            grid_for_napari,
+            dsize,
+            decoded_grid,
+            padding,
+        )
+
+        if data_dim == 3:
+            save_mrc_file(f"pose_interpolate_{mode}_{i}.mrc", grid_for_napari)
+        elif data_dim == 2:
+            save_imshow_png(f"pose_interpolate_{mode}_{i}.png", grid_for_napari
+            )
 
 
 def pose_disentanglement_plot(
