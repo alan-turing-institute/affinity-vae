@@ -132,7 +132,7 @@ class AffinityConfig(BaseModel):
     vis_pos: bool = Field(False, description="Visualise pose")
     vis_pose_class: str = Field(
         None, description="Visualise pose per class interpolation"
-    )    
+    )
     vis_z_n_int: str = Field(
         "0,10", description="Visualise latent space interpolation "
     )

@@ -64,7 +64,7 @@ conda activate affinity_env
 conda install --yes python=3.10
 conda install --yes numpy
 conda install --yes requests
-conda install --yes -c anaconda pandas 
+conda install --yes -c anaconda pandas
 conda install --yes -c anaconda scikit-image
 conda install --yes -c anaconda scikit-learn
 conda install --yes -c anaconda scipy
@@ -74,8 +74,14 @@ conda install --yes -c conda-forge altair
 conda install --yes -c conda-forge umap-learn
 conda install --yes -c conda-forge matplotlib
 conda install --yes -c anaconda click
-conda install --yes pytorch torchvision pytorch-cuda=11.6 -c pytorch -c nvidia
-pip install pydantic 
+
+If you have shortage of space, it is always a good idea to run `conda clean --all` before you proceed from here as pytorch packages require space to download
+
+Regarding installation of pytorch, please follow the latest pytorch installation recommendation provided online as using older versions can cause conflict between packages that conda would not be able to resolve easily.
+The current version requires a cuda=11.8
+
+conda install pytorch torchvision  pytorch-cuda=11.8 -c pytorch -c nvidia
+pip install pydantic
 ```
 
 if the follwoing error occurs:
@@ -191,7 +197,7 @@ Options:
                                   interpolation figure would be created for
                                   each class).
   -vpsc, --vis_z_n_int TEXT       Number of Latent interpolation classes to to be printed, number of interpolation steps in each  plot.
-                                  Example: 1,10. 1 plot with 10 interpolation steps between two classes.  
+                                  Example: 1,10. 1 plot with 10 interpolation steps between two classes.
                                   your deliminator should be commas and no spaces.
   -vc, --vis_cyc                  Visualise cyclical parameters (once per
                                   run).

@@ -616,7 +616,7 @@ def train(
                 vae,
                 device,
                 data_dim,
-                config.VIS_Z_N_INT,
+                settings.VIS_Z_N_INT,
                 poses=p_train,
                 mode="vld",
             )
