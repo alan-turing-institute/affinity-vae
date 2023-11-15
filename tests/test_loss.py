@@ -5,8 +5,10 @@ import numpy as np
 import pandas as pd
 import torch
 
+from avae.decoders.decoders import Decoder
+from avae.encoders.encoders import Encoder
 from avae.loss import AVAELoss
-from avae.model import AffinityVAE as avae
+from avae.models import AffinityVAE as avae
 from avae.utils_learning import set_device
 from tests import testdata_mrc
 
@@ -31,13 +33,24 @@ class LossTest(unittest.TestCase):
             lookup_aff=self.affinity,
             recon_fn="MSE",
         )
-        self.vae = avae(
+        self.encoder_3d = Encoder(
+            capacity=8,
+            depth=4,
+            input_size=(64, 64, 64),
+            latent_dims=16,
+            pose_dims=3,
+            bnorm=True,
+        )
+
+        self.decoder_3d = Decoder(
             capacity=8,
             depth=4,
             input_size=(64, 64, 64),
             latent_dims=16,
             pose_dims=3,
         )
+
+        self.vae = avae(self.encoder_3d, self.decoder_3d)
         self.device = set_device(True)
 
     def tearDown(self):
