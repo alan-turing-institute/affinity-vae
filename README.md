@@ -75,7 +75,7 @@ conda install -c conda-forge umap-learn
 conda install -c conda-forge matplotlib
 conda install -c anaconda click
 conda install pytorch torchvision pytorch-cuda=11.6 -c pytorch -c nvidia
-pip install pydantic 
+pip install pydantic
 ```
 
 if the follwoing error occurs:
