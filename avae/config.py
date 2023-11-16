@@ -131,8 +131,12 @@ class AffinityConfig(BaseModel):
     vis_los: bool = Field(False, description="Visualise loss")
     vis_pos: bool = Field(False, description="Visualise pose")
     vis_pose_class: str = Field(
-        None, description="Visualise pose classification"
+        None, description="Visualise pose per class interpolation"
     )
+    vis_z_n_int: str = Field(
+        "0,10", description="Visualise latent space interpolation "
+    )
+
     vis_rec: bool = Field(False, description="Visualise reconstruction")
     vis_sim: bool = Field(False, description="Visualise similarity")
     filters: list[int] = Field(
@@ -343,3 +347,4 @@ def setup_visualisation_config(data):
         settings.FREQ_SIM = data["freq_sim"]
 
     settings.VIS_POSE_CLASS = data["vis_pose_class"]
+    settings.VIS_Z_N_INT = data["vis_z_n_int"]
