@@ -8,6 +8,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from avae.decoders.decoders import Decoder, DecoderA, DecoderB
 from avae.encoders.encoders import Encoder, EncoderA, EncoderB
+from avae.decoders.differentiable import GaussianSplatDecoder
 
 from . import settings, vis
 from .cyc_annealing import cyc_annealing
@@ -175,6 +176,9 @@ def train(
         decoder = Decoder(
             dshape, channels, depth, lat_dims, pose_dims, filters, bnorm
         )
+    elif model == "differentiable": 
+        encoder = EncoderA(dshape, channels, depth, lat_dims, pose_dims)
+        decoder = GaussianSplatDecoder(dshape, n_splats=1024, latent_dims=16)        
     else:
         raise ValueError("Invalid model type", model, "must be a or b or u")
 
@@ -613,7 +617,6 @@ def train(
                 x_train, p_train, vae, data_dim, device
             )
 
-        if pose and settings.VIS_POSE_CLASS:
             vis.pose_class_disentanglement_plot(
                 x_train,
                 y_train,
