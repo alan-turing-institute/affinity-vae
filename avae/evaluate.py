@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from . import config, vis
+from . import settings, vis
 from .data import load_data
 from .utils import accuracy
 from .utils_learning import add_meta, pass_batch, set_device
@@ -163,26 +163,26 @@ def evaluate(
     else:
         classes_list = []
     # visualise reconstructions - last batch
-    if config.VIS_REC:
+    if settings.VIS_REC:
         vis.recon_plot(x, x_hat, y_test, data_dim, mode="evl")
 
     # visualise latent disentanglement
-    if config.VIS_DIS:
+    if settings.VIS_DIS:
         vis.latent_disentamglement_plot(
             x_test, vae, device, data_dim, poses=p_test, mode="_eval"
         )
 
     # visualise pose disentanglement
-    if pose_dims != 0 and config.VIS_POS:
+    if pose_dims != 0 and settings.VIS_POS:
         vis.pose_disentanglement_plot(
             x_test, p_test, vae, data_dim, device, mode="_eval"
         )
 
-    if pose_dims != 0 and config.VIS_POSE_CLASS:
+    if pose_dims != 0 and settings.VIS_POSE_CLASS:
         vis.pose_class_disentanglement_plot(
             x_test,
             y_test,
-            config.VIS_POSE_CLASS,
+            settings.VIS_POSE_CLASS,
             p_test,
             vae,
             data_dim,
@@ -190,7 +190,7 @@ def evaluate(
             mode="_eval",
         )
     # visualise interpolations
-    if config.VIS_INT:
+    if settings.VIS_INT:
         vis.interpolations_plot(
             x_test,
             np.ones(len(x_test)),
@@ -202,7 +202,7 @@ def evaluate(
         )
 
     # visualise embeddings
-    if config.VIS_EMB:
+    if settings.VIS_EMB:
         vis.latent_embed_plot_umap(
             x_test, np.array(y_test), classes_list, "_eval"
         )
@@ -210,7 +210,7 @@ def evaluate(
             x_test, np.array(y_test), classes_list, "_eval"
         )
 
-    if config.VIS_SIM:
+    if settings.VIS_SIM:
         vis.latent_space_similarity(
             x_test, np.array(y_test), mode="_eval", classes_order=classes_list
         )
@@ -222,14 +222,14 @@ def evaluate(
     ].to_numpy()
     latents_training_id = meta_df[meta_df["mode"] == "trn"]["id"]
 
-    if config.VIS_DYN:
+    if settings.VIS_DYN:
         # merge img and rec into one image for display in altair
         meta_df["image"] = meta_df["image"].apply(vis.merge)
         vis.dyn_latentembed_plot(meta_df, 0, embedding="umap", mode="_eval")
         vis.dyn_latentembed_plot(meta_df, 0, embedding="tsne", mode="_eval")
 
     # visualise embeddings
-    if config.VIS_EMB:
+    if settings.VIS_EMB:
         vis.latent_embed_plot_umap(
             np.concatenate([x_test, latents_training]),
             np.concatenate([np.array(y_test), np.array(latents_training_id)]),

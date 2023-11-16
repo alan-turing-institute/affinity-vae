@@ -6,7 +6,7 @@ import unittest
 
 import torch
 
-from avae import config
+from avae import config, settings
 from run import run_pipeline
 from tests import testdata_mrc, testdata_npy
 
@@ -22,78 +22,49 @@ class TrainEvalTest(unittest.TestCase):
         self.testdata_mrc = os.path.dirname(testdata_mrc.__file__)
         self.testdata_npy = os.path.dirname(testdata_npy.__file__)
 
-        self.data = {
+        self.data_params = {
             "datapath": self.testdata_mrc,
             "datatype": "mrc",
-            "limit": None,
             "split": 10,
             "batch": 25,
             "no_val_drop": True,
             "affinity": os.path.join(self.testdata_mrc, "affinity_fsc_10.csv"),
             "classes": os.path.join(self.testdata_mrc, "classes.csv"),
-            "collect_meta": True,
+            "dynamic": True,
             "epochs": 5,
             "channels": 3,
             "depth": 4,
             "latent_dims": 8,
             "pose_dims": 3,
             "learning": 0.03,
-            "beta_load": None,
             "beta_min": 0,
-            "beta_max": 1,
             "beta": 1,
-            "beta_cycle": "flat",
-            "beta_ratio": None,
+            "beta": 1,
+            "beta_cycle": 1,
             "cyc_method_beta": "flat",
-            "gamma_load": None,
             "gamma_min": 0,
-            "gamma_max": 1,
-            "gamma_cycle": None,
-            "gamma_ratio": None,
+            "gamma": 1,
             "gamma": 1,
             "cyc_method_gamma": "flat",
             "loss_fn": "MSE",
-            "use_gpu": False,
-            "restart": False,
-            "state": None,
-            "gpu": None,
-            "meta": None,
             "gaussian_blur": True,
             "normalise": True,
             "shift_min": True,
             "rescale": 32,
             "tensorboard": True,
             "classifier": "NN",
-            "new_out": False,
             "opt_method": "adam",
+            "freq_all": 5,
+            "vis_all": True,
         }
 
-        config.FREQ_ACC = 5
-        config.FREQ_REC = 5
-        config.FREQ_EMB = 5
-        config.FREQ_INT = 5
-        config.FREQ_DIS = 5
-        config.FREQ_POS = 5
-        config.FREQ_EVAL = 5
-        config.FREQ_STA = 5
-        config.FREQ_SIM = 5
+        self.data = config.load_config_params(local_vars=self.data_params)
 
-        config.VIS_CYC = True
-        config.VIS_LOS = True
-        config.VIS_ACC = True
-        config.VIS_REC = True
-        config.VIS_EMB = True
-        config.VIS_INT = True
-        config.VIS_DIS = True
-        config.VIS_POS = True
-        config.VIS_HIS = True
-        config.VIS_AFF = True
-        config.VIS_SIM = True
-        config.VIS_DYN = True
+        config.setup_visualisation_config(self.data)
 
     def test_model_a_mrc(self):
         self.data["model"] = "a"
-        config.VIS_POSE_CLASS = "1b23,1dkg"
+        settings.VIS_POSE_CLASS = "1b23,1dkg"
 
         (
             n_dir_train,
@@ -116,7 +87,7 @@ class TrainEvalTest(unittest.TestCase):
 
     def test_model_b_mrc(self):
         self.data["model"] = "b"
-        config.VIS_POSE_CLASS = "1b23,1dkg"
+        settings.VIS_POSE_CLASS = "1b23,1dkg"
 
         (
             n_dir_train,
@@ -140,7 +111,7 @@ class TrainEvalTest(unittest.TestCase):
         self.data["model"] = "a"
         self.data["datatype"] = "npy"
         self.data["datapath"] = self.testdata_npy
-        config.VIS_POSE_CLASS = "2,5"
+        settings.VIS_POSE_CLASS = "2,5"
 
         self.data["affinity"] = os.path.join(
             self.testdata_npy, "affinity_an.csv"
@@ -168,7 +139,7 @@ class TrainEvalTest(unittest.TestCase):
         self.data["model"] = "b"
         self.data["datatype"] = "npy"
         self.data["datapath"] = self.testdata_npy
-        config.VIS_POSE_CLASS = "2,5"
+        settings.VIS_POSE_CLASS = "2,5"
 
         self.data["affinity"] = os.path.join(
             self.testdata_npy, "affinity_an.csv"

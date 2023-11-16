@@ -39,6 +39,7 @@ dependencies = [
     "torch",
     "torchvision",
     "umap-learn",
+    "pydantic"
 ]
 
 [project.readme]

@@ -38,7 +38,14 @@ is:
 python -m pip install -e ."[test]"
 ```
 
-> Note: This is the preferred option for running on Turing macOS laptops.
+run tests locally from this same working directory as installation (root of this
+repository):
+
+```
+python -m pytest -s -W ignore
+```
+
+> Note: This is the preferred option for running on macOS laptops.
 
 > Warning: M1 macOS can not do
 > [pytorch paralelisation](https://github.com/pytorch/pytorch/issues/70344). A
@@ -66,9 +73,12 @@ conda install -c anaconda pillow
 conda install -c conda-forge mrcfile
 conda install -c conda-forge altair
 conda install -c conda-forge umap-learn
+conda install -c conda-forge tensorboard
 conda install -c conda-forge matplotlib
 conda install -c anaconda click
 conda install pytorch torchvision pytorch-cuda=11.6 -c pytorch -c nvidia
+pip install pyyaml
+pip install pydantic
 ```
 
 if the follwoing error occurs:

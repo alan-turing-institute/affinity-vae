@@ -1,12 +1,12 @@
 #### Data parameters
 
-datapath: data/shrec21_full_dataset/subtomo_files
-affinity: data/shrec21_full_dataset/subtomo_files/affinity.csv
-classes: data/shrec21_full_dataset/subtomo_files/classes.csv
-state : /your_path_to_saved_state/state.pt
-restart: True
+datapath: tests/testdata_npy
+affinity: tests/testdata_npy/affinity_an.csv
+classes: tests/testdata_npy/classes.csv
+restart: False
 limit: 1000
 split: 20
+datatype: npy
 
 #### Data processing parameters
 shift_mean: False
@@ -61,7 +61,7 @@ vis_emb:  false  # latent embeddings on/off (frequency controlled)
 vis_int:  false  # latent interpolations on/off (frequency controlled)
 vis_dis:  false  # latent disentanglement on/off (frequency controlled)
 vis_pos:  false  # pose disentanglement on/off (frequency controlled)
-vis_pose_class: false # comma separated string eg. 1,2
+vis_pose_class: 1,2 # comma separated string eg. 1,2
 vis_cyc:  false  # beta for cyclic anealing on/off (once per run)
 vis_aff: false   # affinity matrix on/off (once per run)
 vis_his:  false  # class distribution histogram on/off (once per run)

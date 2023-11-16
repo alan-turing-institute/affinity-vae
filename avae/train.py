@@ -7,7 +7,7 @@ import pandas as pd
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
-from . import config, vis
+from . import settings, vis
 from .cyc_annealing import cyc_annealing
 from .data import load_data
 from .loss import AVAELoss
@@ -133,12 +133,6 @@ def train(
         The method to use on the latent space classification. Can be neural network (NN), k nearest neighbourgs (KNN) or logistic regression (LR).
     """
     torch.manual_seed(42)
-
-    # This time stamp is  commented out because it doesnt work the same on all devices
-    # timestamp = str(datetime.datetime.now().strftime("%Y-%m-%d_T%H:%M:%S.%f"))
-
-    curr_dt = datetime.datetime.now()
-    timestamp = str(int(round(curr_dt.timestamp())))
 
     # ############################### DATA ###############################
     trains, vals, tests, lookup, data_dim = load_data(
@@ -282,7 +276,7 @@ def train(
                 f"The length of the gamma array loaded from file is {len(gamma_arr)} but the number of Epochs specified in the input are {epochs}.\n"
                 "These two values should be the same."
             )
-    if config.VIS_CYC:
+    if settings.VIS_CYC:
         vis.plot_cyc_variable(beta_arr, "beta")
         vis.plot_cyc_variable(gamma_arr, "gamma")
 
@@ -439,7 +433,7 @@ def train(
                 writer.add_scalar(loss_name, v_history[-1][i], epoch)
 
         # ########################## TEST #####################################
-        if (epoch + 1) % config.FREQ_EVAL == 0:
+        if (epoch + 1) % settings.FREQ_EVAL == 0:
             for b, batch in enumerate(tests):  # tests empty if no 'test' dir
                 (t, t_hat, t_mu, t_logvar, tlat, tlat_pose, _,) = pass_batch(
                     device, vae, batch, b, len(tests), epoch, epochs
@@ -467,7 +461,7 @@ def train(
         # ########################## VISUALISE ################################
 
         # visualise accuracy: confusion and F1 scores
-        if config.VIS_ACC and (epoch + 1) % config.FREQ_ACC == 0:
+        if settings.VIS_ACC and (epoch + 1) % settings.FREQ_ACC == 0:
             train_acc, val_acc, _, ypred_train, ypred_val = accuracy(
                 x_train, y_train, x_val, y_val, classifier=classifier
             )
@@ -497,7 +491,7 @@ def train(
             )
 
         # visualise loss
-        if config.VIS_LOS and epoch > 0:
+        if settings.VIS_LOS and epoch > 0:
             p = [
                 len(trains),
                 depth,
@@ -517,7 +511,7 @@ def train(
             )
 
         # visualise reconstructions - last batch
-        if config.VIS_REC and (epoch + 1) % config.FREQ_REC == 0:
+        if settings.VIS_REC and (epoch + 1) % settings.FREQ_REC == 0:
             vis.recon_plot(
                 x,
                 x_hat,
@@ -538,7 +532,7 @@ def train(
             )
 
         # visualise mean and logvar similarity matrix
-        if config.VIS_SIM and (epoch + 1) % config.FREQ_SIM == 0:
+        if settings.VIS_SIM and (epoch + 1) % settings.FREQ_SIM == 0:
             if classes is not None:
                 classes_list = pd.read_csv(classes).columns.tolist()
             else:
@@ -560,7 +554,7 @@ def train(
             )
 
         # visualise embeddings
-        if config.VIS_EMB and (epoch + 1) % config.FREQ_EMB == 0:
+        if settings.VIS_EMB and (epoch + 1) % settings.FREQ_EMB == 0:
             if len(tests) != 0:
                 xs = np.r_[x_train, x_val, x_test]
                 ys = np.r_[
@@ -588,14 +582,14 @@ def train(
                     ps, ys, epoch=epoch, writer=writer, mode="pose"
                 )
 
-            if config.VIS_DYN:
+            if settings.VIS_DYN:
                 # merge img and rec into one image for display in altair
                 meta_df["image"] = meta_df["image"].apply(vis.merge)
                 vis.dyn_latentembed_plot(meta_df, epoch, embedding="umap")
                 vis.dyn_latentembed_plot(meta_df, epoch, embedding="tsne")
 
         # visualise latent disentanglement
-        if config.VIS_DIS and (epoch + 1) % config.FREQ_DIS == 0:
+        if settings.VIS_DIS and (epoch + 1) % settings.FREQ_DIS == 0:
             if not pose:
                 p_train = None
             vis.latent_disentamglement_plot(
@@ -603,16 +597,16 @@ def train(
             )
 
         # visualise pose disentanglement
-        if pose and config.VIS_POS and (epoch + 1) % config.FREQ_POS == 0:
+        if pose and settings.VIS_POS and (epoch + 1) % settings.FREQ_POS == 0:
             vis.pose_disentanglement_plot(
                 x_train, p_train, vae, data_dim, device
             )
 
-        if pose and config.VIS_POSE_CLASS:
+        if pose and settings.VIS_POSE_CLASS:
             vis.pose_class_disentanglement_plot(
                 x_train,
                 y_train,
-                config.VIS_POSE_CLASS,
+                settings.VIS_POSE_CLASS,
                 p_train,
                 vae,
                 data_dim,
@@ -620,7 +614,7 @@ def train(
             )
 
         # visualise interpolations
-        if config.VIS_INT and (epoch + 1) % config.FREQ_INT == 0:
+        if settings.VIS_INT and (epoch + 1) % settings.FREQ_INT == 0:
             if len(tests) != 0:
                 xs = np.r_[x_train, x_val, x_test]
                 ys = np.r_[y_train, y_val, np.ones(len(x_test))]
@@ -646,12 +640,12 @@ def train(
             )
 
         # ########################## SAVE STATE ###############################
-        if (epoch + 1) % config.FREQ_STA == 0:
+        if (epoch + 1) % settings.FREQ_STA == 0:
             if not os.path.exists("states"):
                 os.mkdir("states")
             mname = (
                 "avae_"
-                + str(timestamp)
+                + str(settings.date_time_run)
                 + "_E"
                 + str(epoch)
                 + "_"
@@ -682,7 +676,7 @@ def train(
 
             filename = (
                 "meta_"
-                + str(timestamp)
+                + str(settings.date_time_run)
                 + "_E"
                 + str(epoch)
                 + "_"
