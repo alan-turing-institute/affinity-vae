@@ -191,8 +191,9 @@ def save_imshow_png(
 
     fig, _ = plt.subplots(figsize=(10, 10))
     plt.imshow(array, cmap=cmap, vmin=min, vmax=max)  # channels last
+    plt.axis("off")
 
-    plt.savefig("plots/" + fname)
+    plt.savefig("plots/" + fname, bbox_inches="tight", pad_inches=0)
 
     if writer:
         writer.add_figure(figname, fig, epoch)
