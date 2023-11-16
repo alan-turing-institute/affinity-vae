@@ -21,7 +21,9 @@ channels:  64
 filters: [8, 16, 32, 64]
 latent_dims:  8
 pose_dims: 1
-bnorm: true
+bnorm_encoder: true
+bnorm_decoder: true
+
 model: a
 
 #### Training parameters

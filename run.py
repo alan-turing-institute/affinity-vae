@@ -156,11 +156,20 @@ from avae.train import train
     "a standard beta-VAE.",
 )
 @click.option(
-    "--bnorm",
-    "-bn",
+    "--bnorm_encoder",
+    "-bn_enc",
     type=bool,
+    is_flag=True,
     default=None,
-    help="Batch normalisation is on if True.",
+    help="Batch normalisation in encoder is on if True.",
+)
+@click.option(
+    "--bnorm_decoder",
+    "-bn_dec",
+    type=bool,
+    is_flag=True,
+    default=None,
+    help="Batch normalisation in encoder is on if True.",
 )
 @click.option(
     "--klreduction",
@@ -544,7 +553,8 @@ def run(
     filters,
     latent_dims,
     pose_dims,
-    bnorm,
+    bnorm_encoder,
+    bnorm_decoder,
     klreduction,
     beta,
     beta_load,
@@ -664,7 +674,8 @@ def run_pipeline(data):
             filters=data["filters"],
             lat_dims=data["latent_dims"],
             pose_dims=data["pose_dims"],
-            bnorm=data["bnorm"],
+            bnorm_encoder=data["bnorm_encoder"],
+            bnorm_decoder=data["bnorm_decoder"],
             klred=data["klreduction"],
             learning=data["learning"],
             beta_load=data["beta_load"],

@@ -35,7 +35,8 @@ def train(
     filters,
     lat_dims,
     pose_dims,
-    bnorm,
+    bnorm_encoder,
+    bnorm_decoder,
     klred,
     learning,
     beta_load,
@@ -135,6 +136,10 @@ def train(
         If True, log metrics and figures using tensorboard.
     classifier: str
         The method to use on the latent space classification. Can be neural network (NN), k nearest neighbourgs (KNN) or logistic regression (LR).
+    bnorm_encoder: bool
+        If True, batch normalisation is applied to the encoder.
+    bnrom_decoder: bool
+        If True, batch normalisation is applied to the decoder.
     """
     torch.manual_seed(42)
 
@@ -163,17 +168,33 @@ def train(
         filters = np.array(filters.replace(" ", "").split(","), dtype=np.int64)
 
     if model == "a":
-        encoder = EncoderA(dshape, channels, depth, lat_dims, pose_dims)
-        decoder = DecoderA(dshape, channels, depth, lat_dims, pose_dims)
+        encoder = EncoderA(
+            dshape, channels, depth, lat_dims, pose_dims, bnorm=bnorm_encoder
+        )
+        decoder = DecoderA(
+            dshape, channels, depth, lat_dims, pose_dims, bnorm=bnorm_decoder
+        )
     elif model == "b":
         encoder = EncoderB(dshape, channels, depth, lat_dims, pose_dims)
         decoder = DecoderB(dshape, channels, depth, lat_dims, pose_dims)
     elif model == "u":
         encoder = Encoder(
-            dshape, channels, depth, lat_dims, pose_dims, filters, bnorm
+            dshape,
+            channels,
+            depth,
+            lat_dims,
+            pose_dims,
+            filters,
+            bnorm=bnorm_encoder,
         )
         decoder = Decoder(
-            dshape, channels, depth, lat_dims, pose_dims, filters, bnorm
+            dshape,
+            channels,
+            depth,
+            lat_dims,
+            pose_dims,
+            filters,
+            bnorm=bnorm_decoder,
         )
     else:
         raise ValueError("Invalid model type", model, "must be a or b or u")
