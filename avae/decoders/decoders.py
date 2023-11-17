@@ -213,7 +213,7 @@ class DecoderA(AbstractDecoder):
                         )
                     )
                 if self.bnorm:
-                    self.norm_dec.append(BNORM(filters[d - 1]))
+                    self.decoder.append(BNORM(filters[d - 1]))
                 self.decoder.append(nn.ReLU(True))
 
         self.decoder.append(
