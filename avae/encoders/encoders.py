@@ -163,9 +163,12 @@ class Encoder(AbstractEncoder):
 
 
 class EncoderA(AbstractEncoder):
-    def __init__(self, input_size, capacity, depth, latent_dims, pose_dims):
+    def __init__(
+        self, input_size, capacity, depth, latent_dims, pose_dims, bnorm
+    ):
         super(EncoderA, self).__init__()
         self.pose = not (pose_dims == 0)
+        self.bnorm = bnorm
 
         assert all(
             [int(x) == x for x in np.array(input_size) / (2**depth)]
@@ -185,7 +188,7 @@ class EncoderA(AbstractEncoder):
 
         ndim = len(unflat_shape[1:])
 
-        conv, _, _ = set_layer_dim(ndim)
+        conv, _, BNORM = set_layer_dim(ndim)
 
         self.encoder = nn.Sequential()
 
@@ -200,6 +203,8 @@ class EncoderA(AbstractEncoder):
                     padding=1,
                 )
             )
+            if self.bnorm:
+                self.encoder.append(BNORM(filters[d]))
             self.encoder.append(nn.ReLU(True))
             input_channel = filters[d]
 

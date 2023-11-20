@@ -158,9 +158,12 @@ class Decoder(AbstractDecoder):
 
 
 class DecoderA(AbstractDecoder):
-    def __init__(self, input_size, capacity, depth, latent_dims, pose_dims):
+    def __init__(
+        self, input_size, capacity, depth, latent_dims, pose_dims, bnorm
+    ):
         super(DecoderA, self).__init__()
         self.pose = not (pose_dims == 0)
+        self.bnorm = bnorm
 
         assert all(
             [int(x) == x for x in np.array(input_size) / (2**depth)]
@@ -180,7 +183,7 @@ class DecoderA(AbstractDecoder):
 
         ndim = len(unflat_shape[1:])
 
-        _, conv_T, _ = set_layer_dim(ndim)
+        _, conv_T, BNORM = set_layer_dim(ndim)
 
         self.decoder = nn.Sequential()
 
@@ -209,6 +212,8 @@ class DecoderA(AbstractDecoder):
                             padding=0,
                         )
                     )
+                if self.bnorm:
+                    self.decoder.append(BNORM(filters[d - 1]))
                 self.decoder.append(nn.ReLU(True))
 
         self.decoder.append(

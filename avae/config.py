@@ -143,7 +143,12 @@ class AffinityConfig(BaseModel):
         None,
         description="Comma-separated list of filters for the network. Either provide filters, or capacity and depth.",
     )
-    bnorm: bool = Field(False, description="Use batch normalisation")
+    bnorm_encoder: bool = Field(
+        False, description="Use batch normalisation in encoder"
+    )
+    bnorm_decoder: bool = Field(
+        False, description="Use batch normalisation in decoder"
+    )
     klreduction: str = Field('mean', description="KL reduction method")
 
 
