@@ -1199,17 +1199,15 @@ def latent_4enc_interpolate_plot(
 
         draw_four = random.sample(range(len(classes)), k=4)
 
-        for i in draw_four:
-            img = x[0][random.sample(class_indecies[i], k=1)[0]]
+        for idx in draw_four:
+            img = x[0][random.sample(class_indecies[idx], k=1)[0]]
 
             with torch.no_grad():
                 _, _, _, z, _ = vae(img[np.newaxis, ...].to(device=device))
             enc.append(z.cpu())
 
-        fig, axes = plt.subplots(
-            num_steps, num_steps, figsize=(num_steps * 2, num_steps * 2)
-        )
 
+        
         for i in range(num_steps):
             for j in range(num_steps):
                 t1, t2 = i / (num_steps - 1), j / (num_steps - 1)
@@ -1247,11 +1245,11 @@ def latent_4enc_interpolate_plot(
 
         if data_dim == 3:
             save_mrc_file(
-                f"latent_interpolate_{mode}_{num_fig}.mrc", grid_for_napari
+                f"latent_interpolate_{mode}_{num_fig}_{'_'.join(str([classes[k] for k in draw_four]))}.mrc", grid_for_napari
             )
         elif data_dim == 2:
             save_imshow_png(
-                f"latent_interpolate_{mode}_{num_fig}.png", grid_for_napari
+                f"latent_interpolate_{mode}_{num_fig}_{'_'.join(str([classes[k] for k in draw_four]))}.png", grid_for_napari
             )
 
 

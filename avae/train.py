@@ -178,9 +178,9 @@ def train(
         )
     elif model == "differentiable": 
         encoder = EncoderA(dshape, channels, depth, lat_dims, pose_dims)
-        decoder = GaussianSplatDecoder(dshape, n_splats=1024, latent_dims=16)        
+        decoder = GaussianSplatDecoder(dshape, n_splats=1024, latent_dims=16, pose_dims=pose_dims)        
     else:
-        raise ValueError("Invalid model type", model, "must be a or b or u")
+        raise ValueError("Invalid model type", model, "must be one of : a, b, u or differentiable")
 
     vae = AffinityVAE(encoder, decoder)
 

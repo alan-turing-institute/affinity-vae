@@ -164,6 +164,7 @@ class GaussianSplatDecoder(AbstractDecoder):
         splat_sigma_range: Tuple[float, float] = (0.02, 0.1),
         default_axis: CartesianAxes = CartesianAxes.Z,
         device: torch.device = torch.device("cpu"),
+        pose_dims: int,
     ):
         super().__init__()
 
@@ -211,6 +212,15 @@ class GaussianSplatDecoder(AbstractDecoder):
                 conv(1, output_channels, 7, padding="same"),
             )
 
+        
+        """Decode the splats to retrieve the coordinates, weights and sigmas."""
+        if pose_dims not in (1, 4):
+            raise ValueError(
+                "Pose needs to be either a single angle rotation about the "
+                "`default_axis` or a full angle-axis representation in 3D. "
+            )
+        self.pose = not (pose_dims == 0)
+
     def configure_renderer(
         self,
         shape: Tuple[int],
@@ -235,15 +245,10 @@ class GaussianSplatDecoder(AbstractDecoder):
         )
         self._splat_sigma_range = splat_sigma_range
 
+
     def decode_splats(
         self, z: torch.Tensor, pose: torch.Tensor
     ) -> Tuple[torch.Tensor]:
-        """Decode the splats to retrieve the coordinates, weights and sigmas."""
-        if pose.shape[-1] not in (1, 4):
-            raise ValueError(
-                "Pose needs to be either a single angle rotation about the "
-                "`default_axis` or a full angle-axis representation in 3D. "
-            )
 
         # predict the centroids for the splats
 
