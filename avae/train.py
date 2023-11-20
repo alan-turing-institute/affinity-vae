@@ -7,8 +7,8 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 
 from avae.decoders.decoders import Decoder, DecoderA, DecoderB
-from avae.encoders.encoders import Encoder, EncoderA, EncoderB
 from avae.decoders.differentiable import GaussianSplatDecoder
+from avae.encoders.encoders import Encoder, EncoderA, EncoderB
 
 from . import settings, vis
 from .cyc_annealing import cyc_annealing
@@ -38,6 +38,7 @@ def train(
     pose_dims,
     bnorm_encoder,
     bnorm_decoder,
+    n_splats,
     klred,
     learning,
     beta_load,
@@ -197,11 +198,22 @@ def train(
             filters,
             bnorm=bnorm_decoder,
         )
-    elif model == "differentiable": 
-        encoder = EncoderA(dshape, channels, depth, lat_dims, pose_dims)
-        decoder = GaussianSplatDecoder(dshape, n_splats=1024, latent_dims=16, pose_dims=pose_dims)        
+    elif model == "gsd":
+        encoder = EncoderA(
+            dshape, channels, depth, lat_dims, pose_dims, bnorm=bnorm_encoder
+        )
+        decoder = GaussianSplatDecoder(
+            dshape,
+            n_splats=n_splats,
+            latent_dims=lat_dims,
+            pose_dims=pose_dims,
+        )
     else:
-        raise ValueError("Invalid model type", model, "must be one of : a, b, u or differentiable")
+        raise ValueError(
+            "Invalid model type",
+            model,
+            "must be one of : a, b, u or gsd",
+        )
 
     vae = AffinityVAE(encoder, decoder)
 

@@ -1,3 +1,5 @@
+from typing import Optional, Tuple
+
 import torch
 
 from avae.decoders.base import AbstractDecoder
@@ -7,8 +9,6 @@ from avae.decoders.spatial import (
     axis_angle_to_quaternion,
     quaternion_to_rotation_matrix,
 )
-
-from typing import Optional, Tuple
 
 
 class GaussianSplatRenderer(AbstractDecoder):
@@ -43,7 +43,6 @@ class GaussianSplatRenderer(AbstractDecoder):
             .unsqueeze(0)
             .to(device)
         )
-
 
     def forward(
         self,
@@ -212,7 +211,6 @@ class GaussianSplatDecoder(AbstractDecoder):
                 conv(1, output_channels, 7, padding="same"),
             )
 
-        
         """Decode the splats to retrieve the coordinates, weights and sigmas."""
         if pose_dims not in (1, 4):
             raise ValueError(
@@ -244,7 +242,6 @@ class GaussianSplatDecoder(AbstractDecoder):
             device=device,
         )
         self._splat_sigma_range = splat_sigma_range
-
 
     def decode_splats(
         self, z: torch.Tensor, pose: torch.Tensor
@@ -284,7 +281,7 @@ class GaussianSplatDecoder(AbstractDecoder):
         )
 
         # use only the required spatial dimensions (batch, ndim, samples)
-        #rotated_splats = rotated_splats[:, : self._ndim, :]
+        # rotated_splats = rotated_splats[:, : self._ndim, :]
         return rotated_splats, weights, sigmas
 
     def forward(self, z: torch.Tensor, pose: torch.Tensor) -> torch.Tensor:
