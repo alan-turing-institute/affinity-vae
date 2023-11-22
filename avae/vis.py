@@ -1146,7 +1146,7 @@ def recon_plot(img, rec, label, data_dim, mode="trn", epoch=0, writer=None):
 
 
 def latent_4enc_interpolate_plot(
-    x, vae, device, data_dim, plots_config, poses=None, mode="trn"
+    x, xs, ys, vae, device, data_dim, plots_config, poses=None
 ):
     """Visualise the interpolation of latent space between 4 randomly selected encodings.
     The number of plots and the number of interpolation steps is modifyable.
@@ -1155,6 +1155,10 @@ def latent_4enc_interpolate_plot(
     ----------
     x: torch.Tensor
         A sample batch. we extract 4 random images from this
+    xs: list
+        the list of all latent vectors
+    ys: list
+        the list of all labels for each latent vector in xs
     vae: torch.nn.Module
         Affinity vae model.
     device: torch.device
@@ -1165,8 +1169,6 @@ def latent_4enc_interpolate_plot(
         A list containing the number of plots to be generated and the number of interpolation steps.
     poses: list
         List of pose vectors.
-    mode: str
-        Mode of evaluation (trn: Training, vld: Validation, eval: Evaluation )
     """
     logging.info(
         "################################################################",
@@ -1178,18 +1180,15 @@ def latent_4enc_interpolate_plot(
     enc = []
     decoded_images = []
     dsize = x[0].shape[-data_dim:]
-    classes = list(set(x[1]))
-    class_indecies = []
-    for i in range(len(classes)):
-        class_indecies.append(
-            [j for j, c in enumerate(x[1]) if c == classes[i]]
-        )
+    classes = np.unique(np.asarray(ys))
+    latent_dim = xs.shape[1]
 
     # Number of plots (each have 4 random corners)
     plots_config = plots_config.replace(" ", "").split(",")
 
     # Number of interpolation steps
     num_steps = int(plots_config[1])
+
     if poses is not None:
         pose_mean = np.mean(poses)
 
@@ -1198,41 +1197,46 @@ def latent_4enc_interpolate_plot(
         decoded_images = []
 
         draw_four = random.sample(range(len(classes)), k=4)
+        selected_classes = [classes[index] for index in draw_four]
+        for idx in draw_four:
+            lat = np.take(
+                xs,
+                random.sample(list(np.where(ys == classes[idx])[0]), k=1),
+                axis=0,
+            )
+            enc.append(lat)
 
-        for i in draw_four:
-            img = x[0][random.sample(class_indecies[i], k=1)[0]]
+        enc = np.asarray(enc)
+        alpha_values = torch.linspace(0, 1, num_steps)
+        beta_values = torch.linspace(0, 1, num_steps)
+        interpolation_grid = torch.zeros((num_steps, num_steps, latent_dim))
 
-            with torch.no_grad():
-                _, _, _, z, _ = vae(img[np.newaxis, ...].to(device=device))
-            enc.append(z.cpu())
+        for i, h in enumerate(alpha_values):
+            for j, v in enumerate(beta_values):
 
-        fig, axes = plt.subplots(
-            num_steps, num_steps, figsize=(num_steps * 2, num_steps * 2)
+                # bilinear interpolation in the latent space
+                interpolated_z = (
+                    (1 - h) * (1 - v) * enc[0]
+                    + h * (1 - v) * enc[1]
+                    + (1 - h) * v * enc[2]
+                    + h * v * enc[3]
+                )
+                interpolation_grid[i, j, :] = interpolated_z
+
+        # Decode the interpolated encoding to generate an image
+        with torch.no_grad():
+            decoded_images = vae.decoder(
+                interpolation_grid.view(-1, latent_dim).to(device=device),
+                (
+                    torch.Tensor(num_steps * num_steps, poses[0].shape[0])
+                    + pose_mean
+                ).to(device=device),
+            )
+
+        decoded_images = (
+            decoded_images.view(num_steps, num_steps, *dsize).cpu().numpy()
         )
 
-        for i in range(num_steps):
-            for j in range(num_steps):
-                t1, t2 = i / (num_steps - 1), j / (num_steps - 1)
-
-                # Linear interpolation in latent space
-                interpolated_encoding = (1 - t1) * (
-                    (1 - t2) * enc[0] + t2 * enc[1]
-                ) + t1 * ((1 - t2) * enc[2] + t2 * enc[3])
-
-                # Decode the interpolated encoding to generate an image
-                with torch.no_grad():
-                    decoded_image = vae.decoder(
-                        interpolated_encoding.to(device=device),
-                        (torch.Tensor(1, poses[0].shape[0]) + pose_mean).to(
-                            device=device
-                        ),
-                    )
-
-                decoded_images.append(decoded_image.cpu().squeeze().numpy())
-
-        decoded_images = np.reshape(
-            np.array(decoded_images), (num_steps, num_steps, *dsize)
-        )
         grid_for_napari = create_grid_for_plotting(
             num_steps, num_steps, dsize, padding
         )
@@ -1247,11 +1251,13 @@ def latent_4enc_interpolate_plot(
 
         if data_dim == 3:
             save_mrc_file(
-                f"latent_interpolate_{mode}_{num_fig}.mrc", grid_for_napari
+                f"latent_interpolate_{num_fig}_{'_'.join(selected_classes)}.mrc",
+                grid_for_napari,
             )
         elif data_dim == 2:
             save_imshow_png(
-                f"latent_interpolate_{mode}_{num_fig}.png", grid_for_napari
+                f"latent_interpolate_{num_fig}_{'_'.join(selected_classes)}.png",
+                grid_for_napari,
             )
 
 

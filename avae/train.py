@@ -603,22 +603,13 @@ def train(
 
             vis.latent_4enc_interpolate_plot(
                 batch,
+                xs,
+                ys,
                 vae,
                 device,
                 data_dim,
                 settings.VIS_Z_N_INT,
-                poses=p_train,
-                mode="trn",
-            )
-
-            vis.latent_4enc_interpolate_plot(
-                batch,
-                vae,
-                device,
-                data_dim,
-                settings.VIS_Z_N_INT,
-                poses=p_train,
-                mode="vld",
+                poses=ps,
             )
 
         # visualise pose disentanglement
