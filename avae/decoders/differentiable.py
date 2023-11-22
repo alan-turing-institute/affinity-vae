@@ -86,12 +86,13 @@ class GaussianSplatRenderer(AbstractDecoder):
         # scale the sigma values
         min_sigma, max_sigma = splat_sigma_range
         sigmas = sigmas * (max_sigma - min_sigma) + min_sigma
+        
         # transpose keeping batch intact
         coords_t = torch.swapaxes(self.coords, 1, 2)
 
         splats_t = torch.swapaxes(splats, 1, 2)
-        # calculate D^2 for all combinations of voxel and gaussian
 
+        # calculate D^2 for all combinations of voxel and gaussian
         D_squared = torch.sum(
             coords_t[:, :, None, :] ** 2 + splats_t[:, None, :, :] ** 2,
             axis=-1,
