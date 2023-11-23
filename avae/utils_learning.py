@@ -21,7 +21,7 @@ def set_device(gpu):
 
     """
     device = torch.device(
-        "cuda" if gpu and torch.cuda.is_available() else "cpu"
+        "cuda:0,1" if gpu and torch.cuda.is_available() else "cpu"
     )
     if gpu and device == "cpu":
         logging.warning(
