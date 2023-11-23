@@ -82,10 +82,14 @@ pip install pydantic
 
 **Note**
 
-If you have shortage of space, it is always a good idea to run `conda clean --all` before you proceed from here as pytorch packages require space to download
+If you have shortage of space, it is always a good idea to run
+`conda clean --all` before you proceed from here as pytorch packages require
+space to download
 
-Regarding installation of pytorch, please follow the latest pytorch installation recommendation provided online as using older versions can cause conflict between packages that conda would not be able to resolve easily.
-The current version requires a cuda=11.8
+Regarding installation of pytorch, please follow the latest pytorch installation
+recommendation provided online as using older versions can cause conflict
+between packages that conda would not be able to resolve easily. The current
+version requires a cuda=11.8
 
 if the follwoing error occurs:
 
