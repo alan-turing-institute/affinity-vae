@@ -9,7 +9,7 @@
 
 **Affinity-VAE for disentanglement, clustering and classification of objects in
 multidimensional image data**  
-Mirecka J, Famili M, Kotanska A, Jurashcko N, Costa-Gomes B, Palmer CM,
+Mirecka J, Famili M, Kotanska A, Juraschko N, Costa-Gomes B, Palmer CM,
 Thiyagalingam J, Burnley T, Basham M & Lowe AR  
 [![doi:10.48550/arXiv.2209.04517](https://img.shields.io/badge/doi-10.48550/arXiv.2209.04517-blue)](https://doi.org/10.48550/arXiv.2209.04517)
 
@@ -17,15 +17,16 @@ Thiyagalingam J, Burnley T, Basham M & Lowe AR
 
 ### Installing with pip + virtual environments
 
-> Note: This has been tested in the `refactor` branch.
+> Note: This has been tested in the `develop` branch.
 
 You can install the libraries needed for this package on a
 [fresh virtual environment](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/)
 with the following:
 
 ```
-python3 -m venv env
+python -m venv env
 source env/bin/activate
+python -m pip install --upgrade pip
 python -m pip install -e .
 ```
 
@@ -74,14 +75,15 @@ conda install --yes -c conda-forge altair
 conda install --yes -c conda-forge umap-learn
 conda install --yes -c conda-forge matplotlib
 conda install --yes -c anaconda click
+conda install pytorch torchvision  pytorch-cuda=11.8 -c pytorch -c nvidia
+pip install pyyaml
+pip install pydantic
 
+**Note**
 If you have shortage of space, it is always a good idea to run `conda clean --all` before you proceed from here as pytorch packages require space to download
 
 Regarding installation of pytorch, please follow the latest pytorch installation recommendation provided online as using older versions can cause conflict between packages that conda would not be able to resolve easily.
 The current version requires a cuda=11.8
-
-conda install pytorch torchvision  pytorch-cuda=11.8 -c pytorch -c nvidia
-pip install pydantic
 ```
 
 if the follwoing error occurs:

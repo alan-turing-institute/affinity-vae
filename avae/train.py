@@ -359,21 +359,19 @@ def train(
                 mode="trn",
             )
 
-            logging.info(
-                "Training : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
-                "KLdiv: %f | Affin: %f | Beta: %f | Gamma: %f"
-                % (
-                    epoch + 1,
-                    epochs,
-                    b + 1,
-                    len(trains),
-                    *t_history[-1],
-                    beta_arr[epoch],
-                    gamma_arr[epoch],
-                )
-            )
-
         t_history[-1] /= len(trains)
+
+        logging.info(
+            "Training : Epoch: [%d/%d] | Loss: %f | Recon: %f | "
+            "KLdiv: %f | Affin: %f | Beta: %f | Gamma: %f"
+            % (
+                epoch + 1,
+                epochs,
+                *t_history[-1],
+                beta_arr[epoch],
+                gamma_arr[epoch],
+            )
+        )
 
         # ########################## VAL ######################################
         vae.eval()
@@ -414,22 +412,19 @@ def train(
                 v_logvar,
                 mode="val",
             )
-
-            logging.info(
-                "Validation : Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
-                "KLdiv: %f | Affin: %f | Beta: %f | Gamma: %f"
-                % (
-                    epoch + 1,
-                    epochs,
-                    b + 1,
-                    len(vals),
-                    *v_history[-1],
-                    beta_arr[epoch],
-                    gamma_arr[epoch],
-                )
-            )
-
         v_history[-1] /= len(vals)
+
+        logging.info(
+            "Validation : Epoch: [%d/%d] |Loss: %f | Recon: %f | "
+            "KLdiv: %f | Affin: %f | Beta: %f | Gamma: %f"
+            % (
+                epoch + 1,
+                epochs,
+                *v_history[-1],
+                beta_arr[epoch],
+                gamma_arr[epoch],
+            )
+        )
 
         if writer:
             for i, loss_name in enumerate(
