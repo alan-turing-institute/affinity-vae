@@ -99,6 +99,7 @@ def evaluate(
     checkpoint = torch.load(state)
     vae = checkpoint["model_class_object"]
     vae.load_state_dict(checkpoint["model_state_dict"])
+    vae = torch.nn.DataParallel(vae)
     vae.to(device)
 
     # ########################## EVALUATE ################################

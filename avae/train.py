@@ -218,7 +218,7 @@ def train(
     vae = AffinityVAE(encoder, decoder)
 
     logging.info(vae)
-
+    vae = torch.nn.DataParallel(vae)
     vae.to(device)
 
     if opt_method == "adam":
