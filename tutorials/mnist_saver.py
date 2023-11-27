@@ -85,7 +85,7 @@ class SaverMNIST:
         csv_train_path,
         csv_test_path,
         image_shape=(32, 32),
-        rotation_angle=25,
+        rotation_angle=180,
         data=None,
     ):
 
