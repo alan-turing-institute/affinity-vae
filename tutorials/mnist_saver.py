@@ -150,14 +150,18 @@ class SaverMNIST:
 
 if __name__ == '__main__':
 
-    args = sys.argv
-    if len(args) != 3:
-        print(
-            'Usage: python mnist_saver.py [path/to/mnist.pkl.gz] [output_path]'
-        )
-        sys.exit(1)
-    mnist_path = args[1]
-    output_path = args[2]
+    import argparse
+
+    parser = argparse.ArgumentParser()
+
+    # -db DATABSE -u USERNAME -p PASSWORD -size 20
+    parser.add_argument("--mnist_file", help="Path to mnist.pkl.gz file")
+    parser.add_argument("--output_path", help="Output path to save data")
+
+    args = parser.parse_args()
+
+    mnist_path = args.mnist_file
+    output_path = args.output_path
 
     data_path = os.path.join(output_path, 'mnist_data')
 
