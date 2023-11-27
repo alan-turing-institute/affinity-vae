@@ -310,6 +310,7 @@ def setup_visualisation_config(data):
         settings.VIS_SIM = data["vis_sim"]
         settings.VIS_DYN = data["dynamic"]
 
+    
     if data["freq_all"] is not None:
         settings.FREQ_EVAL = data["freq_all"]
         settings.FREQ_STA = data["freq_all"]
@@ -320,15 +321,15 @@ def setup_visualisation_config(data):
         settings.FREQ_DIS = data["freq_all"]
         settings.FREQ_POS = data["freq_all"]
         settings.FREQ_SIM = data["freq_all"]
-    else:
-        settings.FREQ_EVAL = data["freq_eval"]
-        settings.FREQ_REC = data["freq_rec"]
-        settings.FREQ_EMB = data["freq_emb"]
-        settings.FREQ_INT = data["freq_int"]
-        settings.FREQ_DIS = data["freq_dis"]
-        settings.FREQ_POS = data["freq_pos"]
-        settings.FREQ_ACC = data["freq_acc"]
-        settings.FREQ_STA = data["freq_sta"]
-        settings.FREQ_SIM = data["freq_sim"]
+
+    settings.FREQ_EVAL = data["freq_eval"]
+    settings.FREQ_REC = data["freq_rec"]
+    settings.FREQ_EMB = data["freq_emb"]
+    settings.FREQ_INT = data["freq_int"]
+    settings.FREQ_DIS = data["freq_dis"]
+    settings.FREQ_POS = data["freq_pos"]
+    settings.FREQ_ACC = data["freq_acc"]
+    settings.FREQ_STA = data["freq_sta"]
+    settings.FREQ_SIM = data["freq_sim"]
 
     settings.VIS_POSE_CLASS = data["vis_pose_class"]
