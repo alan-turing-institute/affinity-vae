@@ -1146,7 +1146,7 @@ def recon_plot(img, rec, label, data_dim, mode="trn", epoch=0, writer=None):
 
 
 def latent_4enc_interpolate_plot(
-    x, xs, ys, vae, device, data_dim, plots_config, poses=None
+    dsize, xs, ys, vae, device, data_dim, plots_config, poses=None
 ):
     """Visualise the interpolation of latent space between 4 randomly selected encodings.
     The number of plots and the number of interpolation steps is modifyable.
@@ -1177,9 +1177,6 @@ def latent_4enc_interpolate_plot(
         "Visualising Latent Interpolation between 4 randomly selected encodings ...\n"
     )
     padding = 0
-    enc = []
-    decoded_images = []
-    dsize = x[0].shape[-data_dim:]
     classes = np.unique(np.asarray(ys))
     latent_dim = xs.shape[1]
 
@@ -1228,7 +1225,7 @@ def latent_4enc_interpolate_plot(
             decoded_images = vae.decoder(
                 interpolation_grid.view(-1, latent_dim).to(device=device),
                 (
-                    torch.Tensor(num_steps * num_steps, poses[0].shape[0])
+                    torch.zeros(num_steps * num_steps, poses[0].shape[0])
                     + pose_mean
                 ).to(device=device),
             )

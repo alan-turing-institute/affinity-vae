@@ -630,7 +630,7 @@ def train(
                     ps = None
 
             vis.latent_4enc_interpolate_plot(
-                batch,
+                batch[0].shape[-data_dim:],
                 xs,
                 ys,
                 vae,
