@@ -24,8 +24,9 @@ directory.
 
 ### Create the MNSIT dataset for affinityVAE
 
-We are MNIST dataset with augmentation and rotations, and saved with a structure
-that affinityVAE can read. This can be done by running the following command:
+We need an MNIST dataset with augmentation and rotations, and saved with a
+structure that affinityVAE can read (a subdirectory for training data, and
+another for testing). This can be done by running the following command:
 
 ```bash
  python mnist_saver.py --mnist_file mnist.pkl.gz --output_path .
@@ -34,13 +35,20 @@ that affinityVAE can read. This can be done by running the following command:
 here the first argument is the path to the downloaded MNIST dataset, and the
 second argument is the path to the directory where the processed dataset will be
 saved. In this example, we are saving the dataset in the current directory under
-`mnist_data`.
+[mnist_data](mnist_data). There you can also find a visualization of a few
+random samples of the dataset in the `mnist_examples.png` file for validation.
+
+Affinity-VAE is a highly configurable model (to see the full list of
+configurables run `python absolute/path/to/affinity-vae/run.py --help`). In this
+tutorial we will use a yaml file [mnist_config.yml](mnist_data/mnist_config.yml)
+to configure our run.
 
 Now we are ready to run AffinityVAE on the MNIST dataset. For this we need the
 data divided into training and test sets, we need a configuration file
-(`mnist_config.yml`), and we need the `classes_mnist.csv` and
-`affinity_mnist.csv` files, which are provided in his tutorial. All these files
-can be found in the `mnist_data` directory.
+(`mnist_config.yml`), and we need the files `classes_mnist.csv` (list of labels
+to use in training) and `affinity_mnist.csv` (affinity matrix for the classes
+defined above), which are provided in his tutorial. All these files can be found
+in the [mnist_data](mnist_data) directory.
 
 First thing you need to do is to modify the `mnist_config.yml` file to point to
 the absolute paths of the data, classes, and affinity files. Currently, the
@@ -54,19 +62,20 @@ classes: /absolute/path/to/mnist_data/classes_mnist.csv
 affinity: /absolute/path/to/mnist_data/affinity_mnist.csv
 ```
 
-in general, we recommend to work with absolute paths to avoid issues.
+In general, we recommend to work with absolute paths to avoid issues.
 
 To train AffinityVAE on our rotated MNIST dataset, run the following command:
 
 ```bash
-python path/to/affinity-vae/run.py --config_file /absolute/path/to/mnist_data/mnist_config.yml ---new_out
+python /absolute/path/to/affinity-vae/run.py --config_file /absolute/path/to/mnist_data/mnist_config.yml ---new_out
 ```
 
 This will train AffinityVAE on the MNIST dataset and save the results in a new
-directory created by the `--new_out` flag. In this case the run is configured by
-the `mnist_config.yml` file, however, you can also configure the run by passing
-arguments to the `run.py` script as shown in the main README file and in the
-following example:
+timestamped directory created by the `--new_out` flag. In this case the run is
+configured by the `mnist_config.yml` file.
+
+You can also configure the run by passing arguments to the `run.py` script as
+shown in the main README file and in the following example:
 
 ```bash
 python path/to/affinity-vae/run.py --config_file /absolute/path/to/mnist_data/mnist_config.yml --beta 0.1 --gamma 0.01 --lr 0.001 --epochs 200 --new_out
@@ -74,13 +83,19 @@ python path/to/affinity-vae/run.py --config_file /absolute/path/to/mnist_data/mn
 
 Here the command line arguments override the values in the config file.
 
-Once the training finishes you can evaluate the model on the test set by
-stepping into the new directory and running
+The config file provided here has optimal parameters for the MNIST dataset, so
+we recommend to use it as it is.
+
+Once the training finishes you can evaluate the model on unseen data using the
+test set by stepping into the new directory and running.
 
 ```bash
 cd path/to/new_out
 python path/to/affinity-vae/run.py --config_file /absolute/path/to/mnist_data/mnist_config.yml  --data_path /absolute/path/to/mnist_data/images_test/ --eval
 ```
+
+_Note_: During training we've left the class `9` out, so we can use it for
+evaluation and see where it fits in the affinity organised latent space.
 
 You can also restart training from a checkpoint by running
 
