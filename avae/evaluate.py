@@ -180,6 +180,7 @@ def evaluate(
 
     if pose_dims != 0 and settings.VIS_POSE_CLASS:
         vis.pose_class_disentanglement_plot(
+            batch[0].shape[-data_dim:],
             x_test,
             y_test,
             settings.VIS_POSE_CLASS,

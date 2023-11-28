@@ -599,10 +599,16 @@ def train(
         # visualise pose disentanglement
         if pose and settings.VIS_POS and (epoch + 1) % settings.FREQ_POS == 0:
             vis.pose_disentanglement_plot(
-                x_train, p_train, vae, data_dim, device
+                batch[0].shape[-data_dim:],
+                x_train,
+                p_train,
+                vae,
+                data_dim,
+                device,
             )
 
             vis.pose_class_disentanglement_plot(
+                batch[0].shape[-data_dim:],
                 x_train,
                 y_train,
                 settings.VIS_POSE_CLASS,

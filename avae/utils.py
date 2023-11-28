@@ -4,6 +4,7 @@ import os.path
 import matplotlib.pyplot as plt
 import mrcfile
 import numpy as np
+import torch
 from sklearn import metrics, preprocessing
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
@@ -228,3 +229,29 @@ def colour_per_class(classes: list):
     # Generate a list of colors based on the modulo operation of i with respect to the number of colors in the combined colormap
     colours = [custom_cmap(i % len(combined_cmap)) for i in range(num_colors)]
     return colours
+
+
+def pose_interpolation(
+    enc, pos_dims, pose_mean, pose_std, dsize, number_of_samples, vae, device
+):
+
+    # Generate vectors representing single transversals along each lat_dim
+    for p_dim in range(pos_dims):
+        for grid_spot in range(number_of_samples):
+            means = copy.deepcopy(pose_mean)
+            means[p_dim] += pose_std[p_dim] * (-1.2 + 0.4 * grid_spot)
+
+            pos = torch.FloatTensor(np.array(means)).unsqueeze(0).to(device)
+            lat = torch.FloatTensor(np.array(enc)).unsqueeze(0).to(device)
+
+            # Decode interpolated vectors
+            with torch.no_grad():
+                decoded_img = vae.decoder(lat, pos)
+
+            decoded_grid.append(decoded_img.cpu().squeeze().numpy())
+
+    decoded_grid = np.reshape(
+        np.array(decoded_grid), (pos_dims, number_of_samples, *dsize)
+    )
+
+    return decoded_grid

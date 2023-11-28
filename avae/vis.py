@@ -21,6 +21,7 @@ from .utils import (
     colour_per_class,
     create_grid_for_plotting,
     fill_grid_for_plottting,
+    pose_interpolation,
     save_imshow_png,
     save_mrc_file,
 )
@@ -1206,8 +1207,7 @@ def latent_4enc_interpolate_plot(
         enc = np.asarray(enc)
         alpha_values = torch.linspace(0, 1, num_steps)
         beta_values = torch.linspace(0, 1, num_steps)
-        interpolation_grid = torch.zeros((num_steps, num_steps, latent_dim))
-
+        decoded_grid = []
         for i, h in enumerate(alpha_values):
             for j, v in enumerate(beta_values):
 
@@ -1218,20 +1218,19 @@ def latent_4enc_interpolate_plot(
                     + (1 - h) * v * enc[2]
                     + h * v * enc[3]
                 )
-                interpolation_grid[i, j, :] = interpolated_z
 
-        # Decode the interpolated encoding to generate an image
-        with torch.no_grad():
-            decoded_images = vae.decoder(
-                interpolation_grid.view(-1, latent_dim).to(device=device),
-                (
-                    torch.zeros(num_steps * num_steps, poses[0].shape[0])
-                    + pose_mean
-                ).to(device=device),
-            )
+                # Decode the interpolated encoding to generate an image
+                with torch.no_grad():
+                    decoded_images = vae.decoder(
+                        interpolated_z.view(-1, latent_dim).to(device=device),
+                        (torch.zeros(1, poses[0].shape[0]) + pose_mean).to(
+                            device=device
+                        ),
+                    )
+                decoded_grid.append(decoded_images.cpu().squeeze().numpy())
 
-        decoded_images = (
-            decoded_images.view(num_steps, num_steps, *dsize).cpu().numpy()
+        decoded_grid = np.reshape(
+            np.array(decoded_grid), (num_steps, num_steps, *dsize)
         )
 
         grid_for_napari = create_grid_for_plotting(
@@ -1242,7 +1241,7 @@ def latent_4enc_interpolate_plot(
             num_steps,
             grid_for_napari,
             dsize,
-            decoded_images,
+            decoded_grid,
             padding,
         )
 
@@ -1350,7 +1349,7 @@ def latent_disentamglement_plot(
 
 
 def pose_class_disentanglement_plot(
-    x, y, pose_vis_class, poses, vae, data_dim, device, mode="trn"
+    dsize, x, y, pose_vis_class, poses, vae, data_dim, device, mode="trn"
 ):
     """Visualise Pose interpolation per class. This function creates a pose interpolatoion
     plot for all classes listed in pose_vis_class.
@@ -1395,7 +1394,7 @@ def pose_class_disentanglement_plot(
     pose_vis_class = pose_vis_class.replace(" ", "").split(",")
 
     for i in pose_vis_class:
-
+        decoded_grid = []
         class_x = np.take(x, np.where(np.array(y) == i)[0], axis=0)
         class_x_indx = np.random.choice(class_x.shape[0])
         enc = class_x[class_x_indx, :]
@@ -1404,33 +1403,17 @@ def pose_class_disentanglement_plot(
         class_pos_mean = np.mean(class_pos, axis=0)
         class_pos_stds = np.std(class_pos, axis=0)
 
-        lat_dims = enc.shape[0]
-        lat_grid = np.zeros((pos_dims * number_of_samples, lat_dims)) + enc
-        pos_grid = np.zeros((pos_dims * number_of_samples, pos_dims))
-
-        # Generate vectors representing single transversals along each lat_dim
-        for p_dim in range(pos_dims):
-            for grid_spot in range(number_of_samples):
-                means = copy.deepcopy(class_pos_mean)
-                means[p_dim] += class_pos_stds[p_dim] * (
-                    -1.2 + 0.4 * grid_spot
-                )
-                pos_grid[p_dim * number_of_samples + grid_spot, :] = means
-
-        # Decode interpolated vectors
-        with torch.no_grad():
-            lat_grid = torch.FloatTensor(np.array(lat_grid))
-            lat_grid = lat_grid.to(device)
-            pos_grid = torch.FloatTensor(np.array(pos_grid))
-            pos_grid = pos_grid.to(device)
-            decoded_grid = vae.decoder(lat_grid, pos_grid)
-
-        dsize = decoded_grid.shape[-data_dim:]
-
-        decoded_grid = np.reshape(
-            np.array(decoded_grid.cpu()),
-            (pos_dims, number_of_samples, *dsize),
+        decoded_grid = pose_interpolation(
+            enc,
+            pos_dims,
+            class_pos_mean,
+            class_pos_stds,
+            dsize,
+            number_of_samples,
+            vae,
+            device,
         )
+
         grid_for_napari = create_grid_for_plotting(
             pos_dims, number_of_samples, dsize, padding
         )
@@ -1452,7 +1435,7 @@ def pose_class_disentanglement_plot(
 
 
 def pose_disentanglement_plot(
-    lats, poses, vae, data_dim, device, label="avg", mode="trn"
+    dsize, lats, poses, vae, data_dim, device, label="avg", mode="trn"
 ):
     """Visualise pose disentanglement.
 
@@ -1488,39 +1471,20 @@ def pose_disentanglement_plot(
     pos_means = np.mean(poses, axis=0)
     pos_stds = np.std(poses, axis=0)
     pos_dims = poses.shape[-1]
-    pos_grid = np.zeros((pos_dims * number_of_samples, pos_dims))
 
     lat_means = np.mean(lats, axis=0)
-    lat_dims = lats.shape[-1]
-    lat_grid = np.zeros((pos_dims * number_of_samples, lat_dims)) + lat_means
 
-    # Generate vectors representing single transversals along each lat_dim
-    for p_dim in range(pos_dims):
-        for grid_spot in range(number_of_samples):
-            means = copy.deepcopy(pos_means)
-            means[p_dim] += pos_stds[p_dim] * (-1.2 + 0.4 * grid_spot)
-            pos_grid[p_dim * number_of_samples + grid_spot, :] = means
-
-    # Decode interpolated vectors
-    with torch.no_grad():
-        lat_grid = torch.FloatTensor(np.array(lat_grid))
-        lat_grid = lat_grid.to(device)
-        pos_grid = torch.FloatTensor(np.array(pos_grid))
-        pos_grid = pos_grid.to(device)
-        recon = vae.decoder(lat_grid, pos_grid)
-
-    dsize = recon.shape[-data_dim:]
-    if len(dsize) == 0:
-        logging.warning(
-            "\n\nWARNING: All images need to be the same size to create "
-            "interpolation plot. Exiting.\n",
-        )
-        return
-
-    recon = np.reshape(
-        np.array(recon.cpu()),
-        (pos_dims, number_of_samples, *dsize),
+    recon = pose_interpolation(
+        lat_means,
+        pos_dims,
+        pos_means,
+        pos_stds,
+        dsize,
+        number_of_samples,
+        vae,
+        device,
     )
+
     grid_for_napari = create_grid_for_plotting(
         pos_dims, number_of_samples, dsize, padding
     )
