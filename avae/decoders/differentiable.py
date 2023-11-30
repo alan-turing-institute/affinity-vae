@@ -24,6 +24,8 @@ class GaussianSplatRenderer(AbstractDecoder):
 
         self._shape = shape
         self._ndim = len(shape)
+        self.device = device
+
         if len(shape) not in (SpatialDims.TWO, SpatialDims.THREE):
             raise ValueError("Only 2D or 3D rotations are currently supported")
 
@@ -31,6 +33,7 @@ class GaussianSplatRenderer(AbstractDecoder):
             *[torch.linspace(-1, 1, sz) for sz in shape],
             indexing="xy",
         )
+
         # add all zeros for z- if we have a 2d grid
         if len(shape) == SpatialDims.TWO:
             grids += (
@@ -38,10 +41,12 @@ class GaussianSplatRenderer(AbstractDecoder):
                     grids[0],
                 ),
             )
+
         self.coords = (
             torch.stack([torch.ravel(grid) for grid in grids], axis=0)
+            .transpose(0, 1)
             .unsqueeze(0)
-            .to(device)
+            .to(self.device)
         )
 
     def forward(
@@ -86,24 +91,23 @@ class GaussianSplatRenderer(AbstractDecoder):
         # scale the sigma values
         min_sigma, max_sigma = splat_sigma_range
         sigmas = sigmas * (max_sigma - min_sigma) + min_sigma
-        
-        # transpose keeping batch intact
-        coords_t = torch.swapaxes(self.coords, 1, 2)
 
+        # transpose keeping batch intact
+        # coords_t = torch.swapaxes(self.coords, 1, 2)
         splats_t = torch.swapaxes(splats, 1, 2)
 
         # calculate D^2 for all combinations of voxel and gaussian
         D_squared = torch.sum(
-            coords_t[:, :, None, :] ** 2 + splats_t[:, None, :, :] ** 2,
+            self.coords[:, :, None, :].to(self.device) ** 2 + splats_t[:, None, :, :].to(self.device) ** 2,
             axis=-1,
-        ) - 2 * torch.matmul(coords_t, splats)
+        ) - 2 * torch.matmul(self.coords.to(self.device), splats.to(self.device))
 
         # scale the gaussians
         sigmas = 2.0 * sigmas[:, None, :] ** 2
 
         # now splat the gaussians
         x = torch.sum(
-            weights[:, None, :] * torch.exp(-D_squared / sigmas), axis=-1
+            weights[:, None, :] * torch.exp(-D_squared.to(self.device) / sigmas.to(self.device)), axis=-1
         )
 
         return x.reshape((-1, *self._shape)).unsqueeze(1)
@@ -188,6 +192,7 @@ class GaussianSplatDecoder(AbstractDecoder):
             torch.nn.Linear(latent_dims, n_splats),
             torch.nn.Sigmoid(),
         )
+
         # now set up the differentiable renderer
         self.configure_renderer(
             shape,
@@ -200,6 +205,15 @@ class GaussianSplatDecoder(AbstractDecoder):
         self._ndim = len(shape)
         self._output_channels = output_channels
 
+        """Decode the splats to retrieve the coordinates, weights and sigmas."""
+        if pose_dims not in (1, 4):
+            raise ValueError(
+                "Pose needs to be either a single angle rotation about the "
+                "`default_axis` or a full angle-axis representation in 3D. "
+            )
+        self.pose = not (pose_dims == 0)
+
+
         # add a final convolutional decoder to generate an image if the number
         # of output channels has been provided
         if output_channels is not None:
@@ -209,16 +223,12 @@ class GaussianSplatDecoder(AbstractDecoder):
                 else torch.nn.Conv3d
             )
             self._decoder = torch.nn.Sequential(
-                conv(1, output_channels, 7, padding="same"),
+                conv(1, 32, 3, padding="same"),
+                torch.nn.ReLU(),
+                conv(32, 32, 3, padding="same"),
+                torch.nn.ReLU(),
+                conv(32, output_channels, 3, padding="same"),
             )
-
-        """Decode the splats to retrieve the coordinates, weights and sigmas."""
-        if pose_dims not in (1, 4):
-            raise ValueError(
-                "Pose needs to be either a single angle rotation about the "
-                "`default_axis` or a full angle-axis representation in 3D. "
-            )
-        self.pose = not (pose_dims == 0)
 
     def configure_renderer(
         self,
@@ -249,7 +259,6 @@ class GaussianSplatDecoder(AbstractDecoder):
     ) -> Tuple[torch.Tensor]:
 
         # predict the centroids for the splats
-
         splats = self.centroids(z).view(z.shape[0], 3, -1)
         weights = self.weights(z)
         sigmas = self.sigmas(z)
@@ -282,10 +291,17 @@ class GaussianSplatDecoder(AbstractDecoder):
         )
 
         # use only the required spatial dimensions (batch, ndim, samples)
-        # rotated_splats = rotated_splats[:, : self._ndim, :]
+        rotated_splats = rotated_splats[:, : self._ndim, :]
+
         return rotated_splats, weights, sigmas
 
-    def forward(self, z: torch.Tensor, pose: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self,
+        z: torch.Tensor,
+        pose: torch.Tensor,
+        *,
+        use_final_convolution: bool = True,
+    ) -> torch.Tensor:
         """Decode the latents to an image volume given an explicit transform.
 
         Parameters
@@ -296,6 +312,10 @@ class GaussianSplatDecoder(AbstractDecoder):
         pose : tensor
             An (N, 1 | 4) tensor specifying the pose in terms of a single
             rotation (assumed around the z-axis) or a full axis-angle rotation.
+        use_final_convolution: bool
+            Whether to apply the final convolutional layers to recover the image.
+            This can be useful to inspect the underlying structure in a trained
+            model.
 
         Returns
         -------
@@ -311,7 +331,7 @@ class GaussianSplatDecoder(AbstractDecoder):
         )
 
         # if we're doing a final convolution, do it here
-        if self._output_channels is not None:
+        if self._output_channels is not None and use_final_convolution:
             x = self._decoder(x)
 
         return x
