@@ -206,6 +206,7 @@ def train(
             dshape,
             n_splats=n_splats,
             latent_dims=lat_dims,
+            device = device,
             pose_dims=pose_dims,
         )
     else:
@@ -218,7 +219,9 @@ def train(
     vae = AffinityVAE(encoder, decoder)
 
     logging.info(vae)
+
     vae = torch.nn.DataParallel(vae)
+    
     vae.to(device)
 
     if opt_method == "adam":
@@ -640,28 +643,13 @@ def train(
         if settings.VIS_DIS and (epoch + 1) % settings.FREQ_DIS == 0:
             if not pose:
                 p_train = None
-            vis.latent_disentamglement_plot(
-                x_train, vae, device, data_dim, poses=p_train
-            )
 
-            vis.latent_4enc_interpolate_plot(
-                batch,
-                xs,
-                ys,
-                vae,
-                device,
-                data_dim,
-                settings.VIS_Z_N_INT,
-                poses=ps,
-            )
 
         # visualise pose disentanglement
         if pose and settings.VIS_POS and (epoch + 1) % settings.FREQ_POS == 0:
-            vis.pose_disentanglement_plot(
-                x_train, p_train, vae, data_dim, device
-            )
 
             vis.pose_class_disentanglement_plot(
+                batch[0].shape[-data_dim:],
                 x_train,
                 y_train,
                 settings.VIS_POSE_CLASS,
@@ -688,38 +676,17 @@ def train(
                 else:
                     ps = None
 
-            vis.interpolations_plot(
-                xs,
-                ys,
-                vae,
-                device,
-                data_dim,
-                poses=ps,  # do we need val and test here?
-            )
-
             vis.latent_4enc_interpolate_plot(
-                batch,
+                batch[0].shape[-data_dim:],
                 xs,
                 ys,
                 vae,
                 device,
                 data_dim,
                 settings.VIS_Z_N_INT,
-                poses=p_train,
-                mode="trn",
+                poses=ps,
             )
 
-            vis.latent_4enc_interpolate_plot(
-                batch,
-                xs,
-                ys,
-                vae,
-                device,
-                data_dim,
-                settings.VIS_Z_N_INT,
-                poses=p_train,
-                mode="vld",
-            )
 
         # ########################## SAVE STATE ###############################
         if (epoch + 1) % settings.FREQ_STA == 0:

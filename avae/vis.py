@@ -1144,9 +1144,8 @@ def recon_plot(img, rec, label, data_dim, mode="trn", epoch=0, writer=None):
         save_mrc_file(str(mode) + "_recon_in.mrc", grid_for_napari)
         logging.info("\n")
 
-
 def latent_4enc_interpolate_plot(
-    x, xs, ys, vae, device, data_dim, plots_config, poses=None
+    dsize, xs, ys, vae, device, data_dim, plots_config, poses=None
 ):
     """Visualise the interpolation of latent space between 4 randomly selected encodings.
     The number of plots and the number of interpolation steps is modifyable.
@@ -1177,9 +1176,6 @@ def latent_4enc_interpolate_plot(
         "Visualising Latent Interpolation between 4 randomly selected encodings ...\n"
     )
     padding = 0
-    enc = []
-    decoded_images = []
-    dsize = x[0].shape[-data_dim:]
     classes = np.unique(np.asarray(ys))
     latent_dim = xs.shape[1]
 
@@ -1210,7 +1206,7 @@ def latent_4enc_interpolate_plot(
         alpha_values = torch.linspace(0, 1, num_steps)
         beta_values = torch.linspace(0, 1, num_steps)
         interpolation_grid = torch.zeros((num_steps, num_steps, latent_dim))
-
+        decoded_grid = []
         for i, h in enumerate(alpha_values):
             for j, v in enumerate(beta_values):
 
@@ -1221,21 +1217,19 @@ def latent_4enc_interpolate_plot(
                     + (1 - h) * v * enc[2]
                     + h * v * enc[3]
                 )
-                interpolation_grid[i, j, :] = interpolated_z
 
-        # Decode the interpolated encoding to generate an image
-        with torch.no_grad():
-            decoded_images = vae.decoder(
-                interpolation_grid.view(-1, latent_dim).to(device=device),
-                (
-                    torch.Tensor(num_steps * num_steps, poses[0].shape[0])
-                    + pose_mean
-                ).to(device=device),
-            )
+                # Decode the interpolated encoding to generate an image
+                with torch.no_grad():
+                    decoded_images = vae.module.decoder(
+                        interpolated_z.view(-1, latent_dim).to(device=device),
+                        (torch.zeros(1, poses[0].shape[0]) + pose_mean).to(
+                            device=device
+                        ),
+                    )
 
-        decoded_images = (
-            decoded_images.view(num_steps, num_steps, *dsize).cpu().numpy()
-        )
+                decoded_grid.append(decoded_images.cpu().squeeze().detach().numpy())
+
+        decoded_grid = np.reshape(decoded_grid, (num_steps, num_steps, *dsize))
 
         grid_for_napari = create_grid_for_plotting(
             num_steps, num_steps, dsize, padding
@@ -1245,7 +1239,7 @@ def latent_4enc_interpolate_plot(
             num_steps,
             grid_for_napari,
             dsize,
-            decoded_images,
+            decoded_grid,
             padding,
         )
 
@@ -1353,7 +1347,7 @@ def latent_disentamglement_plot(
 
 
 def pose_class_disentanglement_plot(
-    x, y, pose_vis_class, poses, vae, data_dim, device, mode="trn"
+    dsize, x, y, pose_vis_class, poses, vae, data_dim, device, mode="trn"
 ):
     """Visualise Pose interpolation per class. This function creates a pose interpolatoion
     plot for all classes listed in pose_vis_class.
@@ -1398,7 +1392,7 @@ def pose_class_disentanglement_plot(
     pose_vis_class = pose_vis_class.replace(" ", "").split(",")
 
     for i in pose_vis_class:
-
+        decoded_grid = []
         class_x = np.take(x, np.where(np.array(y) == i)[0], axis=0)
         class_x_indx = np.random.choice(class_x.shape[0])
         enc = class_x[class_x_indx, :]
@@ -1407,10 +1401,6 @@ def pose_class_disentanglement_plot(
         class_pos_mean = np.mean(class_pos, axis=0)
         class_pos_stds = np.std(class_pos, axis=0)
 
-        lat_dims = enc.shape[0]
-        lat_grid = np.zeros((pos_dims * number_of_samples, lat_dims)) + enc
-        pos_grid = np.zeros((pos_dims * number_of_samples, pos_dims))
-
         # Generate vectors representing single transversals along each lat_dim
         for p_dim in range(pos_dims):
             for grid_spot in range(number_of_samples):
@@ -1418,22 +1408,21 @@ def pose_class_disentanglement_plot(
                 means[p_dim] += class_pos_stds[p_dim] * (
                     -1.2 + 0.4 * grid_spot
                 )
-                pos_grid[p_dim * number_of_samples + grid_spot, :] = means
 
-        # Decode interpolated vectors
-        with torch.no_grad():
-            lat_grid = torch.FloatTensor(np.array(lat_grid))
-            lat_grid = lat_grid.to(device)
-            pos_grid = torch.FloatTensor(np.array(pos_grid))
-            pos_grid = pos_grid.to(device)
-            decoded_grid = vae.decoder(lat_grid, pos_grid)
+                pos = (
+                    torch.FloatTensor(np.array(means)).unsqueeze(0).to(device)
+                )
+                lat = torch.FloatTensor(np.array(enc)).unsqueeze(0).to(device)
 
-        dsize = decoded_grid.shape[-data_dim:]
+                with torch.no_grad():
+                    decoded_img = vae.module.decoder(lat, pos)
+
+                decoded_grid.append(decoded_img.cpu().squeeze().detach().numpy())
 
         decoded_grid = np.reshape(
-            np.array(decoded_grid.cpu()),
-            (pos_dims, number_of_samples, *dsize),
+            np.array(decoded_grid), (pos_dims, number_of_samples, *dsize)
         )
+
         grid_for_napari = create_grid_for_plotting(
             pos_dims, number_of_samples, dsize, padding
         )
@@ -1452,7 +1441,6 @@ def pose_class_disentanglement_plot(
             save_imshow_png(
                 f"pose_interpolate_{mode}_{i}.png", grid_for_napari
             )
-
 
 def pose_disentanglement_plot(
     lats, poses, vae, data_dim, device, label="avg", mode="trn"
@@ -1510,7 +1498,7 @@ def pose_disentanglement_plot(
         lat_grid = lat_grid.to(device)
         pos_grid = torch.FloatTensor(np.array(pos_grid))
         pos_grid = pos_grid.to(device)
-        recon = vae.decoder(lat_grid, pos_grid)
+        recon = vae.module.decoder(lat_grid, pos_grid)
 
     dsize = recon.shape[-data_dim:]
     if len(dsize) == 0:
@@ -1640,9 +1628,9 @@ def interpolations_plot(
         if poses is not None:
             poses = torch.FloatTensor(np.array(poses))
             poses = poses.to(device)
-            recon = vae.decoder(latents, poses)
+            recon = vae.module.decoder(latents, poses)
         else:
-            recon = vae.decoder(latents, None)
+            recon = vae.module.decoder(latents, None)
     dsize = recon.shape[-data_dim:]
     if len(dsize) == 0:
         logging.warning(
