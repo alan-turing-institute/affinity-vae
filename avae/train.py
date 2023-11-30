@@ -206,7 +206,7 @@ def train(
             dshape,
             n_splats=n_splats,
             latent_dims=lat_dims,
-            device = device,
+            device=device,
             pose_dims=pose_dims,
         )
     else:
@@ -221,7 +221,7 @@ def train(
     logging.info(vae)
 
     vae = torch.nn.DataParallel(vae)
-    
+
     vae.to(device)
 
     if opt_method == "adam":
@@ -644,7 +644,6 @@ def train(
             if not pose:
                 p_train = None
 
-
         # visualise pose disentanglement
         if pose and settings.VIS_POS and (epoch + 1) % settings.FREQ_POS == 0:
 
@@ -686,7 +685,6 @@ def train(
                 settings.VIS_Z_N_INT,
                 poses=ps,
             )
-
 
         # ########################## SAVE STATE ###############################
         if (epoch + 1) % settings.FREQ_STA == 0:

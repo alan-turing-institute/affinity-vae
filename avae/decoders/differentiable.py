@@ -98,16 +98,21 @@ class GaussianSplatRenderer(AbstractDecoder):
 
         # calculate D^2 for all combinations of voxel and gaussian
         D_squared = torch.sum(
-            self.coords[:, :, None, :].to(self.device) ** 2 + splats_t[:, None, :, :].to(self.device) ** 2,
+            self.coords[:, :, None, :].to(self.device) ** 2
+            + splats_t[:, None, :, :].to(self.device) ** 2,
             axis=-1,
-        ) - 2 * torch.matmul(self.coords.to(self.device), splats.to(self.device))
+        ) - 2 * torch.matmul(
+            self.coords.to(self.device), splats.to(self.device)
+        )
 
         # scale the gaussians
         sigmas = 2.0 * sigmas[:, None, :] ** 2
 
         # now splat the gaussians
         x = torch.sum(
-            weights[:, None, :] * torch.exp(-D_squared.to(self.device) / sigmas.to(self.device)), axis=-1
+            weights[:, None, :]
+            * torch.exp(-D_squared.to(self.device) / sigmas.to(self.device)),
+            axis=-1,
         )
 
         return x.reshape((-1, *self._shape)).unsqueeze(1)
@@ -212,7 +217,6 @@ class GaussianSplatDecoder(AbstractDecoder):
                 "`default_axis` or a full angle-axis representation in 3D. "
             )
         self.pose = not (pose_dims == 0)
-
 
         # add a final convolutional decoder to generate an image if the number
         # of output channels has been provided

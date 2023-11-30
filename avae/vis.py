@@ -1144,6 +1144,7 @@ def recon_plot(img, rec, label, data_dim, mode="trn", epoch=0, writer=None):
         save_mrc_file(str(mode) + "_recon_in.mrc", grid_for_napari)
         logging.info("\n")
 
+
 def latent_4enc_interpolate_plot(
     dsize, xs, ys, vae, device, data_dim, plots_config, poses=None
 ):
@@ -1227,7 +1228,9 @@ def latent_4enc_interpolate_plot(
                         ),
                     )
 
-                decoded_grid.append(decoded_images.cpu().squeeze().detach().numpy())
+                decoded_grid.append(
+                    decoded_images.cpu().squeeze().detach().numpy()
+                )
 
         decoded_grid = np.reshape(decoded_grid, (num_steps, num_steps, *dsize))
 
@@ -1417,7 +1420,9 @@ def pose_class_disentanglement_plot(
                 with torch.no_grad():
                     decoded_img = vae.module.decoder(lat, pos)
 
-                decoded_grid.append(decoded_img.cpu().squeeze().detach().numpy())
+                decoded_grid.append(
+                    decoded_img.cpu().squeeze().detach().numpy()
+                )
 
         decoded_grid = np.reshape(
             np.array(decoded_grid), (pos_dims, number_of_samples, *dsize)
@@ -1441,6 +1446,7 @@ def pose_class_disentanglement_plot(
             save_imshow_png(
                 f"pose_interpolate_{mode}_{i}.png", grid_for_napari
             )
+
 
 def pose_disentanglement_plot(
     lats, poses, vae, data_dim, device, label="avg", mode="trn"

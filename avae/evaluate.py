@@ -167,20 +167,9 @@ def evaluate(
     if settings.VIS_REC:
         vis.recon_plot(x, x_hat, y_test, data_dim, mode="evl")
 
-    # visualise latent disentanglement
-    if settings.VIS_DIS:
-        vis.latent_disentamglement_plot(
-            x_test, vae, device, data_dim, poses=p_test, mode="_eval"
-        )
-
-    # visualise pose disentanglement
-    if pose_dims != 0 and settings.VIS_POS:
-        vis.pose_disentanglement_plot(
-            x_test, p_test, vae, data_dim, device, mode="_eval"
-        )
-
     if pose_dims != 0 and settings.VIS_POSE_CLASS:
         vis.pose_class_disentanglement_plot(
+            batch[0].shape[-data_dim:],
             x_test,
             y_test,
             settings.VIS_POSE_CLASS,
@@ -188,17 +177,6 @@ def evaluate(
             vae,
             data_dim,
             device,
-            mode="_eval",
-        )
-    # visualise interpolations
-    if settings.VIS_INT:
-        vis.interpolations_plot(
-            x_test,
-            np.ones(len(x_test)),
-            vae,
-            device,
-            data_dim,
-            poses=p_test,
             mode="_eval",
         )
 
