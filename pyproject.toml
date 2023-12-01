@@ -36,8 +36,6 @@ dependencies = [
     "scikit-image",
     "scikit-learn",
     "tensorboard",
-    "torch",
-    "torchvision",
     "umap-learn",
     "pydantic"
 ]
