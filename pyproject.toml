@@ -67,6 +67,9 @@ dev = [
     "pytest-cov >=3",
     "pre-commit",
 ]
+napari = [
+    "napari[all]",
+]
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = ["-ra", "--showlocals"]#, "--strict-markers", "--strict-config"]
