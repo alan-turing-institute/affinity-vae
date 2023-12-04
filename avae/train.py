@@ -593,7 +593,12 @@ def train(
             if not pose:
                 p_train = None
             vis.latent_disentamglement_plot(
-                x_train, vae, device, data_dim, poses=p_train
+                batch[0].shape[-data_dim:],
+                x_train,
+                vae,
+                device,
+                data_dim,
+                poses=p_train,
             )
 
         # visualise pose disentanglement

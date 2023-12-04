@@ -169,13 +169,25 @@ def evaluate(
     # visualise latent disentanglement
     if settings.VIS_DIS:
         vis.latent_disentamglement_plot(
-            x_test, vae, device, data_dim, poses=p_test, mode="_eval"
+            batch[0].shape[-data_dim:],
+            x_test,
+            vae,
+            device,
+            data_dim,
+            poses=p_test,
+            mode="_eval",
         )
 
     # visualise pose disentanglement
     if pose_dims != 0 and settings.VIS_POS:
         vis.pose_disentanglement_plot(
-            x_test, p_test, vae, data_dim, device, mode="_eval"
+            batch[0].shape[-data_dim:],
+            x_test,
+            p_test,
+            vae,
+            data_dim,
+            device,
+            mode="_eval",
         )
 
     if pose_dims != 0 and settings.VIS_POSE_CLASS:

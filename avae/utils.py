@@ -1,3 +1,4 @@
+import copy
 import logging
 import os.path
 
@@ -234,7 +235,7 @@ def colour_per_class(classes: list):
 def pose_interpolation(
     enc, pos_dims, pose_mean, pose_std, dsize, number_of_samples, vae, device
 ):
-
+    decoded_grid = []
     # Generate vectors representing single transversals along each lat_dim
     for p_dim in range(pos_dims):
         for grid_spot in range(number_of_samples):
