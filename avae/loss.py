@@ -94,9 +94,18 @@ class AVAELoss:
 
     """
 
-    def __init__(self, device, beta, gamma, lookup_aff=None, recon_fn="MSE"):
+    def __init__(
+        self,
+        device,
+        beta,
+        gamma,
+        lookup_aff=None,
+        recon_fn="MSE",
+        klred="mean",
+    ):
         self.device = device
         self.recon_fn = recon_fn
+        self.klred = klred
         self.beta = beta
 
         self.affinity_loss = None
@@ -178,7 +187,21 @@ class AVAELoss:
             )
 
         # kldiv loss
-        kldivergence = -0.5 * torch.mean(1 + logvar - mu.pow(2) - logvar.exp())
+        if self.klred == "mean":
+            kldivergence = -0.5 * torch.mean(
+                1 + logvar - mu.pow(2) - logvar.exp()
+            )
+        elif self.klred == "sum":
+            kldivergence = torch.mean(
+                -0.5
+                * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), axis=1),
+                axis=0,
+            )
+        else:
+            raise RuntimeError(
+                "AffinityVAE loss requires 'mean' or 'sum' for 'klreduction' "
+                "parameter."
+            )
 
         # affinity loss
         affin_loss = torch.Tensor([0]).to(self.device)
