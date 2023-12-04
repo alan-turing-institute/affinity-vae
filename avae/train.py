@@ -652,6 +652,7 @@ def train(
             )
 
             vis.interpolations_plot(
+                batch[0].shape[-data_dim:],
                 xs,
                 ys,
                 vae,

@@ -205,6 +205,7 @@ def evaluate(
     # visualise interpolations
     if settings.VIS_INT:
         vis.interpolations_plot(
+            batch[0].shape[-data_dim:],
             x_test,
             np.ones(len(x_test)),
             vae,

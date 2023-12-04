@@ -1247,12 +1247,12 @@ def latent_4enc_interpolate_plot(
 
         if data_dim == 3:
             save_mrc_file(
-                f"latent_interpolate_{num_fig}_{'_'.join(selected_classes)}.mrc",
+                f"latent_interpolate_{num_fig}.mrc",
                 grid_for_napari,
             )
         elif data_dim == 2:
             save_imshow_png(
-                f"latent_interpolate_{num_fig}_{'_'.join(selected_classes)}.png",
+                f"latent_interpolate_{num_fig}.png",
                 grid_for_napari,
             )
 
@@ -1512,7 +1512,7 @@ def pose_disentanglement_plot(
 
 
 def interpolations_plot(
-    lats, classes, vae, device, data_dim, poses=None, mode="trn"
+    dsize, lats, classes, vae, device, data_dim, poses=None, mode="trn"
 ):
     """Visualise interpolations.
 
@@ -1568,63 +1568,58 @@ def interpolations_plot(
     inds, class_rep_lats = list(zip(*draw_four))
     class_rep_lats = np.asarray(class_rep_lats)
     latent_dim = class_rep_lats.shape[1]
+
     if poses is not None:
         class_rep_poses = np.asarray([class_reps_poses[i] for i in inds])
         poses_dim = class_rep_poses.shape[1]
 
     # Generate a gird of latent vectors interpolated between reps of four ids
+
     grid_size = 6
-    x = np.linspace(0, 1, grid_size)
-    y = np.linspace(0, 1, grid_size)
-    xx, yy = np.meshgrid(x, y)
-    corners = [[0, 0], [0, 1], [1, 0], [1, 1]]
-    layers_l = []
-    for i, corner in enumerate(corners):
-        a, b = corner
-        layers_l.append(
-            np.where(
-                1 - (np.sqrt((xx - a) ** 2 + (yy - b) ** 2)) > 0,
-                1 - (np.sqrt((xx - a) ** 2 + (yy - b) ** 2)),
-                0,
-            )[np.newaxis, :, :]
-        )
-    layers = np.concatenate(
-        [layers_l[0], layers_l[2], layers_l[1], layers_l[3]], axis=0
+    alpha_values = torch.linspace(0, 1, grid_size)
+    beta_values = torch.linspace(0, 1, grid_size)
+    decoded_grid = []
+    for i, h in enumerate(alpha_values):
+        for j, v in enumerate(beta_values):
+
+            # bilinear interpolation in the latent space
+            interpolated_z = (
+                (1 - h) * (1 - v) * class_rep_lats[0]
+                + h * (1 - v) * class_rep_lats[1]
+                + (1 - h) * v * class_rep_lats[2]
+                + h * v * class_rep_lats[3]
+            )
+
+            interpolated_pose = (
+                (1 - h) * (1 - v) * class_reps_poses[0]
+                + h * (1 - v) * class_reps_poses[1]
+                + (1 - h) * v * class_reps_poses[2]
+                + h * v * class_reps_poses[3]
+            )
+            with torch.no_grad():
+                if poses is not None:
+                    decoded_images = vae.decoder(
+                        interpolated_z.view(-1, latent_dim).to(device=device),
+                        (
+                            torch.zeros(1, poses[0].shape[0])
+                            + interpolated_pose
+                        ).to(device=device),
+                    )
+                else:
+                    decoded_images = vae.decoder(
+                        interpolated_z.view(-1, latent_dim).to(device=device),
+                        None,
+                    )
+
+            decoded_grid.append(decoded_images.cpu().squeeze().numpy())
+
+    decoded_grid = np.reshape(
+        np.array(decoded_grid), (grid_size, grid_size, *dsize)
     )
-    layers = (layers / np.sum(layers, axis=0))[:, :, :, np.newaxis]
-    lat_vecs = class_rep_lats[:, np.newaxis, np.newaxis, :]
-    if poses is not None:
-        lat_pose = class_rep_poses[:, np.newaxis, np.newaxis, :]
-
-    latents = np.reshape(np.sum((layers * lat_vecs), axis=0), (-1, latent_dim))
-    if poses is not None:
-        poses = np.reshape(
-            np.sum((layers * lat_pose), axis=0), (-1, poses_dim)
-        )
-
-    # Decode interpolated vectors
-    with torch.no_grad():
-        latents = torch.FloatTensor(np.array(latents))
-        latents = latents.to(device)
-        if poses is not None:
-            poses = torch.FloatTensor(np.array(poses))
-            poses = poses.to(device)
-            recon = vae.decoder(latents, poses)
-        else:
-            recon = vae.decoder(latents, None)
-    dsize = recon.shape[-data_dim:]
-    if len(dsize) == 0:
-        logging.warning(
-            "\n\nWARNING: All images need to be the same size to create "
-            "interpolation plot. Exiting.\n",
-        )
-        return
-
-    recon = np.reshape(np.array(recon.cpu()), (grid_size, grid_size, *dsize))
 
     grid_for_napari = create_grid_for_plotting(grid_size, grid_size, dsize)
     grid_for_napari = fill_grid_for_plottting(
-        grid_size, grid_size, grid_for_napari, dsize, recon
+        grid_size, grid_size, grid_for_napari, dsize, decoded_grid
     )
     # Create an mrc file with interpolations
 
