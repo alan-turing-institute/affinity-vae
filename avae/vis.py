@@ -1319,12 +1319,12 @@ def latent_disentamglement_plot(
 
             # Decode the current vector
             with torch.no_grad():
-                current_lat_grid = torch.FloatTensor(np.array([means])).to(
+                current_lat_grid = torch.from_numpy(np.array([means])).to(
                     device
                 )
 
                 if poses is not None:
-                    current_pos_grid = torch.FloatTensor(
+                    current_pos_grid = torch.from_numpy(
                         np.array([pos_means])
                     ).to(device)
                     current_recon = vae.decoder(
