@@ -235,6 +235,32 @@ def colour_per_class(classes: list):
 def pose_interpolation(
     enc, pos_dims, pose_mean, pose_std, dsize, number_of_samples, vae, device
 ):
+
+    """This function:
+    1-  interpolates within each pose channels
+        for the number_of_samples requested.
+    2- returns all decoded images based on the input latent
+        and the interpolated pose
+
+    Parameters
+    ----------
+    enc: numpy array
+        the latent encoding.
+    pos_dims: int
+        the pose channel dimension
+    pose_mean: numpy array
+        mean of each pose channel.
+    pose_std: numpy array
+        standard deviation of each pose channel.
+    dsize: torch.size
+        the dimension of the data. Example [32,32,32]
+    number_of_samples: int
+        number of samples to interpolate for.
+    vae: torch.nn.Module
+        Affinity vae model.
+    device: torch.device
+        Device to run the model on.
+    """
     decoded_grid = []
     # Generate vectors representing single transversals along each lat_dim
     for p_dim in range(pos_dims):
@@ -242,8 +268,8 @@ def pose_interpolation(
             means = copy.deepcopy(pose_mean)
             means[p_dim] += pose_std[p_dim] * (-1.2 + 0.4 * grid_spot)
 
-            pos = torch.FloatTensor(np.array(means)).unsqueeze(0).to(device)
-            lat = torch.FloatTensor(np.array(enc)).unsqueeze(0).to(device)
+            pos = torch.from_numpy(np.array(means)).unsqueeze(0).to(device)
+            lat = torch.from_numpy(np.array(enc)).unsqueeze(0).to(device)
 
             # Decode interpolated vectors
             with torch.no_grad():

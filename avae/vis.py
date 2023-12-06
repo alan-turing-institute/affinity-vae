@@ -1154,7 +1154,7 @@ def latent_4enc_interpolate_plot(
 
     Parameters
     ----------
-    dsize: list
+    dsize: torch.size
         the size of input.
     x: torch.Tensor
         A sample batch. we extract 4 random images from this
@@ -1274,7 +1274,7 @@ def latent_disentamglement_plot(
 
     Parameters
     ----------
-    dsize: list
+    dsize: torch.size
         the size of input.
     lats: list
         List of latent vectors.
@@ -1369,7 +1369,7 @@ def pose_class_disentanglement_plot(
 
     Parameters
     ----------
-    dsize: list
+    dsize: torch.size
         the size of input.
     x: list
         List of latent vectors.
@@ -1456,7 +1456,7 @@ def pose_disentanglement_plot(
 
     Parameters
     ----------
-    dsize: list
+    dsize: torch.size
         the size of input.
     lats: list
         List of latent vectors.
@@ -1528,7 +1528,7 @@ def interpolations_plot(
 
     Parameters
     ----------
-    dsize: list
+    dsize: torch.size
         the size of input.
     lats: list
         List of latent vectors.
