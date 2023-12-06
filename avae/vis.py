@@ -21,6 +21,7 @@ from .utils import (
     colour_per_class,
     create_grid_for_plotting,
     fill_grid_for_plottting,
+    pose_interpolation,
     save_imshow_png,
     save_mrc_file,
 )
@@ -1145,11 +1146,126 @@ def recon_plot(img, rec, label, data_dim, mode="trn", epoch=0, writer=None):
         logging.info("\n")
 
 
+def latent_4enc_interpolate_plot(
+    dsize, xs, ys, vae, device, plots_config, poses=None
+):
+    """Visualise the interpolation of latent space between 4 randomly selected encodings.
+    The number of plots and the number of interpolation steps is modifyable.
+
+    Parameters
+    ----------
+    dsize: torch.size
+        the size of input.
+    x: torch.Tensor
+        A sample batch. we extract 4 random images from this
+    xs: list
+        the list of all latent vectors
+    ys: list
+        the list of all labels for each latent vector in xs
+    vae: torch.nn.Module
+        Affinity vae model.
+    device: torch.device
+        Device to run the model on.
+    data_dim: int
+        the size of spatial dimensions of the input data (2:2D, 3:3D)
+    plots_config: List
+        A list containing the number of plots to be generated and the number of interpolation steps.
+    poses: list
+        List of pose vectors.
+    """
+    logging.info(
+        "################################################################",
+    )
+    logging.info(
+        "Visualising Latent Interpolation between 4 randomly selected encodings ...\n"
+    )
+    padding = 0
+    data_dim = len(dsize)
+    classes = np.unique(np.asarray(ys))
+    latent_dim = xs.shape[1]
+
+    # Number of plots (each have 4 random corners)
+    plots_config = plots_config.replace(" ", "").split(",")
+
+    # Number of interpolation steps
+    num_steps = int(plots_config[1])
+
+    if poses is not None:
+        pose_mean = np.mean(poses)
+
+    for num_fig in range(int(plots_config[0])):
+        enc = []
+        decoded_images = []
+
+        draw_four = random.sample(range(len(classes)), k=4)
+        selected_classes = [classes[index] for index in draw_four]
+        for idx in draw_four:
+            lat = np.take(
+                xs,
+                random.sample(list(np.where(ys == classes[idx])[0]), k=1),
+                axis=0,
+            )
+            enc.append(lat)
+
+        enc = np.asarray(enc)
+        alpha_values = torch.linspace(0, 1, num_steps)
+        beta_values = torch.linspace(0, 1, num_steps)
+        decoded_grid = []
+
+        for h in alpha_values:
+            for v in beta_values:
+
+                # bilinear interpolation in the latent space
+                interpolated_z = (
+                    (1 - h) * (1 - v) * enc[0]
+                    + h * (1 - v) * enc[1]
+                    + (1 - h) * v * enc[2]
+                    + h * v * enc[3]
+                )
+
+                # Decode the interpolated encoding to generate an image
+                with torch.no_grad():
+                    decoded_images = vae.decoder(
+                        interpolated_z.view(-1, latent_dim).to(device=device),
+                        (torch.zeros(1, poses[0].shape[0]) + pose_mean).to(
+                            device=device
+                        ),
+                    )
+                decoded_grid.append(decoded_images.cpu().squeeze().numpy())
+
+        decoded_grid = np.reshape(
+            np.array(decoded_grid), (num_steps, num_steps, *dsize)
+        )
+
+        grid_for_napari = create_grid_for_plotting(
+            num_steps, num_steps, dsize, padding
+        )
+        grid_for_napari = fill_grid_for_plottting(
+            num_steps,
+            num_steps,
+            grid_for_napari,
+            dsize,
+            decoded_grid,
+            padding,
+        )
+
+        if data_dim == 3:
+            save_mrc_file(
+                f"latent_interpolate_{num_fig}.mrc",
+                grid_for_napari,
+            )
+        elif data_dim == 2:
+            save_imshow_png(
+                f"latent_interpolate_{num_fig}.png",
+                grid_for_napari,
+            )
+
+
 def latent_disentamglement_plot(
+    dsize,
     lats,
     vae,
     device,
-    data_dim,
     poses=None,
     mode="trn",
     writer=None,
@@ -1158,14 +1274,20 @@ def latent_disentamglement_plot(
 
     Parameters
     ----------
+    dsize: torch.size
+        the size of input.
     lats: list
         List of latent vectors.
     vae: torch.nn.Module
         Affinity vae model.
     device: torch.device
         Device to run the model on.
+    data_dim: int
+        the size of spatial dimensions of the input data (2:2D, 3:3D)
     poses: list
         List of pose vectors.
+    mode: str
+        Mode of evaluation (trn: Training, vld: Validation, eval: Evaluation )
     writer: SummaryWriter
         Tensorboard summary writer
     """
@@ -1175,6 +1297,7 @@ def latent_disentamglement_plot(
     logging.info("Visualising latent content disentanglement ...\n")
     number_of_samples = 7
     padding = 0
+    data_dim = len(dsize)
     lats = np.asarray(lats)
     if poses is not None:
         poses = np.asarray(poses)
@@ -1182,48 +1305,54 @@ def latent_disentamglement_plot(
     lat_means = np.mean(lats, axis=0)
     lat_stds = np.std(lats, axis=0)
     lat_dims = lats.shape[-1]
-    lat_grid = np.zeros((lat_dims * number_of_samples, lat_dims))
+
     if poses is not None:
         pos_means = np.mean(poses, axis=0)
         pos_dims = poses.shape[-1]
-        pos_grid = (
-            np.zeros((lat_dims * number_of_samples, pos_dims)) + pos_means
-        )
+
+    recon_images = []
 
     # Generate vectors representing single transversals along each lat_dim
     for l_dim in range(lat_dims):
-        for grid_spot in range(7):
+        for grid_spot in range(number_of_samples):
             means = copy.deepcopy(lat_means)
             # every 0.4 interval from -1.2 to 1.2 sigma
             means[l_dim] += lat_stds[l_dim] * (-1.2 + 0.4 * grid_spot)
-            lat_grid[l_dim * number_of_samples + grid_spot, :] = means
 
-    # Decode interpolated vectors
-    with torch.no_grad():
-        lat_grid = torch.FloatTensor(np.array(lat_grid))
-        lat_grid = lat_grid.to(device)
-        if poses is not None:
-            pos_grid = torch.FloatTensor(np.array(pos_grid))
-            pos_grid = pos_grid.to(device)
-            recon = vae.decoder(lat_grid, pos_grid)
-        else:
-            recon = vae.decoder(lat_grid, None)
-    dsize = recon.shape[-data_dim:]
-    if len(dsize) == 0:
-        logging.warning(
-            "\n\nWARNING: All images need to be the same size to create "
-            "interpolation plot. Exiting.\n",
-        )
-        return
+            # Decode the current vector
+            with torch.no_grad():
+                current_lat_grid = torch.from_numpy(np.array([means])).to(
+                    device
+                )
 
-    recon = np.reshape(
-        np.array(recon.cpu()), (lat_dims, number_of_samples, *dsize)
+                if poses is not None:
+                    current_pos_grid = torch.from_numpy(
+                        np.array([pos_means])
+                    ).to(device)
+                    current_recon = vae.decoder(
+                        current_lat_grid, current_pos_grid
+                    )
+                else:
+                    current_recon = vae.decoder(current_lat_grid, None)
+
+            recon_images.append(current_recon.cpu().squeeze().numpy())
+
+    # Combine the individual decoded images into a single array
+    recon_images = np.array(recon_images)
+    recon_images = np.reshape(
+        recon_images, (lat_dims, number_of_samples, *dsize)
     )
+
     grid_for_napari = create_grid_for_plotting(
         lat_dims, number_of_samples, dsize, padding
     )
     grid_for_napari = fill_grid_for_plottting(
-        lat_dims, number_of_samples, grid_for_napari, dsize, recon, padding
+        lat_dims,
+        number_of_samples,
+        grid_for_napari,
+        dsize,
+        recon_images,
+        padding,
     )
 
     if data_dim == 3:
@@ -1233,38 +1362,110 @@ def latent_disentamglement_plot(
 
 
 def pose_class_disentanglement_plot(
-    x, y, pose_vis_class, poses, vae, data_dim, device, mode="trn"
+    dsize, x, y, pose_vis_class, poses, vae, device, mode="trn"
 ):
+    """Visualise Pose interpolation per class. This function creates a pose interpolatoion
+    plot for all classes listed in pose_vis_class.
+
+    Parameters
+    ----------
+    dsize: torch.size
+        the size of input.
+    x: list
+        List of latent vectors.
+    y: List
+        List of the labels associated with each latent vector in x
+    pose_vis_class: str
+        Classes to be used for pose interpolation (a seperate pose interpolation figure would be created for each class)."
+    poses: list
+        List of pose vectors.
+    vae: torch.nn.Module
+        Affinity vae model.
+    data_dim: int
+        the size of spatial dimensions of the input data (2:2D, 3:3D)
+    device: torch.device
+        Device to run the model on.
+    mode: str
+        Mode of evaluation (trn: Training, vld: Validation, eval: Evaluation )
+    """
+    logging.info(
+        "Visualising pose disentanglement for each class {}...\n".format(
+            "".join(pose_vis_class)
+        )
+    )
+    if poses is None:
+        logging.warning(
+            "Pose interpolation cannot be done if pose dimension is not specified"
+        )
+
+    # number of pose interpolation steps, prefarably odd
+    number_of_samples = 7
+    padding = 0
+    data_dim = len(dsize)
+    x = np.asarray(x)
+
+    poses = np.asarray(poses)
+    pos_dims = poses.shape[-1]
     pose_vis_class = pose_vis_class.replace(" ", "").split(",")
+
     for i in pose_vis_class:
-        class_reps_x = np.take(x, np.where(np.array(y) == i)[0], axis=0)
-        class_reps_poses = np.take(
-            poses, np.where(np.array(y) == i)[0], axis=0
-        )
-        pose_disentanglement_plot(
-            class_reps_x,
-            class_reps_poses,
+        decoded_grid = []
+        class_x = np.take(x, np.where(np.array(y) == i)[0], axis=0)
+        class_x_indx = np.random.choice(class_x.shape[0])
+        enc = class_x[class_x_indx, :]
+
+        class_pos = np.take(poses, np.where(np.array(y) == i)[0], axis=0)
+        class_pos_mean = np.mean(class_pos, axis=0)
+        class_pos_stds = np.std(class_pos, axis=0)
+
+        decoded_grid = pose_interpolation(
+            enc,
+            pos_dims,
+            class_pos_mean,
+            class_pos_stds,
+            dsize,
+            number_of_samples,
             vae,
-            data_dim,
             device,
-            label=i,
-            mode="trn",
         )
+
+        grid_for_napari = create_grid_for_plotting(
+            pos_dims, number_of_samples, dsize, padding
+        )
+        grid_for_napari = fill_grid_for_plottting(
+            pos_dims,
+            number_of_samples,
+            grid_for_napari,
+            dsize,
+            decoded_grid,
+            padding,
+        )
+
+        if data_dim == 3:
+            save_mrc_file(f"pose_interpolate_{mode}_{i}.mrc", grid_for_napari)
+        elif data_dim == 2:
+            save_imshow_png(
+                f"pose_interpolate_{mode}_{i}.png", grid_for_napari
+            )
 
 
 def pose_disentanglement_plot(
-    lats, poses, vae, data_dim, device, label="avg", mode="trn"
+    dsize, lats, poses, vae, device, label="avg", mode="trn"
 ):
     """Visualise pose disentanglement.
 
     Parameters
     ----------
+    dsize: torch.size
+        the size of input.
     lats: list
         List of latent vectors.
     poses: list
         List of pose vectors.
     vae: torch.nn.Module
         Affinity vae model.
+    data_dim: int
+        the size of spatial dimensions of the input data (2:2D, 3:3D)
     device: torch.device
         Device to run the model on.
     """
@@ -1280,46 +1481,27 @@ def pose_disentanglement_plot(
 
     number_of_samples = 7
     padding = 0
-
+    data_dim = len(dsize)
     lats = np.asarray(lats)
     poses = np.asarray(poses)
 
     pos_means = np.mean(poses, axis=0)
     pos_stds = np.std(poses, axis=0)
     pos_dims = poses.shape[-1]
-    pos_grid = np.zeros((pos_dims * number_of_samples, pos_dims))
 
     lat_means = np.mean(lats, axis=0)
-    lat_dims = lats.shape[-1]
-    lat_grid = np.zeros((pos_dims * number_of_samples, lat_dims)) + lat_means
 
-    # Generate vectors representing single transversals along each lat_dim
-    for p_dim in range(pos_dims):
-        for grid_spot in range(number_of_samples):
-            means = copy.deepcopy(pos_means)
-            means[p_dim] += pos_stds[p_dim] * (-1.2 + 0.4 * grid_spot)
-            pos_grid[p_dim * number_of_samples + grid_spot, :] = means
-
-    # Decode interpolated vectors
-    with torch.no_grad():
-        lat_grid = torch.FloatTensor(np.array(lat_grid))
-        lat_grid = lat_grid.to(device)
-        pos_grid = torch.FloatTensor(np.array(pos_grid))
-        pos_grid = pos_grid.to(device)
-        recon = vae.decoder(lat_grid, pos_grid)
-
-    dsize = recon.shape[-data_dim:]
-    if len(dsize) == 0:
-        logging.warning(
-            "\n\nWARNING: All images need to be the same size to create "
-            "interpolation plot. Exiting.\n",
-        )
-        return
-
-    recon = np.reshape(
-        np.array(recon.cpu()),
-        (pos_dims, number_of_samples, *dsize),
+    recon = pose_interpolation(
+        lat_means,
+        pos_dims,
+        pos_means,
+        pos_stds,
+        dsize,
+        number_of_samples,
+        vae,
+        device,
     )
+
     grid_for_napari = create_grid_for_plotting(
         pos_dims, number_of_samples, dsize, padding
     )
@@ -1340,12 +1522,14 @@ def pose_disentanglement_plot(
 
 
 def interpolations_plot(
-    lats, classes, vae, device, data_dim, poses=None, mode="trn"
+    dsize, lats, classes, vae, device, poses=None, mode="trn"
 ):
     """Visualise interpolations.
 
     Parameters
     ----------
+    dsize: torch.size
+        the size of input.
     lats: list
         List of latent vectors.
     classes: list
@@ -1354,15 +1538,21 @@ def interpolations_plot(
         Affinity vae model.
     device: torch.device
         Device to run the model on.
+    data_dim: int
+        the size of spatial dimensions of the input data (2:2D, 3:3D)
     poses: list
         List of pose vectors.
+    mode: str
+        Mode of evaluation (trn: Training, vld: Validation, eval: Evaluation )
     """
     logging.info(
         "################################################################",
     )
     logging.info("Visualising interpolations ...\n")
+    data_dim = len(dsize)
     lats = np.asarray(lats)
     classes = np.asarray(classes)
+
     if poses is not None:
         poses = np.asarray(poses)
 
@@ -1391,63 +1581,58 @@ def interpolations_plot(
     inds, class_rep_lats = list(zip(*draw_four))
     class_rep_lats = np.asarray(class_rep_lats)
     latent_dim = class_rep_lats.shape[1]
+
     if poses is not None:
         class_rep_poses = np.asarray([class_reps_poses[i] for i in inds])
         poses_dim = class_rep_poses.shape[1]
 
     # Generate a gird of latent vectors interpolated between reps of four ids
+
     grid_size = 6
-    x = np.linspace(0, 1, grid_size)
-    y = np.linspace(0, 1, grid_size)
-    xx, yy = np.meshgrid(x, y)
-    corners = [[0, 0], [0, 1], [1, 0], [1, 1]]
-    layers_l = []
-    for i, corner in enumerate(corners):
-        a, b = corner
-        layers_l.append(
-            np.where(
-                1 - (np.sqrt((xx - a) ** 2 + (yy - b) ** 2)) > 0,
-                1 - (np.sqrt((xx - a) ** 2 + (yy - b) ** 2)),
-                0,
-            )[np.newaxis, :, :]
-        )
-    layers = np.concatenate(
-        [layers_l[0], layers_l[2], layers_l[1], layers_l[3]], axis=0
+    alpha_values = torch.linspace(0, 1, grid_size)
+    beta_values = torch.linspace(0, 1, grid_size)
+    decoded_grid = []
+    for i, h in enumerate(alpha_values):
+        for j, v in enumerate(beta_values):
+
+            # bilinear interpolation in the latent space
+            interpolated_z = (
+                (1 - h) * (1 - v) * class_rep_lats[0]
+                + h * (1 - v) * class_rep_lats[1]
+                + (1 - h) * v * class_rep_lats[2]
+                + h * v * class_rep_lats[3]
+            )
+
+            interpolated_pose = (
+                (1 - h) * (1 - v) * class_reps_poses[0]
+                + h * (1 - v) * class_reps_poses[1]
+                + (1 - h) * v * class_reps_poses[2]
+                + h * v * class_reps_poses[3]
+            )
+            with torch.no_grad():
+                if poses is not None:
+                    decoded_images = vae.decoder(
+                        interpolated_z.view(-1, latent_dim).to(device=device),
+                        (
+                            torch.zeros(1, poses[0].shape[0])
+                            + interpolated_pose
+                        ).to(device=device),
+                    )
+                else:
+                    decoded_images = vae.decoder(
+                        interpolated_z.view(-1, latent_dim).to(device=device),
+                        None,
+                    )
+
+            decoded_grid.append(decoded_images.cpu().squeeze().numpy())
+
+    decoded_grid = np.reshape(
+        np.array(decoded_grid), (grid_size, grid_size, *dsize)
     )
-    layers = (layers / np.sum(layers, axis=0))[:, :, :, np.newaxis]
-    lat_vecs = class_rep_lats[:, np.newaxis, np.newaxis, :]
-    if poses is not None:
-        lat_pose = class_rep_poses[:, np.newaxis, np.newaxis, :]
-
-    latents = np.reshape(np.sum((layers * lat_vecs), axis=0), (-1, latent_dim))
-    if poses is not None:
-        poses = np.reshape(
-            np.sum((layers * lat_pose), axis=0), (-1, poses_dim)
-        )
-
-    # Decode interpolated vectors
-    with torch.no_grad():
-        latents = torch.FloatTensor(np.array(latents))
-        latents = latents.to(device)
-        if poses is not None:
-            poses = torch.FloatTensor(np.array(poses))
-            poses = poses.to(device)
-            recon = vae.decoder(latents, poses)
-        else:
-            recon = vae.decoder(latents, None)
-    dsize = recon.shape[-data_dim:]
-    if len(dsize) == 0:
-        logging.warning(
-            "\n\nWARNING: All images need to be the same size to create "
-            "interpolation plot. Exiting.\n",
-        )
-        return
-
-    recon = np.reshape(np.array(recon.cpu()), (grid_size, grid_size, *dsize))
 
     grid_for_napari = create_grid_for_plotting(grid_size, grid_size, dsize)
     grid_for_napari = fill_grid_for_plottting(
-        grid_size, grid_size, grid_for_napari, dsize, recon
+        grid_size, grid_size, grid_for_napari, dsize, decoded_grid
     )
     # Create an mrc file with interpolations
 

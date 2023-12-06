@@ -136,3 +136,7 @@ configs/avae-test-config.yml
 
 # remove pycharm specific files
 .idea/
+affinity-vae.code-workspace
+.vscode/launch.json
+.vscode/settings.json
+.gitignore

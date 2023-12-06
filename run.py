@@ -374,7 +374,14 @@ from avae.train import train
     "-vpsc",
     type=str,
     default=None,
-    help="Example: A,B,C. your deliminator should be commas and no spaces .Classes to be used for pose interpolation (a seperate pose interpolation figure would be created for each class).",
+    help="Example: A,B,C. your deliminator should be commas and no spaces. Classes to be used for pose interpolation (a seperate pose interpolation figure would be created for each class).",
+)
+@click.option(
+    "--vis_z_n_int",
+    "-vzni",
+    type=str,
+    default=None,
+    help="Number of Latent interpolation classes to to be printed, number of interpolation steps in each  plot. Example: 1,10. 1 plot with 10 interpolation steps between two classes.  your deliminator should be commas and no spaces.",
 )
 @click.option(
     "--vis_cyc",
@@ -587,6 +594,7 @@ def run(
     vis_dis,
     vis_pos,
     vis_pose_class,
+    vis_z_n_int,
     vis_acc,
     vis_cyc,
     vis_aff,
