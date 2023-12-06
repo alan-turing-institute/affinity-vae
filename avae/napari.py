@@ -25,7 +25,7 @@ class CartesianAxes(enum.Enum):
         return torch.tensor(self.value, dtype=torch.float32)
 
 
-MAX_UMAP = 20.0
+MAX_UMAP = 100.0
 
 
 def process(
@@ -68,39 +68,33 @@ class MplCanvas(FigureCanvasQTAgg):
         super(MplCanvas, self).__init__(fig)
 
 
+import pandas as pd
+
+
 class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
-    """A widget to allow interactivity with the AffinityVAE model.
-
-    Parameters
-    ----------
-    napari_viewer : Viewer
-    model : AffinityVAE
-    latent_dims : int
-    mapper : UMAP, optional
-    reconstruction_layer_name : str
-    device :
-
-    """
-
     def __init__(
         self,
         napari_viewer: napari.Viewer,
         model: torch.nn.Module,
+        meta_df: pd.DataFrame,  # DataFrame containing both latents and embeddings
+        pose_dims: int = 1,  # Number of pose dimensions
         *,
         latent_dims: int = 8,
-        mapper: Optional[umap.UMAP] = None,
-        z: Optional[npt.NDArray] = None,
         reconstruction_layer_name: str = "Reconstruction",
         device: torch.device = torch.device("cpu"),
+        manifold: str = "umap",  # use manifold or load embeddings from metafile
     ) -> None:
         super().__init__()
 
         self.viewer = napari_viewer
         self._model = model
-        self._latent_dims = latent_dims
-        self._mapper = mapper
         self._layer = self.viewer.layers[reconstruction_layer_name]
         self._device = device
+        self._meta_df = meta_df  # Store the DataFrame
+        self.pose_dims = pose_dims
+        self._latent_dims = latent_dims  # Number of latent dimensions
+
+        # ... (existing code for initialization)
 
         self._main_layout = QtWidgets.QVBoxLayout()
         self._tabs = QtWidgets.QTabWidget()
@@ -115,12 +109,49 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
         self.setLayout(self._main_layout)
         self._main_layout.addStretch(stretch=1)
         self.setMinimumWidth(400)
-        self._z = z
+        self.manifold = 'load'
+        self.cartestian = False  # Remove cartesian-related variable
+
+        samples = self._meta_df[self._meta_df["mode"] == "trn"][
+            [col for col in self._meta_df.columns if col.startswith("lat")]
+        ].to_numpy()  # Assuming the column name for latent variables is 'latent'
+        labels = self._meta_df[self._meta_df["mode"] == "trn"]["id"]
+
+        if self.manifold == "umap":
+            self._mapper = umap.UMAP(random_state=42)
+            self._embedding = self._mapper.fit_transform(samples)
+        elif self.manifold == "load":
+            self._embedding = self._meta_df[self._meta_df["mode"] == "trn"][
+                [col for col in self._meta_df if col.startswith("emb")]
+            ].to_numpy()
+
+        # Combine embeddings and labels into a structured array
+        data = np.array(
+            list(zip(self._embedding[:, 0], self._embedding[:, 1], labels)),
+            dtype=[('X', float), ('Y', float), ('Label', object)],
+        )
+
+        # Calculate centroids and store as a dictionary
+        centroids_dict = {}
+        for label in np.unique(labels):
+            mask = data['Label'] == label
+            centroids_dict[label] = [
+                np.mean(data[mask]['X']),
+                np.mean(data[mask]['Y']),
+            ]
+
+        self.set_embedding(
+            embedding=self._embedding, labels=centroids_dict
+        )  # Add labels to the manifold
+        self.inverse_map_manifold_to_z()  # Update the reconstruction
 
     def add_pose_widget(self) -> None:
         """Add widgets to manipulate the model pose space."""
         pose_axes = QtWidgets.QComboBox()
-        pose_axes.addItems(["X", "Y", "Z"])
+        axis = ["X", "Y", "Z"]
+
+        for dim in range(self.pose_dims):
+            pose_axes.addItems([axis[dim]])
 
         pose_value = QtWidgets.QSlider(QtCore.Qt.Horizontal)
         pose_value.setRange(0, 1000)
@@ -193,8 +224,13 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
 
     def get_pose(self) -> npt.NDArray:
         theta = scale_from_slider(self._widgets["theta"].value(), np.pi)
-        axis = CartesianAxes[str(self._widgets["axes"].currentText())]
-        return np.array([theta, *axis.value], dtype=np.float32)
+
+        if self.cartestian:
+            axis = CartesianAxes[str(self._widgets["axes"].currentText())]
+            return np.array([theta, *axis.value], dtype=np.float32)
+
+        else:
+            return np.array([theta], dtype=np.float32)
 
     def get_state(self) -> Tuple[float, npt.NDArray]:
         pose = self.get_pose()
@@ -207,36 +243,60 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
         z = scale_from_slider(z_values, MAX_UMAP)
         return pose, z
 
-    def inverse_map_manifold_to_z(self, event) -> None:
-        test_pt = np.array([event.xdata, event.ydata]).reshape(1, -1)
+    def inverse_map_manifold_to_z(self, event=None) -> Optional[npt.NDArray]:
 
-        if self._mapper is not None:
-            inv_transformed_points = self._mapper.inverse_transform(test_pt)
-        if self._z is not None:
-            inv_transformed_points = self._z
+        if event is None:
+            pt = self._embedding[0].reshape(
+                1, -1
+            )  # Use the first point in the manifold as a test point
         else:
-            inv_transformed_points = np.zeros((1, self._latent_dims))
-            inv_transformed_points[:2] = test_pt
+            pt = np.array([event.xdata, event.ydata]).reshape(1, -1)
 
-        print(inv_transformed_points.shape)
-        print(inv_transformed_points[0])
-        transformed = [
-            scale_to_slider(pt, MAX_UMAP)
-            for pt in np.squeeze(inv_transformed_points)
-        ]
+        # Retrieve latent variables based on the clicked index in the DataFrame
+        if self.manifold == "umap" and self._mapper is not None:
+            inv_transformed_points = self._mapper.inverse_transform(pt)
+        else:
+            clicked_index = self.get_clicked_index(pt)
+            inv_transformed_points = self._meta_df.iloc[clicked_index][
+                [col for col in self._meta_df.columns if col.startswith("lat")]
+            ].values  # Assuming the column name for latent variables is 'latent'
 
+        print(inv_transformed_points)
         pose = self.get_pose()
         self._layer.data = process(
             self._model, inv_transformed_points, pose, device=self._device
         )
+
+        transformed = [
+            scale_to_slider(pt, MAX_UMAP)
+            for pt in np.squeeze(inv_transformed_points)
+        ]
 
         for idx in range(self._latent_dims):
             slider = self._widgets[f"z{idx}"]
             with QtCore.QSignalBlocker(slider):
                 slider.setValue(transformed[idx])
 
+    def get_clicked_index(self, test_pt) -> Optional[str]:
+        # Helper method to retrieve the index of the clicked point in the DataFrame
+        clicked_index = None
+        try:
+            distances = np.sqrt(
+                np.sum(
+                    (self._meta_df[['emb-x', 'emb-y']] - test_pt) ** 2, axis=1
+                )
+            )
+            # Find the index of the point with the minimum distance
+            clicked_index = np.argmin(distances)
+        except Exception as e:
+            print(f"Error finding index: {e}")
+        return clicked_index
+
     def update_reconstruction(self) -> None:
+        print('Updating reconstruction')
         pose, z = self.get_state()
+        print(pose)
+        print(z)
         self._layer.data = process(self._model, z, pose, device=self._device)
 
     def set_embedding(
@@ -273,7 +333,7 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
         with plt.style.context("dark_background"):
             for label, centroid in labels.items():
                 self._widgets["manifold"].axes.text(
-                    centroid, centroid, str(label)
+                    centroid[0], centroid[1], str(label)
                 )
 
         self._widgets["manifold"].axes.set_aspect("equal")
