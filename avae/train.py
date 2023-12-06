@@ -150,6 +150,8 @@ def train(
         shift_min=shift_min,
         rescale=rescale,
     )
+
+    # The spacial dimensions of the data
     dshape = list(trains)[0][0].shape[2:]
     pose = not (pose_dims == 0)
 
@@ -593,22 +595,30 @@ def train(
             if not pose:
                 p_train = None
             vis.latent_disentamglement_plot(
-                x_train, vae, device, data_dim, poses=p_train
+                dshape,
+                x_train,
+                vae,
+                device,
+                poses=p_train,
             )
 
         # visualise pose disentanglement
         if pose and settings.VIS_POS and (epoch + 1) % settings.FREQ_POS == 0:
             vis.pose_disentanglement_plot(
-                x_train, p_train, vae, data_dim, device
+                dshape,
+                x_train,
+                p_train,
+                vae,
+                device,
             )
 
             vis.pose_class_disentanglement_plot(
+                dshape,
                 x_train,
                 y_train,
                 settings.VIS_POSE_CLASS,
                 p_train,
                 vae,
-                data_dim,
                 device,
             )
 
@@ -630,22 +640,21 @@ def train(
                     ps = None
 
             vis.latent_4enc_interpolate_plot(
-                batch[0].shape[-data_dim:],
+                dshape,
                 xs,
                 ys,
                 vae,
                 device,
-                data_dim,
                 settings.VIS_Z_N_INT,
                 poses=ps,
             )
 
             vis.interpolations_plot(
+                dshape,
                 xs,
                 ys,
                 vae,
                 device,
-                data_dim,
                 poses=ps,  # do we need val and test here?
             )
 

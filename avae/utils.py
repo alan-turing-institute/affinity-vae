@@ -1,9 +1,11 @@
+import copy
 import logging
 import os.path
 
 import matplotlib.pyplot as plt
 import mrcfile
 import numpy as np
+import torch
 from sklearn import metrics, preprocessing
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
@@ -228,3 +230,55 @@ def colour_per_class(classes: list):
     # Generate a list of colors based on the modulo operation of i with respect to the number of colors in the combined colormap
     colours = [custom_cmap(i % len(combined_cmap)) for i in range(num_colors)]
     return colours
+
+
+def pose_interpolation(
+    enc, pos_dims, pose_mean, pose_std, dsize, number_of_samples, vae, device
+):
+
+    """This function:
+    1-  interpolates within each pose channels
+        for the number_of_samples requested.
+    2- returns all decoded images based on the input latent
+        and the interpolated pose
+
+    Parameters
+    ----------
+    enc: numpy array
+        the latent encoding.
+    pos_dims: int
+        the pose channel dimension
+    pose_mean: numpy array
+        mean of each pose channel.
+    pose_std: numpy array
+        standard deviation of each pose channel.
+    dsize: torch.size
+        the dimension of the data. Example [32,32,32]
+    number_of_samples: int
+        number of samples to interpolate for.
+    vae: torch.nn.Module
+        Affinity vae model.
+    device: torch.device
+        Device to run the model on.
+    """
+    decoded_grid = []
+    # Generate vectors representing single transversals along each lat_dim
+    for p_dim in range(pos_dims):
+        for grid_spot in range(number_of_samples):
+            means = copy.deepcopy(pose_mean)
+            means[p_dim] += pose_std[p_dim] * (-1.2 + 0.4 * grid_spot)
+
+            pos = torch.from_numpy(np.array(means)).unsqueeze(0).to(device)
+            lat = torch.from_numpy(np.array(enc)).unsqueeze(0).to(device)
+
+            # Decode interpolated vectors
+            with torch.no_grad():
+                decoded_img = vae.decoder(lat, pos)
+
+            decoded_grid.append(decoded_img.cpu().squeeze().numpy())
+
+    decoded_grid = np.reshape(
+        np.array(decoded_grid), (pos_dims, number_of_samples, *dsize)
+    )
+
+    return decoded_grid
