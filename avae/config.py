@@ -139,6 +139,17 @@ class AffinityConfig(BaseModel):
 
     vis_rec: bool = Field(False, description="Visualise reconstruction")
     vis_sim: bool = Field(False, description="Visualise similarity")
+    filters: list[int] = Field(
+        None,
+        description="Comma-separated list of filters for the network. Either provide filters, or capacity and depth.",
+    )
+    bnorm_encoder: bool = Field(
+        False, description="Use batch normalisation in encoder"
+    )
+    bnorm_decoder: bool = Field(
+        False, description="Use batch normalisation in decoder"
+    )
+    klreduction: str = Field('mean', description="KL reduction method")
 
 
 def load_config_params(config_file=None, local_vars={}):

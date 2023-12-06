@@ -193,6 +193,10 @@ def save_imshow_png(
 
     plt.savefig("plots/" + fname)
 
+    if not os.path.exists("plots/reconstructions"):
+        os.mkdir("plots/reconstructions")
+    plt.savefig("plots/reconstructions/epoch_" + str(epoch) + "_" + fname)
+
     if writer:
         writer.add_figure(figname, fig, epoch)
 

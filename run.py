@@ -133,6 +133,14 @@ from avae.train import train
     help="First layer channels (default 64).",
 )
 @click.option(
+    "--filters",
+    "-fl",
+    type=str,
+    default=None,
+    help="Comma-separated list of filters for the network. Either provide "
+    "filters, or capacity and depth.",
+)
+@click.option(
     "--latent_dims",
     "-ld",
     type=int,
@@ -146,6 +154,29 @@ from avae.train import train
     default=None,
     help="If pose on, number of pose dimensions. If 0 and gamma=0 it becomes"
     "a standard beta-VAE.",
+)
+@click.option(
+    "--bnorm_encoder",
+    "-bn_enc",
+    type=bool,
+    is_flag=True,
+    default=None,
+    help="Batch normalisation in encoder is on if True.",
+)
+@click.option(
+    "--bnorm_decoder",
+    "-bn_dec",
+    type=bool,
+    is_flag=True,
+    default=None,
+    help="Batch normalisation in encoder is on if True.",
+)
+@click.option(
+    "--klreduction",
+    "-kr",
+    type=str,
+    default=None,
+    help="Mean or sum reduction on KLD term.",
 )
 @click.option(
     "--beta",
@@ -526,8 +557,12 @@ def run(
     batch,
     depth,
     channels,
+    filters,
     latent_dims,
     pose_dims,
+    bnorm_encoder,
+    bnorm_decoder,
+    klreduction,
     beta,
     beta_load,
     gamma_load,
@@ -597,7 +632,7 @@ def run(
     setup_visualisation_config(data)
 
     if data["new_out"]:
-        dir_name = f'results_{settings.date_time_run}_lat{data["latent_dims"]}_pose{data["pose_dims"]}_lr{data["learning"]}_beta{data["beta"]}_gamma{data["gamma"]}'
+        dir_name = f'results_{settings.date_time_run}_model_{data["model"]}_lat{data["latent_dims"]}_pose{data["pose_dims"]}_lr{data["learning"]}_beta{data["beta"]}_gamma{data["gamma"]}'
         if not os.path.exists(dir_name):
             os.mkdir(dir_name)
         os.chdir(dir_name)
@@ -644,8 +679,12 @@ def run_pipeline(data):
             epochs=data["epochs"],
             channels=data["channels"],
             depth=data["depth"],
+            filters=data["filters"],
             lat_dims=data["latent_dims"],
             pose_dims=data["pose_dims"],
+            bnorm_encoder=data["bnorm_encoder"],
+            bnorm_decoder=data["bnorm_decoder"],
+            klred=data["klreduction"],
             learning=data["learning"],
             beta_load=data["beta_load"],
             beta_min=data["beta_min"],
