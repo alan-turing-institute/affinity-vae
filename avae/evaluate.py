@@ -174,7 +174,6 @@ def evaluate(
             x_test,
             vae,
             device,
-            data_dim,
             poses=p_test,
             mode="_eval",
         )
@@ -186,7 +185,6 @@ def evaluate(
             x_test,
             p_test,
             vae,
-            data_dim,
             device,
             mode="_eval",
         )
@@ -199,7 +197,6 @@ def evaluate(
             settings.VIS_POSE_CLASS,
             p_test,
             vae,
-            data_dim,
             device,
             mode="_eval",
         )
@@ -211,7 +208,6 @@ def evaluate(
             np.ones(len(x_test)),
             vae,
             device,
-            data_dim,
             poses=p_test,
             mode="_eval",
         )

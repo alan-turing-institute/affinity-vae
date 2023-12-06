@@ -599,7 +599,6 @@ def train(
                 x_train,
                 vae,
                 device,
-                data_dim,
                 poses=p_train,
             )
 
@@ -610,7 +609,6 @@ def train(
                 x_train,
                 p_train,
                 vae,
-                data_dim,
                 device,
             )
 
@@ -621,7 +619,6 @@ def train(
                 settings.VIS_POSE_CLASS,
                 p_train,
                 vae,
-                data_dim,
                 device,
             )
 
@@ -648,7 +645,6 @@ def train(
                 ys,
                 vae,
                 device,
-                data_dim,
                 settings.VIS_Z_N_INT,
                 poses=ps,
             )
@@ -659,7 +655,6 @@ def train(
                 ys,
                 vae,
                 device,
-                data_dim,
                 poses=ps,  # do we need val and test here?
             )
 

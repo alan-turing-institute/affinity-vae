@@ -1147,7 +1147,7 @@ def recon_plot(img, rec, label, data_dim, mode="trn", epoch=0, writer=None):
 
 
 def latent_4enc_interpolate_plot(
-    dsize, xs, ys, vae, device, data_dim, plots_config, poses=None
+    dsize, xs, ys, vae, device, plots_config, poses=None
 ):
     """Visualise the interpolation of latent space between 4 randomly selected encodings.
     The number of plots and the number of interpolation steps is modifyable.
@@ -1180,6 +1180,7 @@ def latent_4enc_interpolate_plot(
         "Visualising Latent Interpolation between 4 randomly selected encodings ...\n"
     )
     padding = 0
+    data_dim = len(dsize)
     classes = np.unique(np.asarray(ys))
     latent_dim = xs.shape[1]
 
@@ -1210,8 +1211,9 @@ def latent_4enc_interpolate_plot(
         alpha_values = torch.linspace(0, 1, num_steps)
         beta_values = torch.linspace(0, 1, num_steps)
         decoded_grid = []
-        for i, h in enumerate(alpha_values):
-            for j, v in enumerate(beta_values):
+
+        for h in alpha_values:
+            for v in beta_values:
 
                 # bilinear interpolation in the latent space
                 interpolated_z = (
@@ -1264,7 +1266,6 @@ def latent_disentamglement_plot(
     lats,
     vae,
     device,
-    data_dim,
     poses=None,
     mode="trn",
     writer=None,
@@ -1296,6 +1297,7 @@ def latent_disentamglement_plot(
     logging.info("Visualising latent content disentanglement ...\n")
     number_of_samples = 7
     padding = 0
+    data_dim = len(dsize)
     lats = np.asarray(lats)
     if poses is not None:
         poses = np.asarray(poses)
@@ -1360,7 +1362,7 @@ def latent_disentamglement_plot(
 
 
 def pose_class_disentanglement_plot(
-    dsize, x, y, pose_vis_class, poses, vae, data_dim, device, mode="trn"
+    dsize, x, y, pose_vis_class, poses, vae, device, mode="trn"
 ):
     """Visualise Pose interpolation per class. This function creates a pose interpolatoion
     plot for all classes listed in pose_vis_class.
@@ -1399,7 +1401,7 @@ def pose_class_disentanglement_plot(
     # number of pose interpolation steps, prefarably odd
     number_of_samples = 7
     padding = 0
-
+    data_dim = len(dsize)
     x = np.asarray(x)
 
     poses = np.asarray(poses)
@@ -1448,7 +1450,7 @@ def pose_class_disentanglement_plot(
 
 
 def pose_disentanglement_plot(
-    dsize, lats, poses, vae, data_dim, device, label="avg", mode="trn"
+    dsize, lats, poses, vae, device, label="avg", mode="trn"
 ):
     """Visualise pose disentanglement.
 
@@ -1479,7 +1481,7 @@ def pose_disentanglement_plot(
 
     number_of_samples = 7
     padding = 0
-
+    data_dim = len(dsize)
     lats = np.asarray(lats)
     poses = np.asarray(poses)
 
@@ -1520,7 +1522,7 @@ def pose_disentanglement_plot(
 
 
 def interpolations_plot(
-    dsize, lats, classes, vae, device, data_dim, poses=None, mode="trn"
+    dsize, lats, classes, vae, device, poses=None, mode="trn"
 ):
     """Visualise interpolations.
 
@@ -1547,6 +1549,7 @@ def interpolations_plot(
         "################################################################",
     )
     logging.info("Visualising interpolations ...\n")
+    data_dim = len(dsize)
     lats = np.asarray(lats)
     classes = np.asarray(classes)
 
