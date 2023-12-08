@@ -93,6 +93,7 @@ def evaluate(
 
     s = os.path.basename(state)
     fname = s.split(".")[0].split("_")
+    dshape = list(tests)[0][0].shape[2:]
     pose_dims = fname[3]
 
     logging.info("Loading model from: {}".format(state))
@@ -167,16 +168,48 @@ def evaluate(
     if settings.VIS_REC:
         vis.recon_plot(x, x_hat, y_test, data_dim, mode="evl")
 
+    # visualise latent disentanglement
+    if settings.VIS_DIS:
+        vis.latent_disentamglement_plot(
+            dshape,
+            x_test,
+            vae,
+            device,
+            poses=p_test,
+            mode="_eval",
+        )
+
+    # visualise pose disentanglement
+    if pose_dims != 0 and settings.VIS_POS:
+        vis.pose_disentanglement_plot(
+            dshape,
+            x_test,
+            p_test,
+            vae,
+            device,
+            mode="_eval",
+        )
+
     if pose_dims != 0 and settings.VIS_POSE_CLASS:
         vis.pose_class_disentanglement_plot(
-            batch[0].shape[-data_dim:],
+            dshape,
             x_test,
             y_test,
             settings.VIS_POSE_CLASS,
             p_test,
             vae,
-            data_dim,
             device,
+            mode="_eval",
+        )
+    # visualise interpolations
+    if settings.VIS_INT:
+        vis.interpolations_plot(
+            dshape,
+            x_test,
+            np.ones(len(x_test)),
+            vae,
+            device,
+            poses=p_test,
             mode="_eval",
         )
 
