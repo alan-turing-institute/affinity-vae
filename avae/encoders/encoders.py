@@ -44,11 +44,8 @@ class Encoder(AbstractEncoder):
 
         super(Encoder, self).__init__()
         self.filters = []
-        if capacity is None and filters is None:
-            raise RuntimeError(
-                "Pass either capacity or filters when definining avae.Encoder."
-            )
-        elif filters is not None and len(filters) != 0:
+
+        if filters is not None and len(filters) != 0:
             if 0 in filters:
                 raise RuntimeError("Filter list cannot contain zeros.")
             self.filters = filters
@@ -64,26 +61,30 @@ class Encoder(AbstractEncoder):
                     " provide 'depth' parameter too."
                 )
             self.filters = [capacity * 2**x for x in range(depth)]
-        else:
-            raise RuntimeError(
-                "You must provide either capacity or filters when definity ave.Encoder."
+
+        if len(self.filters) != 0:
+            assert all(
+                [
+                    int(x) == x
+                    for x in np.array(input_size) / (2 ** len(self.filters))
+                ]
+            ), (
+                "Input size not compatible with --depth. Input must be divisible "
+                "by {}.".format(2 ** len(self.filters))
             )
 
-        assert all(
-            [int(x) == x for x in np.array(input_size) / (2**depth)]
-        ), (
-            "Input size not compatible with --depth. Input must be divisible "
-            "by {}.".format(2**depth)
-        )
+            bottom_dim = tuple(
+                [int(i / (2 ** len(self.filters))) for i in input_size]
+            )
 
-        bottom_dim = tuple(
-            [int(i / (2 ** len(self.filters))) for i in input_size]
-        )
+            # define layer dimensions
+            CONV, TCONV, BNORM = set_layer_dim(len(input_size))
+
+        else:
+            bottom_dim = input_size
+
         self.bnorm = bnorm
         self.pose = not (pose_dims == 0)
-
-        # define layer dimensions
-        CONV, TCONV, BNORM = set_layer_dim(len(input_size))
 
         # iteratively define convolution and batch normalisation layers
         self.conv_enc = nn.ModuleList()
