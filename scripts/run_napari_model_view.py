@@ -17,6 +17,7 @@ def setup_napari():
         colormap="inferno",
         rendering="iso",
         name="Reconstruction",
+        depiction="volume",
     )
     return viewer
 
@@ -72,7 +73,7 @@ def run_napari(model_fn, meta_fn, ldim=None, pdim=None):
         meta_df=meta_df,
         pose_dims=pose_dims,
         latent_dims=lat_dims,
-        manifold="load",
+        manifold="umap",
     )
     viewer.window.add_dock_widget(widget, name="AffinityVAE")
     napari.run()

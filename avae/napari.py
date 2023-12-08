@@ -112,16 +112,29 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
         self.manifold = 'load'
         self.cartestian = False  # Remove cartesian-related variable
 
-        samples = self._meta_df[self._meta_df["mode"] == "trn"][
+        self._load_data()
+
+        self.set_embedding(
+            embedding=self._embedding, labels=self._centroids_dict
+        )  # Add labels to the manifold
+        self.inverse_map_manifold_to_z()  # Update the reconstruction
+
+    def _load_data(self):
+        latent_space = self._meta_df[
             [col for col in self._meta_df.columns if col.startswith("lat")]
         ].to_numpy()  # Assuming the column name for latent variables is 'latent'
-        labels = self._meta_df[self._meta_df["mode"] == "trn"]["id"]
+        labels = self._meta_df["id"]
+
+        self._latent_range = 10 * latent_space.max(axis=0)
+        self._pose_range = 1.5 * self._meta_df[
+            [col for col in self._meta_df.columns if col.startswith("pos")]
+        ].to_numpy().max(axis=0)
 
         if self.manifold == "umap":
             self._mapper = umap.UMAP(random_state=42)
-            self._embedding = self._mapper.fit_transform(samples)
+            self._embedding = self._mapper.fit_transform(latent_space)
         elif self.manifold == "load":
-            self._embedding = self._meta_df[self._meta_df["mode"] == "trn"][
+            self._embedding = self._meta_df[
                 [col for col in self._meta_df if col.startswith("emb")]
             ].to_numpy()
 
@@ -132,18 +145,13 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
         )
 
         # Calculate centroids and store as a dictionary
-        centroids_dict = {}
+        self._centroids_dict = {}
         for label in np.unique(labels):
             mask = data['Label'] == label
-            centroids_dict[label] = [
+            self._centroids_dict[label] = [
                 np.mean(data[mask]['X']),
                 np.mean(data[mask]['Y']),
             ]
-
-        self.set_embedding(
-            embedding=self._embedding, labels=centroids_dict
-        )  # Add labels to the manifold
-        self.inverse_map_manifold_to_z()  # Update the reconstruction
 
     def add_pose_widget(self) -> None:
         """Add widgets to manipulate the model pose space."""
@@ -223,14 +231,17 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
         )
 
     def get_pose(self) -> npt.NDArray:
-        theta = scale_from_slider(self._widgets["theta"].value(), np.pi)
 
         if self.cartestian:
+            theta = scale_from_slider(self._widgets["theta"].value(), np.pi)
             axis = CartesianAxes[str(self._widgets["axes"].currentText())]
             return np.array([theta, *axis.value], dtype=np.float32)
 
         else:
-            return np.array([theta], dtype=np.float32)
+            theta = scale_from_slider(
+                self._widgets["theta"].value(), self._pose_range
+            )
+            return np.array(theta, dtype=np.float32)
 
     def get_state(self) -> Tuple[float, npt.NDArray]:
         pose = self.get_pose()
@@ -240,7 +251,7 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
                 for idx in range(self._latent_dims)
             ]
         )
-        z = scale_from_slider(z_values, MAX_UMAP)
+        z = scale_from_slider(z_values, self._latent_range)
         return pose, z
 
     def inverse_map_manifold_to_z(self, event=None) -> Optional[npt.NDArray]:
@@ -268,8 +279,8 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
         )
 
         transformed = [
-            scale_to_slider(pt, MAX_UMAP)
-            for pt in np.squeeze(inv_transformed_points)
+            scale_to_slider(pt, self._latent_range[z_dim])
+            for z_dim, pt in enumerate(np.squeeze(inv_transformed_points))
         ]
 
         for idx in range(self._latent_dims):
