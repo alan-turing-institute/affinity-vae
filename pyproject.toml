@@ -39,7 +39,7 @@ dependencies = [
     "torch",
     "torchvision",
     "umap-learn",
-    "pydantic"
+    "pydantic>=2.5.2"
 ]
 
 [project.readme]
@@ -69,6 +69,7 @@ dev = [
 ]
 napari = [
     "napari[all]",
+    "pydantic==1.10.13", # latest napari version is incompatible with napari, napari demo doesnt use pydantic.
 ]
 [tool.pytest.ini_options]
 minversion = "6.0"
