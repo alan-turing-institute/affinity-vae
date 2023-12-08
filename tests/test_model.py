@@ -1,5 +1,6 @@
 import unittest
 
+import pytest
 from torch import nn, randn
 
 from avae.decoders.decoders import Decoder
@@ -72,3 +73,60 @@ class ModelTest(unittest.TestCase):
         self.assertEqual(randn(14, 16).shape, y[2].shape)
         self.assertEqual(randn(14, 16).shape, y[3].shape)
         self.assertEqual(randn(14, 3).shape, y[4].shape)
+
+    def test_model_filters(self):
+        input = randn(14, 1, 64, 64)
+
+        enc = Encoder(
+            filters=[8, 16],
+            input_size=(64, 64),
+            latent_dims=16,
+            pose_dims=3,
+        )
+        dec = Decoder(
+            filters=[16],
+            input_size=(64, 64),
+            latent_dims=16,
+            pose_dims=3,
+        )
+        model = avae(enc, dec)
+        output = model(input)[0]
+        self.assertEqual(output.shape, input.shape)
+
+    def test_model_noconv(self):
+        input = randn(14, 1, 128)
+
+        enc = Encoder(
+            input_size=(128,),
+            depth=0,
+            latent_dims=16,
+            pose_dims=3,
+        )
+        dec = Decoder(
+            input_size=(128,),
+            depth=0,
+            latent_dims=16,
+            pose_dims=3,
+        )
+        model = avae(enc, dec)
+        output = model(input)[0]
+        self.assertEqual(output.shape, input.shape)
+
+
+class PoseTest(unittest.TestCase):
+    def setUp(self):
+        self.input = randn(14, 1, 64, 64, 64)
+        self.params = [(0, 2), (1, 3)]  # 3 tensors for pose, 2 without
+
+    def test_encoder(self):
+        for dim, exp in self.params:
+            enc = Encoder(
+                capacity=8,
+                depth=4,
+                input_size=(64, 64, 64),
+                latent_dims=16,
+                pose_dims=dim,
+                bnorm=True,
+            )
+            output = enc(self.input)
+            self.assertEqual(len(output), exp)
