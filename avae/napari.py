@@ -107,7 +107,7 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
         self.setLayout(self._main_layout)
         self._main_layout.addStretch(stretch=1)
         self.setMinimumWidth(400)
-        self.manifold = 'load'
+        self.manifold = manifold
         self.cartestian = False  # Remove cartesian-related variable
 
         self._load_data()
@@ -263,7 +263,7 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
 
         # Retrieve latent variables based on the clicked index in the DataFrame
         if self.manifold == "umap" and self._mapper is not None:
-            inv_transformed_points = self._mapper.inverse_transform(pt)
+            inv_transformed_points = self._mapper.inverse_transform(pt)[0]
         else:
             clicked_index = self.get_clicked_index(pt)
             inv_transformed_points = self._meta_df.iloc[clicked_index][
