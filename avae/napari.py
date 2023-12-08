@@ -94,8 +94,6 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
         self.pose_dims = pose_dims
         self._latent_dims = latent_dims  # Number of latent dimensions
 
-        # ... (existing code for initialization)
-
         self._main_layout = QtWidgets.QVBoxLayout()
         self._tabs = QtWidgets.QTabWidget()
         self._widgets = {}
@@ -272,7 +270,12 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
                 [col for col in self._meta_df.columns if col.startswith("lat")]
             ].values  # Assuming the column name for latent variables is 'latent'
 
+            # for debugging
+            print('Data point clicked:')
+            print(self._meta_df.iloc[clicked_index]["id"])
+        print("Latent variables clicked:")
         print(inv_transformed_points)
+
         pose = self.get_pose()
         self._layer.data = process(
             self._model, inv_transformed_points, pose, device=self._device
