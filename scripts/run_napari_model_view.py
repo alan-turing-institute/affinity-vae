@@ -73,7 +73,7 @@ def run_napari(model_fn, meta_fn, ldim=None, pdim=None, manifold="umap"):
         meta_df=meta_df,
         pose_dims=pose_dims,
         latent_dims=lat_dims,
-        manifold="umap",
+        manifold=manifold,
     )
     viewer.window.add_dock_widget(widget, name="AffinityVAE")
     napari.run()
