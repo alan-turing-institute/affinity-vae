@@ -20,7 +20,8 @@ The MNIST dataset can be downloaded from:
 https://figshare.com/articles/dataset/mnist_pkl_gz/13303457
 
 In this tutorial, we assume that the dataset is downloaded to this `tutorials`
-directory.
+directory. Make sure that the downloaded file is indeed `mnist.pkl.gz` and that it hasn't
+been decompressed by your browser (this could happen in Safari).
 
 ### Create the MNSIT dataset for affinityVAE
 
@@ -67,7 +68,7 @@ In general, we recommend to work with absolute paths to avoid issues.
 To train AffinityVAE on our rotated MNIST dataset, run the following command:
 
 ```bash
-python /absolute/path/to/affinity-vae/run.py --config_file /absolute/path/to/mnist_data/mnist_config.yml ---new_out
+python /absolute/path/to/affinity-vae/run.py --config_file /absolute/path/to/mnist_data/mnist_config.yml --new_out
 ```
 
 This will train AffinityVAE on the MNIST dataset and save the results in a new
