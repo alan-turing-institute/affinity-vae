@@ -20,8 +20,8 @@ The MNIST dataset can be downloaded from:
 https://figshare.com/articles/dataset/mnist_pkl_gz/13303457
 
 In this tutorial, we assume that the dataset is downloaded to this `tutorials`
-directory. Make sure that the downloaded file is indeed `mnist.pkl.gz` and that it hasn't
-been decompressed by your browser (this could happen in Safari).
+directory. Make sure that the downloaded file is indeed `mnist.pkl.gz` and that
+it hasn't been decompressed by your browser (this could happen in Safari).
 
 ### Create the MNSIT dataset for affinityVAE
 
