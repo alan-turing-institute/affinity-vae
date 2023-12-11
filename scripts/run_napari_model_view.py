@@ -37,7 +37,7 @@ def load_model(model_fn, meta_fn, device="cpu"):
     return model, meta_df
 
 
-def run_napari(model_fn, meta_fn, ldim=None, pdim=None):
+def run_napari(model_fn, meta_fn, ldim=None, pdim=None, manifold="umap"):
     """Run the napari viewer for model."""
 
     viewer = setup_napari()
@@ -84,17 +84,29 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--model_file", help="Path to model state file.")
-    parser.add_argument("--meta_file", help="Path to the meta file.")
+    parser.add_argument(
+        "--model_file", help="Path to model state file.", required=True
+    )
+    parser.add_argument(
+        "--meta_file", help="Path to the meta file.", required=True
+    )
+    parser.add_argument(
+        "--manifold",
+        help="Manifold to use for latent space. This can be either `umap` or `load`.",
+        required=False,
+        default="umap",
+    )
     parser.add_argument(
         "--pose_dims",
         help="Number of pose dimensions. This will overwrite the internal model value.",
         default=None,
+        required=False,
     )
     parser.add_argument(
         "--latent_dims",
         help="Number of latent dimensions. This will overwrite the internal model value.",
         default=None,
+        required=False,
     )
 
     args = parser.parse_args()
@@ -103,6 +115,10 @@ if __name__ == "__main__":
     meta_fn = args.meta_file
     pdim = args.pose_dims
     ldim = args.latent_dims
+    manifold = args.manifold
+
+    if manifold != "umap" and manifold != "load":
+        raise ValueError("Manifold must be either \"umap\" or \"load\".")
 
     print("Running napari viewer with model: {}".format(model_fn))
-    run_napari(model_fn, meta_fn, ldim, pdim)
+    run_napari(model_fn, meta_fn, ldim, pdim, manifold)
