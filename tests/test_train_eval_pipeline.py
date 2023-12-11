@@ -18,7 +18,6 @@ random.seed(10)
 class TrainEvalTest(unittest.TestCase):
     def setUp(self) -> None:
         """Test instantiation of the pipeline."""
-
         self.testdata_mrc = os.path.dirname(testdata_mrc.__file__)
         self.testdata_npy = os.path.dirname(testdata_npy.__file__)
 
@@ -160,6 +159,28 @@ class TrainEvalTest(unittest.TestCase):
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
         self.assertEqual(n_plots_eval, 52)
+        self.assertEqual(n_latent_eval, 4)
+        self.assertEqual(n_states_eval, 3)
+
+    def test_model_nopose(self):
+        self.data["model"] = "u"
+        self.data["pose_dims"] = 0
+
+        (
+            n_dir_train,
+            n_plots_train,
+            n_latent_train,
+            n_states_train,
+            n_plots_eval,
+            n_latent_eval,
+            n_states_eval,
+        ) = helper_train_eval(self.data)
+
+        self.assertEqual(n_dir_train, 4)
+        self.assertEqual(n_plots_train, 30)
+        self.assertEqual(n_latent_train, 2)
+        self.assertEqual(n_states_train, 2)
+        self.assertEqual(n_plots_eval, 48)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 3)
 

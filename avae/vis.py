@@ -1603,12 +1603,13 @@ def interpolations_plot(
                 + h * v * class_rep_lats[3]
             )
 
-            interpolated_pose = (
-                (1 - h) * (1 - v) * class_reps_poses[0]
-                + h * (1 - v) * class_reps_poses[1]
-                + (1 - h) * v * class_reps_poses[2]
-                + h * v * class_reps_poses[3]
-            )
+            if poses is not None:
+                interpolated_pose = (
+                    (1 - h) * (1 - v) * class_reps_poses[0]
+                    + h * (1 - v) * class_reps_poses[1]
+                    + (1 - h) * v * class_reps_poses[2]
+                    + h * v * class_reps_poses[3]
+                )
             with torch.no_grad():
                 if poses is not None:
                     decoded_images = vae.decoder(
