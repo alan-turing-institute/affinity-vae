@@ -1,4 +1,3 @@
-import datetime
 import logging
 import os
 
@@ -7,12 +6,14 @@ import pandas as pd
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
+from avae.decoders.decoders import Decoder, DecoderA, DecoderB
+from avae.encoders.encoders import Encoder, EncoderA, EncoderB
+
 from . import settings, vis
 from .cyc_annealing import cyc_annealing
 from .data import load_data
 from .loss import AVAELoss
-from .model_a import AffinityVAE as AffinityVAE_A
-from .model_b import AffinityVAE as AffinityVAE_B
+from .models import AffinityVAE
 from .utils import accuracy
 from .utils_learning import add_meta, pass_batch, set_device
 
@@ -31,8 +32,12 @@ def train(
     epochs,
     channels,
     depth,
+    filters,
     lat_dims,
     pose_dims,
+    bnorm_encoder,
+    bnorm_decoder,
+    klred,
     learning,
     beta_load,
     beta_min,
@@ -131,6 +136,10 @@ def train(
         If True, log metrics and figures using tensorboard.
     classifier: str
         The method to use on the latent space classification. Can be neural network (NN), k nearest neighbourgs (KNN) or logistic regression (LR).
+    bnorm_encoder: bool
+        If True, batch normalisation is applied to the encoder.
+    bnrom_decoder: bool
+        If True, batch normalisation is applied to the decoder.
     """
     torch.manual_seed(42)
 
@@ -150,26 +159,50 @@ def train(
         shift_min=shift_min,
         rescale=rescale,
     )
+
+    # The spacial dimensions of the data
     dshape = list(trains)[0][0].shape[2:]
     pose = not (pose_dims == 0)
 
     # ############################### MODEL ###############################
     device = set_device(use_gpu)
+    if filters is not None:
+        filters = np.array(filters.replace(" ", "").split(","), dtype=np.int64)
 
     if model == "a":
-        affinityVAE = AffinityVAE_A
+        encoder = EncoderA(
+            dshape, channels, depth, lat_dims, pose_dims, bnorm=bnorm_encoder
+        )
+        decoder = DecoderA(
+            dshape, channels, depth, lat_dims, pose_dims, bnorm=bnorm_decoder
+        )
     elif model == "b":
-        affinityVAE = AffinityVAE_B
+        encoder = EncoderB(dshape, channels, depth, lat_dims, pose_dims)
+        decoder = DecoderB(dshape, channels, depth, lat_dims, pose_dims)
+    elif model == "u":
+        encoder = Encoder(
+            dshape,
+            channels,
+            depth,
+            lat_dims,
+            pose_dims,
+            filters,
+            bnorm=bnorm_encoder,
+        )
+        decoder = Decoder(
+            dshape,
+            channels,
+            depth,
+            lat_dims,
+            pose_dims,
+            filters,
+            bnorm=bnorm_decoder,
+        )
     else:
-        raise ValueError("Invalid model type", model, "must be a or b")
+        raise ValueError("Invalid model type", model, "must be a or b or u")
 
-    vae = affinityVAE(
-        channels,
-        depth,
-        dshape,
-        lat_dims,
-        pose_dims=pose_dims,
-    )
+    vae = AffinityVAE(encoder, decoder)
+
     logging.info(vae)
 
     vae.to(device)
@@ -286,6 +319,7 @@ def train(
         gamma=gamma_arr,
         lookup_aff=lookup,
         recon_fn=recon_fn,
+        klred=klred,
     )
 
     if tensorboard:
@@ -593,23 +627,30 @@ def train(
             if not pose:
                 p_train = None
             vis.latent_disentamglement_plot(
-                x_train, vae, device, data_dim, poses=p_train
+                dshape,
+                x_train,
+                vae,
+                device,
+                poses=p_train,
             )
 
         # visualise pose disentanglement
         if pose and settings.VIS_POS and (epoch + 1) % settings.FREQ_POS == 0:
             vis.pose_disentanglement_plot(
-                x_train, p_train, vae, data_dim, device
+                dshape,
+                x_train,
+                p_train,
+                vae,
+                device,
             )
 
-        if pose and settings.VIS_POSE_CLASS:
             vis.pose_class_disentanglement_plot(
+                dshape,
                 x_train,
                 y_train,
                 settings.VIS_POSE_CLASS,
                 p_train,
                 vae,
-                data_dim,
                 device,
             )
 
@@ -630,12 +671,22 @@ def train(
                 else:
                     ps = None
 
-            vis.interpolations_plot(
+            vis.latent_4enc_interpolate_plot(
+                dshape,
                 xs,
                 ys,
                 vae,
                 device,
-                data_dim,
+                settings.VIS_Z_N_INT,
+                poses=ps,
+            )
+
+            vis.interpolations_plot(
+                dshape,
+                xs,
+                ys,
+                vae,
+                device,
                 poses=ps,  # do we need val and test here?
             )
 

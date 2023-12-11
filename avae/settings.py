@@ -17,6 +17,7 @@ VIS_HIS = False
 VIS_SIM = False
 VIS_DYN = False
 VIS_POSE_CLASS = None
+VIS_Z_N_INT = "1,10"
 
 FREQ_ACC = 10
 FREQ_REC = 10
