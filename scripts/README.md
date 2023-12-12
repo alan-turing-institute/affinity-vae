@@ -51,8 +51,7 @@ For a minimal usage you can run the Napari plugin just providing the model state
 and meta files from a run:
 
 ```bash
-
-python scripts/napari_plugin.py --model_file <path_to_model> --meta_file <path_to_meta>
+python scripts/run_napari_model_view.py --model_file <path_to_model> --meta_file <path_to_meta>
 ```
 
 in this case the pose and latent dimensions will be read from the model file and
