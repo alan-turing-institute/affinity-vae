@@ -50,12 +50,16 @@ def process(
     return x.squeeze().cpu().numpy()
 
 
-def scale_from_slider(x, s):
-    return 2 * ((x / 1000.0) - 0.5) * s
+def scale_from_slider(x, min_val, max_val):
+    scaled_value = x / 1000.0
+    scaled_range = max_val - min_val
+    return min_val + (scaled_value) * scaled_range
 
 
-def scale_to_slider(x, s):
-    return np.clip(((x + s) / (2 * s)) * 1000, 0, 1000).astype(int)
+def scale_to_slider(x, min_val, max_val):
+    scaled_range = max_val - min_val
+    scaled_value = (x - min_val) / scaled_range
+    return np.clip(((scaled_value)) * 1000, 0, 1000).astype(int)
 
 
 class MplCanvas(FigureCanvasQTAgg):
@@ -123,10 +127,14 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
         ].to_numpy()  # Assuming the column name for latent variables is 'latent'
         labels = self._meta_df["id"]
 
-        self._latent_range = 10 * latent_space.max(axis=0)
-        self._pose_range = 1.5 * self._meta_df[
+        pose_space = self._meta_df[
             [col for col in self._meta_df.columns if col.startswith("pos")]
-        ].to_numpy().max(axis=0)
+        ].to_numpy()
+
+        self._latent_range_min = latent_space.min(axis=0)
+        self._latent_range_max = latent_space.max(axis=0)
+        self._pose_range_min = pose_space.min(axis=0)
+        self._pose_range_max = pose_space.max(axis=0)
 
         if self.manifold == "umap":
             self._mapper = umap.UMAP(random_state=42)
@@ -237,7 +245,9 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
 
         else:
             theta = scale_from_slider(
-                self._widgets["theta"].value(), self._pose_range
+                self._widgets["theta"].value(),
+                self._pose_range_min,
+                self._pose_range_max,
             )
             return np.array(theta, dtype=np.float32)
 
@@ -249,7 +259,9 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
                 for idx in range(self._latent_dims)
             ]
         )
-        z = scale_from_slider(z_values, self._latent_range)
+        z = scale_from_slider(
+            z_values, self._latent_range_min, self._latent_range_max
+        )
         return pose, z
 
     def inverse_map_manifold_to_z(self, event=None) -> Optional[npt.NDArray]:
@@ -282,7 +294,11 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
         )
 
         transformed = [
-            scale_to_slider(pt, self._latent_range[z_dim])
+            scale_to_slider(
+                pt,
+                self._latent_range_min[z_dim],
+                self._latent_range_max[z_dim],
+            )
             for z_dim, pt in enumerate(np.squeeze(inv_transformed_points))
         ]
 
@@ -351,3 +367,5 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
                 )
 
         self._widgets["manifold"].axes.set_aspect("equal")
+        self._widgets["manifold"].axes.get_xaxis().set_label_text("UMAP-1")
+        self._widgets["manifold"].axes.get_yaxis().set_label_text("UMAP-2")
