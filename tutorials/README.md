@@ -3,7 +3,7 @@
 ## Running AffinityVAE on the MNIST dataset
 
 ### 1. Install AffinityVAE
-
+To start, clone the AffinityVAE repository and switch to the `affinity-vae` directory
 As described in the [README](../README.md), AffinityVAE can be installed using
 pip:
 
