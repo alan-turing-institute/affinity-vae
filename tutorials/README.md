@@ -92,7 +92,7 @@ test set by stepping into the new directory and running.
 
 ```bash
 cd path/to/new_out
-python path/to/affinity-vae/run.py --config_file /absolute/path/to/mnist_data/mnist_config.yml  --data_path /absolute/path/to/mnist_data/images_test/ --eval
+python path/to/affinity-vae/run.py --config_file /absolute/path/to/mnist_data/mnist_config.yml  --datapath /absolute/path/to/mnist_data/images_test/ --eval
 ```
 
 _Note_: During training we've left the class `9` out, so we can use it for
