@@ -112,8 +112,7 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
         self._main_layout.addStretch(stretch=1)
         self.setMinimumWidth(400)
         self.manifold = manifold
-        self.cartestian = False  # Remove cartesian-related variable
-
+        self.cartestian = False  # Keeping this as false and as a placeholder as we havent implemented cartesian pose space yet
         self._load_data()
 
         self.set_embedding(
