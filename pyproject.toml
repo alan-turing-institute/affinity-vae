@@ -67,6 +67,10 @@ dev = [
     "pytest-cov >=3",
     "pre-commit",
 ]
+napari = [
+    "napari[all]",
+    "pydantic<2", # latest napari version is incompatible with napari, napari demo doesnt use pydantic.
+]
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = ["-ra", "--showlocals"]#, "--strict-markers", "--strict-config"]

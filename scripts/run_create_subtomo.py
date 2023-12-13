@@ -8,8 +8,8 @@ import yaml
 
 from tools.create_subtomo import create_subtomo
 
-if not os.path.exists("logs"):
-    os.mkdir("logs")
+if not os.path.exists("../logs"):
+    os.mkdir("../logs")
 dt_name = datetime.now().strftime("%H_%M_%d_%m_%Y")
 logging.basicConfig(
     level=logging.INFO,

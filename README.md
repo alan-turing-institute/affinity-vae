@@ -302,3 +302,9 @@ input files for Affinity-VAE or analyse teh output of the model.
 ##### Evaluation: To run evaluation on a trained model you can turn the `eval` flag to True. This will load the last model present on the `states` directory (within the working directory path where you run the code) and run the evaluation on data set by the `datapath` flag. The evaluation will be saved in the `plots` and `latents` directory with the `eval` suffix on the names.
 
 ##### The name of the state file consist of avae_date_time_Epoch_latent_pose.pt
+
+### Inspecting the results from Affinity-VAE
+
+You can interact with the latent space and access reconstruction from the train
+model using Napari. You can find more information on how to use the Napari
+plugin in the [README.md](scripts/README.md) file in the scripts folder.
