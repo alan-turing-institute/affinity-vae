@@ -54,34 +54,34 @@ class AffinityConfig(BaseModel):
     epochs: PositiveInt = Field(20, description="Number of epochs")
     eval: bool = Field(False, description="Evaluation mode")
     freq_acc: PositiveInt = Field(
-        10, description="Frequency (in epochs) of accuracy plot"
+        None, description="Frequency (in epochs) of accuracy plot"
     )
     freq_all: PositiveInt = Field(
         None, description="Frequency (in epochs) of all plots"
     )
     freq_dis: PositiveInt = Field(
-        10, description="Frequency (in epochs) of disentanglement plot"
+        None, description="Frequency (in epochs) of disentanglement plot"
     )
     freq_emb: PositiveInt = Field(
-        10, description="Frequency (in epochs) of embedding plot"
+        None, description="Frequency (in epochs) of embedding plot"
     )
     freq_eval: PositiveInt = Field(
-        10, description="Frequency (in epochs) of evaluation"
+        None, description="Frequency (in epochs) of evaluation"
     )
     freq_int: PositiveInt = Field(
-        10, description="Frequency (in epochs) of interpolation plot"
+        None, description="Frequency (in epochs) of interpolation plot"
     )
     freq_pos: PositiveInt = Field(
-        10, description="Frequency (in epochs) of pose plot"
+        None, description="Frequency (in epochs) of pose plot"
     )
     freq_rec: PositiveInt = Field(
-        10, description="Frequency (in epochs) of reconstruction plot"
+        None, description="Frequency (in epochs) of reconstruction plot"
     )
     freq_sim: PositiveInt = Field(
-        10, description="Frequency (in epochs) of similarity plot"
+        None, description="Frequency (in epochs) of similarity plot"
     )
     freq_sta: PositiveInt = Field(
-        10, description="Frequency (in epochs) of states saved."
+        None, description="Frequency (in epochs) of states saved."
     )
     gamma: float = Field(2, description="Gamma value")
     gamma_cycle: PositiveInt = Field(4, description="Gamma cycle")
@@ -134,7 +134,7 @@ class AffinityConfig(BaseModel):
         None, description="Visualise pose per class interpolation"
     )
     vis_z_n_int: str = Field(
-        "0,10", description="Visualise latent space interpolation "
+        None, description="Visualise latent space interpolation "
     )
 
     vis_rec: bool = Field(False, description="Visualise reconstruction")
@@ -172,7 +172,6 @@ def load_config_params(config_file=None, local_vars={}):
     if config_file is not None:
         with open(config_file, "r") as f:
             config_data = yaml.safe_load(f)
-
         try:
             data = AffinityConfig(**config_data)
             logging.info("Config file is valid!")
@@ -296,55 +295,71 @@ def write_config_file(time_stamp_name, data):
 
 
 def setup_visualisation_config(data):
-
-    if data["vis_all"]:
-        settings.VIS_LOS = True
-        settings.VIS_ACC = True
-        settings.VIS_REC = True
-        settings.VIS_CYC = True
-        settings.VIS_AFF = True
-        settings.VIS_EMB = True
-        settings.VIS_INT = True
-        settings.VIS_DIS = True
-        settings.VIS_POS = True
-        settings.VIS_HIS = True
-        settings.VIS_SIM = True
-        settings.VIS_DYN = True
-
-    else:
-        settings.VIS_LOS = data["vis_los"]
-        settings.VIS_ACC = data["vis_acc"]
-        settings.VIS_REC = data["vis_rec"]
-        settings.VIS_CYC = data["vis_cyc"]
-        settings.VIS_AFF = data["vis_aff"]
-        settings.VIS_EMB = data["vis_emb"]
-        settings.VIS_INT = data["vis_int"]
-        settings.VIS_DIS = data["vis_dis"]
-        settings.VIS_POS = data["vis_pos"]
-        settings.VIS_HIS = data["vis_his"]
-        settings.VIS_SIM = data["vis_sim"]
-        settings.VIS_DYN = data["dynamic"]
-
-    if data["freq_all"] is not None:
-        settings.FREQ_EVAL = data["freq_all"]
-        settings.FREQ_STA = data["freq_all"]
-        settings.FREQ_ACC = data["freq_all"]
-        settings.FREQ_REC = data["freq_all"]
-        settings.FREQ_EMB = data["freq_all"]
-        settings.FREQ_INT = data["freq_all"]
-        settings.FREQ_DIS = data["freq_all"]
-        settings.FREQ_POS = data["freq_all"]
-        settings.FREQ_SIM = data["freq_all"]
-    else:
-        settings.FREQ_EVAL = data["freq_eval"]
-        settings.FREQ_REC = data["freq_rec"]
-        settings.FREQ_EMB = data["freq_emb"]
-        settings.FREQ_INT = data["freq_int"]
-        settings.FREQ_DIS = data["freq_dis"]
-        settings.FREQ_POS = data["freq_pos"]
-        settings.FREQ_ACC = data["freq_acc"]
-        settings.FREQ_STA = data["freq_sta"]
-        settings.FREQ_SIM = data["freq_sim"]
-
+    settings.VIS_LOS = (
+        data["vis_los"] if data["vis_los"] == True else data["vis_all"]
+    )
+    settings.VIS_ACC = (
+        data["vis_acc"] if data["vis_acc"] == True else data["vis_all"]
+    )
+    settings.VIS_REC = (
+        data["vis_rec"] if data["vis_rec"] == True else data["vis_all"]
+    )
+    settings.VIS_CYC = (
+        data["vis_cyc"] if data["vis_cyc"] == True else data["vis_all"]
+    )
+    settings.VIS_AFF = (
+        data["vis_aff"] if data["vis_aff"] == True else data["vis_all"]
+    )
+    settings.VIS_EMB = (
+        data["vis_emb"] if data["vis_emb"] == True else data["vis_all"]
+    )
+    settings.VIS_INT = (
+        data["vis_int"] if data["vis_int"] == True else data["vis_all"]
+    )
+    settings.VIS_DIS = (
+        data["vis_dis"] if data["vis_dis"] == True else data["vis_all"]
+    )
+    settings.VIS_POS = (
+        data["vis_pos"] if data["vis_pos"] == True else data["vis_all"]
+    )
+    settings.VIS_HIS = (
+        data["vis_his"] if data["vis_his"] == True else data["vis_all"]
+    )
+    settings.VIS_SIM = (
+        data["vis_sim"] if data["vis_sim"] == True else data["vis_all"]
+    )
+    settings.VIS_DYN = (
+        data["dynamic"] if data["dynamic"] == True else data["vis_all"]
+    )
     settings.VIS_POSE_CLASS = data["vis_pose_class"]
     settings.VIS_Z_N_INT = data["vis_z_n_int"]
+
+    settings.FREQ_EVAL = (
+        data["freq_eval"]
+        if data["freq_eval"] is not None
+        else data["freq_all"]
+    )
+    settings.FREQ_REC = (
+        data["freq_rec"] if data["freq_rec"] is not None else data["freq_all"]
+    )
+    settings.FREQ_EMB = (
+        data["freq_emb"] if data["freq_emb"] is not None else data["freq_all"]
+    )
+    settings.FREQ_INT = (
+        data["freq_int"] if data["freq_int"] is not None else data["freq_all"]
+    )
+    settings.FREQ_DIS = (
+        data["freq_dis"] if data["freq_dis"] is not None else data["freq_all"]
+    )
+    settings.FREQ_POS = (
+        data["freq_pos"] if data["freq_pos"] is not None else data["freq_all"]
+    )
+    settings.FREQ_ACC = (
+        data["freq_acc"] if data["freq_acc"] is not None else data["freq_all"]
+    )
+    settings.FREQ_STA = (
+        data["freq_sta"] if data["freq_sta"] is not None else data["freq_all"]
+    )
+    settings.FREQ_SIM = (
+        data["freq_sim"] if data["freq_sim"] is not None else data["freq_all"]
+    )

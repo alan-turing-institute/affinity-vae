@@ -272,6 +272,8 @@ def latent_embed_plot_tsne(
         plt.ylabel("freq")
 
     plt.tight_layout()
+    if not os.path.exists("plots"):
+        os.mkdir("plots")
     plt.savefig(f"plots/embedding_TSNE{mode}.png")
 
     if writer:
@@ -393,6 +395,8 @@ def latent_embed_plot_umap(
         plt.ylabel("freq")
 
     plt.tight_layout()
+    if not os.path.exists("plots"):
+        os.mkdir("plots")
     plt.savefig(f"plots/embedding_UMAP{mode}.png")
 
     if writer:
@@ -1142,7 +1146,7 @@ def recon_plot(img, rec, label, data_dim, mode="trn", epoch=0, writer=None):
                         :,
                     ] = rec_img[i, j, :, :, :]
 
-        save_mrc_file(str(mode) + "_recon_in.mrc", grid_for_napari)
+        save_mrc_file(str(mode) + "_recons.mrc", grid_for_napari)
         logging.info("\n")
 
 

@@ -494,6 +494,11 @@ def train(
 
         # ########################## VISUALISE ################################
 
+        if classes is not None:
+            classes_list = pd.read_csv(classes).columns.tolist()
+        else:
+            classes_list = []
+
         # visualise accuracy: confusion and F1 scores
         if settings.VIS_ACC and (epoch + 1) % settings.FREQ_ACC == 0:
             train_acc, val_acc, _, ypred_train, ypred_val = accuracy(
@@ -567,10 +572,6 @@ def train(
 
         # visualise mean and logvar similarity matrix
         if settings.VIS_SIM and (epoch + 1) % settings.FREQ_SIM == 0:
-            if classes is not None:
-                classes_list = pd.read_csv(classes).columns.tolist()
-            else:
-                classes_list = []
 
             vis.latent_space_similarity(
                 x_train,
@@ -644,15 +645,16 @@ def train(
                 device,
             )
 
-            vis.pose_class_disentanglement_plot(
-                dshape,
-                x_train,
-                y_train,
-                settings.VIS_POSE_CLASS,
-                p_train,
-                vae,
-                device,
-            )
+            if settings.VIS_POSE_CLASS is not None:
+                vis.pose_class_disentanglement_plot(
+                    dshape,
+                    x_train,
+                    y_train,
+                    settings.VIS_POSE_CLASS,
+                    p_train,
+                    vae,
+                    device,
+                )
 
         # visualise interpolations
         if settings.VIS_INT and (epoch + 1) % settings.FREQ_INT == 0:
@@ -671,15 +673,16 @@ def train(
                 else:
                     ps = None
 
-            vis.latent_4enc_interpolate_plot(
-                dshape,
-                xs,
-                ys,
-                vae,
-                device,
-                settings.VIS_Z_N_INT,
-                poses=ps,
-            )
+            if settings.VIS_Z_N_INT is not None:
+                vis.latent_4enc_interpolate_plot(
+                    dshape,
+                    xs,
+                    ys,
+                    vae,
+                    device,
+                    settings.VIS_Z_N_INT,
+                    poses=ps,
+                )
 
             vis.interpolations_plot(
                 dshape,

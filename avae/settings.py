@@ -17,17 +17,17 @@ VIS_HIS = False
 VIS_SIM = False
 VIS_DYN = False
 VIS_POSE_CLASS = None
-VIS_Z_N_INT = "1,10"
+VIS_Z_N_INT = None
 
-FREQ_ACC = 10
-FREQ_REC = 10
-FREQ_EMB = 10
-FREQ_INT = 10
-FREQ_DIS = 10
-FREQ_POS = 10
-FREQ_SIM = 10
-FREQ_EVAL = 10
-FREQ_STA = 10
+FREQ_ACC = None
+FREQ_REC = None
+FREQ_EMB = None
+FREQ_INT = None
+FREQ_DIS = None
+FREQ_POS = None
+FREQ_SIM = None
+FREQ_EVAL = None
+FREQ_STA = None
 
 # logging settings
 
