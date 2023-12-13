@@ -108,7 +108,7 @@ python path/to/affinity-vae/run.py --config_file /absolute/path/to/mnist_data/mn
 here epochs are set to 2000 to continue training for 1000 extra epochs (assuming
 initial training ran for the 1000 epochs defined in the config file).
 
-# Outptus of the training run
+# Outputs of the training and evaluation runs
 
 The training run will create a directory with the following structure:
 
