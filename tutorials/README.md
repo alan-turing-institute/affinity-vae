@@ -53,7 +53,7 @@ in the [mnist_data](mnist_data) directory.
 
 First thing you need to do is to modify the `mnist_config.yml` file to point to
 the absolute paths of the data, classes, and affinity files. Currently, the
-paths in the config file are relative this directory but this can cause issues
+paths in the config file are relative to this directory but this can cause issues
 when running the code from a different directory. To modify the paths, open the
 `mnist_config.yml` file and change the following lines:
 
