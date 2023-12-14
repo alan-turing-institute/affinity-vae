@@ -30,8 +30,8 @@ python -m pip install --upgrade pip
 python -m pip install -e .
 ```
 
-If you are developing code, you should be able to run precommits and tests,
-thefore the best installation option after setting up the virtual environment
+If you are developing code, you should be able to run pre-commits and tests,
+therefore the best installation option after setting up the virtual environment
 is:
 
 ```
@@ -105,8 +105,12 @@ conda install -c anaconda libtiff==4.4.0
 
 ### Quick start
 
-Affinity-vae has a running script (`run.py`)that allows you to configure and run
-the code. You can look at the avaible configuration options by running:
+We have a [tutorial](tutorials/README.md) on how to run Affinity-VAE on the
+MNIST dataset. We recommend to start there for the first time you run
+Affinity-VAE.
+
+Affinity-VAE has a running script (`run.py`) that allows you to configure and
+run the code. You can look at the available configuration options by running:
 
 ```
 python run.py --help
