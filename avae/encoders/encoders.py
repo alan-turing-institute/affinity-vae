@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 import numpy as np
 import torch
@@ -35,11 +36,11 @@ class Encoder(AbstractEncoder):
     def __init__(
         self,
         input_size: tuple,
-        capacity: int = None,
-        depth: int = None,
+        capacity: Optional[int] = None,
+        depth: int = 4,
         latent_dims: int = 8,
         pose_dims: int = 0,
-        filters: list[int] = None,
+        filters: Optional[list[int]] = None,
         bnorm: bool = True,
     ):
 
@@ -120,7 +121,11 @@ class Encoder(AbstractEncoder):
                 out_features=pose_dims,
             )
 
-    def forward(self, x: torch.Tensor) -> tuple(torch.Tensor):
+    def forward(
+        self, x: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor] | tuple[
+        torch.Tensor, torch.Tensor, torch.Tensor
+    ]:
         """Encoder forward pass.
 
         Parameters
@@ -167,8 +172,8 @@ class EncoderA(AbstractEncoder):
     def __init__(
         self,
         input_size: tuple,
-        capacity: int = None,
-        depth: int = None,
+        capacity: Optional[int] = None,
+        depth: int = 4,
         latent_dims: int = 8,
         pose_dims: int = 0,
         bnorm: bool = True,
@@ -247,8 +252,8 @@ class EncoderB(AbstractEncoder):
     def __init__(
         self,
         input_size: tuple,
-        capacity: int = None,
-        depth: int = None,
+        capacity: int = 8,
+        depth: int = 4,
         latent_dims: int = 8,
         pose_dims: int = 0,
     ):
@@ -263,7 +268,6 @@ class EncoderB(AbstractEncoder):
         CONV, _, BNORM = set_layer_dim(len(input_size))
         self.bottom_dim = tuple([int(i / (2**depth)) for i in input_size])
 
-        c = capacity
         self.depth = depth
         self.pose = not (pose_dims == 0)
 
@@ -272,7 +276,7 @@ class EncoderB(AbstractEncoder):
         self.norm_enc = nn.ModuleList()
         prev_sh = 1
         for d in range(depth):
-            sh = c * (d + 1)
+            sh = capacity * (d + 1)
             self.conv_enc.append(
                 CONV(
                     in_channels=prev_sh,
@@ -286,7 +290,7 @@ class EncoderB(AbstractEncoder):
             prev_sh = sh
 
         # define fully connected layers
-        chf = 1 if depth == 0 else c * depth  # allow for no conv layers
+        chf = 1 if depth == 0 else capacity * depth  # allow for no conv layers
         self.fc_mu = nn.Linear(
             in_features=chf * np.prod(self.bottom_dim),
             out_features=latent_dims,
@@ -301,7 +305,11 @@ class EncoderB(AbstractEncoder):
                 out_features=pose_dims,
             )
 
-    def forward(self, x: torch.Tensor) -> tuple(torch.Tensor):
+    def forward(
+        self, x: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor] | tuple[
+        torch.Tensor, torch.Tensor, torch.Tensor
+    ]:
         """Encoder forward pass.
 
         Parameters

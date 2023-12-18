@@ -100,7 +100,7 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
 
         self._main_layout = QtWidgets.QVBoxLayout()
         self._tabs = QtWidgets.QTabWidget()
-        self._widgets = {}
+        self._widgets: Dict = {}
 
         self.add_pose_widget()
         self._main_layout.addWidget(self._tabs, stretch=0)
@@ -238,7 +238,9 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
     def get_pose(self) -> npt.NDArray:
 
         if self.cartestian:
-            theta = scale_from_slider(self._widgets["theta"].value(), np.pi)
+            theta = scale_from_slider(
+                self._widgets["theta"].value(), -np.pi, np.pi
+            )
             axis = CartesianAxes[str(self._widgets["axes"].currentText())]
             return np.array([theta, *axis.value], dtype=np.float32)
 
@@ -263,7 +265,7 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
         )
         return pose, z
 
-    def inverse_map_manifold_to_z(self, event=None) -> Optional[npt.NDArray]:
+    def inverse_map_manifold_to_z(self, event=None) -> None:
 
         if event is None:
             pt = self._embedding[0].reshape(

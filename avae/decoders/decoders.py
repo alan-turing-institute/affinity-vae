@@ -36,11 +36,11 @@ class Decoder(AbstractDecoder):
     def __init__(
         self,
         input_size: tuple,
-        capacity: int = None,
-        depth: int = None,
+        capacity: int | None = None,
+        depth: int = 4,
         latent_dims: int = 8,
         pose_dims: int = 0,
-        filters: list[int] = None,
+        filters: list[int] | None = None,
         bnorm: bool = True,
     ):
 
@@ -161,8 +161,8 @@ class DecoderA(AbstractDecoder):
     def __init__(
         self,
         input_size: tuple,
-        capacity: int = None,
-        depth: int = None,
+        capacity: int = 8,
+        depth: int = 4,
         latent_dims: int = 8,
         pose_dims: int = 0,
         bnorm: bool = False,
@@ -259,13 +259,13 @@ class DecoderB(AbstractDecoder):
     def __init__(
         self,
         input_size: tuple,
-        capacity: int = None,
-        depth: int = None,
+        capacity: int,
+        depth: int = 4,
         latent_dims: int = 8,
         pose_dims: int = 0,
     ):
         super(DecoderB, self).__init__()
-        self.c = capacity
+        self.capacity = capacity
         self.depth = depth
         self.pose = not (pose_dims == 0)
 
@@ -281,9 +281,9 @@ class DecoderB(AbstractDecoder):
         #  iteratively define deconvolution and batch normalisation layers
         self.conv_dec = nn.ModuleList()
         self.norm_dec = nn.ModuleList()
-        prev_sh = self.c * depth
+        prev_sh = self.capacity * depth
         for d in range(depth, 0, -1):
-            sh = self.c * (d - 1) if d != 1 else 1
+            sh = self.capacity * (d - 1) if d != 1 else 1
             self.conv_dec.append(
                 TCONV(
                     in_channels=prev_sh,
@@ -298,7 +298,7 @@ class DecoderB(AbstractDecoder):
 
         # define fully connected layers
         self.chf = (
-            1 if depth == 0 else self.c * depth
+            1 if depth == 0 else self.capacity * depth
         )  # allow for no convolutions
         if self.pose:
             self.fc = nn.Linear(

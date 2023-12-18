@@ -19,7 +19,7 @@ np.random.seed(42)
 def load_data(
     datapath: str,
     datatype: str,
-    lim: int = None,
+    lim: int | None = None,
     splt: int = 20,
     batch_s: int = 64,
     no_val_drop: bool = False,
