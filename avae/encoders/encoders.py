@@ -202,7 +202,7 @@ class EncoderA(AbstractEncoder):
 
         conv, _, BNORM = set_layer_dim(ndim)
 
-        self.encoder = torch.nnSequential()
+        self.encoder = torch.nn.Sequential()
 
         input_channel = 1
         for d in range(len(filters)):
