@@ -35,13 +35,13 @@ class Decoder(AbstractDecoder):
 
     def __init__(
         self,
-        input_size,
-        capacity=None,
-        depth=None,
-        latent_dims=8,
-        pose_dims=0,
-        filters=None,
-        bnorm=True,
+        input_size: torch.Size,
+        capacity: int = None,
+        depth: int = None,
+        latent_dims: int = 8,
+        pose_dims: int = 0,
+        filters: list[int] = None,
+        bnorm: bool = True,
     ):
 
         super(Decoder, self).__init__()
@@ -120,7 +120,7 @@ class Decoder(AbstractDecoder):
                 out_features=self.ch * np.prod(self.bottom_dim),
             )
 
-    def forward(self, x, x_pose):
+    def forward(self, x: torch.Tensor, x_pose: torch.Tensor) -> torch.Tensor:
         """Decoder forward pass.
 
         Parameters
@@ -159,8 +159,15 @@ class Decoder(AbstractDecoder):
 
 class DecoderA(AbstractDecoder):
     def __init__(
-        self, input_size, capacity, depth, latent_dims, pose_dims, bnorm
+        self,
+        input_size: torch.Size,
+        capacity: int = None,
+        depth: int = None,
+        latent_dims: int = 8,
+        pose_dims: int = 0,
+        bnorm: bool = False,
     ):
+
         super(DecoderA, self).__init__()
         self.pose = not (pose_dims == 0)
         self.bnorm = bnorm
@@ -226,7 +233,7 @@ class DecoderA(AbstractDecoder):
             )
         )
 
-    def forward(self, x, x_pose):
+    def forward(self, x: torch.Tensor, x_pose: torch.Tensor) -> torch.Tensor:
         if self.pose:
             return self.decoder(torch.cat([x_pose, x], dim=-1))
         else:
@@ -249,7 +256,14 @@ class DecoderB(AbstractDecoder):
         Number of bottleneck pose dimensions.
     """
 
-    def __init__(self, input_size, capacity, depth, latent_dims, pose_dims):
+    def __init__(
+        self,
+        input_size: torch.Size,
+        capacity: int = None,
+        depth: int = None,
+        latent_dims: int = 8,
+        pose_dims: int = 0,
+    ):
         super(DecoderB, self).__init__()
         self.c = capacity
         self.depth = depth
@@ -297,7 +311,7 @@ class DecoderB(AbstractDecoder):
                 out_features=self.chf * np.prod(self.bottom_dim),
             )
 
-    def forward(self, x, x_pose):
+    def forward(self, x: torch.Tensor, x_pose: torch.Tensor) -> torch.Tensor:
         """Decoder forward pass.
 
         Parameters
