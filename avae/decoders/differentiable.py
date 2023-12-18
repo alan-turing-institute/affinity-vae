@@ -34,6 +34,7 @@ class GaussianSplatRenderer(AbstractDecoder):
             indexing="xy",
         )
 
+
         # add all zeros for z- if we have a 2d grid
         if len(shape) == SpatialDims.TWO:
             grids += (
@@ -95,16 +96,14 @@ class GaussianSplatRenderer(AbstractDecoder):
         # transpose keeping batch intact
         # coords_t = torch.swapaxes(self.coords, 1, 2)
         splats_t = torch.swapaxes(splats, 1, 2)
-
         # calculate D^2 for all combinations of voxel and gaussian
         D_squared = torch.sum(
-            self.coords[:, :, None, :].to(self.device) ** 2
-            + splats_t[:, None, :, :].to(self.device) ** 2,
+            self.coords[:, :, None, :] ** 2
+            + splats_t[:, None, :, :] ** 2,
             axis=-1,
         ) - 2 * torch.matmul(
-            self.coords.to(self.device), splats.to(self.device)
+            self.coords, splats
         )
-
         # scale the gaussians
         sigmas = 2.0 * sigmas[:, None, :] ** 2
 
@@ -177,12 +176,12 @@ class GaussianSplatDecoder(AbstractDecoder):
     ):
         super().__init__()
 
+        self._device=device
         # centroids should be in the range of (-1, 1)
         self.centroids = torch.nn.Sequential(
             torch.nn.Linear(latent_dims, n_splats * 3),
             torch.nn.Tanh(),
         )
-
         # weights are effectively whether a splat is used or not
         # use a soft step function to make this `binary` (but differentiable)
         # NOTE(arl): not sure if this really makes any difference
@@ -191,13 +190,11 @@ class GaussianSplatDecoder(AbstractDecoder):
             torch.nn.Tanh(),
             SoftStep(k=10.0),
         )
-
         # sigma ends up being scaled by `splat_sigma_range`
         self.sigmas = torch.nn.Sequential(
             torch.nn.Linear(latent_dims, n_splats),
             torch.nn.Sigmoid(),
         )
-
         # now set up the differentiable renderer
         self.configure_renderer(
             shape,
@@ -233,7 +230,6 @@ class GaussianSplatDecoder(AbstractDecoder):
                 torch.nn.ReLU(),
                 conv(32, output_channels, 3, padding="same"),
             )
-
     def configure_renderer(
         self,
         shape: Tuple[int],
@@ -257,6 +253,8 @@ class GaussianSplatDecoder(AbstractDecoder):
             device=device,
         )
         self._splat_sigma_range = splat_sigma_range
+
+
 
     def decode_splats(
         self, z: torch.Tensor, pose: torch.Tensor
@@ -337,5 +335,4 @@ class GaussianSplatDecoder(AbstractDecoder):
         # if we're doing a final convolution, do it here
         if self._output_channels is not None and use_final_convolution:
             x = self._decoder(x)
-
         return x

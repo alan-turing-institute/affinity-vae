@@ -219,12 +219,11 @@ def train(
         )
 
     vae = AffinityVAE(encoder, decoder)
-
+    vae = vae.to(device)
     logging.info(vae)
 
-    vae = torch.nn.DataParallel(vae)
-
-    vae.to(device)
+    # If more than one GPU available, model can use DataParallel
+    print("Using", torch.cuda.device_count(), "GPUs!")
 
     if opt_method == "adam":
         optimizer = torch.optim.Adam(
@@ -425,7 +424,8 @@ def train(
                 gamma_arr[epoch],
             )
         )
-
+        with torch.no_grad():
+            torch.cuda.empty_cache()
         # ########################## VAL ######################################
         vae.eval()
         for b, batch in enumerate(vals):
@@ -478,7 +478,7 @@ def train(
                 gamma_arr[epoch],
             )
         )
-
+            
         if writer:
             for i, loss_name in enumerate(
                 ["Loss", "Recon loss", "KLdiv loss", "Affin loss"]
