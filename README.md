@@ -30,8 +30,8 @@ python -m pip install --upgrade pip
 python -m pip install -e .
 ```
 
-If you are developing code, you should be able to run precommits and tests,
-thefore the best installation option after setting up the virtual environment
+If you are developing code, you should be able to run pre-commits and tests,
+therefore the best installation option after setting up the virtual environment
 is:
 
 ```
@@ -105,8 +105,12 @@ conda install -c anaconda libtiff==4.4.0
 
 ### Quick start
 
-Affinity-vae has a running script (`run.py`)that allows you to configure and run
-the code. You can look at the avaible configuration options by running:
+We have a [tutorial](tutorials/README.md) on how to run Affinity-VAE on the
+MNIST dataset. We recommend to start there for the first time you run
+Affinity-VAE.
+
+Affinity-VAE has a running script (`run.py`) that allows you to configure and
+run the code. You can look at the available configuration options by running:
 
 ```
 python run.py --help
@@ -302,3 +306,9 @@ input files for Affinity-VAE or analyse teh output of the model.
 ##### Evaluation: To run evaluation on a trained model you can turn the `eval` flag to True. This will load the last model present on the `states` directory (within the working directory path where you run the code) and run the evaluation on data set by the `datapath` flag. The evaluation will be saved in the `plots` and `latents` directory with the `eval` suffix on the names.
 
 ##### The name of the state file consist of avae_date_time_Epoch_latent_pose.pt
+
+### Inspecting the results from Affinity-VAE
+
+You can interact with the latent space and access reconstruction from the train
+model using Napari. You can find more information on how to use the Napari
+plugin in the [README.md](scripts/README.md) file in the scripts folder.
