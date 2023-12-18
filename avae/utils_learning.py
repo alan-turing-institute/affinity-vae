@@ -62,7 +62,7 @@ def pass_batch(
     epochs: int = 1,
     history: list = [],
     loss: AVAELoss | None = None,
-    optimizer: torch.optim | None = None,
+    optimizer: any = None,
     beta: list[float] | None = None,
 ) -> tuple[
     torch.Tensor,
