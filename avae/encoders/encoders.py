@@ -1,7 +1,6 @@
 import logging
 
 import numpy as np
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -34,13 +33,13 @@ class Encoder(AbstractEncoder):
 
     def __init__(
         self,
-        input_size: tuple,
-        capacity: int = None,
-        depth: int = None,
-        latent_dims: int = 8,
-        pose_dims: int = 0,
-        filters: list[int] = None,
-        bnorm: bool = True,
+        input_size,
+        capacity=None,
+        depth=None,
+        latent_dims=8,
+        pose_dims=0,
+        filters=None,
+        bnorm=True,
     ):
 
         super(Encoder, self).__init__()
@@ -120,7 +119,7 @@ class Encoder(AbstractEncoder):
                 out_features=pose_dims,
             )
 
-    def forward(self, x: torch.Tensor) -> tuple(torch.Tensor):
+    def forward(self, x):
         """Encoder forward pass.
 
         Parameters
@@ -165,13 +164,7 @@ class Encoder(AbstractEncoder):
 
 class EncoderA(AbstractEncoder):
     def __init__(
-        self,
-        input_size: tuple,
-        capacity: int = None,
-        depth: int = None,
-        latent_dims: int = 8,
-        pose_dims: int = 0,
-        bnorm: bool = True,
+        self, input_size, capacity, depth, latent_dims, pose_dims, bnorm
     ):
         super(EncoderA, self).__init__()
         self.pose = not (pose_dims == 0)
@@ -244,14 +237,7 @@ class EncoderB(AbstractEncoder):
         Number of bottleneck pose dimensions.
     """
 
-    def __init__(
-        self,
-        input_size: tuple,
-        capacity: int = None,
-        depth: int = None,
-        latent_dims: int = 8,
-        pose_dims: int = 0,
-    ):
+    def __init__(self, input_size, capacity, depth, latent_dims, pose_dims=0):
         super(EncoderB, self).__init__()
 
         assert all(
@@ -301,7 +287,7 @@ class EncoderB(AbstractEncoder):
                 out_features=pose_dims,
             )
 
-    def forward(self, x: torch.Tensor) -> tuple(torch.Tensor):
+    def forward(self, x):
         """Encoder forward pass.
 
         Parameters

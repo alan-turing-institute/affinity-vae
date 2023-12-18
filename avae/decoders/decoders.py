@@ -35,7 +35,7 @@ class Decoder(AbstractDecoder):
 
     def __init__(
         self,
-        input_size: tuple,
+        input_size: torch.Size,
         capacity: int = None,
         depth: int = None,
         latent_dims: int = 8,
@@ -160,7 +160,7 @@ class Decoder(AbstractDecoder):
 class DecoderA(AbstractDecoder):
     def __init__(
         self,
-        input_size: tuple,
+        input_size: torch.Size,
         capacity: int = None,
         depth: int = None,
         latent_dims: int = 8,
@@ -258,7 +258,7 @@ class DecoderB(AbstractDecoder):
 
     def __init__(
         self,
-        input_size: tuple,
+        input_size: torch.Size,
         capacity: int = None,
         depth: int = None,
         latent_dims: int = 8,
