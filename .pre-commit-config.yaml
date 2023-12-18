@@ -42,3 +42,8 @@ repos:
     #  - id: prettier
     #    types_or: [yaml, markdown, html, css, scss, javascript, json]
     #    args: [--prose-wrap=always]
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: ''  # Use the sha / tag you want to point at
+    hooks:
+      -  id: mypy
