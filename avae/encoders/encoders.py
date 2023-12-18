@@ -2,7 +2,6 @@ import logging
 from typing import Optional
 
 import numpy as np
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -126,6 +125,7 @@ class Encoder(AbstractEncoder):
     ) -> tuple[torch.Tensor, torch.Tensor] | tuple[
         torch.Tensor, torch.Tensor, torch.Tensor
     ]:
+
         """Encoder forward pass.
 
         Parameters
