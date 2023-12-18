@@ -24,13 +24,15 @@ def load_data(
     batch_s: int = 64,
     no_val_drop: bool = False,
     eval: bool = True,
-    affinity=None,
-    classes=None,
-    gaussian_blur=False,
-    normalise=False,
-    shift_min=False,
-    rescale=None,
-):
+    affinity: str | None = None,
+    classes: str | None = None,
+    gaussian_blur: bool = False,
+    normalise: bool = False,
+    shift_min: bool = False,
+    rescale: bool = None,
+) -> tuple[DataLoader, DataLoader, DataLoader, pd.DataFrame, tuple] | tuple[
+    DataLoader, tuple
+]:
     """Loads all data needed for training, testing and evaluation. Loads MRC files from a given path, selects subset of
     classes if requested, splits it into train / val  and test in batch sets, loads affinity matrix. Returns train,
     validation and test data as DataLoader objects.
@@ -198,16 +200,16 @@ def load_data(
 class Dataset_reader(Dataset):
     def __init__(
         self,
-        root_dir,
-        amatrix=None,
-        classes=None,
-        transform=None,
-        gaussian_blur=False,
-        normalise=False,
-        shift_min=False,
-        rescale=None,
-        lim=None,
-        datatype="mrc",
+        root_dir: str,
+        amatrix: np.ndarray | None = None,
+        classes: str | None = None,
+        transform: any = None,
+        gaussian_blur: bool = False,
+        normalise: bool = False,
+        shift_min: bool = False,
+        rescale: bool | None = None,
+        lim: int | None = None,
+        datatype: str = "mrc",
     ):
         super().__init__()
         self.datatype = datatype

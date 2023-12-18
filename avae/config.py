@@ -150,7 +150,9 @@ class AffinityConfig(BaseModel):
     klreduction: str = Field('mean', description="KL reduction method")
 
 
-def load_config_params(config_file=None, local_vars={}):
+def load_config_params(
+    config_file: str | None = None, local_vars: dict = {}
+) -> dict:
     """
     Load configuration parameters from config file and command line arguments.
 
@@ -293,7 +295,7 @@ def write_config_file(time_stamp_name, data):
     logging.info("YAML File saved!\n")
 
 
-def setup_visualisation_config(data):
+def setup_visualisation_config(data: dict) -> None:
 
     if data["vis_all"]:
         settings.VIS_LOS = True
