@@ -3,8 +3,6 @@ from typing import Optional
 
 import numpy as np
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 
 from avae.encoders.base import AbstractEncoder
 from avae.models import dims_after_pooling, set_layer_dim
@@ -52,7 +50,7 @@ class Encoder(AbstractEncoder):
             )
         elif filters is not None and len(filters) != 0:
             if 0 in filters:
-                raise RuntimeError("Filter list cannot contain zeros.")
+                raise RuntimeError("Filter list catorch.nnot contain zeros.")
             self.filters = filters
             if depth is not None:
                 logging.warning(
@@ -88,9 +86,9 @@ class Encoder(AbstractEncoder):
         CONV, TCONV, BNORM = set_layer_dim(len(input_size))
 
         # iteratively define convolution and batch normalisation layers
-        self.conv_enc = nn.ModuleList()
+        self.conv_enc = torch.nn.ModuleList()
         if self.bnorm:
-            self.norm_enc = nn.ModuleList()
+            self.norm_enc = torch.nn.ModuleList()
 
         for d in range(len(self.filters)):
             self.conv_enc.append(
@@ -107,16 +105,16 @@ class Encoder(AbstractEncoder):
 
         # define fully connected layers
         ch = 1 if depth == 0 else self.filters[-1]  # allow for no conv layers
-        self.fc_mu = nn.Linear(
+        self.fc_mu = torch.nn.Linear(
             in_features=ch * np.prod(bottom_dim),
             out_features=latent_dims,
         )
-        self.fc_logvar = nn.Linear(
+        self.fc_logvar = torch.nn.Linear(
             in_features=ch * np.prod(bottom_dim),
             out_features=latent_dims,
         )
         if self.pose:
-            self.fc_pose = nn.Linear(
+            self.fc_pose = torch.nn.Linear(
                 in_features=ch * np.prod(bottom_dim),
                 out_features=pose_dims,
             )
@@ -155,9 +153,11 @@ class Encoder(AbstractEncoder):
         """
         for d in range(len(self.filters)):
             if self.bnorm:
-                x = self.norm_enc[d](F.relu(self.conv_enc[d](x)))
+                x = self.norm_enc[d](
+                    torch.nn.functional.relu(self.conv_enc[d](x))
+                )
             else:
-                x = F.relu(self.conv_enc[d](x))
+                x = torch.nn.functional.relu(self.conv_enc[d](x))
         x = x.view(x.size(0), -1)
         x_mu = self.fc_mu(x)
         x_logvar = self.fc_logvar(x)
@@ -202,7 +202,7 @@ class EncoderA(AbstractEncoder):
 
         conv, _, BNORM = set_layer_dim(ndim)
 
-        self.encoder = nn.Sequential()
+        self.encoder = torch.nnSequential()
 
         input_channel = 1
         for d in range(len(filters)):
@@ -217,13 +217,13 @@ class EncoderA(AbstractEncoder):
             )
             if self.bnorm:
                 self.encoder.append(BNORM(filters[d]))
-            self.encoder.append(nn.ReLU(True))
+            self.encoder.append(torch.nn.ReLU(True))
             input_channel = filters[d]
 
-        self.encoder.append(nn.Flatten())
-        self.mu = nn.Linear(flat_shape, latent_dims)
-        self.log_var = nn.Linear(flat_shape, latent_dims)
-        self.pose_fc = nn.Linear(flat_shape, pose_dims)
+        self.encoder.append(torch.nn.Flatten())
+        self.mu = torch.nn.Linear(flat_shape, latent_dims)
+        self.log_var = torch.nn.Linear(flat_shape, latent_dims)
+        self.pose_fc = torch.nn.Linear(flat_shape, pose_dims)
 
     def forward(self, x):
         encoded = self.encoder(x)
@@ -272,8 +272,8 @@ class EncoderB(AbstractEncoder):
         self.pose = not (pose_dims == 0)
 
         # iteratively define convolution and batch normalisation layers
-        self.conv_enc = nn.ModuleList()
-        self.norm_enc = nn.ModuleList()
+        self.conv_enc = torch.nn.ModuleList()
+        self.norm_enc = torch.nn.ModuleList()
         prev_sh = 1
         for d in range(depth):
             sh = capacity * (d + 1)
@@ -291,16 +291,16 @@ class EncoderB(AbstractEncoder):
 
         # define fully connected layers
         chf = 1 if depth == 0 else capacity * depth  # allow for no conv layers
-        self.fc_mu = nn.Linear(
+        self.fc_mu = torch.nn.Linear(
             in_features=chf * np.prod(self.bottom_dim),
             out_features=latent_dims,
         )
-        self.fc_logvar = nn.Linear(
+        self.fc_logvar = torch.nn.Linear(
             in_features=chf * np.prod(self.bottom_dim),
             out_features=latent_dims,
         )
         if self.pose:
-            self.fc_pose = nn.Linear(
+            self.fc_pose = torch.nn.Linear(
                 in_features=chf * np.prod(self.bottom_dim),
                 out_features=pose_dims,
             )
@@ -338,7 +338,7 @@ class EncoderB(AbstractEncoder):
             pose dimensions.
         """
         for d in range(self.depth):
-            x = self.norm_enc[d](F.relu(self.conv_enc[d](x)))
+            x = self.norm_enc[d](torch.nn.functional.relu(self.conv_enc[d](x)))
         x = x.view(x.size(0), -1)
         x_mu = self.fc_mu(x)
         x_logvar = self.fc_logvar(x)
