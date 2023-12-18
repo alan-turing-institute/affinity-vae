@@ -118,7 +118,7 @@ class Decoder(AbstractDecoder):
                 out_features=self.ch * np.prod(self.bottom_dim),
             )
 
-    def forward(self, x: torch.Tensor, x_pose: torch.Tensor) -> torch.Tensor:
+    def forward(self, x, x_pose):
         """Decoder forward pass.
 
         Parameters
@@ -167,7 +167,6 @@ class DecoderA(AbstractDecoder):
         pose_dims: int = 0,
         bnorm: bool = False,
     ):
-
         super(DecoderA, self).__init__()
         self.pose = not (pose_dims == 0)
         self.bnorm = bnorm
@@ -235,7 +234,7 @@ class DecoderA(AbstractDecoder):
             )
         )
 
-    def forward(self, x: torch.Tensor, x_pose: torch.Tensor) -> torch.Tensor:
+    def forward(self, x, x_pose):
         if self.pose:
             return self.decoder(torch.cat([x_pose, x], dim=-1))
         else:
@@ -313,7 +312,7 @@ class DecoderB(AbstractDecoder):
                 out_features=self.chf * np.prod(self.bottom_dim),
             )
 
-    def forward(self, x: torch.Tensor, x_pose: torch.Tensor) -> torch.Tensor:
+    def forward(self, x, x_pose):
         """Decoder forward pass.
 
         Parameters
