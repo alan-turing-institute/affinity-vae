@@ -219,6 +219,7 @@ def train(
         )
 
     vae = AffinityVAE(encoder, decoder)
+    vae = torch.nn.DataParallel(vae)
     vae = vae.to(device)
     logging.info(vae)
 

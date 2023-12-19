@@ -50,7 +50,7 @@ def run_napari(model_fn, meta_fn, ldim=None, pdim=None, manifold="umap"):
         pose_dims = pdim
     else:
         try:
-            pose_dims = model.encoder.pose_fc.out_features
+            pose_dims = model.module.encoder.pose_fc.out_features
         except AttributeError:
             raise AttributeError(
                 "Model does not have pose attributes, please specify manually."
@@ -60,7 +60,7 @@ def run_napari(model_fn, meta_fn, ldim=None, pdim=None, manifold="umap"):
         lat_dims = ldim
     else:
         try:
-            lat_dims = model.encoder.mu.out_features
+            lat_dims = model.module.encoder.mu.out_features
         except AttributeError:
             raise AttributeError(
                 "Model does not have latent attributes, please specify manually."
