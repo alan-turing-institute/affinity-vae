@@ -31,7 +31,7 @@ class cyc_annealing:
         n_epoch: int,
         cyc_method: str = "flat",
         n_cycle: int = 4,
-        ratio: int = 0.5,
+        ratio: float = 0.5,
     ):
 
         self.n_epoch = n_epoch

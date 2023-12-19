@@ -1,6 +1,7 @@
 import logging
 import os
 import random
+import typing
 
 import mrcfile
 import numpy as np
@@ -29,7 +30,7 @@ def load_data(
     gaussian_blur: bool = False,
     normalise: bool = False,
     shift_min: bool = False,
-    rescale: bool = None,
+    rescale: bool | None = None,
 ) -> tuple[DataLoader, DataLoader, DataLoader, pd.DataFrame, tuple] | tuple[
     DataLoader, tuple
 ]:
@@ -203,7 +204,7 @@ class Dataset_reader(Dataset):
         root_dir: str,
         amatrix: np.ndarray | None = None,
         classes: str | None = None,
-        transform: any = None,
+        transform: typing.Any = None,
         gaussian_blur: bool = False,
         normalise: bool = False,
         shift_min: bool = False,

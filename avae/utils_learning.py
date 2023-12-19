@@ -1,4 +1,5 @@
 import logging
+import typing
 
 import numpy as np
 import pandas as pd
@@ -62,7 +63,7 @@ def pass_batch(
     epochs: int = 1,
     history: list = [],
     loss: AVAELoss | None = None,
-    optimizer: any = None,
+    optimizer: typing.Any = None,
     beta: list[float] | None = None,
 ) -> tuple[
     torch.Tensor,
