@@ -34,7 +34,6 @@ class GaussianSplatRenderer(AbstractDecoder):
             indexing="xy",
         )
 
-
         # add all zeros for z- if we have a 2d grid
         if len(shape) == SpatialDims.TWO:
             grids += (
@@ -98,19 +97,16 @@ class GaussianSplatRenderer(AbstractDecoder):
         splats_t = torch.swapaxes(splats, 1, 2)
         # calculate D^2 for all combinations of voxel and gaussian
         D_squared = torch.sum(
-            self.coords[:, :, None, :] ** 2
-            + splats_t[:, None, :, :] ** 2,
+            self.coords[:, :, None, :] ** 2 + splats_t[:, None, :, :] ** 2,
             axis=-1,
-        ) - 2 * torch.matmul(
-            self.coords, splats
-        )
+        ) - 2 * torch.matmul(self.coords, splats)
         # scale the gaussians
         sigmas = 2.0 * sigmas[:, None, :] ** 2
 
         # now splat the gaussians
         x = torch.sum(
             weights[:, None, :]
-            * torch.exp(-D_squared.to(self.device) / sigmas.to(self.device)),
+            * torch.exp(-D_squared / sigmas),
             axis=-1,
         )
 
@@ -176,7 +172,7 @@ class GaussianSplatDecoder(AbstractDecoder):
     ):
         super().__init__()
 
-        self._device=device
+        self._device = device
         # centroids should be in the range of (-1, 1)
         self.centroids = torch.nn.Sequential(
             torch.nn.Linear(latent_dims, n_splats * 3),
@@ -230,6 +226,7 @@ class GaussianSplatDecoder(AbstractDecoder):
                 torch.nn.ReLU(),
                 conv(32, output_channels, 3, padding="same"),
             )
+
     def configure_renderer(
         self,
         shape: Tuple[int],
@@ -253,8 +250,6 @@ class GaussianSplatDecoder(AbstractDecoder):
             device=device,
         )
         self._splat_sigma_range = splat_sigma_range
-
-
 
     def decode_splats(
         self, z: torch.Tensor, pose: torch.Tensor

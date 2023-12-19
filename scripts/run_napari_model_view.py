@@ -25,7 +25,7 @@ def setup_napari():
 def load_model(model_fn, meta_fn, device="cpu"):
     """Load the model and meta data."""
     print("Loading model")
-    checkpoint = torch.load(model_fn)
+    checkpoint = torch.load(model_fn, map_location=torch.device('cpu'))
     model = checkpoint["model_class_object"]
 
     model.load_state_dict(checkpoint["model_state_dict"])

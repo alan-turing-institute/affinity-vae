@@ -478,7 +478,7 @@ def train(
                 gamma_arr[epoch],
             )
         )
-            
+
         if writer:
             for i, loss_name in enumerate(
                 ["Loss", "Recon loss", "KLdiv loss", "Affin loss"]
