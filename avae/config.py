@@ -1,7 +1,7 @@
 import logging
 import os
-from typing import Optional
 
+import numpy.typing as npt
 import yaml
 from pydantic import (
     BaseModel,
@@ -92,7 +92,7 @@ class AffinityConfig(BaseModel):
     gpu: bool = Field(True, description="Use GPU")
     latent_dims: PositiveInt = Field(8, description="Latent space dimensions")
     learning: PositiveFloat = Field(0.001, description="Learning rate")
-    limit: Optional[PositiveInt] = Field(
+    limit: PositiveInt | None = Field(
         None, description="Limit number of samples"
     )
     loss_fn: str = Field('MSE', description="Loss function")
@@ -137,7 +137,7 @@ class AffinityConfig(BaseModel):
 
     vis_rec: bool = Field(False, description="Visualise reconstruction")
     vis_sim: bool = Field(False, description="Visualise similarity")
-    filters: list[int] = Field(
+    filters: npt.NDArray | None = Field(
         None,
         description="Comma-separated list of filters for the network. Either provide filters, or capacity and depth.",
     )

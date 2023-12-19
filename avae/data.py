@@ -16,24 +16,63 @@ from . import settings
 from .vis import format, plot_affinity_matrix, plot_classes_distribution
 
 np.random.seed(42)
+from typing import Any, Literal, overload
 
 
+@overload
 def load_data(
     datapath: str,
     datatype: str,
+    eval: Literal[True],
     lim: int | None = None,
     splt: int = 20,
     batch_s: int = 64,
     no_val_drop: bool = False,
-    eval: bool = True,
     affinity: str | None = None,
     classes: str | None = None,
     gaussian_blur: bool = False,
     normalise: bool = False,
     shift_min: bool = False,
     rescale: bool | None = None,
-) -> tuple[DataLoader, DataLoader, DataLoader, pd.DataFrame, tuple] | tuple[
-    DataLoader, tuple
+) -> tuple[DataLoader, int]:
+    ...
+
+
+@overload
+def load_data(
+    datapath: str,
+    datatype: str,
+    eval: Literal[False],
+    lim: int | None = None,
+    splt: int = 20,
+    batch_s: int = 64,
+    no_val_drop: bool = False,
+    affinity: str | None = None,
+    classes: str | None = None,
+    gaussian_blur: bool = False,
+    normalise: bool = False,
+    shift_min: bool = False,
+    rescale: bool | None = None,
+) -> tuple[DataLoader, DataLoader, DataLoader, pd.DataFrame, int]:
+    ...
+
+
+def load_data(
+    datapath: str,
+    datatype: str,
+    eval: bool,
+    lim: int | None = None,
+    splt: int = 20,
+    batch_s: int = 64,
+    no_val_drop: bool = False,
+    affinity: str | None = None,
+    classes: str | None = None,
+    gaussian_blur: bool = False,
+    normalise: bool = False,
+    shift_min: bool = False,
+    rescale: bool | None = None,
+) -> tuple[DataLoader, DataLoader, DataLoader, pd.DataFrame, int] | tuple[
+    DataLoader, int
 ]:
     """Loads all data needed for training, testing and evaluation. Loads MRC files from a given path, selects subset of
     classes if requested, splits it into train / val  and test in batch sets, loads affinity matrix. Returns train,
