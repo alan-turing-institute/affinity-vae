@@ -5,6 +5,7 @@ import typing
 
 import mrcfile
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from scipy.ndimage import zoom
 from torch import Tensor
@@ -202,7 +203,7 @@ class Dataset_reader(Dataset):
     def __init__(
         self,
         root_dir: str,
-        amatrix: np.ndarray | None = None,
+        amatrix: npt.NDArray | None = None,
         classes: str | None = None,
         transform: typing.Any = None,
         gaussian_blur: bool = False,

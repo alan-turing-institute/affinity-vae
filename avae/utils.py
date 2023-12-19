@@ -1,10 +1,12 @@
 import copy
 import logging
 import os.path
+import typing
 
 import matplotlib.pyplot as plt
 import mrcfile
 import numpy as np
+import numpy.typing as npt
 import torch
 from sklearn import metrics, preprocessing
 from sklearn.linear_model import LogisticRegression
@@ -14,7 +16,13 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import make_pipeline
 
 
-def accuracy(x_train, y_train, x_val, y_val, classifier="NN"):
+def accuracy(
+    x_train: npt.NDArray,
+    y_train: npt.NDArray,
+    x_val: npt.NDArray,
+    y_val: npt.NDArray,
+    classifier: str = "NN",
+) -> tuple[float, float, float, npt.NDArray, npt.NDArray]:
     """Computes the accuracy using a given classifier. Currently only supports
     neural network, K-nearest neighbors and logistic regression. A grid search on the
     hyperparameters is performed.
@@ -65,6 +73,8 @@ def accuracy(x_train, y_train, x_val, y_val, classifier="NN"):
     y_train = le.transform(y_train)
     y_val = le.transform(y_val)
 
+    parameters: dict[str, typing.Any]
+
     if classifier == "NN":
 
         parameters = {
@@ -85,15 +95,8 @@ def accuracy(x_train, y_train, x_val, y_val, classifier="NN"):
             alpha=1,
         )
 
-    elif classifier == "LR":
-        method = LogisticRegression(
-            random_state=0, multi_class="multinomial", max_iter=1000
-        )
-
-        parameters = [{"penalty": ["l1", "l2"]}, {"C": [1, 10, 100, 1000]}]
-
     elif classifier == "KNN":
-        parameters = dict(n_neighbors=list(range(1, 500, 100)))
+        parameters = dict(n_neighbors=(range(1, 500, 100)))
         method = KNeighborsClassifier()
     else:
         raise ValueError("Invalid classifier type must be NN, KNN or LR")
@@ -126,7 +129,9 @@ def accuracy(x_train, y_train, x_val, y_val, classifier="NN"):
     return train_acc, val_acc, val_acc_selected, y_pred_train, y_pred_val
 
 
-def create_grid_for_plotting(rows, columns, dsize, padding=0):
+def create_grid_for_plotting(
+    rows: int, columns: int, dsize: tuple, padding: int = 0
+) -> npt.NDArray:
 
     # define the dimensions for the napari grid
 
@@ -152,7 +157,14 @@ def create_grid_for_plotting(rows, columns, dsize, padding=0):
     return grid_for_napari
 
 
-def fill_grid_for_plottting(rows, columns, grid, dsize, array, padding=0):
+def fill_grid_for_plottting(
+    rows: int,
+    columns: int,
+    grid: npt.NDArray,
+    dsize: tuple,
+    array: npt.NDArray,
+    padding: int = 0,
+) -> npt.NDArray:
 
     if len(dsize) == 3:
         for j in range(columns):
@@ -176,15 +188,15 @@ def fill_grid_for_plottting(rows, columns, grid, dsize, array, padding=0):
 
 
 def save_imshow_png(
-    fname,
-    array,
-    cmap=None,
-    min=None,
-    max=None,
-    writer=None,
-    figname=None,
-    epoch=0,
-):
+    fname: str,
+    array: npt.NDArray,
+    cmap: str | None = None,
+    min: float | None = None,
+    max: float | None = None,
+    writer: typing.Any = None,
+    figname: str | None = None,
+    epoch: int = 0,
+) -> None:
     if not os.path.exists("plots"):
         os.mkdir("plots")
 
@@ -203,14 +215,14 @@ def save_imshow_png(
     plt.close()
 
 
-def save_mrc_file(fname, array):
+def save_mrc_file(fname: str, array: npt.NDArray) -> None:
     if not os.path.exists("plots"):
         os.mkdir("plots")
     with mrcfile.new("plots/" + fname, overwrite=True) as mrc:
         mrc.set_data(array)
 
 
-def colour_per_class(classes: list):
+def colour_per_class(classes: list) -> list:
     # Define the number of colors you want
     num_colors = len(classes)
 
@@ -237,8 +249,15 @@ def colour_per_class(classes: list):
 
 
 def pose_interpolation(
-    enc, pos_dims, pose_mean, pose_std, dsize, number_of_samples, vae, device
-):
+    enc: npt.NDArray,
+    pos_dims: int,
+    pose_mean: npt.NDArray,
+    pose_std: npt.NDArray,
+    dsize: tuple,
+    number_of_samples: int,
+    vae: torch.nn.Module,
+    device: torch.device,
+) -> npt.NDArray:
 
     """This function:
     1-  interpolates within each pose channels

@@ -94,12 +94,12 @@ class AVAELoss:
 
     def __init__(
         self,
-        device,
-        beta,
-        gamma,
-        lookup_aff=None,
-        recon_fn="MSE",
-        klred="mean",
+        device: torch.device,
+        beta: list[float],
+        gamma: list[float],
+        lookup_aff: torch.Tensor | None = None,
+        recon_fn: str = "MSE",
+        klred: str = "mean",
     ):
         self.device = device
         self.recon_fn = recon_fn
@@ -126,7 +126,15 @@ class AVAELoss:
             )
             self.affinity_loss = None
 
-    def __call__(self, x, recon_x, mu, logvar, epoch, batch_aff=None):
+    def __call__(
+        self,
+        x: torch.Tensor,
+        recon_x: torch.Tensor,
+        mu: torch.Tensor,
+        logvar: torch.Tensor,
+        epoch: int,
+        batch_aff: torch.Tensor | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """Return the aVAE loss.
 
         Parameters

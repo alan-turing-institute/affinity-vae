@@ -6,8 +6,7 @@ import pandas as pd
 import torch
 
 from avae.loss import AVAELoss
-
-from . import vis
+from avae.vis import format
 
 
 def set_device(gpu: bool) -> torch.device:
@@ -169,7 +168,7 @@ def pass_batch(
 
 
 def add_meta(
-    data_dim: tuple,
+    data_dim: int,
     meta_df: pd.DataFrame,
     batch_meta: dict,
     x_hat: torch.Tensor,
@@ -183,7 +182,7 @@ def add_meta(
 
     Parameters
     ----------
-    data_dim: tuple
+    data_dim: int
         Dimensions of the data.
     meta_df: pd.DataFrame
         Dataframe containing meta data, to which new data is added.
@@ -209,7 +208,7 @@ def add_meta(
     meta = pd.DataFrame(batch_meta)
 
     meta["mode"] = mode
-    meta["image"] += vis.format(x_hat, data_dim)
+    meta["image"] += format(x_hat, data_dim)
     for d in range(latent_mu.shape[-1]):
         meta[f"lat{d}"] = np.array(latent_mu[:, d].cpu().detach().numpy())
     for d in range(latent_logvar.shape[-1]):
