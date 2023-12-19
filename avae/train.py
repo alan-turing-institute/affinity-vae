@@ -33,7 +33,7 @@ def train(
     epochs: int,
     channels: int,
     depth: int,
-    filters: npt.NDarray | None,
+    filters: list | None,
     lat_dims: int,
     pose_dims: int,
     bnorm_encoder: bool,
@@ -168,7 +168,9 @@ def train(
     # ############################### MODEL ###############################
     device = set_device(use_gpu)
     if filters is not None:
-        filters = np.array(filters.replace(" ", "").split(","), dtype=np.int64)
+        filters = np.array(
+            np.array(filters).replace(" ", "").split(","), dtype=np.int64
+        )
 
     if model == "a":
         encoder = EncoderA(

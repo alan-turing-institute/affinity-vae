@@ -1,7 +1,6 @@
 import logging
 import os
 
-import numpy.typing as npt
 import yaml
 from pydantic import (
     BaseModel,
@@ -137,7 +136,7 @@ class AffinityConfig(BaseModel):
 
     vis_rec: bool = Field(False, description="Visualise reconstruction")
     vis_sim: bool = Field(False, description="Visualise similarity")
-    filters: npt.NDArray | None = Field(
+    filters: list | None = Field(
         None,
         description="Comma-separated list of filters for the network. Either provide filters, or capacity and depth.",
     )
