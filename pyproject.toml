@@ -20,27 +20,23 @@ classifiers = [
     "Operating System :: MacOS",
 ]
 requires-python = ">=3.10"
-[common-dependencies]
-altair = "*"
-click = "*"
-mrcfile = "*"
-matplotlib = "*"
-numpy = "*"
-scipy = "*"
-pillow = "*"
-pandas = "*"
-pyyaml = "*"
-requests = "*"
-scikit-image = "*"
-scikit-learn = "*"
-tensorboard = "*"
-umap-learn = "*"
 
-[training-dependencies]
-torch = "*"
-torchvision = "*"
-pydantic = ">2"
-
+dependencies = [
+    "altair",
+    "click",
+    "mrcfile",
+    "matplotlib",
+    "numpy",
+    "scipy",
+    "pillow",
+    "pandas",
+    "pyyaml",
+    "requests",
+    "scikit-image",
+    "scikit-learn",
+    "tensorboard",
+    "umap-learn",
+]
 
 [project.readme]
 file = "README.md"
@@ -56,37 +52,28 @@ envs.default.dependencies = [
   "pytest-cov",
 ]
 
-[project.dependencies]
-all = [
-    { include = "common-dependencies" },
-    { include = "training-dependencies" }
-]
 
 
 [project.optional-dependencies]
+all = ["torch",
+    "torchvision",
+    "pydantic>2"]
+
 test = [
+    "affinivae[all]",
     "pytest >=6",
     "pytest-cov >=3",
-    { include = "training-dependencies" },
-    { include = "common-dependencies" }
-
 ]
 
+baskerville = [
+    "pydantic>2"
+]
 napari = [
     "napari[all]",
     "torch",
     "torchvision",
     "pydantic<2", # latest napari version is incompatible with napari, napari demo doesnt use pydantic.
-    { include = "common-dependencies" }
-
 ]
-
-[project.extras]
-baskerville = [
-    { include = "common-dependencies" },
-    "pydantic>2"
-]
-
 
 [tool.pytest.ini_options]
 minversion = "6.0"
