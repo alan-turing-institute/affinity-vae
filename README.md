@@ -59,49 +59,18 @@ python -m pytest -s -W ignore
 The following is the recommended way of installing all libraries in Baskervile.
 
 ```
-conda create --name affinity_env
-conda activate affinity_env
+module load bask-apps/live
+module load PyTorch/2.0.1-foss-2022a-CUDA-11.7.0
+module load torchvision/0.15.2-foss-2022a-CUDA-11.7.0
 
-conda install --yes python=3.10
-conda install --yes numpy
-conda install --yes requests
-conda install --yes -c anaconda pandas
-conda install --yes -c anaconda scikit-image
-conda install --yes -c anaconda scikit-learn
-conda install --yes -c anaconda scipy
-conda install --yes -c anaconda pillow
-conda install --yes -c conda-forge mrcfile
-conda install --yes -c conda-forge altair
-conda install --yes -c conda-forge umap-learn
-conda install --yes -c conda-forge matplotlib
-conda install --yes -c anaconda click
-conda install pytorch torchvision  pytorch-cuda=11.8 -c pytorch -c nvidia
-pip install pyyaml
-pip install pydantic
+python -m venv pyenv_affinity
+source pyenv_affinity/bin/activate
+
+git clone https://github.com/alan-turing-institute/affinity-vae.git
+cd  affinity-vae/
+python -m pip install -e ."[baskerville]"
 ```
 
-**Note**
-
-If you have shortage of space, it is always a good idea to run
-`conda clean --all` before you proceed from here as pytorch packages require
-space to download
-
-Regarding installation of pytorch, please follow the latest pytorch installation
-recommendation provided online as using older versions can cause conflict
-between packages that conda would not be able to resolve easily. The current
-version requires a cuda=11.8
-
-if the follwoing error occurs:
-
-```
-:ImportError: libtiff.so.5: cannot open shared object file: No such file or directory
-```
-
-you can resolve it via:
-
-```
-conda install -c anaconda libtiff==4.4.0
-```
 
 ### Quick start
 
