@@ -27,7 +27,7 @@ with the following:
 python -m venv env
 source env/bin/activate
 python -m pip install --upgrade pip
-python -m pip install -e .
+python -m pip install -e ."[all]"
 ```
 
 If you are developing code, you should be able to run pre-commits and tests,
@@ -50,7 +50,7 @@ python -m pytest -s -W ignore
 > Warning: M1 macOS can not do
 > [pytorch paralelisation](https://github.com/pytorch/pytorch/issues/70344). A
 > temporary solution for this is to modify the code on the DataLoaders in
-> data.py to `num_workers=0` in order to run the code. Otherwise you will get
+> data.py to `num_workers=0` in order to run the code. Otherwise, you will get
 > the error:
 > `AttributeError: Can't pickle local object 'ProteinDataset.__init__.<locals>.<lambda>'`.
 

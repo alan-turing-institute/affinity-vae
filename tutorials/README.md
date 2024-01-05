@@ -11,7 +11,7 @@ pip:
 python -m venv env
 source env/bin/activate
 python -m pip install --upgrade pip
-python -m pip install -e .
+python -m pip install -e ."[all]"
 ```
 
 ### 2. Download the MNIST dataset
