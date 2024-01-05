@@ -11,8 +11,6 @@ license = {text = "BSD 3-Clause"}
 classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
@@ -21,26 +19,28 @@ classifiers = [
     "Operating System :: Unix",
     "Operating System :: MacOS",
 ]
-requires-python = ">=3.8"
-dependencies = [
-    "altair",
-    "click",
-    "mrcfile",
-    "matplotlib",
-    "numpy",
-    "scipy",
-    "pillow",
-    "pandas",
-    "pyyaml",
-    "requests",
-    "scikit-image",
-    "scikit-learn",
-    "tensorboard",
-    "torch",
-    "torchvision",
-    "umap-learn",
-    "pydantic"
-]
+requires-python = ">=3.10"
+[common-dependencies]
+altair = "*"
+click = "*"
+mrcfile = "*"
+matplotlib = "*"
+numpy = "*"
+scipy = "*"
+pillow = "*"
+pandas = "*"
+pyyaml = "*"
+requests = "*"
+scikit-image = "*"
+scikit-learn = "*"
+tensorboard = "*"
+umap-learn = "*"
+
+[training-dependencies]
+torch = "*"
+torchvision = "*"
+pydantic = ">2"
+
 
 [project.readme]
 file = "README.md"
@@ -56,21 +56,38 @@ envs.default.dependencies = [
   "pytest-cov",
 ]
 
+[project.dependencies]
+all = [
+    { include = "common-dependencies" },
+    { include = "training-dependencies" }
+]
+
+
 [project.optional-dependencies]
 test = [
     "pytest >=6",
     "pytest-cov >=3",
-    "pre-commit",
+    { include = "training-dependencies" },
+    { include = "common-dependencies" }
+
 ]
-dev = [
-    "pytest >=6",
-    "pytest-cov >=3",
-    "pre-commit",
-]
+
 napari = [
     "napari[all]",
+    "torch",
+    "torchvision",
     "pydantic<2", # latest napari version is incompatible with napari, napari demo doesnt use pydantic.
+    { include = "common-dependencies" }
+
 ]
+
+[project.extras]
+baskerville = [
+    { include = "common-dependencies" },
+    "pydantic>2"
+]
+
+
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = ["-ra", "--showlocals"]#, "--strict-markers", "--strict-config"]
