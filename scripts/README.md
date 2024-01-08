@@ -28,7 +28,7 @@ line to see the different options:
 
 ```bash
 
-python scripts/napari_plugin.py --help
+python scripts/run_napari_model_view.py --help
 
 Output:
 
