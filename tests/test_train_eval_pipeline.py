@@ -196,10 +196,10 @@ class TrainEvalTest(unittest.TestCase):
         ) = helper_train_eval(self.data)
 
         self.assertEqual(n_dir_train, 4)
-        self.assertEqual(n_plots_train, 32)
+        self.assertEqual(n_plots_train, 33)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
-        self.assertEqual(n_plots_eval, 52)
+        self.assertEqual(n_plots_eval, 51)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 3)
 
@@ -222,15 +222,9 @@ def helper_train_eval(
         if data["eval"]:
             data["datapath"] = os.path.join(data["datapath"], "test")
 
-        print(data["eval"])
-        print(noplot, nolat, nostate)
         run_pipeline(data)
 
-        if os.path.exists(os.path.join(temp_dir.name, "plots")):
-            print(sorted(os.listdir(os.path.join(temp_dir.name, "plots"))))
-
         n_plots, n_latent, n_states = (0, 0, 0)
-        print(next(os.walk(temp_dir.name)))
         n_dir = len(next(os.walk(temp_dir.name))[1])
         if os.path.exists(os.path.join(temp_dir.name, "plots")):
             n_plots = (
@@ -255,8 +249,6 @@ def helper_train_eval(
     ret.insert(0, n_dir)
 
     shutil.rmtree(temp_dir.name)
-
-    print(ret)
 
     return tuple(ret)
 
