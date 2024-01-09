@@ -27,7 +27,6 @@ class LossTest(unittest.TestCase):
             dtype=np.float32
         )
         self.loss = AVAELoss(
-            torch.device("cpu"),
             [1],
             [1],
             lookup_aff=self.affinity,
