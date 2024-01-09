@@ -1,6 +1,7 @@
 import logging
 import os
 
+import lightning as lt
 import numpy as np
 import pandas as pd
 import torch
@@ -62,6 +63,8 @@ def evaluate(
 
 
     """
+    fabric = lt.Fabric()
+    fabric.launch()
     # ############################### DATA ###############################
     tests, data_dim = load_data(
         datapath=datapath,
@@ -74,10 +77,11 @@ def evaluate(
         normalise=normalise,
         shift_min=shift_min,
         rescale=rescale,
+        fabric=fabric,
     )
 
     # ############################### MODEL ###############################
-    device = set_device(use_gpu)
+    device = fabric.device
 
     if state is None:
         if not os.path.exists("states"):
