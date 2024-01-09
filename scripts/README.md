@@ -17,9 +17,9 @@ python -m pip install --upgrade pip
 python -m pip install -e ."[napari]"
 ```
 
-> **Important note**: This environment should only be used for running the
-> Napari plugin. If you want to run the AffinityVAE model, you'll need to
-> install the requirements in a different python environment. The reason for
+> **Important note**: This installation should only be used for running the
+> Napari plugin. If you want to train/run the AffinityVAE model, you'll need to
+> reinstall the package using the "all" option (e.g ```python -m pip install -e ."[all]"```). The reason for
 > this is that the napari library requires an older version of pydantic (1.10.0)
 > and the AffinityVAE model requires pydantic > 2.0 or higher.
 
@@ -63,10 +63,10 @@ Using the `umap` option can be slow, as the manifold is created on the fly and
 reversed everytime you click on a point on the embedding map. If you want to use
 the precomputed manifold from the AffinityVAE run, you can use the `load` option
 (adding the flag `--manifold "load"` to the command line. This will use the
-embedding variables from the meta file to create the manifold and it will
+embedding variables from the meta file to create the manifold, and it will
 reverse to the latent space by finding the closest distance point in the data.
 This is much faster than using the `umap` option and a good option for quick
-debugging/exploring. However this option will not allow you explore unseen
+debugging/exploring. However, this option will not allow you to explore unseen
 regions of the latent space, only the available data.
 
 **Example of usage**
