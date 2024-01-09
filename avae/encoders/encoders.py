@@ -46,8 +46,8 @@ class Encoder(AbstractEncoder):
         self.filters = []
 
         if filters is not None and len(filters) != 0:
-            if 0 in filters:
-                raise RuntimeError("Filter list cannot contain zeros.")
+            if sum([1 for f in filters if f <= 0]) != 0:
+                raise RuntimeError("Filter list cannot contain zeros or negative values.")
             self.filters = filters
             if depth is not None:
                 logging.warning(
@@ -60,7 +60,14 @@ class Encoder(AbstractEncoder):
                     "When passing initial 'capacity' parameter in avae.Encoder,"
                     " provide 'depth' parameter too."
                 )
+            elif depth < 0:
+                raise RuntimeError(
+                    "Parameter 'depth' cannot be a negative value."
+                )
             self.filters = [capacity * 2**x for x in range(depth)]
+        elif depth is None:
+            raise RuntimeError("Both 'capacity' and 'filters' parameters are None. Please pass one or the other to instantiate the network.")
+        # else it's an FC network and filters not needed
 
         if len(self.filters) != 0:
             assert all(
@@ -82,6 +89,9 @@ class Encoder(AbstractEncoder):
 
         else:
             bottom_dim = input_size
+
+        if latent_dims <= 0:
+            raise RuntimeError("Parameter 'latent_dims' must be non-zero and positive.")
 
         self.bnorm = bnorm
         self.pose = not (pose_dims == 0)
