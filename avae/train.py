@@ -718,7 +718,7 @@ def train(
                 "################################################################"
             )
 
-            torch.save(
+            fabric.save(
                 {
                     "epoch": epoch + 1,
                     "model_state_dict": vae.state_dict(),
