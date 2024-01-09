@@ -3,8 +3,6 @@ import logging
 
 import numpy as np
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 
 from avae.decoders.base import AbstractDecoder
 from avae.models import dims_after_pooling, set_layer_dim
@@ -35,13 +33,13 @@ class Decoder(AbstractDecoder):
 
     def __init__(
         self,
-        input_size,
-        capacity=None,
-        depth=None,
-        latent_dims=8,
-        pose_dims=0,
-        filters=None,
-        bnorm=True,
+        input_size: tuple,
+        capacity: int | None = None,
+        depth: int = 4,
+        latent_dims: int = 8,
+        pose_dims: int = 0,
+        filters: list[int] | None = None,
+        bnorm: bool = True,
     ):
 
         super(Decoder, self).__init__()
@@ -88,9 +86,9 @@ class Decoder(AbstractDecoder):
         CONV, TCONV, BNORM = set_layer_dim(len(input_size))
 
         #  iteratively define deconvolution and batch normalisation layers
-        self.conv_dec = nn.ModuleList()
+        self.conv_dec = torch.nn.ModuleList()
         if self.bnorm:
-            self.norm_dec = nn.ModuleList()
+            self.norm_dec = torch.nn.ModuleList()
 
         for d in reversed(range(len(self.filters))):
             self.conv_dec.append(
@@ -110,12 +108,12 @@ class Decoder(AbstractDecoder):
             1 if depth == 0 else self.filters[-1]
         )  # allow for no convolutions
         if self.pose:
-            self.fc = nn.Linear(
+            self.fc = torch.nn.Linear(
                 in_features=pose_dims + latent_dims,
                 out_features=self.ch * np.prod(self.bottom_dim),
             )
         else:
-            self.fc = nn.Linear(
+            self.fc = torch.nn.Linear(
                 in_features=latent_dims,
                 out_features=self.ch * np.prod(self.bottom_dim),
             )
@@ -150,16 +148,24 @@ class Decoder(AbstractDecoder):
         x = x.view(x.size(0), self.ch, *self.bottom_dim)
         for d in range(len(self.filters) - 1):
             if self.bnorm:
-                x = self.norm_dec[d](F.relu(self.conv_dec[d](x)))
+                x = self.norm_dec[d](
+                    torch.nn.functional.relu(self.conv_dec[d](x))
+                )
             else:
-                x = F.relu(self.conv_dec[d](x))
+                x = torch.nn.functional.relu(self.conv_dec[d](x))
         x = torch.sigmoid(self.conv_dec[-1](x))
         return x
 
 
 class DecoderA(AbstractDecoder):
     def __init__(
-        self, input_size, capacity, depth, latent_dims, pose_dims, bnorm
+        self,
+        input_size: tuple,
+        capacity: int = 8,
+        depth: int = 4,
+        latent_dims: int = 8,
+        pose_dims: int = 0,
+        bnorm: bool = False,
     ):
         super(DecoderA, self).__init__()
         self.pose = not (pose_dims == 0)
@@ -185,10 +191,12 @@ class DecoderA(AbstractDecoder):
 
         _, conv_T, BNORM = set_layer_dim(ndim)
 
-        self.decoder = nn.Sequential()
+        self.decoder = torch.nn.Sequential()
 
-        self.decoder.append(nn.Linear(latent_dims + pose_dims, flat_shape))
-        self.decoder.append(nn.Unflatten(-1, unflat_shape))
+        self.decoder.append(
+            torch.nn.Linear(latent_dims + pose_dims, flat_shape)
+        )
+        self.decoder.append(torch.nn.Unflatten(-1, unflat_shape))
 
         for d in reversed(range(len(filters))):
             if d != 0:
@@ -214,7 +222,7 @@ class DecoderA(AbstractDecoder):
                     )
                 if self.bnorm:
                     self.decoder.append(BNORM(filters[d - 1]))
-                self.decoder.append(nn.ReLU(True))
+                self.decoder.append(torch.nn.ReLU(True))
 
         self.decoder.append(
             conv_T(
@@ -249,9 +257,16 @@ class DecoderB(AbstractDecoder):
         Number of bottleneck pose dimensions.
     """
 
-    def __init__(self, input_size, capacity, depth, latent_dims, pose_dims):
+    def __init__(
+        self,
+        input_size: tuple,
+        capacity: int,
+        depth: int = 4,
+        latent_dims: int = 8,
+        pose_dims: int = 0,
+    ):
         super(DecoderB, self).__init__()
-        self.c = capacity
+        self.capacity = capacity
         self.depth = depth
         self.pose = not (pose_dims == 0)
 
@@ -265,11 +280,11 @@ class DecoderB(AbstractDecoder):
         self.bottom_dim = tuple([int(i / (2**depth)) for i in input_size])
 
         #  iteratively define deconvolution and batch normalisation layers
-        self.conv_dec = nn.ModuleList()
-        self.norm_dec = nn.ModuleList()
-        prev_sh = self.c * depth
+        self.conv_dec = torch.nn.ModuleList()
+        self.norm_dec = torch.nn.ModuleList()
+        prev_sh = self.capacity * depth
         for d in range(depth, 0, -1):
-            sh = self.c * (d - 1) if d != 1 else 1
+            sh = self.capacity * (d - 1) if d != 1 else 1
             self.conv_dec.append(
                 TCONV(
                     in_channels=prev_sh,
@@ -284,15 +299,15 @@ class DecoderB(AbstractDecoder):
 
         # define fully connected layers
         self.chf = (
-            1 if depth == 0 else self.c * depth
+            1 if depth == 0 else self.capacity * depth
         )  # allow for no convolutions
         if self.pose:
-            self.fc = nn.Linear(
+            self.fc = torch.nn.Linear(
                 in_features=pose_dims + latent_dims,
                 out_features=self.chf * np.prod(self.bottom_dim),
             )
         else:
-            self.fc = nn.Linear(
+            self.fc = torch.nn.Linear(
                 in_features=latent_dims,
                 out_features=self.chf * np.prod(self.bottom_dim),
             )
@@ -326,6 +341,6 @@ class DecoderB(AbstractDecoder):
             x = self.fc(x)
         x = x.view(x.size(0), self.chf, *self.bottom_dim)
         for d in range(self.depth - 1):
-            x = self.norm_dec[d](F.relu(self.conv_dec[d](x)))
+            x = self.norm_dec[d](torch.nn.functional.relu(self.conv_dec[d](x)))
         x = torch.sigmoid(self.conv_dec[-1](x))
         return x

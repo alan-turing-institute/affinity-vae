@@ -1,6 +1,5 @@
 import logging
 import os
-from typing import Optional
 
 import yaml
 from pydantic import (
@@ -22,9 +21,7 @@ class AffinityConfig(BaseModel):
     batch: PositiveInt = Field(128, description="Batch size")
     beta: float = Field(1, description="Beta value")
     beta_cycle: PositiveInt = Field(4, description="Beta cycle")
-    beta_load: Optional[FilePath] = Field(
-        None, description="Path to beta file"
-    )
+    beta_load: FilePath | None = Field(None, description="Path to beta file")
     beta_min: float = Field(0, description="Minimum betvalue")
     beta_ratio: PositiveFloat = Field(0, description="Beta value")
     channels: PositiveInt = Field(64, description="First layer channels")
@@ -35,7 +32,7 @@ class AffinityConfig(BaseModel):
         description="Method to classify the latent space. Options "
         "are: KNN (nearest neighbour), NN (neural network), LR (Logistic Regression).",
     )
-    config_file: Optional[FilePath] = Field(
+    config_file: FilePath | None = Field(
         None, description="Path to config file"
     )
     cyc_method_beta: str = Field(
@@ -85,7 +82,7 @@ class AffinityConfig(BaseModel):
     )
     gamma: float = Field(2, description="Gamma value")
     gamma_cycle: PositiveInt = Field(4, description="Gamma cycle")
-    gamma_load: Optional[FilePath] = Field(
+    gamma_load: FilePath | None = Field(
         None, description="Path to gamma array file"
     )
     gamma_min: float = Field(0, description="Minimum gamma value")
@@ -94,11 +91,11 @@ class AffinityConfig(BaseModel):
     gpu: bool = Field(True, description="Use GPU")
     latent_dims: PositiveInt = Field(8, description="Latent space dimensions")
     learning: PositiveFloat = Field(0.001, description="Learning rate")
-    limit: Optional[PositiveInt] = Field(
+    limit: PositiveInt | None = Field(
         None, description="Limit number of samples"
     )
     loss_fn: str = Field('MSE', description="Loss function")
-    meta: Optional[FilePath] = Field(None, description="Path to meta file")
+    meta: FilePath | None = Field(None, description="Path to meta file")
     model: str = Field('a', description="Type of model to use")
     new_out: bool = Field(False, description="Create new output directory")
     no_val_drop: bool = Field(
@@ -118,7 +115,7 @@ class AffinityConfig(BaseModel):
         False, description="Scale data with min-max transformation"
     )
     split: PositiveInt = Field(20, description="Split ratio")
-    state: Optional[FilePath] = Field(None, description="Path to state file")
+    state: FilePath | None = Field(None, description="Path to state file")
     tensorboard: bool = Field(False, description="Use tensorboard")
     vis_acc: bool = Field(False, description="Visualise accuracy")
     vis_aff: bool = Field(False, description="Visualise affinity")
@@ -139,7 +136,7 @@ class AffinityConfig(BaseModel):
 
     vis_rec: bool = Field(False, description="Visualise reconstruction")
     vis_sim: bool = Field(False, description="Visualise similarity")
-    filters: list[int] = Field(
+    filters: list | None = Field(
         None,
         description="Comma-separated list of filters for the network. Either provide filters, or capacity and depth.",
     )
@@ -152,7 +149,9 @@ class AffinityConfig(BaseModel):
     klreduction: str = Field('mean', description="KL reduction method")
 
 
-def load_config_params(config_file=None, local_vars={}):
+def load_config_params(
+    config_file: str | None = None, local_vars: dict = {}
+) -> dict:
     """
     Load configuration parameters from config file and command line arguments.
 
@@ -295,7 +294,7 @@ def write_config_file(time_stamp_name, data):
     logging.info("YAML File saved!\n")
 
 
-def setup_visualisation_config(data):
+def setup_visualisation_config(data: dict) -> None:
 
     if data["vis_all"]:
         settings.VIS_LOS = True

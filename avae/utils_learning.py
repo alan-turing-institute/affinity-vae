@@ -1,13 +1,15 @@
 import logging
+import typing
 
 import numpy as np
 import pandas as pd
 import torch
 
-from . import vis
+from avae.loss import AVAELoss
+from avae.vis import format
 
 
-def set_device(gpu):
+def set_device(gpu: bool) -> torch.device:
     """Set the torch device to use for training and inference.
 
     Parameters
@@ -51,18 +53,26 @@ def dims_after_pooling(start: int, n_pools: int) -> int:
 
 
 def pass_batch(
-    device,
-    vae,
-    batch,
-    b,
-    batches,
-    e=None,
-    epochs=None,
-    history=[],
-    loss=None,
-    optimizer=None,
-    beta=None,
-):
+    device: torch.device,
+    vae: torch.nn.Module,
+    batch: list,
+    b: int,
+    batches: int,
+    e: int = 1,
+    epochs: int = 1,
+    history: list = [],
+    loss: AVAELoss | None = None,
+    optimizer: typing.Any = None,
+    beta: list[float] | None = None,
+) -> tuple[
+    torch.Tensor,
+    torch.Tensor,
+    torch.Tensor,
+    torch.Tensor,
+    torch.Tensor,
+    torch.Tensor,
+    list,
+]:
     """Passes a batch through the affinity VAE model epoch and computes the loss.
 
     Parameters
@@ -158,20 +168,22 @@ def pass_batch(
 
 
 def add_meta(
-    data_dim,
-    meta_df,
-    batch_meta,
-    x_hat,
-    latent_mu,
-    lat_pose,
-    latent_logvar,
-    mode="trn",
-):
+    data_dim: int,
+    meta_df: pd.DataFrame,
+    batch_meta: dict,
+    x_hat: torch.Tensor,
+    latent_mu: torch.Tensor,
+    lat_pose: torch.Tensor,
+    latent_logvar: torch.Tensor,
+    mode: str = "trn",
+) -> pd.DataFrame:
     """
     Created meta data about data and training.
 
     Parameters
     ----------
+    data_dim: int
+        Dimensions of the data.
     meta_df: pd.DataFrame
         Dataframe containing meta data, to which new data is added.
     batch_meta: dict
@@ -196,7 +208,7 @@ def add_meta(
     meta = pd.DataFrame(batch_meta)
 
     meta["mode"] = mode
-    meta["image"] += vis.format(x_hat, data_dim)
+    meta["image"] += format(x_hat, data_dim)
     for d in range(latent_mu.shape[-1]):
         meta[f"lat{d}"] = np.array(latent_mu[:, d].cpu().detach().numpy())
     for d in range(latent_logvar.shape[-1]):

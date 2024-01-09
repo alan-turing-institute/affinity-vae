@@ -28,10 +28,10 @@ class cyc_annealing:
 
     def __init__(
         self,
-        n_epoch,
-        cyc_method="flat",
-        n_cycle=4,
-        ratio=0.5,
+        n_epoch: int,
+        cyc_method: str = "flat",
+        n_cycle: int = 4,
+        ratio: float = 0.5,
     ):
 
         self.n_epoch = n_epoch
