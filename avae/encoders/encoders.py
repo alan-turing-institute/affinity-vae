@@ -50,7 +50,7 @@ class Encoder(AbstractEncoder):
             )
         elif filters is not None and len(filters) != 0:
             if 0 in filters:
-                raise RuntimeError("Filter list catorch.nnot contain zeros.")
+                raise RuntimeError("Filter list cannot contain zeros.")
             self.filters = filters
             if depth is not None:
                 logging.warning(
