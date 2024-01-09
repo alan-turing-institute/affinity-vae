@@ -1,8 +1,8 @@
 import logging
 import os
 
+import lightning as lt
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
 import torch
 from torch.utils.tensorboard import SummaryWriter
@@ -144,6 +144,10 @@ def train(
     """
     torch.manual_seed(42)
 
+    fabric = lt.Fabric()
+    fabric.launch()
+    device = fabric.device
+
     # ############################### DATA ###############################
     trains, vals, tests, lookup, data_dim = load_data(
         datapath=datapath,
@@ -159,6 +163,7 @@ def train(
         normalise=normalise,
         shift_min=shift_min,
         rescale=rescale,
+        fabric=fabric,
     )
 
     # The spacial dimensions of the data
@@ -166,7 +171,6 @@ def train(
     pose = not (pose_dims == 0)
 
     # ############################### MODEL ###############################
-    device = set_device(use_gpu)
     if filters is not None:
         filters = np.array(
             np.array(filters).replace(" ", "").split(","), dtype=np.int64
@@ -207,8 +211,6 @@ def train(
     vae = AffinityVAE(encoder, decoder)
 
     logging.info(vae)
-
-    vae.to(device)
 
     if opt_method == "adam":
         optimizer = torch.optim.Adam(
@@ -316,8 +318,9 @@ def train(
         vis.plot_cyc_variable(beta_arr, "beta")
         vis.plot_cyc_variable(gamma_arr, "gamma")
 
+    vae, optimizer = fabric.setup(vae, optimizer)
+
     loss = AVAELoss(
-        device,
         beta_arr,
         gamma=gamma_arr,
         lookup_aff=lookup,
@@ -366,7 +369,7 @@ def train(
                 lat_pos,
                 t_history,
             ) = pass_batch(
-                device,
+                fabric,
                 vae,
                 batch,
                 b,
@@ -422,7 +425,7 @@ def train(
                 vlat_pos,
                 v_history,
             ) = pass_batch(
-                device,
+                fabric,
                 vae,
                 batch,
                 b,
@@ -473,7 +476,7 @@ def train(
         if (epoch + 1) % settings.FREQ_EVAL == 0:
             for b, batch in enumerate(tests):  # tests empty if no 'test' dir
                 (t, t_hat, t_mu, t_logvar, tlat, tlat_pose, _,) = pass_batch(
-                    device, vae, batch, b, len(tests), epoch, epochs
+                    fabric, vae, batch, b, len(tests), epoch, epochs
                 )
                 x_test.extend(t_mu.cpu().detach().numpy())  # store latents
                 c_test.extend(t_logvar.cpu().detach().numpy())

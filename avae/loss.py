@@ -23,9 +23,9 @@ class AffinityLoss:
     L2-norm. Not sure what the best one is yet.
     """
 
-    def __init__(self, lookup: torch.Tensor, device: torch.device):
-        self.device = device
-        self.lookup = torch.tensor(lookup).to(device)
+    def __init__(self, lookup: torch.Tensor):  # , device: torch.device):
+        # self.device = device
+        self.lookup = torch.tensor(lookup)  # .to(device)
         self.cos = torch.nn.CosineSimilarity(dim=1, eps=1e-8)
         self.l1loss = torch.nn.L1Loss()
 
@@ -51,10 +51,10 @@ class AffinityLoss:
         # first calculate the affinity, for the real classes
         c = (
             torch.combinations(y_true, r=2, with_replacement=False)
-            .to(self.device)
+            # .to(self.device)
             .long()
         )
-        affinity = self.lookup[c[:, 0], c[:, 1]].to(self.device)
+        affinity = self.lookup[c[:, 0], c[:, 1]]  # .to(self.device)
 
         # now calculate the latent similarity
         z_id = torch.tensor(list(range(y_pred.shape[0])))
@@ -94,14 +94,14 @@ class AVAELoss:
 
     def __init__(
         self,
-        device: torch.device,
+        # device: torch.device,
         beta: list[float],
         gamma: list[float],
         lookup_aff: torch.Tensor | None = None,
         recon_fn: str = "MSE",
         klred: str = "mean",
     ):
-        self.device = device
+        # self.device = device
         self.recon_fn = recon_fn
         self.klred = klred
         self.beta = beta
@@ -110,7 +110,7 @@ class AVAELoss:
         self.gamma = gamma
 
         if lookup_aff is not None and max(gamma) != 0:
-            self.affinity_loss = AffinityLoss(lookup_aff, device)
+            self.affinity_loss = AffinityLoss(lookup_aff)  # , device)
 
         elif lookup_aff is None and max(gamma) != 0:
             raise RuntimeError(
@@ -214,7 +214,7 @@ class AVAELoss:
             )
 
         # affinity loss
-        affin_loss = torch.Tensor([0]).to(self.device)
+        affin_loss = torch.Tensor([0])  # .to(self.device)
         if self.affinity_loss is not None:
             affin_loss = self.affinity_loss(batch_aff, mu)
 
