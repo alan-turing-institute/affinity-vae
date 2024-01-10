@@ -101,7 +101,7 @@ def evaluate(
     pose_dims = fname[3]
 
     logging.info("Loading model from: {}".format(state))
-    checkpoint = torch.load(state)
+    checkpoint = fabric.load(state)
     vae = checkpoint["model_class_object"]
     vae.load_state_dict(checkpoint["model_state_dict"])
     vae.to(device)

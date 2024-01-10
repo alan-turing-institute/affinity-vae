@@ -248,7 +248,7 @@ def train(
                 )[-1]
                 state = os.path.join("states", state)
 
-        checkpoint = torch.load(state)
+        checkpoint = fabric.load(state)
         vae.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         e_start = checkpoint["epoch"]
@@ -719,6 +719,7 @@ def train(
             )
 
             fabric.save(
+                os.path.join("states", mname),
                 {
                     "epoch": epoch + 1,
                     "model_state_dict": vae.state_dict(),
@@ -727,7 +728,6 @@ def train(
                     "t_loss_history": t_history,
                     "v_loss_history": v_history,
                 },
-                os.path.join("states", mname),
             )
             logging.info(
                 f"Saved model state: {mname} for restarting and evaluation "
