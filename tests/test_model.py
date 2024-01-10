@@ -90,26 +90,34 @@ class ModelParamsTest(unittest.TestCase):
         # no parameters
         with pytest.raises(TypeError) as errinfo:
             Encoder()
-        assert str(
-            errinfo.value) == "Encoder.__init__() missing 1 required positional argument: 'input_size'"
+        assert (
+            str(errinfo.value)
+            == "Encoder.__init__() missing 1 required positional argument: 'input_size'"
+        )
         with pytest.raises(TypeError) as errinfo:
             Decoder()
-        assert str(
-            errinfo.value) == "Decoder.__init__() missing 1 required positional argument: 'input_size'"
+        assert (
+            str(errinfo.value)
+            == "Decoder.__init__() missing 1 required positional argument: 'input_size'"
+        )
 
         # no capacity no filters scenario
         with pytest.raises(RuntimeError) as errinfo:
             Encoder(
                 input_size=self.input_size,
             )
-        assert str(
-            errinfo.value) == "Both 'capacity' and 'filters' parameters are None. Please pass one or the other to instantiate the network."
+        assert (
+            str(errinfo.value)
+            == "Both 'capacity' and 'filters' parameters are None. Please pass one or the other to instantiate the network."
+        )
         with pytest.raises(RuntimeError) as errinfo:
             Decoder(
                 input_size=self.input_size,
             )
-        assert str(
-            errinfo.value) == "Both 'capacity' and 'filters' parameters are None. Please pass one or the other to instantiate the network."
+        assert (
+            str(errinfo.value)
+            == "Both 'capacity' and 'filters' parameters are None. Please pass one or the other to instantiate the network."
+        )
 
         # capacity but no depth scenario
         with pytest.raises(RuntimeError) as errinfo:
@@ -117,15 +125,19 @@ class ModelParamsTest(unittest.TestCase):
                 capacity=1,
                 input_size=self.input_size,
             )
-        assert str(
-            errinfo.value) == "When passing initial 'capacity' parameter in avae.Encoder, provide 'depth' parameter too."
+        assert (
+            str(errinfo.value)
+            == "When passing initial 'capacity' parameter in avae.Encoder, provide 'depth' parameter too."
+        )
         with pytest.raises(RuntimeError) as errinfo:
             Decoder(
                 capacity=1,
                 input_size=self.input_size,
             )
-        assert str(
-            errinfo.value) == "When passing initial 'capacity' parameter in avae.Encoder, provide 'depth' parameter too."
+        assert (
+            str(errinfo.value)
+            == "When passing initial 'capacity' parameter in avae.Encoder, provide 'depth' parameter too."
+        )
 
         # 0 or negative value in filters
         with pytest.raises(RuntimeError) as errinfo:
@@ -133,15 +145,19 @@ class ModelParamsTest(unittest.TestCase):
                 filters=[0, -1],
                 input_size=self.input_size,
             )
-        assert str(
-            errinfo.value) == "Filter list cannot contain zeros or negative values."
+        assert (
+            str(errinfo.value)
+            == "Filter list cannot contain zeros or negative values."
+        )
         with pytest.raises(RuntimeError) as errinfo:
             Decoder(
                 filters=[0, -1],
                 input_size=self.input_size,
             )
-        assert str(
-            errinfo.value) == "Filter list cannot contain zeros or negative values."
+        assert (
+            str(errinfo.value)
+            == "Filter list cannot contain zeros or negative values."
+        )
 
         # input too small for depth with filters
         with pytest.raises(AssertionError) as errinfo:
@@ -149,15 +165,19 @@ class ModelParamsTest(unittest.TestCase):
                 filters=[2, 4, 16, 32],
                 input_size=(8, 8),
             )
-        assert str(
-            errinfo.value) == "Input size not compatible with --depth. Input must be divisible by 16."
+        assert (
+            str(errinfo.value)
+            == "Input size not compatible with --depth. Input must be divisible by 16."
+        )
         with pytest.raises(AssertionError) as errinfo:
             Decoder(
                 filters=[2, 4, 16, 32],
                 input_size=(8, 8),
             )
-        assert str(
-            errinfo.value) == "Input size not compatible with --depth. Input must be divisible by 16."
+        assert (
+            str(errinfo.value)
+            == "Input size not compatible with --depth. Input must be divisible by 16."
+        )
 
         # input too small for depth with capacity
         with pytest.raises(AssertionError) as errinfo:
@@ -166,16 +186,20 @@ class ModelParamsTest(unittest.TestCase):
                 depth=4,
                 input_size=(8, 8),
             )
-        assert str(
-            errinfo.value) == "Input size not compatible with --depth. Input must be divisible by 16."
+        assert (
+            str(errinfo.value)
+            == "Input size not compatible with --depth. Input must be divisible by 16."
+        )
         with pytest.raises(AssertionError) as errinfo:
             Decoder(
                 capacity=8,
                 depth=4,
                 input_size=(8, 8),
             )
-        assert str(
-            errinfo.value) == "Input size not compatible with --depth. Input must be divisible by 16."
+        assert (
+            str(errinfo.value)
+            == "Input size not compatible with --depth. Input must be divisible by 16."
+        )
 
         # negative depth
         with pytest.raises(RuntimeError) as errinfo:
@@ -184,16 +208,20 @@ class ModelParamsTest(unittest.TestCase):
                 depth=-1,
                 input_size=self.input_size,
             )
-        assert str(
-            errinfo.value) == "Parameter 'depth' cannot be a negative value."
+        assert (
+            str(errinfo.value)
+            == "Parameter 'depth' cannot be a negative value."
+        )
         with pytest.raises(RuntimeError) as errinfo:
             Decoder(
                 capacity=8,
                 depth=-1,
                 input_size=self.input_size,
             )
-        assert str(
-            errinfo.value) == "Parameter 'depth' cannot be a negative value."
+        assert (
+            str(errinfo.value)
+            == "Parameter 'depth' cannot be a negative value."
+        )
 
         # negative depth
         with pytest.raises(RuntimeError) as errinfo:
@@ -203,8 +231,10 @@ class ModelParamsTest(unittest.TestCase):
                 latent_dims=0,
                 input_size=self.input_size,
             )
-        assert str(
-            errinfo.value) == "Parameter 'latent_dims' must be non-zero and positive."
+        assert (
+            str(errinfo.value)
+            == "Parameter 'latent_dims' must be non-zero and positive."
+        )
         with pytest.raises(RuntimeError) as errinfo:
             Decoder(
                 capacity=8,
@@ -212,8 +242,10 @@ class ModelParamsTest(unittest.TestCase):
                 latent_dims=0,
                 input_size=self.input_size,
             )
-        assert str(
-            errinfo.value) == "Parameter 'latent_dims' must be non-zero and positive."
+        assert (
+            str(errinfo.value)
+            == "Parameter 'latent_dims' must be non-zero and positive."
+        )
 
     def test_capacity(self):
 
@@ -347,18 +379,8 @@ class ModelParamsTest(unittest.TestCase):
 
     def test_batchnorm(self):
 
-        enc = Encoder(
-            filters=[8, 16],
-            input_size=self.input_size,
-            bnorm=True
-        )
-        dec = Decoder(
-            filters=[8, 16],
-            input_size=self.input_size,
-            bnorm=False
-        )
+        enc = Encoder(filters=[8, 16], input_size=self.input_size, bnorm=True)
+        dec = Decoder(filters=[8, 16], input_size=self.input_size, bnorm=False)
         model = avae(enc, dec)
         output = model(self.input)
         self.assertEqual(output[0].shape, self.input.shape)
-
-
