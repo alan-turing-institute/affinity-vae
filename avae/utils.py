@@ -277,7 +277,7 @@ def pose_interpolation(
 
             # Decode interpolated vectors
             with torch.no_grad():
-                decoded_img = vae.module.decoder(lat, pos)
+                decoded_img = vae.decoder(lat, pos)
 
             decoded_grid.append(decoded_img.cpu().squeeze().numpy())
 

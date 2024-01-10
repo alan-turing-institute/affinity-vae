@@ -97,7 +97,9 @@ class GaussianSplatRenderer(AbstractDecoder):
         splats = splats.to(self.device)
         splats_t = torch.swapaxes(splats, 1, 2)
         splats_t = splats_t.to(self.device)
-        self.coords = self.coords.to(self.device)        # calculate D^2 for all combinations of voxel and gaussian
+        self.coords = self.coords.to(
+            self.device
+        )  # calculate D^2 for all combinations of voxel and gaussian
         D_squared = torch.sum(
             self.coords[:, :, None, :] ** 2 + splats_t[:, None, :, :] ** 2,
             axis=-1,
@@ -109,8 +111,7 @@ class GaussianSplatRenderer(AbstractDecoder):
 
         # now splat the gaussians
         x = torch.sum(
-            weights[:, None, :]
-            * torch.exp(-D_squared / sigmas),
+            weights[:, None, :] * torch.exp(-D_squared / sigmas),
             axis=-1,
         )
 

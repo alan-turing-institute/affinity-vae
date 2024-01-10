@@ -25,7 +25,7 @@ def setup_napari():
 def load_model(model_fn, meta_fn, device="cpu"):
     """Load the model and meta data."""
     print("Loading model")
-    checkpoint = torch.load(model_fn, map_location=torch.device('cpu'))
+    checkpoint = torch.load(model_fn, map_location=torch.device(device))
     model = checkpoint["model_class_object"]
 
     model.load_state_dict(checkpoint["model_state_dict"])
@@ -43,14 +43,13 @@ def run_napari(model_fn, meta_fn, ldim=None, pdim=None, manifold="umap"):
     viewer = setup_napari()
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
     model, meta_df = load_model(model_fn, meta_fn, device=device)
 
     if pdim is not None:
         pose_dims = pdim
     else:
         try:
-            pose_dims = model.module.encoder.pose_fc.out_features
+            pose_dims = model.encoder.pose_fc.out_features
         except AttributeError:
             raise AttributeError(
                 "Model does not have pose attributes, please specify manually."
@@ -60,7 +59,7 @@ def run_napari(model_fn, meta_fn, ldim=None, pdim=None, manifold="umap"):
         lat_dims = ldim
     else:
         try:
-            lat_dims = model.module.encoder.mu.out_features
+            lat_dims = model.encoder.mu.out_features
         except AttributeError:
             raise AttributeError(
                 "Model does not have latent attributes, please specify manually."

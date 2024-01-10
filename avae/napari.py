@@ -235,7 +235,9 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
     def get_pose(self) -> npt.NDArray:
 
         if self.cartestian:
-            theta = scale_from_slider(self._widgets["theta"].value(), np.pi, 2*np.pi )
+            theta = scale_from_slider(
+                self._widgets["theta"].value(), np.pi, 2 * np.pi
+            )
             axis = CartesianAxes[str(self._widgets["axes"].currentText())]
             return np.array([theta, *axis.value], dtype=np.float32)
 
