@@ -11,7 +11,7 @@ from avae.decoders.spatial import (
 )
 
 
-class GaussianSplatRenderer(AbstractDecoder):
+class GaussianSplatRenderer:
     """Perform gaussian splatting."""
 
     def __init__(
@@ -55,7 +55,7 @@ class GaussianSplatRenderer(AbstractDecoder):
         weights: torch.Tensor,
         sigmas: torch.Tensor,
         *,
-        splat_sigma_range: Tuple[float] = (0.0, 1.0),
+        splat_sigma_range: Tuple[float, float] = (0.0, 1.0),
     ) -> torch.Tensor:
         """Render the Gaussian splats in an image volume.
 
@@ -145,7 +145,7 @@ class GaussianSplatDecoder(AbstractDecoder):
         The number of output channels in the final image volume. If not
         supplied, this will default to 1. If it is supplied, additional
         convolutions are applied to the GMM model.
-    splat_sigma_range : tuple[float]
+    splat_sigma_range : tuple[float, float]
         The minimum and maximum sigma values for each splat. Useful to control
         the resolution of the final render.
     default_axis : CartesianAxes
@@ -250,15 +250,17 @@ class GaussianSplatDecoder(AbstractDecoder):
         """
         self._shape = shape
         self._default_axis = default_axis.as_tensor()
-        self._splatter = GaussianSplatRenderer(
+        self._splatter.configure_renderer(
             shape,
+            splat_sigma_range=splat_sigma_range,
+            default_axis=default_axis,
             device=device,
         )
         self._splat_sigma_range = splat_sigma_range
 
     def decode_splats(
         self, z: torch.Tensor, pose: torch.Tensor
-    ) -> Tuple[torch.Tensor]:
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
 
         # predict the centroids for the splats
         splats = self.centroids(z).view(z.shape[0], 3, -1)

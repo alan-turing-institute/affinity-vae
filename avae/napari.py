@@ -1,12 +1,13 @@
 # code @quantumjot extracted from https://github.com/quantumjot/vne/blob/broadcast/vne/utils/napari.py
 
 import enum
-from typing import Dict, Optional, Tuple
+from typing import Any
 
 import matplotlib.pyplot as plt
 import napari
 import numpy as np
 import numpy.typing as npt
+import pandas as pd
 import torch
 import umap
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
@@ -50,13 +51,13 @@ def process(
     return x.squeeze().cpu().numpy()
 
 
-def scale_from_slider(x, min_val, max_val):
+def scale_from_slider(x, min_val: float, max_val: float) -> float:
     scaled_value = x / 1000.0
     scaled_range = max_val - min_val
     return min_val + (scaled_value) * scaled_range
 
 
-def scale_to_slider(x, min_val, max_val):
+def scale_to_slider(x, min_val: float, max_val: float) -> float:
     scaled_range = max_val - min_val
     scaled_value = (x - min_val) / scaled_range
     return np.clip(((scaled_value)) * 1000, 0, 1000).astype(int)
@@ -70,9 +71,6 @@ class MplCanvas(FigureCanvasQTAgg):
             )
             self.axes = fig.add_subplot(111)
         super(MplCanvas, self).__init__(fig)
-
-
-import pandas as pd
 
 
 class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
@@ -100,7 +98,7 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
 
         self._main_layout = QtWidgets.QVBoxLayout()
         self._tabs = QtWidgets.QTabWidget()
-        self._widgets = {}
+        self._widgets: dict = {}
 
         self.add_pose_widget()
         self._main_layout.addWidget(self._tabs, stretch=0)
@@ -249,7 +247,7 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
             )
             return np.array(theta, dtype=np.float32)
 
-    def get_state(self) -> Tuple[float, npt.NDArray]:
+    def get_state(self) -> tuple[float, npt.NDArray]:
         pose = self.get_pose()
         z_values = np.array(
             [
@@ -262,7 +260,7 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
         )
         return pose, z
 
-    def inverse_map_manifold_to_z(self, event=None) -> Optional[npt.NDArray]:
+    def inverse_map_manifold_to_z(self, event: Any = None) -> None:
 
         if event is None:
             pt = self._embedding[0].reshape(
@@ -305,7 +303,7 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
             with QtCore.QSignalBlocker(slider):
                 slider.setValue(transformed[idx])
 
-    def get_clicked_index(self, test_pt) -> Optional[str]:
+    def get_clicked_index(self, test_pt) -> str | None:
         # Helper method to retrieve the index of the clicked point in the DataFrame
         clicked_index = None
         try:
@@ -331,7 +329,7 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
         self,
         embedding: npt.NDArray,
         *,
-        labels: Optional[Dict[str, npt.NDArray]] = None,
+        labels: dict | npt.NDArray | None = None,
     ) -> None:
         from matplotlib import colormaps
         from scipy.stats import gaussian_kde

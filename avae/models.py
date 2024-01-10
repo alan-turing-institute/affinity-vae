@@ -9,7 +9,9 @@ from avae.base import AbstractAffinityVAE
 from .base import SpatialDims
 
 
-def set_layer_dim(ndim):
+def set_layer_dim(
+    ndim: SpatialDims | int,
+) -> tuple[nn.Module, nn.Module, nn.Module]:
     if ndim == SpatialDims.TWO:
         return nn.Conv2d, nn.ConvTranspose2d, nn.BatchNorm2d
     elif ndim == SpatialDims.THREE:
@@ -39,7 +41,7 @@ def dims_after_pooling(start: int, n_pools: int) -> int:
     return start // (2**n_pools)
 
 
-def set_device(gpu):
+def set_device(gpu: bool) -> torch.device:
     """Set the torch device to use for training and inference.
 
     Parameters

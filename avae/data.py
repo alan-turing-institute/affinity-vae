@@ -1,9 +1,11 @@
 import logging
 import os
 import random
+import typing
 
 import mrcfile
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from scipy.ndimage import zoom
 from torch import Tensor
@@ -14,23 +16,64 @@ from . import settings
 from .vis import format, plot_affinity_matrix, plot_classes_distribution
 
 np.random.seed(42)
+from typing import Any, Literal, overload
+
+
+@overload
+def load_data(
+    datapath: str,
+    datatype: str,
+    eval: Literal[True],
+    lim: int | None = None,
+    splt: int = 20,
+    batch_s: int = 64,
+    no_val_drop: bool = False,
+    affinity: str | None = None,
+    classes: str | None = None,
+    gaussian_blur: bool = False,
+    normalise: bool = False,
+    shift_min: bool = False,
+    rescale: bool | None = None,
+) -> tuple[DataLoader, int]:
+    ...
+
+
+@overload
+def load_data(
+    datapath: str,
+    datatype: str,
+    eval: Literal[False],
+    lim: int | None = None,
+    splt: int = 20,
+    batch_s: int = 64,
+    no_val_drop: bool = False,
+    affinity: str | None = None,
+    classes: str | None = None,
+    gaussian_blur: bool = False,
+    normalise: bool = False,
+    shift_min: bool = False,
+    rescale: bool | None = None,
+) -> tuple[DataLoader, DataLoader, DataLoader, pd.DataFrame, int]:
+    ...
 
 
 def load_data(
     datapath: str,
     datatype: str,
-    lim: int = None,
+    eval: bool,
+    lim: int | None = None,
     splt: int = 20,
     batch_s: int = 64,
     no_val_drop: bool = False,
-    eval: bool = True,
-    affinity=None,
-    classes=None,
-    gaussian_blur=False,
-    normalise=False,
-    shift_min=False,
-    rescale=None,
-):
+    affinity: str | None = None,
+    classes: str | None = None,
+    gaussian_blur: bool = False,
+    normalise: bool = False,
+    shift_min: bool = False,
+    rescale: bool | None = None,
+) -> tuple[DataLoader, DataLoader, DataLoader, pd.DataFrame, int] | tuple[
+    DataLoader, int
+]:
     """Loads all data needed for training, testing and evaluation. Loads MRC files from a given path, selects subset of
     classes if requested, splits it into train / val  and test in batch sets, loads affinity matrix. Returns train,
     validation and test data as DataLoader objects.
@@ -198,16 +241,16 @@ def load_data(
 class Dataset_reader(Dataset):
     def __init__(
         self,
-        root_dir,
-        amatrix=None,
-        classes=None,
-        transform=None,
-        gaussian_blur=False,
-        normalise=False,
-        shift_min=False,
-        rescale=None,
-        lim=None,
-        datatype="mrc",
+        root_dir: str,
+        amatrix: npt.NDArray | None = None,
+        classes: str | None = None,
+        transform: typing.Any = None,
+        gaussian_blur: bool = False,
+        normalise: bool = False,
+        shift_min: bool = False,
+        rescale: bool | None = None,
+        lim: int | None = None,
+        datatype: str = "mrc",
     ):
         super().__init__()
         self.datatype = datatype
