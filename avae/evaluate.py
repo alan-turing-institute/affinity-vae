@@ -101,10 +101,10 @@ def evaluate(
     pose_dims = fname[3]
 
     logging.info("Loading model from: {}".format(state))
-    checkpoint = fabric.load(state)
+    checkpoint = torch.load(state)
     vae = checkpoint["model_class_object"]
     vae.load_state_dict(checkpoint["model_state_dict"])
-    vae.to(device)
+    vae = fabric.setup(vae)
 
     # ########################## EVALUATE ################################
 
@@ -135,7 +135,7 @@ def evaluate(
     vae.eval()
     for b, batch in enumerate(tests):
         x, x_hat, lat_mu, lat_logvar, lat, lat_pose, _ = pass_batch(
-            device, vae, batch, b, len(tests)
+            fabric=fabric, vae=vae, batch=batch, b=b, batches=len(tests)
         )
         x_test.extend(lat_mu.cpu().detach().numpy())
         c_test.extend(lat_logvar.cpu().detach().numpy())
