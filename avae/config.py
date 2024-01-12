@@ -147,6 +147,10 @@ class AffinityConfig(BaseModel):
         False, description="Use batch normalisation in decoder"
     )
     klreduction: str = Field('mean', description="KL reduction method")
+    strategy: str = Field(
+        "auto",
+        description="Strategy for training. It can be  'ddp', 'deepspeed' or 'fsdp",
+    )
 
 
 def load_config_params(

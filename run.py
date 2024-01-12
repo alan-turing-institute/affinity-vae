@@ -541,6 +541,13 @@ from avae.train import train
     is_flag=True,
     help="Log metrics and figures to tensorboard during training",
 )
+@click.option(
+    "--strategy",
+    "-st",
+    type=str,
+    default=None,
+    help="Define the strategy for distributed training. Options are: 'ddp', 'deepspeed' or 'fsdp",
+)
 def run(
     config_file,
     datapath,
@@ -614,6 +621,7 @@ def run(
     classifier,
     new_out,
     debug,
+    strategy,
 ):
 
     warnings.simplefilter("ignore", FutureWarning)
@@ -708,6 +716,7 @@ def run_pipeline(data):
             rescale=data["rescale"],
             tensorboard=data["tensorboard"],
             classifier=data["classifier"],
+            strategy=data["strategy"],
         )
     else:
         evaluate(
