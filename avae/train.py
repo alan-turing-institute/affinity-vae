@@ -62,6 +62,7 @@ def train(
     rescale: bool,
     tensorboard: bool,
     classifier: str,
+    strategy: str,
 ):
     """Function to train an AffinityVAE model. The inputs are training configuration parameters. In this function the
     data is loaded, selected and split into training, validation and test sets, the model is initialised and trained
@@ -141,10 +142,11 @@ def train(
         If True, batch normalisation is applied to the encoder.
     bnrom_decoder: bool
         If True, batch normalisation is applied to the decoder.
+    strategy: str
+        The strategy to use for distributed training. Can be  'ddp', 'deepspeed' or 'fsdp".
     """
     torch.manual_seed(42)
-
-    fabric = lt.Fabric()
+    fabric = lt.Fabric(strategy=strategy, accelerator="auto")
     fabric.launch()
     device = fabric.device
 
