@@ -46,7 +46,7 @@ def process(
     )
 
     with torch.inference_mode():
-        x = model.module.decoder(z, pose)
+        x = model.decoder(z, pose)
 
     return x.squeeze().cpu().numpy()
 
