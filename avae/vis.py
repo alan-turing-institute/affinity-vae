@@ -2,11 +2,13 @@ import copy
 import logging
 import os.path
 import random
+import typing
 
 import altair
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 import torch
 import torchvision
@@ -27,7 +29,7 @@ from .utils import (
 )
 
 
-def _encoder(i):
+def _encoder(i: Image) -> str:
     """Encode PIL Image as base64 buffer.
     Parameters
     ----------
@@ -51,7 +53,7 @@ def _encoder(i):
     return f"{data}"
 
 
-def _decoder(i):
+def _decoder(i: str) -> Image:
     """Decode base64 buffer as PIL Image.
     Parameters
     ----------
@@ -69,13 +71,15 @@ def _decoder(i):
     return Image.open(BytesIO(base64.b64decode(i)))
 
 
-def format(im, data_dim):
+def format(im: Image, data_dim: int) -> str | list[str] | None:
     """Format PIL Image as Pandas compatible Altair image display.
 
     Parameters
     ----------
     im: PIL.Image
         Image to be formatted.
+    data_dim: int
+        Dimension of the data.
 
     Returns
     -------
@@ -107,7 +111,7 @@ def format(im, data_dim):
             "\n\nWARNING: Wrong data format, please pass either a single "
             "unsqueezed tensor or a batch to image formatter. Exiting.\n",
         )
-        return
+        return None
     im *= 255
     im = im.astype(np.uint8)
     if batch:
@@ -118,7 +122,7 @@ def format(im, data_dim):
         return _encoder(Image.fromarray(im))
 
 
-def merge(im):
+def merge(im: str) -> str | None:
     """Merge 2 base64 buffers as PIL Images and encode back to base64
     buffers.
 
@@ -138,7 +142,7 @@ def merge(im):
             "\n\nWARNING: Image format corrupt. Number of images in meta_df: {}. "
             "Exiting. \n".format(len(i)),
         )
-        return
+        return None
 
     im1 = _decoder(i[0])
     im2 = _decoder(i[1])
@@ -152,16 +156,23 @@ def merge(im):
 
 
 def latent_embed_plot_tsne(
-    xs, ys, classes=None, mode="", epoch=0, writer=None
-):
+    xs: npt.NDArray,
+    ys: npt.NDArray,
+    classes: list | None = None,
+    mode: str = "",
+    epoch: int = 0,
+    writer: typing.Any = None,
+) -> None:
     """Plot static TSNE embedding.
 
     Parameters
     ----------
-    xs: list
-        List of latent vectors.
-    ys: list
-        List of labels.
+    xs: np.ndarray
+        Array of latent vectors.
+    ys: np.ndarray
+        Array of labels.
+    classes: list
+        List of classes.
     mode: str
         Added data mode to the name of the saved figure (e.g train, valid, eval).
     epoch: int
@@ -209,8 +220,9 @@ def latent_embed_plot_tsne(
         classes = sorted(list(np.unique(ys)))
     else:
         if np.setdiff1d(ys, classes).size > 0:
-            classes = np.concatenate((classes, np.setdiff1d(ys, classes)))
-        classes = list(classes)
+            classes = list(
+                np.concatenate((classes, np.setdiff1d(ys, classes)))
+            )
 
     n_classes = len(classes)
 
@@ -283,16 +295,23 @@ def latent_embed_plot_tsne(
 
 
 def latent_embed_plot_umap(
-    xs, ys, classes=None, mode="", epoch=0, writer=None
-):
+    xs: npt.NDArray,
+    ys: npt.NDArray,
+    classes: list | None = None,
+    mode: str = "",
+    epoch: int = 0,
+    writer: typing.Any = None,
+) -> None:
     """Plot static UMAP embedding.
 
     Parameters
     ----------
-    xs: list
-        List of latent vectors.
-    ys: list
-        List of labels.
+    xs: np.ndarray
+        Array of latent vectors.
+    ys: np.ndarray
+        Array of labels.
+    classes: list
+        List of classes.
     mode: str
         Added data mode to the name of the saved figure (e.g train, valid, eval).
     epoch: int
@@ -336,8 +355,9 @@ def latent_embed_plot_umap(
         classes = sorted(list(np.unique(ys)))
     else:
         if np.setdiff1d(ys, classes).size > 0:
-            classes = np.concatenate((classes, np.setdiff1d(ys, classes)))
-        classes = list(classes)
+            classes = list(
+                np.concatenate((classes, np.setdiff1d(ys, classes)))
+            )
 
     n_classes = len(classes)
     if n_classes < 3:
@@ -405,7 +425,9 @@ def latent_embed_plot_umap(
     plt.close()
 
 
-def dyn_latentembed_plot(df, epoch, embedding="umap", mode=""):
+def dyn_latentembed_plot(
+    df: pd.DataFrame, epoch: int, embedding: str = "umap", mode: str = ""
+):
     """Plot dynamic TSNE or UMAP embedding.
 
     Parameters
@@ -610,14 +632,14 @@ def confidence_plot(x, y, s, suffix=None):
 
 
 def accuracy_plot(
-    y_train,
-    ypred_train,
-    y_val,
-    ypred_val,
-    classes=None,
-    mode="",
-    epoch=0,
-    writer=None,
+    y_train: npt.NDArray,
+    ypred_train: npt.NDArray,
+    y_val: npt.NDArray,
+    ypred_val: npt.NDArray,
+    classes: str | None = None,
+    mode: str = "",
+    epoch: int = 0,
+    writer: typing.Any = None,
 ):
     """Plot confusion matrix .
 
@@ -799,14 +821,14 @@ def accuracy_plot(
 
 
 def f1_plot(
-    y_train,
-    ypred_train,
-    y_val,
-    ypred_val,
-    classes=None,
-    mode="",
-    epoch=0,
-    writer=None,
+    y_train: npt.NDArray,
+    ypred_train: npt.NDArray,
+    y_val: npt.NDArray,
+    ypred_val: npt.NDArray,
+    classes: str | None = None,
+    mode: str = "",
+    epoch: int = 0,
+    writer: typing.Any = None,
 ):
     """Plot F1 values. If classes list is provided, the F1 scores are calculated only for the classess in the
     list. This avoids F1 scores being affected by unseen clases that can be added in evaluation.
@@ -913,13 +935,24 @@ def f1_plot(
         plt.close()
 
 
-def loss_plot(epochs, beta, gamma, train_loss, val_loss=None, p=None):
+def loss_plot(
+    epochs: int,
+    beta: float,
+    gamma: float,
+    train_loss: list[float],
+    val_loss: list[float] | None = None,
+    p: list | None = None,
+) -> None:
     """Visualise loss over epochs.
 
     Parameters
     ----------
     epochs: int
         Number of epochs.
+    beta: list[float]
+        List of beta values.
+    gamma: list[float]
+        List of gamma values.
     train_loss: list
         Training loss over epochs.
     val_loss: list
@@ -955,8 +988,6 @@ def loss_plot(epochs, beta, gamma, train_loss, val_loss=None, p=None):
     plt.ticklabel_format(useOffset=False)
 
     train_loss[-2] = train_loss[-2] * beta
-    val_loss[-2] = val_loss[-2] * beta
-    val_loss[-1] = val_loss[-1] * gamma
     train_loss[-1] = train_loss[-1] * gamma
 
     for i, loss in enumerate(train_loss):
@@ -965,6 +996,8 @@ def loss_plot(epochs, beta, gamma, train_loss, val_loss=None, p=None):
             range(1, epochs + 1), loss, c=cols[i], linestyle=s, label=labs[i]
         )
     if val_loss is not None:
+        val_loss[-2] = val_loss[-2] * beta
+        val_loss[-1] = val_loss[-1] * gamma
         for i, loss in enumerate(val_loss):
             s = "--"
             plt.plot(
@@ -1029,13 +1062,14 @@ def loss_plot(epochs, beta, gamma, train_loss, val_loss=None, p=None):
         linestyle="-",
         label=labs[0],
     )
-    plt.plot(
-        range(1, epochs + 1),
-        val_loss[0],
-        c=cols[0],
-        linestyle="--",
-        label=vlabs[0],
-    )
+    if val_loss is not None:
+        plt.plot(
+            range(1, epochs + 1),
+            val_loss[0],
+            c=cols[0],
+            linestyle="--",
+            label=vlabs[0],
+        )
     plt.yscale("log")
     plt.ylabel("Loss", fontsize=16)
     plt.xlabel("Epochs", fontsize=16)
@@ -1047,7 +1081,15 @@ def loss_plot(epochs, beta, gamma, train_loss, val_loss=None, p=None):
     plt.close()
 
 
-def recon_plot(img, rec, label, data_dim, mode="trn", epoch=0, writer=None):
+def recon_plot(
+    img: torch.Tensor,
+    rec: torch.Tensor,
+    label: list,
+    data_dim: int,
+    mode: str = "trn",
+    epoch: int = 0,
+    writer: typing.Any = None,
+) -> None:
     """Visualise reconstructions.
 
     Parameters
@@ -1056,6 +1098,10 @@ def recon_plot(img, rec, label, data_dim, mode="trn", epoch=0, writer=None):
         Input images.
     rec: torch.Tensor
         Reconstructed images.
+    label: list
+        List of labels for reconstructed images.
+    data_dim: int
+        Dimensionality of the data.
     mode: str
         Type of image in the training set: trn or val.
     epoch: int
@@ -1151,8 +1197,14 @@ def recon_plot(img, rec, label, data_dim, mode="trn", epoch=0, writer=None):
 
 
 def latent_4enc_interpolate_plot(
-    dsize, xs, ys, vae, device, plots_config, poses=None
-):
+    dsize: tuple,
+    xs: torch.Tensor,
+    ys: torch.Tensor,
+    vae: torch.nn.Module,
+    device: torch.device,
+    plots_config: npt.NDArray,
+    poses: list,
+) -> None:
     """Visualise the interpolation of latent space between 4 randomly selected encodings.
     The number of plots and the number of interpolation steps is modifyable.
 
@@ -1172,8 +1224,8 @@ def latent_4enc_interpolate_plot(
         Device to run the model on.
     data_dim: int
         the size of spatial dimensions of the input data (2:2D, 3:3D)
-    plots_config: List
-        A list containing the number of plots to be generated and the number of interpolation steps.
+    plots_config: np.array
+        Array containing the number of plots to be generated and the number of interpolation steps.
     poses: list
         List of pose vectors.
     """
@@ -1199,7 +1251,6 @@ def latent_4enc_interpolate_plot(
 
     for num_fig in range(int(plots_config[0])):
         enc = []
-        decoded_images = []
 
         draw_four = random.sample(range(len(classes)), k=4)
         selected_classes = [classes[index] for index in draw_four]
@@ -1266,14 +1317,13 @@ def latent_4enc_interpolate_plot(
 
 
 def latent_disentamglement_plot(
-    dsize,
-    lats,
-    vae,
-    device,
-    poses=None,
-    mode="trn",
-    writer=None,
-):
+    dsize: tuple,
+    lats: list,
+    vae: torch.nn.Module,
+    device: torch.device,
+    poses: list | None = None,
+    mode: str = "trn",
+) -> None:
     """Visualise latent content disentanglement.
 
     Parameters
@@ -1302,17 +1352,17 @@ def latent_disentamglement_plot(
     number_of_samples = 7
     padding = 0
     data_dim = len(dsize)
-    lats = np.asarray(lats)
+    latents = np.asarray(lats)
     if poses is not None:
-        poses = np.asarray(poses)
+        poses_space = np.asarray(poses)
 
-    lat_means = np.mean(lats, axis=0)
-    lat_stds = np.std(lats, axis=0)
-    lat_dims = lats.shape[-1]
+    lat_means = np.mean(latents, axis=0)
+    lat_stds = np.std(latents, axis=0)
+    lat_dims = latents.shape[-1]
 
     if poses is not None:
-        pos_means = np.mean(poses, axis=0)
-        pos_dims = poses.shape[-1]
+        pos_means = np.mean(poses_space, axis=0)
+        pos_dims = poses_space.shape[-1]
 
     recon_images = []
 
@@ -1366,8 +1416,16 @@ def latent_disentamglement_plot(
 
 
 def pose_class_disentanglement_plot(
-    dsize, x, y, pose_vis_class, poses, vae, device, mode="trn"
+    dsize: tuple,
+    x: list,
+    y: list,
+    pose_vis_class: npt.NDArray,
+    poses: list,
+    vae: torch.nn.Module,
+    device: torch.device,
+    mode: str = "trn",
 ):
+
     """Visualise Pose interpolation per class. This function creates a pose interpolatoion
     plot for all classes listed in pose_vis_class.
 
@@ -1379,7 +1437,7 @@ def pose_class_disentanglement_plot(
         List of latent vectors.
     y: List
         List of the labels associated with each latent vector in x
-    pose_vis_class: str
+    pose_vis_class: list
         Classes to be used for pose interpolation (a seperate pose interpolation figure would be created for each class)."
     poses: list
         List of pose vectors.
@@ -1408,17 +1466,17 @@ def pose_class_disentanglement_plot(
     data_dim = len(dsize)
     x = np.asarray(x)
 
-    poses = np.asarray(poses)
-    pos_dims = poses.shape[-1]
-    pose_vis_class = pose_vis_class.replace(" ", "").split(",")
+    poses_space = np.asarray(poses)
+    pos_dims = poses_space.shape[-1]
+    pose_vis_class_list = pose_vis_class.replace(" ", "").split(",")
 
-    for i in pose_vis_class:
+    for i in pose_vis_class_list:
         decoded_grid = []
         class_x = np.take(x, np.where(np.array(y) == i)[0], axis=0)
         class_x_indx = np.random.choice(class_x.shape[0])
         enc = class_x[class_x_indx, :]
 
-        class_pos = np.take(poses, np.where(np.array(y) == i)[0], axis=0)
+        class_pos = np.take(poses_space, np.where(np.array(y) == i)[0], axis=0)
         class_pos_mean = np.mean(class_pos, axis=0)
         class_pos_stds = np.std(class_pos, axis=0)
 
@@ -1454,7 +1512,13 @@ def pose_class_disentanglement_plot(
 
 
 def pose_disentanglement_plot(
-    dsize, lats, poses, vae, device, label="avg", mode="trn"
+    dsize: tuple,
+    lats: list,
+    poses: list,
+    vae: torch.nn.Module,
+    device: torch.device,
+    label: str = "avg",
+    mode: str = "trn",
 ):
     """Visualise pose disentanglement.
 
@@ -1486,14 +1550,14 @@ def pose_disentanglement_plot(
     number_of_samples = 7
     padding = 0
     data_dim = len(dsize)
-    lats = np.asarray(lats)
-    poses = np.asarray(poses)
+    latents = np.asarray(lats)
+    poses_space = np.asarray(poses)
 
-    pos_means = np.mean(poses, axis=0)
-    pos_stds = np.std(poses, axis=0)
-    pos_dims = poses.shape[-1]
+    pos_means = np.mean(poses_space, axis=0)
+    pos_stds = np.std(poses_space, axis=0)
+    pos_dims = poses_space.shape[-1]
 
-    lat_means = np.mean(lats, axis=0)
+    lat_means = np.mean(latents, axis=0)
 
     recon = pose_interpolation(
         lat_means,
@@ -1526,8 +1590,14 @@ def pose_disentanglement_plot(
 
 
 def interpolations_plot(
-    dsize, lats, classes, vae, device, poses=None, mode="trn"
-):
+    dsize: tuple,
+    lats: list,
+    classes: list,
+    vae: torch.nn.Module,
+    device: torch.device,
+    poses: list | None = None,
+    mode: str = "trn",
+) -> None:
     """Visualise interpolations.
 
     Parameters
@@ -1542,8 +1612,6 @@ def interpolations_plot(
         Affinity vae model.
     device: torch.device
         Device to run the model on.
-    data_dim: int
-        the size of spatial dimensions of the input data (2:2D, 3:3D)
     poses: list
         List of pose vectors.
     mode: str
@@ -1558,7 +1626,7 @@ def interpolations_plot(
     classes = np.asarray(classes)
 
     if poses is not None:
-        poses = np.asarray(poses)
+        poses_space = np.asarray(poses)
 
     class_ids = np.unique(classes)
     if len(class_ids) <= 3:
@@ -1575,15 +1643,15 @@ def interpolations_plot(
     if poses is not None:
         class_reps_poses = np.asarray(
             np.take(
-                poses,
+                poses_space,
                 [np.where(classes == i)[0][0] for i in class_ids],
                 axis=0,
             )
         )
 
     draw_four = random.sample(list(enumerate(class_reps_lats)), k=4)
-    inds, class_rep_lats = list(zip(*draw_four))
-    class_rep_lats = np.asarray(class_rep_lats)
+    inds, class_rep = list(zip(*draw_four))
+    class_rep_lats = np.asarray(class_rep)
     latent_dim = class_rep_lats.shape[1]
 
     if poses is not None:
@@ -1647,7 +1715,9 @@ def interpolations_plot(
         save_imshow_png(f"interpolations_{mode}.png", grid_for_napari)
 
 
-def plot_affinity_matrix(lookup, all_classes, selected_classes):
+def plot_affinity_matrix(
+    lookup: pd.DataFrame, all_classes: list, selected_classes: list
+) -> None:
     """
     This function plots the Affinity matrix and highlights the
     classes selected for the given calculation.
@@ -1708,7 +1778,7 @@ def plot_affinity_matrix(lookup, all_classes, selected_classes):
     plt.close()
 
 
-def plot_classes_distribution(data, category):
+def plot_classes_distribution(data: list, category: str) -> None:
     """Plot histogram with classes distribution
 
     Parameters
@@ -1768,8 +1838,12 @@ def plot_cyc_variable(array: list, variable_name: str):
 
 
 def latent_space_similarity(
-    latent_space, class_labels, mode="", epoch=0, classes_order=[]
-):
+    latent_space: npt.NDArray,
+    class_labels: npt.NDArray,
+    mode: str = "",
+    epoch: int = 0,
+    classes_order: list = [],
+) -> None:
     """
     This function calculates the similarity (affinity) between classes in the latent space and builds a matrix.
     Parameters

@@ -2,6 +2,7 @@ import logging
 import os
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 import torch
 from torch.utils.tensorboard import SummaryWriter
@@ -19,48 +20,48 @@ from .utils_learning import add_meta, pass_batch, set_device
 
 
 def train(
-    datapath,
-    datatype,
-    restart,
-    state,
-    lim,
-    splt,
-    batch_s,
-    no_val_drop,
-    affinity,
-    classes,
-    epochs,
-    channels,
-    depth,
-    filters,
-    lat_dims,
-    pose_dims,
-    bnorm_encoder,
-    bnorm_decoder,
-    klred,
-    learning,
-    beta_load,
-    beta_min,
-    beta_max,
-    beta_cycle,
-    beta_ratio,
-    cyc_method_beta,
-    gamma_load,
-    gamma_min,
-    gamma_max,
-    gamma_cycle,
-    gamma_ratio,
-    cyc_method_gamma,
-    recon_fn,
-    use_gpu,
-    model,
-    opt_method,
-    gaussian_blur,
-    normalise,
-    shift_min,
-    rescale,
-    tensorboard,
-    classifier,
+    datapath: str,
+    datatype: str,
+    restart: bool,
+    state: str | None,
+    lim: int | None,
+    splt: int,
+    batch_s: int,
+    no_val_drop: bool,
+    affinity: str | None,
+    classes: str | None,
+    epochs: int,
+    channels: int,
+    depth: int,
+    filters: list | None,
+    lat_dims: int,
+    pose_dims: int,
+    bnorm_encoder: bool,
+    bnorm_decoder: bool,
+    klred: str,
+    learning: float,
+    beta_load: str | None,
+    beta_min: float,
+    beta_max: float,
+    beta_cycle: int,
+    beta_ratio: float,
+    cyc_method_beta: str,
+    gamma_load: str | None,
+    gamma_min: float,
+    gamma_max: float,
+    gamma_cycle: int,
+    gamma_ratio: float,
+    cyc_method_gamma: str,
+    recon_fn: str,
+    use_gpu: bool,
+    model: str,
+    opt_method: str,
+    gaussian_blur: bool,
+    normalise: bool,
+    shift_min: bool,
+    rescale: bool,
+    tensorboard: bool,
+    classifier: str,
 ):
     """Function to train an AffinityVAE model. The inputs are training configuration parameters. In this function the
     data is loaded, selected and split into training, validation and test sets, the model is initialised and trained
@@ -145,8 +146,8 @@ def train(
 
     # ############################### DATA ###############################
     trains, vals, tests, lookup, data_dim = load_data(
-        datapath,
-        datatype,
+        datapath=datapath,
+        datatype=datatype,
         lim=lim,
         splt=splt,
         batch_s=batch_s,
@@ -167,7 +168,9 @@ def train(
     # ############################### MODEL ###############################
     device = set_device(use_gpu)
     if filters is not None:
-        filters = np.array(filters.replace(" ", "").split(","), dtype=np.int64)
+        filters = np.array(
+            np.array(filters).replace(" ", "").split(","), dtype=np.int64
+        )
 
     if model == "a":
         encoder = EncoderA(
@@ -626,13 +629,15 @@ def train(
         # visualise latent disentanglement
         if settings.VIS_DIS and (epoch + 1) % settings.FREQ_DIS == 0:
             if not pose:
-                p_train = None
+                poses = None
+            else:
+                poses = p_train
             vis.latent_disentamglement_plot(
                 dshape,
                 x_train,
                 vae,
                 device,
-                poses=p_train,
+                poses=poses,
             )
 
         # visualise pose disentanglement

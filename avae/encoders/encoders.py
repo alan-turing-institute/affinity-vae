@@ -1,8 +1,8 @@
 import logging
+from typing import Optional
 
 import numpy as np
-import torch.nn as nn
-import torch.nn.functional as F
+import torch
 
 from avae.encoders.base import AbstractEncoder
 from avae.models import dims_after_pooling, set_layer_dim
@@ -33,13 +33,13 @@ class Encoder(AbstractEncoder):
 
     def __init__(
         self,
-        input_size,
-        capacity=None,
-        depth=None,
-        latent_dims=8,
-        pose_dims=0,
-        filters=None,
-        bnorm=True,
+        input_size: tuple,
+        capacity: Optional[int] = None,
+        depth: int = 4,
+        latent_dims: int = 8,
+        pose_dims: int = 0,
+        filters: Optional[list[int]] = None,
+        bnorm: bool = True,
     ):
 
         super(Encoder, self).__init__()
@@ -103,9 +103,9 @@ class Encoder(AbstractEncoder):
         self.pose = not (pose_dims == 0)
 
         # iteratively define convolution and batch normalisation layers
-        self.conv_enc = nn.ModuleList()
+        self.conv_enc = torch.nn.ModuleList()
         if self.bnorm:
-            self.norm_enc = nn.ModuleList()
+            self.norm_enc = torch.nn.ModuleList()
 
         for d in range(len(self.filters)):
             self.conv_enc.append(
@@ -122,21 +122,25 @@ class Encoder(AbstractEncoder):
 
         # define fully connected layers
         ch = 1 if depth == 0 else self.filters[-1]  # allow for no conv layers
-        self.fc_mu = nn.Linear(
+        self.fc_mu = torch.nn.Linear(
             in_features=ch * np.prod(bottom_dim),
             out_features=latent_dims,
         )
-        self.fc_logvar = nn.Linear(
+        self.fc_logvar = torch.nn.Linear(
             in_features=ch * np.prod(bottom_dim),
             out_features=latent_dims,
         )
         if self.pose:
-            self.fc_pose = nn.Linear(
+            self.fc_pose = torch.nn.Linear(
                 in_features=ch * np.prod(bottom_dim),
                 out_features=pose_dims,
             )
 
-    def forward(self, x):
+    def forward(
+        self, x: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor] | tuple[
+        torch.Tensor, torch.Tensor, torch.Tensor
+    ]:
         """Encoder forward pass.
 
         Parameters
@@ -166,9 +170,11 @@ class Encoder(AbstractEncoder):
         """
         for d in range(len(self.filters)):
             if self.bnorm:
-                x = self.norm_enc[d](F.relu(self.conv_enc[d](x)))
+                x = self.norm_enc[d](
+                    torch.nn.functional.relu(self.conv_enc[d](x))
+                )
             else:
-                x = F.relu(self.conv_enc[d](x))
+                x = torch.nn.functional.relu(self.conv_enc[d](x))
         x = x.view(x.size(0), -1)
         x_mu = self.fc_mu(x)
         x_logvar = self.fc_logvar(x)
@@ -181,7 +187,13 @@ class Encoder(AbstractEncoder):
 
 class EncoderA(AbstractEncoder):
     def __init__(
-        self, input_size, capacity, depth, latent_dims, pose_dims, bnorm
+        self,
+        input_size: tuple,
+        capacity: Optional[int] = None,
+        depth: int = 4,
+        latent_dims: int = 8,
+        pose_dims: int = 0,
+        bnorm: bool = True,
     ):
         super(EncoderA, self).__init__()
         self.pose = not (pose_dims == 0)
@@ -207,7 +219,7 @@ class EncoderA(AbstractEncoder):
 
         conv, _, BNORM = set_layer_dim(ndim)
 
-        self.encoder = nn.Sequential()
+        self.encoder = torch.nn.Sequential()
 
         input_channel = 1
         for d in range(len(filters)):
@@ -222,13 +234,13 @@ class EncoderA(AbstractEncoder):
             )
             if self.bnorm:
                 self.encoder.append(BNORM(filters[d]))
-            self.encoder.append(nn.ReLU(True))
+            self.encoder.append(torch.nn.ReLU(True))
             input_channel = filters[d]
 
-        self.encoder.append(nn.Flatten())
-        self.mu = nn.Linear(flat_shape, latent_dims)
-        self.log_var = nn.Linear(flat_shape, latent_dims)
-        self.pose_fc = nn.Linear(flat_shape, pose_dims)
+        self.encoder.append(torch.nn.Flatten())
+        self.mu = torch.nn.Linear(flat_shape, latent_dims)
+        self.log_var = torch.nn.Linear(flat_shape, latent_dims)
+        self.pose_fc = torch.nn.Linear(flat_shape, pose_dims)
 
     def forward(self, x):
         encoded = self.encoder(x)
@@ -254,7 +266,14 @@ class EncoderB(AbstractEncoder):
         Number of bottleneck pose dimensions.
     """
 
-    def __init__(self, input_size, capacity, depth, latent_dims, pose_dims=0):
+    def __init__(
+        self,
+        input_size: tuple,
+        capacity: int = 8,
+        depth: int = 4,
+        latent_dims: int = 8,
+        pose_dims: int = 0,
+    ):
         super(EncoderB, self).__init__()
 
         assert all(
@@ -266,16 +285,15 @@ class EncoderB(AbstractEncoder):
         CONV, _, BNORM = set_layer_dim(len(input_size))
         self.bottom_dim = tuple([int(i / (2**depth)) for i in input_size])
 
-        c = capacity
         self.depth = depth
         self.pose = not (pose_dims == 0)
 
         # iteratively define convolution and batch normalisation layers
-        self.conv_enc = nn.ModuleList()
-        self.norm_enc = nn.ModuleList()
+        self.conv_enc = torch.nn.ModuleList()
+        self.norm_enc = torch.nn.ModuleList()
         prev_sh = 1
         for d in range(depth):
-            sh = c * (d + 1)
+            sh = capacity * (d + 1)
             self.conv_enc.append(
                 CONV(
                     in_channels=prev_sh,
@@ -289,22 +307,26 @@ class EncoderB(AbstractEncoder):
             prev_sh = sh
 
         # define fully connected layers
-        chf = 1 if depth == 0 else c * depth  # allow for no conv layers
-        self.fc_mu = nn.Linear(
+        chf = 1 if depth == 0 else capacity * depth  # allow for no conv layers
+        self.fc_mu = torch.nn.Linear(
             in_features=chf * np.prod(self.bottom_dim),
             out_features=latent_dims,
         )
-        self.fc_logvar = nn.Linear(
+        self.fc_logvar = torch.nn.Linear(
             in_features=chf * np.prod(self.bottom_dim),
             out_features=latent_dims,
         )
         if self.pose:
-            self.fc_pose = nn.Linear(
+            self.fc_pose = torch.nn.Linear(
                 in_features=chf * np.prod(self.bottom_dim),
                 out_features=pose_dims,
             )
 
-    def forward(self, x):
+    def forward(
+        self, x: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor] | tuple[
+        torch.Tensor, torch.Tensor, torch.Tensor
+    ]:
         """Encoder forward pass.
 
         Parameters
@@ -333,7 +355,7 @@ class EncoderB(AbstractEncoder):
             pose dimensions.
         """
         for d in range(self.depth):
-            x = self.norm_enc[d](F.relu(self.conv_enc[d](x)))
+            x = self.norm_enc[d](torch.nn.functional.relu(self.conv_enc[d](x)))
         x = x.view(x.size(0), -1)
         x_mu = self.fc_mu(x)
         x_logvar = self.fc_logvar(x)

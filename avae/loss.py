@@ -1,8 +1,6 @@
 import logging
 
 import torch
-import torch.nn.functional as F
-from torch import nn
 
 
 class AffinityLoss:
@@ -28,8 +26,8 @@ class AffinityLoss:
     def __init__(self, lookup: torch.Tensor, device: torch.device):
         self.device = device
         self.lookup = torch.tensor(lookup).to(device)
-        self.cos = nn.CosineSimilarity(dim=1, eps=1e-8)
-        self.l1loss = nn.L1Loss()
+        self.cos = torch.nn.CosineSimilarity(dim=1, eps=1e-8)
+        self.l1loss = torch.nn.L1Loss()
 
     def __call__(
         self, y_true: torch.Tensor, y_pred: torch.Tensor
@@ -96,12 +94,12 @@ class AVAELoss:
 
     def __init__(
         self,
-        device,
-        beta,
-        gamma,
-        lookup_aff=None,
-        recon_fn="MSE",
-        klred="mean",
+        device: torch.device,
+        beta: list[float],
+        gamma: list[float],
+        lookup_aff: torch.Tensor | None = None,
+        recon_fn: str = "MSE",
+        klred: str = "mean",
     ):
         self.device = device
         self.recon_fn = recon_fn
@@ -128,7 +126,15 @@ class AVAELoss:
             )
             self.affinity_loss = None
 
-    def __call__(self, x, recon_x, mu, logvar, epoch, batch_aff=None):
+    def __call__(
+        self,
+        x: torch.Tensor,
+        recon_x: torch.Tensor,
+        mu: torch.Tensor,
+        logvar: torch.Tensor,
+        epoch: int,
+        batch_aff: torch.Tensor | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """Return the aVAE loss.
 
         Parameters
@@ -177,9 +183,13 @@ class AVAELoss:
 
         # recon loss
         if self.recon_fn == "BCE":
-            recon_loss = F.binary_cross_entropy(x, recon_x, reduction="mean")
+            recon_loss = torch.nn.functional.binary_cross_entropy(
+                x, recon_x, reduction="mean"
+            )
         elif self.recon_fn == "MSE":
-            recon_loss = F.mse_loss(x, recon_x, reduction="mean")
+            recon_loss = torch.nn.functional.mse_loss(
+                x, recon_x, reduction="mean"
+            )
         else:
             raise RuntimeError(
                 "AffinityVAE loss requires 'BCE' or 'MSE' for 'loss_fn' "

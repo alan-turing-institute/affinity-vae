@@ -12,20 +12,20 @@ from .utils_learning import add_meta, pass_batch, set_device
 
 
 def evaluate(
-    datapath,
-    datatype,
-    state,
-    meta,
-    lim,
-    splt,
-    batch_s,
-    classes,
-    use_gpu,
-    gaussian_blur,
-    normalise,
-    shift_min,
-    rescale,
-    classifier,
+    datapath: str,
+    datatype: str,
+    state: str | None,
+    meta: str | None,
+    lim: int | None,
+    splt: int,
+    batch_s: int,
+    classes: str | None,
+    use_gpu: bool,
+    gaussian_blur: bool,
+    normalise: bool,
+    shift_min: bool,
+    rescale: bool,
+    classifier: str,
 ):
     """Function for evaluating the model. Loads the data, model and runs the evaluation. Saves the results of the
     evaluation in the plot and latents directories.
@@ -64,11 +64,11 @@ def evaluate(
     """
     # ############################### DATA ###############################
     tests, data_dim = load_data(
-        datapath,
-        datatype,
-        lim,
-        splt,
-        batch_s,
+        datapath=datapath,
+        datatype=datatype,
+        lim=lim,
+        splt=splt,
+        batch_s=batch_s,
         eval=True,
         gaussian_blur=gaussian_blur,
         normalise=normalise,

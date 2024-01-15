@@ -27,11 +27,11 @@ with the following:
 python -m venv env
 source env/bin/activate
 python -m pip install --upgrade pip
-python -m pip install -e .
+python -m pip install -e ."[all]"
 ```
 
-If you are developing code, you should be able to run precommits and tests,
-thefore the best installation option after setting up the virtual environment
+If you are developing code, you should be able to run pre-commits and tests,
+therefore the best installation option after setting up the virtual environment
 is:
 
 ```
@@ -50,7 +50,7 @@ python -m pytest -s -W ignore
 > Warning: M1 macOS can not do
 > [pytorch paralelisation](https://github.com/pytorch/pytorch/issues/70344). A
 > temporary solution for this is to modify the code on the DataLoaders in
-> data.py to `num_workers=0` in order to run the code. Otherwise you will get
+> data.py to `num_workers=0` in order to run the code. Otherwise, you will get
 > the error:
 > `AttributeError: Can't pickle local object 'ProteinDataset.__init__.<locals>.<lambda>'`.
 
@@ -59,54 +59,27 @@ python -m pytest -s -W ignore
 The following is the recommended way of installing all libraries in Baskervile.
 
 ```
-conda create --name affinity_env
-conda activate affinity_env
+module load bask-apps/live
+module load PyTorch/2.0.1-foss-2022a-CUDA-11.7.0
+module load torchvision/0.15.2-foss-2022a-CUDA-11.7.0
 
-conda install --yes python=3.10
-conda install --yes numpy
-conda install --yes requests
-conda install --yes -c anaconda pandas
-conda install --yes -c anaconda scikit-image
-conda install --yes -c anaconda scikit-learn
-conda install --yes -c anaconda scipy
-conda install --yes -c anaconda pillow
-conda install --yes -c conda-forge mrcfile
-conda install --yes -c conda-forge altair
-conda install --yes -c conda-forge umap-learn
-conda install --yes -c conda-forge matplotlib
-conda install --yes -c anaconda click
-conda install pytorch torchvision  pytorch-cuda=11.8 -c pytorch -c nvidia
-pip install pyyaml
-pip install pydantic
+python -m venv pyenv_affinity
+source pyenv_affinity/bin/activate
+
+git clone https://github.com/alan-turing-institute/affinity-vae.git
+cd  affinity-vae/
+python -m pip install -e ."[baskerville]"
 ```
 
-**Note**
-
-If you have shortage of space, it is always a good idea to run
-`conda clean --all` before you proceed from here as pytorch packages require
-space to download
-
-Regarding installation of pytorch, please follow the latest pytorch installation
-recommendation provided online as using older versions can cause conflict
-between packages that conda would not be able to resolve easily. The current
-version requires a cuda=11.8
-
-if the follwoing error occurs:
-
-```
-:ImportError: libtiff.so.5: cannot open shared object file: No such file or directory
-```
-
-you can resolve it via:
-
-```
-conda install -c anaconda libtiff==4.4.0
-```
 
 ### Quick start
 
-Affinity-vae has a running script (`run.py`)that allows you to configure and run
-the code. You can look at the avaible configuration options by running:
+We have a [tutorial](tutorials/README.md) on how to run Affinity-VAE on the
+MNIST dataset. We recommend to start there for the first time you run
+Affinity-VAE.
+
+Affinity-VAE has a running script (`run.py`) that allows you to configure and
+run the code. You can look at the available configuration options by running:
 
 ```
 python run.py --help
@@ -302,3 +275,9 @@ input files for Affinity-VAE or analyse teh output of the model.
 ##### Evaluation: To run evaluation on a trained model you can turn the `eval` flag to True. This will load the last model present on the `states` directory (within the working directory path where you run the code) and run the evaluation on data set by the `datapath` flag. The evaluation will be saved in the `plots` and `latents` directory with the `eval` suffix on the names.
 
 ##### The name of the state file consist of avae_date_time_Epoch_latent_pose.pt
+
+### Inspecting the results from Affinity-VAE
+
+You can interact with the latent space and access reconstruction from the train
+model using Napari. You can find more information on how to use the Napari
+plugin in the [README.md](scripts/README.md) file in the scripts folder.
