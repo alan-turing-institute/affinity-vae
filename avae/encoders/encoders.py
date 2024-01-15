@@ -34,11 +34,11 @@ class Encoder(AbstractEncoder):
     def __init__(
         self,
         input_size: tuple,
-        capacity: Optional[int] = None,
+        capacity: int | None = None,
+        filters: list[int] | None = None,
         depth: int = 4,
         latent_dims: int = 8,
         pose_dims: int = 0,
-        filters: Optional[list[int]] = None,
         bnorm: bool = True,
     ):
 
@@ -67,7 +67,7 @@ class Encoder(AbstractEncoder):
                     "Parameter 'depth' cannot be a negative value."
                 )
             self.filters = [capacity * 2**x for x in range(depth)]
-        elif depth is None:
+        elif depth is None or depth != 0:
             raise RuntimeError(
                 "Both 'capacity' and 'filters' parameters are None. Please pass one or the other to instantiate the network."
             )

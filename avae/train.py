@@ -184,21 +184,21 @@ def train(
         decoder = DecoderB(dshape, channels, depth, lat_dims, pose_dims)
     elif model == "u":
         encoder = Encoder(
-            dshape,
-            channels,
-            depth,
-            lat_dims,
-            pose_dims,
-            filters,
+            input_size=dshape,
+            capacity=channels,
+            filters=filters,
+            depth=depth,
+            latent_dims=lat_dims,
+            pose_dims=pose_dims,
             bnorm=bnorm_encoder,
         )
         decoder = Decoder(
-            dshape,
-            channels,
-            depth,
-            lat_dims,
-            pose_dims,
-            filters,
+            input_size=dshape,
+            capacity=channels,
+            filters=filters,
+            depth=depth,
+            latent_dims=lat_dims,
+            pose_dims=pose_dims,
             bnorm=bnorm_decoder,
         )
     else:

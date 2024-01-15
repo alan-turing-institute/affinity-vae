@@ -18,15 +18,15 @@ VIS_DYN = False
 VIS_POSE_CLASS = None
 VIS_Z_N_INT = None
 
-FREQ_ACC = None
-FREQ_REC = None
-FREQ_EMB = None
-FREQ_INT = None
-FREQ_DIS = None
-FREQ_POS = None
-FREQ_SIM = None
-FREQ_EVAL = None
-FREQ_STA = None
+FREQ_ACC = 0
+FREQ_REC = 0
+FREQ_EMB = 0
+FREQ_INT = 0
+FREQ_DIS = 0
+FREQ_POS = 0
+FREQ_SIM = 0
+FREQ_EVAL = 0
+FREQ_STA = 0
 
 # logging settings
 

@@ -51,34 +51,34 @@ class AffinityConfig(BaseModel):
     epochs: PositiveInt = Field(20, description="Number of epochs")
     eval: bool = Field(False, description="Evaluation mode")
     freq_acc: PositiveInt = Field(
-        None, description="Frequency (in epochs) of accuracy plot"
+        0, description="Frequency (in epochs) of accuracy plot"
     )
     freq_all: PositiveInt = Field(
-        None, description="Frequency (in epochs) of all plots"
+        10, description="Frequency (in epochs) of all plots"
     )
     freq_dis: PositiveInt = Field(
-        None, description="Frequency (in epochs) of disentanglement plot"
+        0, description="Frequency (in epochs) of disentanglement plot"
     )
     freq_emb: PositiveInt = Field(
-        None, description="Frequency (in epochs) of embedding plot"
+        0, description="Frequency (in epochs) of embedding plot"
     )
     freq_eval: PositiveInt = Field(
-        None, description="Frequency (in epochs) of evaluation"
+        0, description="Frequency (in epochs) of evaluation"
     )
     freq_int: PositiveInt = Field(
-        None, description="Frequency (in epochs) of interpolation plot"
+        0, description="Frequency (in epochs) of interpolation plot"
     )
     freq_pos: PositiveInt = Field(
-        None, description="Frequency (in epochs) of pose plot"
+        0, description="Frequency (in epochs) of pose plot"
     )
     freq_rec: PositiveInt = Field(
-        None, description="Frequency (in epochs) of reconstruction plot"
+        0, description="Frequency (in epochs) of reconstruction plot"
     )
     freq_sim: PositiveInt = Field(
-        None, description="Frequency (in epochs) of similarity plot"
+        0, description="Frequency (in epochs) of similarity plot"
     )
     freq_sta: PositiveInt = Field(
-        None, description="Frequency (in epochs) of states saved."
+        0, description="Frequency (in epochs) of states saved."
     )
     gamma: float = Field(2, description="Gamma value")
     gamma_cycle: PositiveInt = Field(4, description="Gamma cycle")
@@ -334,31 +334,29 @@ def setup_visualisation_config(data: dict) -> None:
     settings.VIS_Z_N_INT = data["vis_z_n_int"]
 
     settings.FREQ_EVAL = (
-        data["freq_eval"]
-        if data["freq_eval"] is not None
-        else data["freq_all"]
+        data["freq_eval"] if data["freq_eval"] != 0 else data["freq_all"]
     )
     settings.FREQ_REC = (
-        data["freq_rec"] if data["freq_rec"] is not None else data["freq_all"]
+        data["freq_rec"] if data["freq_rec"] != 0 else data["freq_all"]
     )
     settings.FREQ_EMB = (
-        data["freq_emb"] if data["freq_emb"] is not None else data["freq_all"]
+        data["freq_emb"] if data["freq_emb"] != 0 else data["freq_all"]
     )
     settings.FREQ_INT = (
-        data["freq_int"] if data["freq_int"] is not None else data["freq_all"]
+        data["freq_int"] if data["freq_int"] != 0 else data["freq_all"]
     )
     settings.FREQ_DIS = (
-        data["freq_dis"] if data["freq_dis"] is not None else data["freq_all"]
+        data["freq_dis"] if data["freq_dis"] != 0 else data["freq_all"]
     )
     settings.FREQ_POS = (
-        data["freq_pos"] if data["freq_pos"] is not None else data["freq_all"]
+        data["freq_pos"] if data["freq_pos"] != 0 else data["freq_all"]
     )
     settings.FREQ_ACC = (
-        data["freq_acc"] if data["freq_acc"] is not None else data["freq_all"]
+        data["freq_acc"] if data["freq_acc"] != 0 else data["freq_all"]
     )
     settings.FREQ_STA = (
-        data["freq_sta"] if data["freq_sta"] is not None else data["freq_all"]
+        data["freq_sta"] if data["freq_sta"] != 0 else data["freq_all"]
     )
     settings.FREQ_SIM = (
-        data["freq_sim"] if data["freq_sim"] is not None else data["freq_all"]
+        data["freq_sim"] if data["freq_sim"] != 0 else data["freq_all"]
     )

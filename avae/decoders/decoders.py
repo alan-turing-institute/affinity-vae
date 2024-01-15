@@ -35,10 +35,10 @@ class Decoder(AbstractDecoder):
         self,
         input_size: tuple,
         capacity: int | None = None,
+        filters: list[int] | None = None,
         depth: int = 4,
         latent_dims: int = 8,
         pose_dims: int = 0,
-        filters: list[int] | None = None,
         bnorm: bool = True,
     ):
 
@@ -67,7 +67,7 @@ class Decoder(AbstractDecoder):
                     "Parameter 'depth' cannot be a negative value."
                 )
             self.filters = [capacity * 2**x for x in range(depth)]
-        elif depth is None:
+        elif depth is None or depth != 0:
             raise RuntimeError(
                 "Both 'capacity' and 'filters' parameters are None. Please pass one or the other to instantiate the network."
             )

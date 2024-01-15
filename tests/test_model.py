@@ -119,25 +119,7 @@ class ModelParamsTest(unittest.TestCase):
             == "Both 'capacity' and 'filters' parameters are None. Please pass one or the other to instantiate the network."
         )
 
-        # capacity but no depth scenario
-        with pytest.raises(RuntimeError) as errinfo:
-            Encoder(
-                capacity=1,
-                input_size=self.input_size,
-            )
-        assert (
-            str(errinfo.value)
-            == "When passing initial 'capacity' parameter in avae.Encoder, provide 'depth' parameter too."
-        )
-        with pytest.raises(RuntimeError) as errinfo:
-            Decoder(
-                capacity=1,
-                input_size=self.input_size,
-            )
-        assert (
-            str(errinfo.value)
-            == "When passing initial 'capacity' parameter in avae.Encoder, provide 'depth' parameter too."
-        )
+        # capacity but no depth scenario - no longer needed since depth is now default to 4
 
         # 0 or negative value in filters
         with pytest.raises(RuntimeError) as errinfo:
@@ -223,7 +205,7 @@ class ModelParamsTest(unittest.TestCase):
             == "Parameter 'depth' cannot be a negative value."
         )
 
-        # negative depth
+        # non-positive latent dims
         with pytest.raises(RuntimeError) as errinfo:
             Encoder(
                 capacity=8,
@@ -239,7 +221,7 @@ class ModelParamsTest(unittest.TestCase):
             Decoder(
                 capacity=8,
                 depth=4,
-                latent_dims=0,
+                latent_dims=-1,
                 input_size=self.input_size,
             )
         assert (
