@@ -69,7 +69,9 @@ test = [
 ]
 
 baskerville = [
-    "pydantic>2"
+    "pydantic>2",
+     "lightning",
+
 ]
 napari = [
     "napari[all]",
