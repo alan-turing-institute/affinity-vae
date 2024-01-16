@@ -146,6 +146,10 @@ def train(
         The strategy to use for distributed training. Can be  'ddp', 'deepspeed' or 'fsdp".
     """
     torch.manual_seed(42)
+
+    n_devices = torch.cuda.device_count()
+    logging.info('GPus available: {}'.format(n_devices))
+
     fabric = lt.Fabric(strategy=strategy, accelerator="auto")
     fabric.launch()
     device = fabric.device
