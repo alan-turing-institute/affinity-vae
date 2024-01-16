@@ -135,9 +135,9 @@ def pass_batch(
 
     # to device
     x = batch[0]
-    x = x  # .to(device)
+    x = x.to(fabric.device)
     aff = batch[2]
-    aff = aff  # .to(device)
+    aff = aff.to(fabric.device)
 
     # forward
     x = x.to(torch.float32)
