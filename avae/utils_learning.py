@@ -206,6 +206,11 @@ def add_meta(
         Dataframe containing meta data.
 
     """
+    batch_meta = {
+        k: v.to(device='cpu', non_blocking=True) if hasattr(v, 'to') else v
+        for k, v in batch_meta.items()
+    }
+
     meta = pd.DataFrame(batch_meta)
 
     meta["mode"] = mode
