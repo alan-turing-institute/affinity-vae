@@ -323,7 +323,8 @@ def train(
     vae, optimizer = fabric.setup(vae, optimizer)
 
     loss = AVAELoss(
-        beta_arr,
+        device=device,
+        beta=beta_arr,
         gamma=gamma_arr,
         lookup_aff=lookup,
         recon_fn=recon_fn,
