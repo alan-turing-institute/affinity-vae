@@ -62,6 +62,7 @@ The following is the recommended way of installing all libraries in Baskervile.
 module purge
 module load baskerville
 module load bask-apps/live
+
 module load PyTorch/2.0.1-foss-2022a-CUDA-11.7.0
 module load torchvision/0.15.2-foss-2022a-CUDA-11.7.0
 
