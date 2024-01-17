@@ -196,22 +196,28 @@ def save_imshow_png(
     writer: typing.Any = None,
     figname: str | None = None,
     epoch: int = 0,
+    display: bool = False, 
 ) -> None:
-    if not os.path.exists("plots"):
-        os.mkdir("plots")
+    if not display:
+        if not os.path.exists("plots"):
+            os.mkdir("plots")
 
-    fig, _ = plt.subplots(figsize=(10, 10))
-    plt.imshow(array, cmap=cmap, vmin=min, vmax=max)  # channels last
+        fig, _ = plt.subplots(figsize=(10, 10))
+        plt.imshow(array, cmap=cmap, vmin=min, vmax=max)  # channels last
 
-    plt.savefig("plots/" + fname)
+        plt.savefig("plots/" + fname)
 
-    if not os.path.exists("plots/reconstructions"):
-        os.mkdir("plots/reconstructions")
-    plt.savefig("plots/reconstructions/epoch_" + str(epoch) + "_" + fname)
+        if not os.path.exists("plots/reconstructions"):
+            os.mkdir("plots/reconstructions")
+        plt.savefig("plots/reconstructions/epoch_" + str(epoch) + "_" + fname)
 
-    if writer:
-        writer.add_figure(figname, fig, epoch)
+        if writer:
+            writer.add_figure(figname, fig, epoch)
+    else:
+        plt.imshow(array, cmap=cmap, vmin=min, vmax=max)  # channels last
+        plt.show()
 
+     
     plt.close()
 
 
