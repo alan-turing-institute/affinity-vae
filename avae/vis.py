@@ -288,11 +288,11 @@ def latent_embed_plot_tsne(
 
     plt.tight_layout()
 
-    if not display: 
+    if not display:
         if not os.path.exists("plots"):
             os.mkdir("plots")
         plt.savefig(f"plots/embedding_TSNE{mode}.png")
-    else: 
+    else:
         plt.show()
     if writer:
         writer.add_figure("TSNE embedding", fig, epoch)
@@ -303,11 +303,11 @@ def latent_embed_plot_tsne(
 def latent_embed_plot_umap(
     xs: npt.NDArray,
     ys: npt.NDArray,
-    rs: int = 42,
     classes: list | None = None,
     mode: str = "",
     epoch: int = 0,
     writer: typing.Any = None,
+    rs: int = 42,
     display: bool = False,
 ) -> None:
     """Plot static UMAP embedding.
@@ -327,8 +327,8 @@ def latent_embed_plot_umap(
     writer: SummaryWriter
         Tensorboard summary writer
     display: bool
-        When this variable is set to true, the save_imshow_png function only dispalys the plot 
-        and does not save a png image. This is to allow the use of this function in jupyter notebook 
+        When this variable is set to true, the save_imshow_png function only dispalys the plot
+        and does not save a png image. This is to allow the use of this function in jupyter notebook
         post calculation. This features is not yet implemented for save_mrc_file.
     """
     logging.info(
@@ -427,11 +427,11 @@ def latent_embed_plot_umap(
         plt.ylabel("freq")
 
     plt.tight_layout()
-    if not display: 
+    if not display:
         if not os.path.exists("plots"):
             os.mkdir("plots")
         plt.savefig(f"plots/embedding_UMAP{mode}.png")
-    else :
+    else:
         plt.show()
     if writer:
         writer.add_figure("UMAP embedding", fig, epoch)
@@ -1124,8 +1124,8 @@ def recon_plot(
     writer: SummaryWriter
         Tensorboard summary writer
     display: bool
-        When this variable is set to true, the save_imshow_png function only dispalys the plot 
-        and does not save a png image. This is to allow the use of this function in jupyter notebook 
+        When this variable is set to true, the save_imshow_png function only dispalys the plot
+        and does not save a png image. This is to allow the use of this function in jupyter notebook
         post calculation. This features is not yet implemented for save_mrc_file.
     """
     logging.info(
@@ -1152,7 +1152,7 @@ def recon_plot(
         writer=writer,
         figname="Recon. (In)",
         epoch=epoch,
-        display = display,
+        display=display,
     )
     save_imshow_png(
         fname_out,
@@ -1160,7 +1160,7 @@ def recon_plot(
         writer=writer,
         figname="Recon. (Out)",
         epoch=epoch,
-        display = display,
+        display=display,
     )
 
     if data_dim == 3:
@@ -1251,8 +1251,8 @@ def latent_4enc_interpolate_plot(
     poses: list
         List of pose vectors.
     display: bool
-        When this variable is set to true, the save_imshow_png function only dispalys the plot 
-        and does not save a png image. This is to allow the use of this function in jupyter notebook 
+        When this variable is set to true, the save_imshow_png function only dispalys the plot
+        and does not save a png image. This is to allow the use of this function in jupyter notebook
         post calculation. This features is not yet implemented for save_mrc_file.
     """
     logging.info(
@@ -1338,9 +1338,10 @@ def latent_4enc_interpolate_plot(
         elif data_dim == 2:
             save_imshow_png(
                 f"latent_interpolate_{num_fig}.png",
-                grid_for_napari, display = display,
+                grid_for_napari,
+                display=display,
             )
-            
+
 
 def latent_disentamglement_plot(
     dsize: tuple,
@@ -1451,7 +1452,7 @@ def pose_class_disentanglement_plot(
     device: torch.device,
     mode: str = "trn",
     number_of_samples: int = 7,
-    display: bool= False,
+    display: bool = False,
 ):
 
     """Visualise Pose interpolation per class. This function creates a pose interpolatoion
@@ -1478,10 +1479,10 @@ def pose_class_disentanglement_plot(
     mode: str
         Mode of evaluation (trn: Training, vld: Validation, eval: Evaluation )
     number_of_samples: int = 7
-        number of pose interpolation steps, prefarably odd          
+        number of pose interpolation steps, prefarably odd
     display: bool
-        When this variable is set to true, the save_imshow_png function only dispalys the plot 
-        and does not save a png image. This is to allow the use of this function in jupyter notebook 
+        When this variable is set to true, the save_imshow_png function only dispalys the plot
+        and does not save a png image. This is to allow the use of this function in jupyter notebook
         post calculation. This features is not yet implemented for save_mrc_file.
     """
     logging.info(
@@ -1539,7 +1540,9 @@ def pose_class_disentanglement_plot(
             save_mrc_file(f"pose_interpolate_{mode}_{i}.mrc", grid_for_napari)
         elif data_dim == 2:
             save_imshow_png(
-                f"pose_interpolate_{mode}_{i}.png", grid_for_napari, display= display,
+                f"pose_interpolate_{mode}_{i}.png",
+                grid_for_napari,
+                display=display,
             )
 
 
@@ -1551,7 +1554,7 @@ def pose_disentanglement_plot(
     device: torch.device,
     label: str = "avg",
     mode: str = "trn",
-    display: bool= False, 
+    display: bool = False,
 ):
     """Visualise pose disentanglement.
 
@@ -1570,8 +1573,8 @@ def pose_disentanglement_plot(
     device: torch.device
         Device to run the model on.
     display: bool
-        When this variable is set to true, the save_imshow_png function only dispalys the plot 
-        and does not save a png image. This is to allow the use of this function in jupyter notebook 
+        When this variable is set to true, the save_imshow_png function only dispalys the plot
+        and does not save a png image. This is to allow the use of this function in jupyter notebook
         post calculation. This features is not yet implemented for save_mrc_file.
     """
     logging.info(
@@ -1622,7 +1625,9 @@ def pose_disentanglement_plot(
         )
     elif data_dim == 2:
         save_imshow_png(
-            f"disentanglement-pose_{mode}_{label}.png", grid_for_napari, display = display
+            f"disentanglement-pose_{mode}_{label}.png",
+            grid_for_napari,
+            display=display,
         )
 
 

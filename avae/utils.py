@@ -196,7 +196,7 @@ def save_imshow_png(
     writer: typing.Any = None,
     figname: str | None = None,
     epoch: int = 0,
-    display: bool = False, 
+    display: bool = False,
 ) -> None:
     if not display:
         if not os.path.exists("plots"):
@@ -217,7 +217,6 @@ def save_imshow_png(
         plt.imshow(array, cmap=cmap, vmin=min, vmax=max)  # channels last
         plt.show()
 
-     
     plt.close()
 
 
