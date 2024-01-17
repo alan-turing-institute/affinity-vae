@@ -643,6 +643,8 @@ def run(
         dir_name = f'results_{settings.date_time_run}_model_{data["model"]}_lat{data["latent_dims"]}_pose{data["pose_dims"]}_lr{data["learning"]}_beta{data["beta"]}_gamma{data["gamma"]}'
         if not os.path.exists(dir_name):
             os.mkdir(dir_name)
+        else:
+            logging.info(f"Directory {dir_name} already exists")
         os.chdir(dir_name)
 
     if not os.path.exists("logs"):
