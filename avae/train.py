@@ -150,7 +150,25 @@ def train(
     n_devices = torch.cuda.device_count()
     logging.info('GPus available: {}'.format(n_devices))
 
-    fabric = lt.Fabric(strategy=strategy, accelerator="auto")
+    if n_devices > 0 and use_gpu is True:
+        accelerator = 'gpu'
+
+        if n_devices <= 4:
+            n_nodes = 1
+        else:
+            # Calculate the number of nodes based on the formula: ceil(num_gpus / 4)
+            n_nodes = (n_devices + 3) // 4
+
+        fabric = lt.Fabric(
+            strategy=strategy,
+            accelerator=accelerator,
+            devices=n_devices,
+            num_nodes=n_nodes,
+        )
+
+    else:
+        fabric = lt.Fabric(strategy=strategy, accelerator='auto')
+
     fabric.launch()
     device = fabric.device
 
