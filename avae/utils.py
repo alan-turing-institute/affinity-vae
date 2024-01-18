@@ -10,6 +10,7 @@ import numpy.typing as npt
 import torch
 from sklearn import metrics, preprocessing
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
@@ -310,3 +311,53 @@ def pose_interpolation(
     )
 
     return decoded_grid
+
+
+def latent_space_similarity_mat(
+    latent_space: npt.NDArray,
+    class_labels: npt.NDArray,
+    unique_classes: list,
+    num_classes: int,
+    plot_mode: str = "",
+) -> npt.NDArray:
+    """
+    This function calculates the similarity (affinity) between classes in the latent space and builds a matrix.
+    Parameters
+    ----------
+    latent_space: np.ndarray
+        The latent space
+    class_labels: np.array
+        The labels of the latent space
+    mode: str
+        Mode of the calculation (train, test, val)
+    epoch: int
+        Epoch number for title
+    classes_order: list
+        Order of the classes in the matrix
+    display: bool
+        When this variable is set to true, the function only dispalys the plot and doesnt save it.
+    """
+    # get same label order as affinity matrix
+    cosine_sim_matrix = cosine_similarity(latent_space)
+
+    cosine_sim_mat = np.zeros((num_classes, num_classes))
+
+    for i in range(num_classes):
+        for j in range(i, num_classes):
+            class_i_indices = np.where(class_labels == unique_classes[i])[0]
+            class_j_indices = np.where(class_labels == unique_classes[j])[0]
+            cosine_sims = cosine_sim_matrix[class_i_indices][
+                :, class_j_indices
+            ]
+            if plot_mode == "mean":
+                cosine_sim_mat[i, j] = np.mean(cosine_sims)
+                cosine_sim_mat[j, i] = cosine_sim_mat[
+                    i, j
+                ]  # symmetrical matrix
+            if plot_mode == "std":
+                cosine_sim_mat[i, j] = np.std(cosine_sims)
+                cosine_sim_mat[j, i] = cosine_sim_mat[
+                    i, j
+                ]  # symmetrical matrix
+
+    return cosine_sim_mat

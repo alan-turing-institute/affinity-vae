@@ -575,14 +575,14 @@ def train(
             else:
                 classes_list = []
 
-            vis.latent_space_similarity(
+            vis.latent_space_similarity_plot(
                 x_train,
                 np.array(y_train),
                 mode="_train",
                 epoch=epoch,
                 classes_order=classes_list,
             )
-            vis.latent_space_similarity(
+            vis.latent_space_similarity_plot(
                 x_val,
                 np.array(y_val),
                 mode="_valid",

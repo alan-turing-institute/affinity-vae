@@ -23,6 +23,7 @@ from .utils import (
     colour_per_class,
     create_grid_for_plotting,
     fill_grid_for_plottting,
+    latent_space_similarity_mat,
     pose_interpolation,
     save_imshow_png,
     save_mrc_file,
@@ -1757,7 +1758,10 @@ def interpolations_plot(
 
 
 def plot_affinity_matrix(
-    lookup: pd.DataFrame, all_classes: list, selected_classes: list
+    lookup: pd.DataFrame,
+    all_classes: list,
+    selected_classes: list,
+    fig_size: int | None = None,
 ) -> None:
     """
     This function plots the Affinity matrix and highlights the
@@ -1776,13 +1780,15 @@ def plot_affinity_matrix(
         "################################################################",
     )
     logging.info("Visualising affinity matrix ...\n")
-
-    with plt.rc_context(
-        {"font.weight": "bold", "font.size": int(len(all_classes) / 3) + 3}
-    ):
-        fig, ax = plt.subplots(
-            figsize=(int(len(all_classes)) / 2, int(len(all_classes)) / 2)
-        )
+    if fig_size is None:
+        with plt.rc_context(
+            {"font.weight": "bold", "font.size": int(len(all_classes) / 3) + 3}
+        ):
+            fig, ax = plt.subplots(
+                figsize=(int(len(all_classes)) / 2, int(len(all_classes)) / 2)
+            )
+    else:
+        fig, ax = plt.subplots(figsize=(fig_size, fig_size))
     # Create the figure and gridspec
     gs = gridspec.GridSpec(1, 2, width_ratios=[9, 0.4])
 
@@ -1878,12 +1884,16 @@ def plot_cyc_variable(array: list, variable_name: str):
     plt.close()
 
 
-def latent_space_similarity(
+def latent_space_similarity_plot(
     latent_space: npt.NDArray,
     class_labels: npt.NDArray,
     mode: str = "",
     epoch: int = 0,
     classes_order: list = [],
+    plot_mode: str = "mean",
+    display: bool = False,
+    font_size: int = 16,
+    dpi: int = 300,
 ) -> None:
     """
     This function calculates the similarity (affinity) between classes in the latent space and builds a matrix.
@@ -1899,15 +1909,12 @@ def latent_space_similarity(
         Epoch number for title
     classes_order: list
         Order of the classes in the matrix
-
     """
     logging.info(
         "################################################################",
     )
     logging.info("Visualising the latent space similarity matrix ...\n")
 
-    # get same label order as affinity matrix
-    cosine_sim_matrix = cosine_similarity(latent_space)
     if len(classes_order) == 0:
         unique_classes = np.unique(class_labels)
     else:
@@ -1922,54 +1929,32 @@ def latent_space_similarity(
         else:
             unique_classes = classes_order
 
-    # Calculate average cosine similarity for each pair of classes
     num_classes = len(unique_classes)
-    avg_cosine_sim = np.zeros((num_classes, num_classes))
-    std_cosine_sim = np.zeros((num_classes, num_classes))
-
-    for i in range(num_classes):
-        for j in range(i, num_classes):
-            class_i_indices = np.where(class_labels == unique_classes[i])[0]
-            class_j_indices = np.where(class_labels == unique_classes[j])[0]
-            cosine_sims = cosine_sim_matrix[class_i_indices][
-                :, class_j_indices
-            ]
-            avg_cosine_sim[i, j] = np.mean(cosine_sims)
-            avg_cosine_sim[j, i] = avg_cosine_sim[i, j]  # symmetrical matrix
-
-            std_cosine_sim[i, j] = np.std(cosine_sims)
-            std_cosine_sim[j, i] = std_cosine_sim[i, j]  # symmetrical matrix
+    cosine_sim = latent_space_similarity_mat(
+        latent_space,
+        class_labels,
+        unique_classes,
+        num_classes,
+        plot_mode=plot_mode,
+    )
 
     # Visualize average cosine similarity matrix
-    fig, ax = plt.subplots(figsize=(8, 8))
+    with plt.rc_context({"font.weight": "bold", "font.size": font_size}):
+        fig, ax = plt.subplots(figsize=(8, 8))
     fig.tight_layout(pad=3)
-    plt.imshow(avg_cosine_sim, cmap="RdBu", vmin=-1, vmax=1)
+    plt.imshow(cosine_sim, cmap="RdBu", vmin=-1, vmax=1)
     plt.colorbar(label="Average Cosine Similarity")
     plt.xticks(ticks=np.arange(num_classes), labels=unique_classes)
     plt.yticks(ticks=np.arange(num_classes), labels=unique_classes)
     plt.title(f"Average Cosine Similarity Matrix at epoch :{epoch}")
     plt.xlabel("Class Labels")
     plt.ylabel("Class Labels")
-    ax.tick_params(axis="x", rotation=90, labelsize=12)
-    ax.tick_params(axis="y", labelsize=12)
-    if not os.path.exists("plots"):
-        os.mkdir("plots")
-    plt.savefig(f"plots/similarity_mean{mode}.png", dpi=300)
-    plt.close()
-
-    # Visualize average cosine similarity matrix
-    fig, ax = plt.subplots(figsize=(8, 8))
-    fig.tight_layout(pad=3)
-    plt.imshow(std_cosine_sim, cmap="RdBu")
-    plt.colorbar(label="Average Cosine Similarity")
-    plt.xticks(ticks=np.arange(num_classes), labels=unique_classes)
-    plt.yticks(ticks=np.arange(num_classes), labels=unique_classes)
-    plt.title(f"Cosine Similarity Matrix Standard Deviation at epoch :{epoch}")
-    plt.xlabel("Class Labels")
-    plt.ylabel("Class Labels")
-    ax.tick_params(axis="x", rotation=90, labelsize=12)
-    ax.tick_params(axis="y", labelsize=12)
-    if not os.path.exists("plots"):
-        os.mkdir("plots")
-    plt.savefig(f"plots/similarity_std{mode}.png", dpi=300)
-    plt.close()
+    ax.tick_params(axis="x", rotation=90, labelsize=font_size)
+    ax.tick_params(axis="y", labelsize=font_size)
+    if not display:
+        if not os.path.exists("plots"):
+            os.mkdir("plots")
+        plt.savefig(f"plots/similarity_mean{mode}.png", dpi=dpi)
+        plt.close()
+    else:
+        plt.show()
