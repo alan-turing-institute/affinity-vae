@@ -1893,6 +1893,7 @@ def latent_space_similarity_plot(
     plot_mode: str = "mean",
     display: bool = False,
     font_size: int = 16,
+    fig_size: int | None = None,
     dpi: int = 300,
 ) -> None:
     """
@@ -1939,8 +1940,21 @@ def latent_space_similarity_plot(
     )
 
     # Visualize average cosine similarity matrix
-    with plt.rc_context({"font.weight": "bold", "font.size": font_size}):
-        fig, ax = plt.subplots(figsize=(8, 8))
+    if fig_size is None:
+        with plt.rc_context(
+            {
+                "font.weight": "bold",
+                "font.size": int(len(unique_classes) / 3) + 3,
+            }
+        ):
+            fig, ax = plt.subplots(
+                figsize=(
+                    int(len(unique_classes)) / 2,
+                    int(len(unique_classes)) / 2,
+                )
+            )
+    else:
+        fig, ax = plt.subplots(figsize=(fig_size, fig_size))
     fig.tight_layout(pad=3)
     plt.imshow(cosine_sim, cmap="RdBu", vmin=-1, vmax=1)
     plt.colorbar(label="Average Cosine Similarity")
@@ -1951,6 +1965,7 @@ def latent_space_similarity_plot(
     plt.ylabel("Class Labels")
     ax.tick_params(axis="x", rotation=90, labelsize=font_size)
     ax.tick_params(axis="y", labelsize=font_size)
+
     if not display:
         if not os.path.exists("plots"):
             os.mkdir("plots")
