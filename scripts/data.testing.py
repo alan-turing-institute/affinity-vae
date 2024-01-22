@@ -8,7 +8,7 @@ from avae.data import load_data
 
 np.random.seed(42)
 
-datapath = "/Users/ep/Documents/1_datasets/aff_vae/affinity-vae/tutorials/mnist_data/images_train/"
+datapath = "/Users/ep/Documents/1_datasets/aff_vae/affinity-vae-omics/omics/omics_data/input_arrays/"
 
 
 trains, vals, tests, lookup, data_dim = load_data(

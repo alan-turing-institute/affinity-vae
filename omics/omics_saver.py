@@ -1,29 +1,14 @@
 import os
+import sys
 # import random
 
 import numpy as np
 import pandas as pd
 
-# input variables - these should be flags - input arguments when you run the script
-
-mat_path = '/Users/ep/Documents/1_datasets/dataset_ibd/output/ol_removed_filtered/vst.counts.fil.ncbi.csv'
-labels_path = '/Users/ep/Documents/1_datasets/dataset_ibd/output/ol_removed/ibd.class.vector.csv'
-output_path = '/Users/ep/Documents/1_datasets/aff_vae/affinity-vae-omics/omics/omics_data/'
-
-# read in counts matrix and classes
-
-data_matrix = pd.read_csv(mat_path, header=0)
-sample_classes = pd.read_csv(labels_path, header=0).values.flatten()
-
-# save the unique list of classes as a csv file
-
-np.savetxt(output_path + 'class_lst.csv', np.unique(sample_classes), delimiter=",")
-
 
 # function to split counts matrix into a set of 1D np arrays, append class label and save as individual files
 
-
-def matrixsplitsave(omic_mat, class_vector):
+def matrixsplitsave(omic_mat, class_vector, output_path):
     sample_names_vec = omic_mat.columns
 
     gene_array_lst = list(range(omic_mat.shape[1]))
@@ -42,9 +27,6 @@ def matrixsplitsave(omic_mat, class_vector):
 
         # save the sample arrays
         np.save(save_path, sample)
-
-
-matrixsplitsave(data_matrix, sample_classes)
 
 
 # parse arguments to extract file paths for saving down the data
@@ -66,8 +48,19 @@ if __name__ == '__main__':
     labels_path = args.labels_file
     output_path = args.output_path
 
-    # data = load_mnist(mnist_path)
+    # read in counts matrix and classes
 
+    data_matrix = pd.read_csv(matrix_path, header=0)
+    sample_classes = pd.read_csv(labels_path, header=0).values.flatten()
+
+    # save the unique list of classes as a csv file
+
+    np.savetxt(output_path + 'class_lst.csv', np.unique(sample_classes), delimiter=",")
+
+    # split matrix and save as individual files
+
+    matrixsplitsave(data_matrix, sample_classes, output_path)
+
+# next steps to add
 # randomised train test split
-# gene_names = omic_mat.index
-# save the vector of the class labels as a csv file
+# build the matrix splitter as a class to handle train / test versions
