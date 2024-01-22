@@ -146,6 +146,9 @@ class AffinityConfig(BaseModel):
     bnorm_decoder: bool = Field(
         False, description="Use batch normalisation in decoder"
     )
+    n_splats: int = Field(
+        128, description="The number of Gaussian splats for the GSD "
+    )
     klreduction: str = Field('mean', description="KL reduction method")
     strategy: str = Field(
         "auto",

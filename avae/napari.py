@@ -93,8 +93,9 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
         self._layer = self.viewer.layers[reconstruction_layer_name]
         self._device = device
         self._meta_df = meta_df  # Store the DataFrame
-        self.pose_dims = pose_dims
-        self._latent_dims = latent_dims  # Number of latent dimensions
+        self.pose_dims = int(pose_dims)
+        self._latent_dims = int(latent_dims)  # Number of latent dimensions
+        self.cartesian = True  # Keeping this as false and as a placeholder as we havent implemented cartesian pose space yet
 
         self._main_layout = QtWidgets.QVBoxLayout()
         self._tabs = QtWidgets.QTabWidget()
@@ -110,7 +111,6 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
         self._main_layout.addStretch(stretch=1)
         self.setMinimumWidth(400)
         self.manifold = manifold
-        self.cartestian = False  # Keeping this as false and as a placeholder as we havent implemented cartesian pose space yet
         self._load_data()
 
         self.set_embedding(
@@ -159,11 +159,11 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
     def add_pose_widget(self) -> None:
         """Add widgets to manipulate the model pose space."""
         pose_axes = QtWidgets.QComboBox()
-        axis = ["X", "Y", "Z"]
-
-        for dim in range(self.pose_dims):
-            pose_axes.addItems([axis[dim]])
-
+        if self.cartesian:
+            pose_axes.addItems(["X", "Y", "Z"])
+        else:
+            for dim in range(self.pose_dims):
+                pose_axes.addItems(["pose" + str(dim)])
         pose_value = QtWidgets.QSlider(QtCore.Qt.Horizontal)
         pose_value.setRange(0, 1000)
         pose_value.setValue(500)
@@ -235,9 +235,9 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
 
     def get_pose(self) -> npt.NDArray:
 
-        if self.cartestian:
+        if self.cartesian:
             theta = scale_from_slider(
-                self._widgets["theta"].value(), -np.pi, np.pi
+                self._widgets["theta"].value(), np.pi, 2 * np.pi
             )
             axis = CartesianAxes[str(self._widgets["axes"].currentText())]
             return np.array([theta, *axis.value], dtype=np.float32)
