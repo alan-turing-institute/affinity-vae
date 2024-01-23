@@ -3,13 +3,12 @@
 import numpy as np
 from avae.data import load_data
 
-
 # ========== testing running the data loader ===============
 
 np.random.seed(42)
 
 datapath = "/Users/ep/Documents/1_datasets/aff_vae/affinity-vae-omics/omics/omics_data/input_arrays/"
-
+affinitypath = "/Users/ep/Documents/1_datasets/aff_vae/affinity-vae-omics/omics/omics_data/affinity_omics.csv"
 
 trains, vals, tests, lookup, data_dim = load_data(
     datapath=datapath,
@@ -19,7 +18,7 @@ trains, vals, tests, lookup, data_dim = load_data(
     # batch_s=batch_s,
     # no_val_drop=no_val_drop,
     eval=False,
-    affinity=None,
+    affinity=affinitypath,
     classes=None
     # gaussian_blur=gaussian_blur,
     # normalise=normalise,
@@ -28,3 +27,10 @@ trains, vals, tests, lookup, data_dim = load_data(
 )
 
 print(len(trains))
+
+datapath
+test_array = np.load("/Users/ep/Documents/1_datasets/aff_vae/affinity-vae-omics/omics/omics_data/input_arrays/0_Sample.2.npy")
+
+type(test_array)
+test_array[:10]
+test_array.shape
