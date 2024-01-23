@@ -52,10 +52,11 @@ if __name__ == '__main__':
 
     data_matrix = pd.read_csv(matrix_path, header=0)
     sample_classes = pd.read_csv(labels_path, header=0).values.flatten()
-
+    sample_classes = np.unique(sample_classes).reshape(1,2)
+    #
     # save the unique list of classes as a csv file
 
-    np.savetxt(output_path + 'class_lst.csv', np.unique(sample_classes), delimiter=",")
+    np.savetxt(output_path + 'class_lst.csv', sample_classes, fmt='%i',  delimiter=",")
 
     # split matrix and save as individual files
 
