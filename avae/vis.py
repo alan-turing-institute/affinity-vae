@@ -288,7 +288,7 @@ def latent_embed_plot_tsne(
         plt.ylabel("freq")
 
     plt.tight_layout()
-    
+
     if not display:
         if not os.path.exists("plots"):
             os.mkdir("plots")
