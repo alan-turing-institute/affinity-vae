@@ -11,7 +11,7 @@ from avae.decoders.spatial import (
 )
 
 
-class GaussianSplatRenderer:
+class GaussianSplatRenderer(AbstractDecoder):
     """Perform gaussian splatting."""
 
     def __init__(
@@ -250,10 +250,8 @@ class GaussianSplatDecoder(AbstractDecoder):
         """
         self._shape = shape
         self._default_axis = default_axis.as_tensor()
-        self._splatter.configure_renderer(
+        self._splatter = GaussianSplatRenderer(
             shape,
-            splat_sigma_range=splat_sigma_range,
-            default_axis=default_axis,
             device=device,
         )
         self._splat_sigma_range = splat_sigma_range
