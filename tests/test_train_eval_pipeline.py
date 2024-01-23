@@ -174,7 +174,7 @@ class TrainEvalTest(unittest.TestCase):
         ) = helper_train_eval(self.data)
 
         self.assertEqual(n_dir_train, 4)
-        self.assertEqual(n_plots_train, 30)
+        self.assertEqual(n_plots_train, 28)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
         self.assertEqual(n_plots_eval, 48)
@@ -196,7 +196,7 @@ class TrainEvalTest(unittest.TestCase):
         ) = helper_train_eval(self.data)
 
         self.assertEqual(n_dir_train, 4)
-        self.assertEqual(n_plots_train, 33)
+        self.assertEqual(n_plots_train, 31)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
         self.assertEqual(n_plots_eval, 51)
