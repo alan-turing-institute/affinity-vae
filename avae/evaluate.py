@@ -141,7 +141,7 @@ def evaluate(
             y_test.extend(batch[1])
         except IndexError:
             np.full(shape=len(batch[0]), fill_value="test")
-        if pose_dims != 0:
+        if lat_pose is not None:
             p_test.extend(lat_pose.cpu().detach().numpy())
 
         meta_df = add_meta(

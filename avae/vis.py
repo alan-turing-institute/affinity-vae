@@ -288,7 +288,7 @@ def latent_embed_plot_tsne(
         plt.ylabel("freq")
 
     plt.tight_layout()
-
+    
     if not display:
         if not os.path.exists("plots"):
             os.mkdir("plots")
@@ -434,6 +434,7 @@ def latent_embed_plot_umap(
         plt.savefig(f"plots/embedding_UMAP{mode}.png")
     else:
         plt.show()
+
     if writer:
         writer.add_figure("UMAP embedding", fig, epoch)
 
@@ -1214,7 +1215,7 @@ def recon_plot(
                         :,
                     ] = rec_img[i, j, :, :, :]
 
-        save_mrc_file(str(mode) + "_recon_in.mrc", grid_for_napari)
+        save_mrc_file(str(mode) + "_recons.mrc", grid_for_napari)
         logging.info("\n")
 
 
@@ -1718,12 +1719,13 @@ def interpolations_plot(
                 + h * v * class_rep_lats[3]
             )
 
-            interpolated_pose = (
-                (1 - h) * (1 - v) * class_reps_poses[0]
-                + h * (1 - v) * class_reps_poses[1]
-                + (1 - h) * v * class_reps_poses[2]
-                + h * v * class_reps_poses[3]
-            )
+            if poses is not None:
+                interpolated_pose = (
+                    (1 - h) * (1 - v) * class_reps_poses[0]
+                    + h * (1 - v) * class_reps_poses[1]
+                    + (1 - h) * v * class_reps_poses[2]
+                    + h * v * class_reps_poses[3]
+                )
             with torch.no_grad():
                 if poses is not None:
                     decoded_images = vae.decoder(

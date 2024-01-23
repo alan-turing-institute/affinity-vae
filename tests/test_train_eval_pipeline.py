@@ -18,7 +18,6 @@ random.seed(10)
 class TrainEvalTest(unittest.TestCase):
     def setUp(self) -> None:
         """Test instantiation of the pipeline."""
-
         self.testdata_mrc = os.path.dirname(testdata_mrc.__file__)
         self.testdata_npy = os.path.dirname(testdata_npy.__file__)
 
@@ -39,11 +38,9 @@ class TrainEvalTest(unittest.TestCase):
             "learning": 0.03,
             "beta_min": 0,
             "beta": 1,
-            "beta": 1,
             "beta_cycle": 1,
             "cyc_method_beta": "flat",
             "gamma_min": 0,
-            "gamma": 1,
             "gamma": 1,
             "cyc_method_gamma": "flat",
             "loss_fn": "MSE",
@@ -59,7 +56,6 @@ class TrainEvalTest(unittest.TestCase):
         }
 
         self.data = config.load_config_params(local_vars=self.data_params)
-
         config.setup_visualisation_config(self.data)
 
     def test_model_a_mrc(self):
@@ -163,40 +159,98 @@ class TrainEvalTest(unittest.TestCase):
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 3)
 
+    def test_model_nopose(self):
+        self.data["model"] = "u"
+        self.data["pose_dims"] = 0
 
-def helper_train_eval(data):
-    temp_dir = tempfile.TemporaryDirectory()
+        (
+            n_dir_train,
+            n_plots_train,
+            n_latent_train,
+            n_states_train,
+            n_plots_eval,
+            n_latent_eval,
+            n_states_eval,
+        ) = helper_train_eval(self.data)
+
+        self.assertEqual(n_dir_train, 4)
+        self.assertEqual(n_plots_train, 30)
+        self.assertEqual(n_latent_train, 2)
+        self.assertEqual(n_states_train, 2)
+        self.assertEqual(n_plots_eval, 48)
+        self.assertEqual(n_latent_eval, 4)
+        self.assertEqual(n_states_eval, 3)
+
+    def test_model_nogamma(self):
+        self.data["model"] = "u"
+        self.data["gamma"] = 0
+
+        (
+            n_dir_train,
+            n_plots_train,
+            n_latent_train,
+            n_states_train,
+            n_plots_eval,
+            n_latent_eval,
+            n_states_eval,
+        ) = helper_train_eval(self.data)
+
+        self.assertEqual(n_dir_train, 4)
+        self.assertEqual(n_plots_train, 33)
+        self.assertEqual(n_latent_train, 2)
+        self.assertEqual(n_states_train, 2)
+        self.assertEqual(n_plots_eval, 51)
+        self.assertEqual(n_latent_eval, 4)
+        self.assertEqual(n_states_eval, 3)
+
+
+def helper_train_eval(
+    data, eval=True, noplot=False, nolat=False, nostate=False
+):
+    temp_dir = tempfile.TemporaryDirectory(prefix='avae-')
     os.chdir(temp_dir.name)
 
+    if eval:
+        eval = [not eval, eval]
+    else:
+        eval = [eval]
+    ret = []
+
     # run training
-    data["eval"] = False
-    run_pipeline(data)
+    for e in eval:
+        data["eval"] = e
+        if data["eval"]:
+            data["datapath"] = os.path.join(data["datapath"], "test")
 
-    n_dir_train = len(next(os.walk(temp_dir.name))[1])
-    n_plots_train = len(os.listdir(os.path.join(temp_dir.name, "plots")))
-    n_latent_train = len(os.listdir(os.path.join(temp_dir.name, "latents")))
-    n_states_train = len(os.listdir(os.path.join(temp_dir.name, "states")))
+        run_pipeline(data)
 
-    # run evaluation
-    data["eval"] = True
-    data["datapath"] = os.path.join(data["datapath"], "test")
-    run_pipeline(data)
+        n_plots, n_latent, n_states = (0, 0, 0)
+        n_dir = len(next(os.walk(temp_dir.name))[1])
+        if os.path.exists(os.path.join(temp_dir.name, "plots")):
+            n_plots = (
+                len(os.listdir(os.path.join(temp_dir.name, "plots")))
+                if not noplot
+                else None
+            )
+        if os.path.exists(os.path.join(temp_dir.name, "latents")):
+            n_latent = (
+                len(os.listdir(os.path.join(temp_dir.name, "latents")))
+                if not nolat
+                else None
+            )
+        if os.path.exists(os.path.join(temp_dir.name, "states")):
+            n_states = (
+                len(os.listdir(os.path.join(temp_dir.name, "states")))
+                if not nostate
+                else None
+            )
 
-    n_plots_eval = len(os.listdir(os.path.join(temp_dir.name, "plots")))
-    n_latent_eval = len(os.listdir(os.path.join(temp_dir.name, "latents")))
-    n_states_eval = len(os.listdir(os.path.join(temp_dir.name, "states")))
+        ret.extend([n_plots, n_latent, n_states])
+    ret.insert(0, n_dir)
 
     shutil.rmtree(temp_dir.name)
 
-    return (
-        n_dir_train,
-        n_plots_train,
-        n_latent_train,
-        n_states_train,
-        n_plots_eval,
-        n_latent_eval,
-        n_states_eval,
-    )
+    return tuple(ret)
 
 
 if __name__ == "__main__":

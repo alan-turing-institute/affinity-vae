@@ -79,17 +79,17 @@ class AffinityVAE(AbstractAffinityVAE):
         self.pose = self.encoder.pose
 
     def forward(self, x):
+        # encode
         if self.pose:
             latent_mu, latent_logvar, latent_pose = self.encoder(x)
         else:
             latent_mu, latent_logvar = self.encoder(x)
             latent_pose = None
-            # reparametrise
+        # reparametrise
         latent = self.reparametrise(latent_mu, latent_logvar)
         # decode
         x_recon = self.decoder(latent, latent_pose)  # pose set to None if pd=0
         return x_recon, latent_mu, latent_logvar, latent, latent_pose
-        # encode
 
     def reparametrise(self, mu, log_var):
         if self.training:
