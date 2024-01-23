@@ -16,6 +16,14 @@ def matrixsplitsave(omic_mat, class_vector, output_path):
     for idx in range(omic_mat.shape[1]):
         gene_array_lst[idx] = omic_mat.iloc[:, idx].values
 
+    # Make sure that the user has a directory named input_arrays.
+    # if not, create it.
+    input_arrays_path = os.path.join(output_path, 'input_arrays')
+    if not os.path.exists(input_arrays_path):
+        os.makedirs(input_arrays_path)
+        print(f"Directory '{input_arrays_path}' created.")
+
+
     # save each array with a file name prefixed with its class label
 
     for sid, sample, label in zip(sample_names_vec, gene_array_lst, class_vector):
