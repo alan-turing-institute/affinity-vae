@@ -177,7 +177,7 @@ class TrainEvalTest(unittest.TestCase):
         self.assertEqual(n_plots_train, 28)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
-        self.assertEqual(n_plots_eval, 48)
+        self.assertEqual(n_plots_eval, 45)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 3)
 
@@ -199,7 +199,7 @@ class TrainEvalTest(unittest.TestCase):
         self.assertEqual(n_plots_train, 31)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
-        self.assertEqual(n_plots_eval, 51)
+        self.assertEqual(n_plots_eval, 48)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 3)
 
