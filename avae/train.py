@@ -39,6 +39,7 @@ def train(
     pose_dims: int,
     bnorm_encoder: bool,
     bnorm_decoder: bool,
+    gsd_conv_layers: int,
     n_splats: int,
     klred: str,
     learning: float,
@@ -143,6 +144,9 @@ def train(
         If True, batch normalisation is applied to the encoder.
     bnrom_decoder: bool
         If True, batch normalisation is applied to the decoder.
+    gsd_conv_layers: int
+        activates convolution layers at the end of the differetiable decoder if set
+        and it is an integer defining the number of output channels  .
     """
     torch.manual_seed(42)
 
@@ -211,6 +215,7 @@ def train(
             dshape,
             n_splats=n_splats,
             latent_dims=lat_dims,
+            output_channels=gsd_conv_layers,
             device=device,
             pose_dims=pose_dims,
         )
