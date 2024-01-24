@@ -26,9 +26,11 @@ class LossTest(unittest.TestCase):
         self.affinity = pd.read_csv("affinity_fsc_10.csv").to_numpy(
             dtype=np.float32
         )
+        device = set_device(False)
         self.loss = AVAELoss(
-            [1],
-            [1],
+            device=device,
+            beta=[1],
+            gamma=[1],
             lookup_aff=self.affinity,
             recon_fn="MSE",
         )
