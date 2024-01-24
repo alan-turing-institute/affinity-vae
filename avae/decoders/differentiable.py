@@ -11,7 +11,7 @@ from avae.decoders.spatial import (
 )
 
 
-class GaussianSplatRenderer(AbstractDecoder):
+class GaussianSplatRenderer(torch.nn.Module):
     """Perform gaussian splatting."""
 
     def __init__(
