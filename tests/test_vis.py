@@ -86,7 +86,7 @@ class VisPipelineTest(unittest.TestCase):
             self.data, eval=False, nolat=True, nostate=True
         )
 
-        self.assertEqual(n_plots, 4)  # recon and val
+        self.assertEqual(n_plots, 2)  # recon and val
 
     def test_embedding(self):
         settings.VIS_EMB = True

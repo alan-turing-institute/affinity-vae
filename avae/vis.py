@@ -23,6 +23,7 @@ from .utils import (
     colour_per_class,
     create_grid_for_plotting,
     fill_grid_for_plottting,
+    latent_space_similarity_mat,
     pose_interpolation,
     save_imshow_png,
     save_mrc_file,
@@ -162,6 +163,8 @@ def latent_embed_plot_tsne(
     mode: str = "",
     epoch: int = 0,
     writer: typing.Any = None,
+    perplexity: int = 40,
+    display: bool = False,
 ) -> None:
     """Plot static TSNE embedding.
 
@@ -179,6 +182,8 @@ def latent_embed_plot_tsne(
         Current epoch
     writer: SummaryWriter
         Tensorboard summary writer
+    perplexity: int
+    display: bool
     """
     logging.info(
         "################################################################",
@@ -191,7 +196,6 @@ def latent_embed_plot_tsne(
     xs = np.asarray(xs)
     ys = np.asarray(ys)
 
-    perplexity = 40
     if len(ys) < perplexity:
         perplexity = len(ys) - 1
 
@@ -284,10 +288,13 @@ def latent_embed_plot_tsne(
         plt.ylabel("freq")
 
     plt.tight_layout()
-    if not os.path.exists("plots"):
-        os.mkdir("plots")
-    plt.savefig(f"plots/embedding_TSNE{mode}.png")
 
+    if not display:
+        if not os.path.exists("plots"):
+            os.mkdir("plots")
+        plt.savefig(f"plots/embedding_TSNE{mode}.png")
+    else:
+        plt.show()
     if writer:
         writer.add_figure("TSNE embedding", fig, epoch)
 
@@ -301,6 +308,8 @@ def latent_embed_plot_umap(
     mode: str = "",
     epoch: int = 0,
     writer: typing.Any = None,
+    rs: int = 42,
+    display: bool = False,
 ) -> None:
     """Plot static UMAP embedding.
 
@@ -318,6 +327,10 @@ def latent_embed_plot_umap(
         Current epoch
     writer: SummaryWriter
         Tensorboard summary writer
+    display: bool
+        When this variable is set to true, the save_imshow_png function only dispalys the plot
+        and does not save a png image. This is to allow the use of this function in jupyter notebook
+        post calculation. This features is not yet implemented for save_mrc_file.
     """
     logging.info(
         "################################################################",
@@ -346,7 +359,7 @@ def latent_embed_plot_umap(
         )
 
     if xs.shape[-1] > 2:
-        reducer = umap.UMAP(random_state=42)
+        reducer = umap.UMAP(random_state=rs)
         embedding = reducer.fit_transform(xs)
     elif xs.shape[-1] == 2 or xs.shape[-1] == 1:
         embedding = xs
@@ -415,9 +428,12 @@ def latent_embed_plot_umap(
         plt.ylabel("freq")
 
     plt.tight_layout()
-    if not os.path.exists("plots"):
-        os.mkdir("plots")
-    plt.savefig(f"plots/embedding_UMAP{mode}.png")
+    if not display:
+        if not os.path.exists("plots"):
+            os.mkdir("plots")
+        plt.savefig(f"plots/embedding_UMAP{mode}.png")
+    else:
+        plt.show()
 
     if writer:
         writer.add_figure("UMAP embedding", fig, epoch)
@@ -1089,6 +1105,7 @@ def recon_plot(
     mode: str = "trn",
     epoch: int = 0,
     writer: typing.Any = None,
+    display: bool = False,
 ) -> None:
     """Visualise reconstructions.
 
@@ -1108,6 +1125,10 @@ def recon_plot(
         Current epoch
     writer: SummaryWriter
         Tensorboard summary writer
+    display: bool
+        When this variable is set to true, the save_imshow_png function only dispalys the plot
+        and does not save a png image. This is to allow the use of this function in jupyter notebook
+        post calculation. This features is not yet implemented for save_mrc_file.
     """
     logging.info(
         "################################################################",
@@ -1133,6 +1154,7 @@ def recon_plot(
         writer=writer,
         figname="Recon. (In)",
         epoch=epoch,
+        display=display,
     )
     save_imshow_png(
         fname_out,
@@ -1140,6 +1162,7 @@ def recon_plot(
         writer=writer,
         figname="Recon. (Out)",
         epoch=epoch,
+        display=display,
     )
 
     if data_dim == 3:
@@ -1204,6 +1227,7 @@ def latent_4enc_interpolate_plot(
     device: torch.device,
     plots_config: npt.NDArray,
     poses: list,
+    display: bool = False,
 ) -> None:
     """Visualise the interpolation of latent space between 4 randomly selected encodings.
     The number of plots and the number of interpolation steps is modifyable.
@@ -1228,6 +1252,10 @@ def latent_4enc_interpolate_plot(
         Array containing the number of plots to be generated and the number of interpolation steps.
     poses: list
         List of pose vectors.
+    display: bool
+        When this variable is set to true, the save_imshow_png function only dispalys the plot
+        and does not save a png image. This is to allow the use of this function in jupyter notebook
+        post calculation. This features is not yet implemented for save_mrc_file.
     """
     logging.info(
         "################################################################",
@@ -1313,6 +1341,7 @@ def latent_4enc_interpolate_plot(
             save_imshow_png(
                 f"latent_interpolate_{num_fig}.png",
                 grid_for_napari,
+                display=display,
             )
 
 
@@ -1424,6 +1453,8 @@ def pose_class_disentanglement_plot(
     vae: torch.nn.Module,
     device: torch.device,
     mode: str = "trn",
+    number_of_samples: int = 7,
+    display: bool = False,
 ):
 
     """Visualise Pose interpolation per class. This function creates a pose interpolatoion
@@ -1449,6 +1480,12 @@ def pose_class_disentanglement_plot(
         Device to run the model on.
     mode: str
         Mode of evaluation (trn: Training, vld: Validation, eval: Evaluation )
+    number_of_samples: int = 7
+        number of pose interpolation steps, prefarably odd
+    display: bool
+        When this variable is set to true, the save_imshow_png function only dispalys the plot
+        and does not save a png image. This is to allow the use of this function in jupyter notebook
+        post calculation. This features is not yet implemented for save_mrc_file.
     """
     logging.info(
         "Visualising pose disentanglement for each class {}...\n".format(
@@ -1460,8 +1497,6 @@ def pose_class_disentanglement_plot(
             "Pose interpolation cannot be done if pose dimension is not specified"
         )
 
-    # number of pose interpolation steps, prefarably odd
-    number_of_samples = 7
     padding = 0
     data_dim = len(dsize)
     x = np.asarray(x)
@@ -1507,7 +1542,9 @@ def pose_class_disentanglement_plot(
             save_mrc_file(f"pose_interpolate_{mode}_{i}.mrc", grid_for_napari)
         elif data_dim == 2:
             save_imshow_png(
-                f"pose_interpolate_{mode}_{i}.png", grid_for_napari
+                f"pose_interpolate_{mode}_{i}.png",
+                grid_for_napari,
+                display=display,
             )
 
 
@@ -1519,6 +1556,7 @@ def pose_disentanglement_plot(
     device: torch.device,
     label: str = "avg",
     mode: str = "trn",
+    display: bool = False,
 ):
     """Visualise pose disentanglement.
 
@@ -1536,6 +1574,10 @@ def pose_disentanglement_plot(
         the size of spatial dimensions of the input data (2:2D, 3:3D)
     device: torch.device
         Device to run the model on.
+    display: bool
+        When this variable is set to true, the save_imshow_png function only dispalys the plot
+        and does not save a png image. This is to allow the use of this function in jupyter notebook
+        post calculation. This features is not yet implemented for save_mrc_file.
     """
     logging.info(
         "################################################################",
@@ -1585,7 +1627,9 @@ def pose_disentanglement_plot(
         )
     elif data_dim == 2:
         save_imshow_png(
-            f"disentanglement-pose_{mode}_{label}.png", grid_for_napari
+            f"disentanglement-pose_{mode}_{label}.png",
+            grid_for_napari,
+            display=display,
         )
 
 
@@ -1716,7 +1760,10 @@ def interpolations_plot(
 
 
 def plot_affinity_matrix(
-    lookup: pd.DataFrame, all_classes: list, selected_classes: list
+    lookup: pd.DataFrame,
+    all_classes: list,
+    selected_classes: list,
+    fig_size: int | None = None,
 ) -> None:
     """
     This function plots the Affinity matrix and highlights the
@@ -1735,13 +1782,15 @@ def plot_affinity_matrix(
         "################################################################",
     )
     logging.info("Visualising affinity matrix ...\n")
-
-    with plt.rc_context(
-        {"font.weight": "bold", "font.size": int(len(all_classes) / 3) + 3}
-    ):
-        fig, ax = plt.subplots(
-            figsize=(int(len(all_classes)) / 2, int(len(all_classes)) / 2)
-        )
+    if fig_size is None:
+        with plt.rc_context(
+            {"font.weight": "bold", "font.size": int(len(all_classes) / 3) + 3}
+        ):
+            fig, ax = plt.subplots(
+                figsize=(int(len(all_classes)) / 2, int(len(all_classes)) / 2)
+            )
+    else:
+        fig, ax = plt.subplots(figsize=(fig_size, fig_size))
     # Create the figure and gridspec
     gs = gridspec.GridSpec(1, 2, width_ratios=[9, 0.4])
 
@@ -1837,12 +1886,17 @@ def plot_cyc_variable(array: list, variable_name: str):
     plt.close()
 
 
-def latent_space_similarity(
+def latent_space_similarity_plot(
     latent_space: npt.NDArray,
     class_labels: npt.NDArray,
     mode: str = "",
     epoch: int = 0,
     classes_order: list = [],
+    plot_mode: str = "mean",
+    display: bool = False,
+    font_size: int = 16,
+    fig_size: int | None = None,
+    dpi: int = 300,
 ) -> None:
     """
     This function calculates the similarity (affinity) between classes in the latent space and builds a matrix.
@@ -1858,15 +1912,12 @@ def latent_space_similarity(
         Epoch number for title
     classes_order: list
         Order of the classes in the matrix
-
     """
     logging.info(
         "################################################################",
     )
     logging.info("Visualising the latent space similarity matrix ...\n")
 
-    # get same label order as affinity matrix
-    cosine_sim_matrix = cosine_similarity(latent_space)
     if len(classes_order) == 0:
         unique_classes = np.unique(class_labels)
     else:
@@ -1881,54 +1932,46 @@ def latent_space_similarity(
         else:
             unique_classes = classes_order
 
-    # Calculate average cosine similarity for each pair of classes
     num_classes = len(unique_classes)
-    avg_cosine_sim = np.zeros((num_classes, num_classes))
-    std_cosine_sim = np.zeros((num_classes, num_classes))
-
-    for i in range(num_classes):
-        for j in range(i, num_classes):
-            class_i_indices = np.where(class_labels == unique_classes[i])[0]
-            class_j_indices = np.where(class_labels == unique_classes[j])[0]
-            cosine_sims = cosine_sim_matrix[class_i_indices][
-                :, class_j_indices
-            ]
-            avg_cosine_sim[i, j] = np.mean(cosine_sims)
-            avg_cosine_sim[j, i] = avg_cosine_sim[i, j]  # symmetrical matrix
-
-            std_cosine_sim[i, j] = np.std(cosine_sims)
-            std_cosine_sim[j, i] = std_cosine_sim[i, j]  # symmetrical matrix
+    cosine_sim = latent_space_similarity_mat(
+        latent_space,
+        class_labels,
+        unique_classes,
+        num_classes,
+        plot_mode=plot_mode,
+    )
 
     # Visualize average cosine similarity matrix
-    fig, ax = plt.subplots(figsize=(8, 8))
+    if fig_size is None:
+        with plt.rc_context(
+            {
+                "font.weight": "bold",
+                "font.size": int(len(unique_classes) / 3) + 3,
+            }
+        ):
+            fig, ax = plt.subplots(
+                figsize=(
+                    int(len(unique_classes)) / 2,
+                    int(len(unique_classes)) / 2,
+                )
+            )
+    else:
+        fig, ax = plt.subplots(figsize=(fig_size, fig_size))
     fig.tight_layout(pad=3)
-    plt.imshow(avg_cosine_sim, cmap="RdBu", vmin=-1, vmax=1)
+    plt.imshow(cosine_sim, cmap="RdBu", vmin=-1, vmax=1)
     plt.colorbar(label="Average Cosine Similarity")
     plt.xticks(ticks=np.arange(num_classes), labels=unique_classes)
     plt.yticks(ticks=np.arange(num_classes), labels=unique_classes)
     plt.title(f"Average Cosine Similarity Matrix at epoch :{epoch}")
     plt.xlabel("Class Labels")
     plt.ylabel("Class Labels")
-    ax.tick_params(axis="x", rotation=90, labelsize=12)
-    ax.tick_params(axis="y", labelsize=12)
-    if not os.path.exists("plots"):
-        os.mkdir("plots")
-    plt.savefig(f"plots/similarity_mean{mode}.png", dpi=300)
-    plt.close()
+    ax.tick_params(axis="x", rotation=90, labelsize=font_size)
+    ax.tick_params(axis="y", labelsize=font_size)
 
-    # Visualize average cosine similarity matrix
-    fig, ax = plt.subplots(figsize=(8, 8))
-    fig.tight_layout(pad=3)
-    plt.imshow(std_cosine_sim, cmap="RdBu")
-    plt.colorbar(label="Average Cosine Similarity")
-    plt.xticks(ticks=np.arange(num_classes), labels=unique_classes)
-    plt.yticks(ticks=np.arange(num_classes), labels=unique_classes)
-    plt.title(f"Cosine Similarity Matrix Standard Deviation at epoch :{epoch}")
-    plt.xlabel("Class Labels")
-    plt.ylabel("Class Labels")
-    ax.tick_params(axis="x", rotation=90, labelsize=12)
-    ax.tick_params(axis="y", labelsize=12)
-    if not os.path.exists("plots"):
-        os.mkdir("plots")
-    plt.savefig(f"plots/similarity_std{mode}.png", dpi=300)
-    plt.close()
+    if not display:
+        if not os.path.exists("plots"):
+            os.mkdir("plots")
+        plt.savefig(f"plots/similarity_mean{mode}.png", dpi=dpi)
+        plt.close()
+    else:
+        plt.show()

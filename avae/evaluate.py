@@ -222,7 +222,7 @@ def evaluate(
         )
 
     if settings.VIS_SIM:
-        vis.latent_space_similarity(
+        vis.latent_space_similarity_plot(
             x_test, np.array(y_test), mode="_eval", classes_order=classes_list
         )
 
