@@ -11,7 +11,7 @@ from avae.decoders.spatial import (
 )
 
 
-class GaussianSplatRenderer(AbstractDecoder):
+class GaussianSplatRenderer(torch.nn.Module):
     """Perform gaussian splatting."""
 
     def __init__(
@@ -293,7 +293,7 @@ class GaussianSplatDecoder(AbstractDecoder):
         )
 
         # use only the required spatial dimensions (batch, ndim, samples)
-        rotated_splats = rotated_splats[:, : self._ndim, :]
+        # rotated_splats = rotated_splats[:, : self._ndim, :]
 
         return rotated_splats, weights, sigmas
 
