@@ -87,6 +87,8 @@ class GaussianSplatRenderer(torch.nn.Module):
         gaussians (e.g. 1024). This leads to a matrix of 32 x 32768 x 1024
         for a minibatch of 32 volumes.
         """
+        if torch.cuda.device_count() == 0 and self.device.type == 'cuda':
+            self.device = torch.device('cpu')
 
         # scale the sigma values
         min_sigma, max_sigma = splat_sigma_range
