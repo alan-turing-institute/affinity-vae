@@ -137,6 +137,7 @@ def merge(im: str) -> str | None:
     str
         Merged image.
     """
+
     i = im.split("&")
     if len(i) != 2:
         logging.warning(
@@ -309,6 +310,7 @@ def latent_embed_plot_umap(
     epoch: int = 0,
     writer: typing.Any = None,
     rs: int = 42,
+    marker_size: int = 24,
     display: bool = False,
 ) -> None:
     """Plot static UMAP embedding.
@@ -327,6 +329,8 @@ def latent_embed_plot_umap(
         Current epoch
     writer: SummaryWriter
         Tensorboard summary writer
+    marker_size: int
+        Marker size for UMAP plot
     display: bool
         When this variable is set to true, the save_imshow_png function only dispalys the plot
         and does not save a png image. This is to allow the use of this function in jupyter notebook
@@ -393,7 +397,7 @@ def latent_embed_plot_umap(
             ax.scatter(
                 embedding[idx, 0],
                 embedding[idx, 1],
-                s=24,
+                s=marker_size,
                 label=mol[:4],
                 facecolor=color,
                 edgecolor=color,
@@ -431,7 +435,7 @@ def latent_embed_plot_umap(
     if not display:
         if not os.path.exists("plots"):
             os.mkdir("plots")
-        plt.savefig(f"plots/embedding_UMAP{mode}.png")
+        plt.savefig(f"plots/embedding_UMAP{mode}.png", dpi=300)
     else:
         plt.show()
 

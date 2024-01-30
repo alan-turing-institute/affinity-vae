@@ -295,40 +295,40 @@ def write_config_file(time_stamp_name, data):
 
 def setup_visualisation_config(data: dict) -> None:
     settings.VIS_LOS = (
-        data["vis_los"] if data["vis_los"] == True else data["vis_all"]
+        data["vis_los"] if data["vis_los"] is not None else data["vis_all"]
     )
     settings.VIS_ACC = (
-        data["vis_acc"] if data["vis_acc"] == True else data["vis_all"]
+        data["vis_acc"] if data["vis_acc"] is not None else data["vis_all"]
     )
     settings.VIS_REC = (
-        data["vis_rec"] if data["vis_rec"] == True else data["vis_all"]
+        data["vis_rec"] if data["vis_rec"] is not None else data["vis_all"]
     )
     settings.VIS_CYC = (
-        data["vis_cyc"] if data["vis_cyc"] == True else data["vis_all"]
+        data["vis_cyc"] if data["vis_cyc"] is not None else data["vis_all"]
     )
     settings.VIS_AFF = (
-        data["vis_aff"] if data["vis_aff"] == True else data["vis_all"]
+        data["vis_aff"] if data["vis_aff"] is not None else data["vis_all"]
     )
     settings.VIS_EMB = (
-        data["vis_emb"] if data["vis_emb"] == True else data["vis_all"]
+        data["vis_emb"] if data["vis_emb"] is not None else data["vis_all"]
     )
     settings.VIS_INT = (
-        data["vis_int"] if data["vis_int"] == True else data["vis_all"]
+        data["vis_int"] if data["vis_int"] is not None else data["vis_all"]
     )
     settings.VIS_DIS = (
-        data["vis_dis"] if data["vis_dis"] == True else data["vis_all"]
+        data["vis_dis"] if data["vis_dis"] is not None else data["vis_all"]
     )
     settings.VIS_POS = (
-        data["vis_pos"] if data["vis_pos"] == True else data["vis_all"]
+        data["vis_pos"] if data["vis_pos"] is not None else data["vis_all"]
     )
     settings.VIS_HIS = (
-        data["vis_his"] if data["vis_his"] == True else data["vis_all"]
+        data["vis_his"] if data["vis_his"] is not None else data["vis_all"]
     )
     settings.VIS_SIM = (
-        data["vis_sim"] if data["vis_sim"] == True else data["vis_all"]
+        data["vis_sim"] if data["vis_sim"] is not None else data["vis_all"]
     )
     settings.VIS_DYN = (
-        data["dynamic"] if data["dynamic"] == True else data["vis_all"]
+        data["dynamic"] if data["dynamic"] is not None else data["vis_all"]
     )
     settings.VIS_POSE_CLASS = data["vis_pose_class"]
     settings.VIS_Z_N_INT = data["vis_z_n_int"]
