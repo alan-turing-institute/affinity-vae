@@ -166,7 +166,7 @@ def train(
             n_nodes = (n_devices + 3) // 4
 
         logging.info(
-            f'Setting up fabric with strategy {strategy}, acceletator {accelerator}, devices {n_devices}, num_nodes {n_nodes}'
+            f'Setting up fabric with strategy {strategy}, accelerator {accelerator}, devices {n_devices}, num_nodes {n_nodes}'
         )
         fabric = lt.Fabric(
             strategy=strategy,
@@ -178,6 +178,8 @@ def train(
 
     else:
         fabric = lt.Fabric(strategy=strategy, accelerator='auto')
+
+    fabric.launch()
     device = fabric.device
 
     # ############################### DATA ###############################
