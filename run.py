@@ -172,6 +172,13 @@ from avae.train import train
     help="Batch normalisation in encoder is on if True.",
 )
 @click.option(
+    "--gsd_conv_layers",
+    "-gsdcl",
+    type=int,
+    default=0,
+    help="The number of output channels for the convolution layers at the end of the GSD decoder",
+)
+@click.option(
     "--n_splats",
     "-spl",
     type=int,
@@ -576,6 +583,7 @@ def run(
     pose_dims,
     bnorm_encoder,
     bnorm_decoder,
+    gsd_conv_layers,
     n_splats,
     klreduction,
     beta,
@@ -702,6 +710,7 @@ def run_pipeline(data):
             pose_dims=data["pose_dims"],
             bnorm_encoder=data["bnorm_encoder"],
             bnorm_decoder=data["bnorm_decoder"],
+            gsd_conv_layers=data["gsd_conv_layers"],
             n_splats=data["n_splats"],
             klred=data["klreduction"],
             learning=data["learning"],

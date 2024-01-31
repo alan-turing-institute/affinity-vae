@@ -39,6 +39,7 @@ def train(
     pose_dims: int,
     bnorm_encoder: bool,
     bnorm_decoder: bool,
+    gsd_conv_layers: int,
     n_splats: int,
     klred: str,
     learning: float,
@@ -146,6 +147,9 @@ def train(
         If True, batch normalisation is applied to the decoder.
     strategy: str
         The strategy to use for distributed training. Can be  'ddp', 'deepspeed' or 'fsdp".
+    gsd_conv_layers: int
+        activates convolution layers at the end of the differetiable decoder if set
+        and it is an integer defining the number of output channels  .
     """
     torch.manual_seed(42)
 
@@ -161,17 +165,19 @@ def train(
             # Calculate the number of nodes based on the formula: ceil(num_gpus / 4)
             n_nodes = (n_devices + 3) // 4
 
+        logging.info(
+            f'Setting up fabric with strategy {strategy}, acceletator {accelerator}, devices {n_devices}, num_nodes {n_nodes}'
+        )
         fabric = lt.Fabric(
             strategy=strategy,
             accelerator=accelerator,
             devices=n_devices,
             num_nodes=n_nodes,
+            # plugins=[SLURMEnvironment(auto_requeue=False)]
         )
 
     else:
         fabric = lt.Fabric(strategy=strategy, accelerator='auto')
-
-    fabric.launch()
     device = fabric.device
 
     # ############################### DATA ###############################
@@ -214,21 +220,21 @@ def train(
         decoder = DecoderB(dshape, channels, depth, lat_dims, pose_dims)
     elif model == "u":
         encoder = Encoder(
-            dshape,
-            channels,
-            depth,
-            lat_dims,
-            pose_dims,
-            filters,
+            input_size=dshape,
+            capacity=channels,
+            filters=filters,
+            depth=depth,
+            latent_dims=lat_dims,
+            pose_dims=pose_dims,
             bnorm=bnorm_encoder,
         )
         decoder = Decoder(
-            dshape,
-            channels,
-            depth,
-            lat_dims,
-            pose_dims,
-            filters,
+            input_size=dshape,
+            capacity=channels,
+            filters=filters,
+            depth=depth,
+            latent_dims=lat_dims,
+            pose_dims=pose_dims,
             bnorm=bnorm_decoder,
         )
     elif model == "gsd":
@@ -239,6 +245,7 @@ def train(
             dshape,
             n_splats=n_splats,
             latent_dims=lat_dims,
+            output_channels=gsd_conv_layers,
             device=device,
             pose_dims=pose_dims,
         )
@@ -454,8 +461,6 @@ def train(
                 gamma_arr[epoch],
             )
         )
-        with torch.no_grad():
-            torch.cuda.empty_cache()
         # ########################## VAL ######################################
         vae.eval()
         for b, batch in enumerate(vals):
@@ -543,6 +548,11 @@ def train(
 
         # ########################## VISUALISE ################################
 
+        if classes is not None:
+            classes_list = pd.read_csv(classes).columns.tolist()
+        else:
+            classes_list = []
+
         # visualise accuracy: confusion and F1 scores
         if settings.VIS_ACC and (epoch + 1) % settings.FREQ_ACC == 0:
             train_acc, val_acc, _, ypred_train, ypred_val = accuracy(
@@ -616,10 +626,6 @@ def train(
 
         # visualise mean and logvar similarity matrix
         if settings.VIS_SIM and (epoch + 1) % settings.FREQ_SIM == 0:
-            if classes is not None:
-                classes_list = pd.read_csv(classes).columns.tolist()
-            else:
-                classes_list = []
 
             vis.latent_space_similarity(
                 x_train,
@@ -695,15 +701,16 @@ def train(
                 device,
             )
 
-            vis.pose_class_disentanglement_plot(
-                dshape,
-                x_train,
-                y_train,
-                settings.VIS_POSE_CLASS,
-                p_train,
-                vae,
-                device,
-            )
+            if settings.VIS_POSE_CLASS is not None:
+                vis.pose_class_disentanglement_plot(
+                    dshape,
+                    x_train,
+                    y_train,
+                    settings.VIS_POSE_CLASS,
+                    p_train,
+                    vae,
+                    device,
+                )
 
         # visualise interpolations
         if settings.VIS_INT and (epoch + 1) % settings.FREQ_INT == 0:
@@ -722,15 +729,16 @@ def train(
                 else:
                     ps = None
 
-            vis.latent_4enc_interpolate_plot(
-                dshape,
-                xs,
-                ys,
-                vae,
-                device,
-                settings.VIS_Z_N_INT,
-                poses=ps,
-            )
+            if settings.VIS_Z_N_INT is not None:
+                vis.latent_4enc_interpolate_plot(
+                    dshape,
+                    xs,
+                    ys,
+                    vae,
+                    device,
+                    settings.VIS_Z_N_INT,
+                    poses=ps,
+                )
 
             vis.interpolations_plot(
                 dshape,
