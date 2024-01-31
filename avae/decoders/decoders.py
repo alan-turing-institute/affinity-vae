@@ -35,22 +35,21 @@ class Decoder(AbstractDecoder):
         self,
         input_size: tuple,
         capacity: int | None = None,
+        filters: list[int] | None = None,
         depth: int = 4,
         latent_dims: int = 8,
         pose_dims: int = 0,
-        filters: list[int] | None = None,
         bnorm: bool = True,
     ):
 
         super(Decoder, self).__init__()
         self.filters = []
-        if capacity is None and filters is None:
-            raise RuntimeError(
-                "Pass either capacity or filters when definining avae.Decoder."
-            )
-        elif filters is not None and len(filters) != 0:
-            if 0 in filters:
-                raise RuntimeError("Filter list cannot contain zeros.")
+
+        if filters is not None and len(filters) != 0:
+            if sum([1 for f in filters if f <= 0]) != 0:
+                raise RuntimeError(
+                    "Filter list cannot contain zeros or negative values."
+                )
             self.filters = filters
             if depth is not None:
                 logging.warning(
@@ -63,27 +62,44 @@ class Decoder(AbstractDecoder):
                     "When passing initial 'capacity' parameter in avae.Encoder,"
                     " provide 'depth' parameter too."
                 )
+            elif depth < 0:
+                raise RuntimeError(
+                    "Parameter 'depth' cannot be a negative value."
+                )
             self.filters = [capacity * 2**x for x in range(depth)]
-        else:
+        elif depth is None or depth != 0:
             raise RuntimeError(
-                "You must provide either capacity or filters when definity ave.Decoder."
+                "Both 'capacity' and 'filters' parameters are None. Please pass one or the other to instantiate the network."
+            )
+        # else it's an FC network and filters not needed
+        if len(self.filters) != 0:
+            assert all(
+                [
+                    int(x) == x
+                    for x in np.array(input_size) / (2 ** len(self.filters))
+                ]
+            ), (
+                "Input size not compatible with --depth. Input must be divisible "
+                "by {}.".format(2 ** len(self.filters))
             )
 
-        assert all(
-            [int(x) == x for x in np.array(input_size) / (2**depth)]
-        ), (
-            "Input size not compatible with --depth. Input must be divisible "
-            "by {}.".format(2**depth)
-        )
+            self.bottom_dim = tuple(
+                [int(i / (2 ** len(self.filters))) for i in input_size]
+            )
 
-        self.bottom_dim = tuple(
-            [int(i / (2 ** len(self.filters))) for i in input_size]
-        )
+            # define layer dimensions
+            CONV, TCONV, BNORM = set_layer_dim(len(input_size))
+
+        else:
+            self.bottom_dim = input_size
+
+        if latent_dims <= 0:
+            raise RuntimeError(
+                "Parameter 'latent_dims' must be non-zero and positive."
+            )
+
         self.pose = not (pose_dims == 0)
         self.bnorm = bnorm
-
-        # define layer dimensions
-        CONV, TCONV, BNORM = set_layer_dim(len(input_size))
 
         #  iteratively define deconvolution and batch normalisation layers
         self.conv_dec = torch.nn.ModuleList()
@@ -153,7 +169,8 @@ class Decoder(AbstractDecoder):
                 )
             else:
                 x = torch.nn.functional.relu(self.conv_dec[d](x))
-        x = torch.sigmoid(self.conv_dec[-1](x))
+        if len(self.filters) != 0:
+            x = torch.sigmoid(self.conv_dec[-1](x))
         return x
 
 

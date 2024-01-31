@@ -52,7 +52,6 @@ class LossTest(unittest.TestCase):
         )
 
         self.vae = avae(self.encoder_3d, self.decoder_3d)
-        self.device = set_device(True)
 
     def tearDown(self):
         os.chdir(self._orig_dir)
@@ -80,3 +79,26 @@ class LossTest(unittest.TestCase):
         self.assertGreater(recon_loss.detach().numpy().item(0), 1)
         self.assertGreater(recon_loss, kldivergence)
         self.assertGreater(total_loss, affin_loss)
+
+    def test_loss_bvae(self):
+
+        x = torch.randn(14, 1, 64, 64, 64)
+
+        self.loss = AVAELoss(
+            torch.device("cpu"),
+            [1],
+            [0],
+            lookup_aff=self.affinity,
+            recon_fn="MSE",
+        )
+
+        x_hat, lat_mu, lat_logvar, _, _ = self.vae(x)
+        _, _, _, affin_loss = self.loss(
+            x,
+            x_hat,
+            lat_mu,
+            lat_logvar,
+            0,
+            batch_aff=torch.ones(14, dtype=torch.int),
+        )
+        self.assertEqual(affin_loss, 0)
