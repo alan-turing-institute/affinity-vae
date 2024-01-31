@@ -149,9 +149,9 @@ class AffinityConfig(BaseModel):
     n_splats: int = Field(
         128, description="The number of Gaussian splats for the GSD "
     )
-    gsd_conv_layers: bool = Field(
-        False,
-        description="If True, activates convolution layers at the end of the differetiable decoder.",
+    gsd_conv_layers: int = Field(
+        0,
+        description="If not none, activates convolution layers at the end of the differetiable decoder.",
     )
     klreduction: str = Field('mean', description="KL reduction method")
 

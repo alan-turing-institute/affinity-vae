@@ -432,8 +432,6 @@ def train(
                 gamma_arr[epoch],
             )
         )
-        with torch.no_grad():
-            torch.cuda.empty_cache()
         # ########################## VAL ######################################
         vae.eval()
         for b, batch in enumerate(vals):

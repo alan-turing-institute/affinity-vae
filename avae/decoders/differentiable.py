@@ -169,7 +169,7 @@ class GaussianSplatDecoder(AbstractDecoder):
         *,
         n_splats: int = 128,
         latent_dims: int = 8,
-        output_channels: Optional[int] = None,
+        output_channels: Optional[int] = 0,
         splat_sigma_range: Tuple[float, float] = (0.02, 0.1),
         default_axis: CartesianAxes = CartesianAxes.Z,
         device: torch.device = torch.device("cpu"),
@@ -218,7 +218,7 @@ class GaussianSplatDecoder(AbstractDecoder):
 
         # add a final convolutional decoder to generate an image if the number
         # of output channels has been provided
-        if output_channels is not None:
+        if output_channels != 0:
             conv = (
                 torch.nn.Conv2d
                 if self._ndim == SpatialDims.TWO
@@ -333,6 +333,6 @@ class GaussianSplatDecoder(AbstractDecoder):
         )
 
         # if we're doing a final convolution, do it here
-        if self._output_channels is not None and use_final_convolution:
+        if self._output_channels != 0 and use_final_convolution:
             x = self._decoder(x)
         return x

@@ -175,7 +175,7 @@ from avae.train import train
     "--gsd_conv_layers",
     "-gsdcl",
     type=int,
-    default=None,
+    default=0,
     help="The number of output channels for the convolution layers at the end of the GSD decoder",
 )
 @click.option(
