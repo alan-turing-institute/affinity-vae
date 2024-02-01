@@ -8,6 +8,7 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 
 from avae.decoders.decoders import Decoder, DecoderA, DecoderB
+from avae.decoders.differentiable import GaussianSplatDecoder
 from avae.encoders.encoders import Encoder, EncoderA, EncoderB
 
 from . import settings, vis
@@ -38,6 +39,8 @@ def train(
     pose_dims: int,
     bnorm_encoder: bool,
     bnorm_decoder: bool,
+    gsd_conv_layers: int,
+    n_splats: int,
     klred: str,
     learning: float,
     beta_load: str | None,
@@ -141,6 +144,9 @@ def train(
         If True, batch normalisation is applied to the encoder.
     bnrom_decoder: bool
         If True, batch normalisation is applied to the decoder.
+    gsd_conv_layers: int
+        activates convolution layers at the end of the differetiable decoder if set
+        and it is an integer defining the number of output channels  .
     """
     torch.manual_seed(42)
 
@@ -201,14 +207,31 @@ def train(
             pose_dims=pose_dims,
             bnorm=bnorm_decoder,
         )
+    elif model == "gsd":
+        encoder = EncoderA(
+            dshape, channels, depth, lat_dims, pose_dims, bnorm=bnorm_encoder
+        )
+        decoder = GaussianSplatDecoder(
+            dshape,
+            n_splats=n_splats,
+            latent_dims=lat_dims,
+            output_channels=gsd_conv_layers,
+            device=device,
+            pose_dims=pose_dims,
+        )
     else:
-        raise ValueError("Invalid model type", model, "must be a or b or u")
+        raise ValueError(
+            "Invalid model type",
+            model,
+            "must be one of : a, b, u or gsd",
+        )
 
     vae = AffinityVAE(encoder, decoder)
-
+    vae = vae.to(device)
     logging.info(vae)
 
-    vae.to(device)
+    # If more than one GPU available, model can use DataParallel
+    print("Using", torch.cuda.device_count(), "GPUs!")
 
     if opt_method == "adam":
         optimizer = torch.optim.Adam(
@@ -409,7 +432,6 @@ def train(
                 gamma_arr[epoch],
             )
         )
-
         # ########################## VAL ######################################
         vae.eval()
         for b, batch in enumerate(vals):
