@@ -151,7 +151,7 @@ def train(
         activates convolution layers at the end of the differetiable decoder if set
         and it is an integer defining the number of output channels  .
     """
-    torch.manual_seed(42)
+    lt.pytorch.seed_everything(42)
 
     n_devices = torch.cuda.device_count()
     logging.info('GPus available: {}'.format(n_devices))

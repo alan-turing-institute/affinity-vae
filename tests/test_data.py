@@ -5,7 +5,6 @@ import unittest
 
 import lightning as lt
 import numpy as np
-from torch.utils.data import DataLoader
 
 from avae.data import load_data
 from tests import testdata_mrc
@@ -68,6 +67,16 @@ class DataTest(unittest.TestCase):
         )  # this is expected only for eval without affinity
 
         assert xs[0].shape[-1] == sh
+
+        print((list(out)[0][0][0][0][0][0][0]).detach().numpy())
+        assert (
+            round((list(out)[0][0][0][0][0][0][0]).detach().numpy().item(), 5)
+            == 0.00238
+        )
+        assert (
+            round((list(out)[0][0][0][0][0][0][-1]).detach().numpy().item(), 5)
+            == 0.00157
+        )
 
     def test_load_train_data(self):
         """Test loading training data."""

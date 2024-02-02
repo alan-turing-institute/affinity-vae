@@ -2,8 +2,9 @@ import logging
 import os
 import random
 import typing
+from typing import Literal, overload
 
-import lightning
+import lightning as lt
 import mrcfile
 import numpy as np
 import numpy.typing as npt
@@ -16,8 +17,7 @@ from torchvision import transforms
 from . import settings
 from .vis import format, plot_affinity_matrix, plot_classes_distribution
 
-np.random.seed(42)
-from typing import Literal, overload
+lt.pytorch.seed_everything(42)
 
 
 @overload
@@ -25,7 +25,7 @@ def load_data(
     datapath: str,
     datatype: str,
     eval: Literal[True],
-    fabric: lightning.fabric.fabric,
+    fabric: lt.fabric.fabric,
     lim: int | None = None,
     splt: int = 20,
     batch_s: int = 64,
@@ -45,7 +45,7 @@ def load_data(
     datapath: str,
     datatype: str,
     eval: Literal[False],
-    fabric: lightning.fabric.fabric,
+    fabric: lt.fabric.fabric,
     lim: int | None = None,
     splt: int = 20,
     batch_s: int = 64,
@@ -64,7 +64,7 @@ def load_data(
     datapath: str,
     datatype: str,
     eval: bool,
-    fabric: lightning.fabric.fabric,
+    fabric: lt.fabric.fabric,
     lim: int | None = None,
     splt: int = 20,
     batch_s: int = 64,
