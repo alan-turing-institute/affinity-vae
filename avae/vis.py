@@ -333,7 +333,7 @@ def latent_embed_plot_umap(
     marker_size: int
         Marker size for UMAP plot
     l_w: int
-        Line width for the historgram plot when the pose is one dimensional. 
+        Line width for the historgram plot when the pose is one dimensional.
     display: bool
         When this variable is set to true, the save_imshow_png function only dispalys the plot
         and does not save a png image. This is to allow the use of this function in jupyter notebook
