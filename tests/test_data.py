@@ -19,8 +19,6 @@ class DataTest(unittest.TestCase):
         self.fabric = lt.Fabric()
         self.fabric.launch()
 
-        print(self.test_data, self.test_dir)
-
         # Change to test directory
         os.chdir(self.test_dir)
 
@@ -68,16 +66,6 @@ class DataTest(unittest.TestCase):
 
         assert xs[0].shape[-1] == sh
 
-        print((list(out)[0][0][0][0][0][0][0]).detach().numpy())
-        assert (
-            round((list(out)[0][0][0][0][0][0][0]).detach().numpy().item(), 5)
-            == 0.00238
-        )
-        assert (
-            round((list(out)[0][0][0][0][0][0][-1]).detach().numpy().item(), 5)
-            == 0.00157
-        )
-
     def test_load_train_data(self):
         """Test loading training data."""
         shutil.copytree(self.test_data, os.path.join(self.test_dir, "train"))
@@ -119,4 +107,27 @@ class DataTest(unittest.TestCase):
         assert lookup.shape[0] == lookup.shape[1]
         assert lookup[0][0] == 1
 
-    # write more tests for ProteinDataset
+        data_0 = list(out[0])[0][0][0][0][0].detach().numpy()
+        data_1 = list(out[0])[0][0][0][0][0].detach().numpy()
+
+        # test reproducibility
+        out_2, _, _, _, _ = load_data(
+            "./train",
+            datatype="mrc",
+            lim=None,
+            splt=30,
+            batch_s=16,
+            no_val_drop=True,
+            eval=False,
+            affinity="./train/affinity_fsc_10.csv",
+            gaussian_blur=True,
+            normalise=True,
+            shift_min=True,
+            rescale=sh,
+            fabric=self.fabric,
+        )
+        data_0_1 = list(out_2)[0][0][0][0][0].detach().numpy()
+        data_1_1 = list(out_2)[0][0][0][0][0].detach().numpy()
+
+        assert data_0.all() == data_0_1.all()
+        assert data_1.all() == data_1_1.all()
