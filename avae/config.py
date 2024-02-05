@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import Optional
 
 import yaml
 from pydantic import (
@@ -47,7 +48,7 @@ class AffinityConfig(BaseModel):
     datatype: str = Field('mrc', pattern='^npy|mrc$', description="Data type")
     debug: bool = Field(False, description="Debug mode")
     depth: PositiveInt = Field(3, description="Number of layers")
-    dynamic: bool = Field(False, description="Dynamic visualisation")
+    dynamic: Optional[bool] = Field(None, description="Dynamic visualisation")
     epochs: PositiveInt = Field(20, description="Number of epochs")
     eval: bool = Field(False, description="Evaluation mode")
     freq_acc: PositiveInt = Field(
@@ -116,17 +117,23 @@ class AffinityConfig(BaseModel):
     )
     split: PositiveInt = Field(20, description="Split ratio")
     state: FilePath | None = Field(None, description="Path to state file")
-    tensorboard: bool = Field(False, description="Use tensorboard")
-    vis_acc: bool = Field(False, description="Visualise accuracy")
-    vis_aff: bool = Field(False, description="Visualise affinity")
-    vis_all: bool = Field(False, description="Visualise all")
-    vis_cyc: bool = Field(False, description="Visualise beta/gamma cycle")
-    vis_dis: bool = Field(False, description="Visualise disentanglement")
-    vis_emb: bool = Field(False, description="Visualise embedding")
-    vis_his: bool = Field(False, description="Visualise history")
-    vis_int: bool = Field(False, description="Visualise interpolation")
-    vis_los: bool = Field(False, description="Visualise loss")
-    vis_pos: bool = Field(False, description="Visualise pose")
+    tensorboard: Optional[bool] = Field(None, description="Use tensorboard")
+    vis_acc: Optional[bool] = Field(None, description="Visualise accuracy")
+    vis_aff: Optional[bool] = Field(None, description="Visualise affinity")
+    vis_all: Optional[bool] = Field(None, description="Visualise all")
+    vis_cyc: Optional[bool] = Field(
+        None, description="Visualise beta/gamma cycle"
+    )
+    vis_dis: Optional[bool] = Field(
+        None, description="Visualise disentanglement"
+    )
+    vis_emb: Optional[bool] = Field(None, description="Visualise embedding")
+    vis_his: Optional[bool] = Field(None, description="Visualise history")
+    vis_int: Optional[bool] = Field(
+        None, description="Visualise interpolation"
+    )
+    vis_los: Optional[bool] = Field(None, description="Visualise loss")
+    vis_pos: Optional[bool] = Field(None, description="Visualise pose")
     vis_pose_class: None | str = Field(
         None, description="Visualise pose per class interpolation"
     )
@@ -134,8 +141,10 @@ class AffinityConfig(BaseModel):
         None, description="Visualise latent space interpolation "
     )
 
-    vis_rec: bool = Field(False, description="Visualise reconstruction")
-    vis_sim: bool = Field(False, description="Visualise similarity")
+    vis_rec: Optional[bool] = Field(
+        None, description="Visualise reconstruction"
+    )
+    vis_sim: Optional[bool] = Field(None, description="Visualise similarity")
     filters: list | None = Field(
         None,
         description="Comma-separated list of filters for the network. Either provide filters, or capacity and depth.",
@@ -302,40 +311,40 @@ def write_config_file(time_stamp_name, data):
 
 def setup_visualisation_config(data: dict) -> None:
     settings.VIS_LOS = (
-        data["vis_los"] if data["vis_los"] == True else data["vis_all"]
+        data["vis_los"] if data["vis_los"] is not None else data["vis_all"]
     )
     settings.VIS_ACC = (
-        data["vis_acc"] if data["vis_acc"] == True else data["vis_all"]
+        data["vis_acc"] if data["vis_acc"] is not None else data["vis_all"]
     )
     settings.VIS_REC = (
-        data["vis_rec"] if data["vis_rec"] == True else data["vis_all"]
+        data["vis_rec"] if data["vis_rec"] is not None else data["vis_all"]
     )
     settings.VIS_CYC = (
-        data["vis_cyc"] if data["vis_cyc"] == True else data["vis_all"]
+        data["vis_cyc"] if data["vis_cyc"] is not None else data["vis_all"]
     )
     settings.VIS_AFF = (
-        data["vis_aff"] if data["vis_aff"] == True else data["vis_all"]
+        data["vis_aff"] if data["vis_aff"] is not None else data["vis_all"]
     )
     settings.VIS_EMB = (
-        data["vis_emb"] if data["vis_emb"] == True else data["vis_all"]
+        data["vis_emb"] if data["vis_emb"] is not None else data["vis_all"]
     )
     settings.VIS_INT = (
-        data["vis_int"] if data["vis_int"] == True else data["vis_all"]
+        data["vis_int"] if data["vis_int"] is not None else data["vis_all"]
     )
     settings.VIS_DIS = (
-        data["vis_dis"] if data["vis_dis"] == True else data["vis_all"]
+        data["vis_dis"] if data["vis_dis"] is not None else data["vis_all"]
     )
     settings.VIS_POS = (
-        data["vis_pos"] if data["vis_pos"] == True else data["vis_all"]
+        data["vis_pos"] if data["vis_pos"] is not None else data["vis_all"]
     )
     settings.VIS_HIS = (
-        data["vis_his"] if data["vis_his"] == True else data["vis_all"]
+        data["vis_his"] if data["vis_his"] is not None else data["vis_all"]
     )
     settings.VIS_SIM = (
-        data["vis_sim"] if data["vis_sim"] == True else data["vis_all"]
+        data["vis_sim"] if data["vis_sim"] is not None else data["vis_all"]
     )
     settings.VIS_DYN = (
-        data["dynamic"] if data["dynamic"] == True else data["vis_all"]
+        data["dynamic"] if data["dynamic"] is not None else data["vis_all"]
     )
     settings.VIS_POSE_CLASS = data["vis_pose_class"]
     settings.VIS_Z_N_INT = data["vis_z_n_int"]

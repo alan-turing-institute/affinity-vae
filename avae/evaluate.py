@@ -115,7 +115,7 @@ def evaluate(
         )[-1]
         meta = os.path.join("states", metas)
 
-    logging.info("Loading model from: {}".format(meta))
+    logging.info("Loading meta file from: {}".format(meta))
     meta_df = pd.read_pickle(meta)
 
     # create holders for latent spaces and labels
@@ -232,7 +232,6 @@ def evaluate(
         [col for col in meta_df if col.startswith("lat")]
     ].to_numpy()
     latents_training_id = meta_df[meta_df["mode"] == "trn"]["id"]
-
     if settings.VIS_DYN:
         # merge img and rec into one image for display in altair
         meta_df["image"] = meta_df["image"].apply(vis.merge)

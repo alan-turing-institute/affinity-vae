@@ -137,6 +137,7 @@ def merge(im: str) -> str | None:
     str
         Merged image.
     """
+
     i = im.split("&")
     if len(i) != 2:
         logging.warning(
@@ -309,6 +310,8 @@ def latent_embed_plot_umap(
     epoch: int = 0,
     writer: typing.Any = None,
     rs: int = 42,
+    marker_size: int = 24,
+    l_w: int = 2,
     display: bool = False,
 ) -> None:
     """Plot static UMAP embedding.
@@ -327,6 +330,10 @@ def latent_embed_plot_umap(
         Current epoch
     writer: SummaryWriter
         Tensorboard summary writer
+    marker_size: int
+        Marker size for UMAP plot
+    l_w: int
+        Line width for the historgram plot when the pose is one dimensional.
     display: bool
         When this variable is set to true, the save_imshow_png function only dispalys the plot
         and does not save a png image. This is to allow the use of this function in jupyter notebook
@@ -393,7 +400,7 @@ def latent_embed_plot_umap(
             ax.scatter(
                 embedding[idx, 0],
                 embedding[idx, 1],
-                s=24,
+                s=marker_size,
                 label=mol[:4],
                 facecolor=color,
                 edgecolor=color,
@@ -417,6 +424,7 @@ def latent_embed_plot_umap(
                 stacked=True,
                 fill=False,
                 label=mol[:4],
+                linewidth=l_w,
             )
         plt.legend(
             prop={"size": 10},
@@ -431,7 +439,7 @@ def latent_embed_plot_umap(
     if not display:
         if not os.path.exists("plots"):
             os.mkdir("plots")
-        plt.savefig(f"plots/embedding_UMAP{mode}.png")
+        plt.savefig(f"plots/embedding_UMAP{mode}.png", dpi=300)
     else:
         plt.show()
 
@@ -1454,6 +1462,7 @@ def pose_class_disentanglement_plot(
     device: torch.device,
     mode: str = "trn",
     number_of_samples: int = 7,
+    specific_enc: npt.NDArray = None,
     display: bool = False,
 ):
 
@@ -1510,6 +1519,9 @@ def pose_class_disentanglement_plot(
         class_x = np.take(x, np.where(np.array(y) == i)[0], axis=0)
         class_x_indx = np.random.choice(class_x.shape[0])
         enc = class_x[class_x_indx, :]
+
+        if specific_enc is not None:
+            enc = specific_enc
 
         class_pos = np.take(poses_space, np.where(np.array(y) == i)[0], axis=0)
         class_pos_mean = np.mean(class_pos, axis=0)
