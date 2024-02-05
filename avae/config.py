@@ -1,6 +1,5 @@
 import logging
 import os
-from typing import Optional
 
 import yaml
 from pydantic import (
@@ -48,7 +47,7 @@ class AffinityConfig(BaseModel):
     datatype: str = Field('mrc', pattern='^npy|mrc$', description="Data type")
     debug: bool = Field(False, description="Debug mode")
     depth: PositiveInt = Field(3, description="Number of layers")
-    dynamic: Optional[bool] = Field(None, description="Dynamic visualisation")
+    dynamic: bool | None = Field(None, description="Dynamic visualisation")
     epochs: PositiveInt = Field(20, description="Number of epochs")
     eval: bool = Field(False, description="Evaluation mode")
     freq_acc: PositiveInt = Field(
@@ -117,23 +116,19 @@ class AffinityConfig(BaseModel):
     )
     split: PositiveInt = Field(20, description="Split ratio")
     state: FilePath | None = Field(None, description="Path to state file")
-    tensorboard: Optional[bool] = Field(None, description="Use tensorboard")
-    vis_acc: Optional[bool] = Field(None, description="Visualise accuracy")
-    vis_aff: Optional[bool] = Field(None, description="Visualise affinity")
-    vis_all: Optional[bool] = Field(None, description="Visualise all")
-    vis_cyc: Optional[bool] = Field(
+    tensorboard: bool | None = Field(None, description="Use tensorboard")
+    vis_acc: bool | None = Field(None, description="Visualise accuracy")
+    vis_aff: bool | None = Field(None, description="Visualise affinity")
+    vis_all: bool | None = Field(None, description="Visualise all")
+    vis_cyc: bool | None = Field(
         None, description="Visualise beta/gamma cycle"
     )
-    vis_dis: Optional[bool] = Field(
-        None, description="Visualise disentanglement"
-    )
-    vis_emb: Optional[bool] = Field(None, description="Visualise embedding")
-    vis_his: Optional[bool] = Field(None, description="Visualise history")
-    vis_int: Optional[bool] = Field(
-        None, description="Visualise interpolation"
-    )
-    vis_los: Optional[bool] = Field(None, description="Visualise loss")
-    vis_pos: Optional[bool] = Field(None, description="Visualise pose")
+    vis_dis: bool | None = Field(None, description="Visualise disentanglement")
+    vis_emb: bool | None = Field(None, description="Visualise embedding")
+    vis_his: bool | None = Field(None, description="Visualise history")
+    vis_int: bool | None = Field(None, description="Visualise interpolation")
+    vis_los: bool | None = Field(None, description="Visualise loss")
+    vis_pos: bool | None = Field(None, description="Visualise pose")
     vis_pose_class: None | str = Field(
         None, description="Visualise pose per class interpolation"
     )
@@ -141,10 +136,8 @@ class AffinityConfig(BaseModel):
         None, description="Visualise latent space interpolation "
     )
 
-    vis_rec: Optional[bool] = Field(
-        None, description="Visualise reconstruction"
-    )
-    vis_sim: Optional[bool] = Field(None, description="Visualise similarity")
+    vis_rec: bool | None = Field(None, description="Visualise reconstruction")
+    vis_sim: bool | None = Field(None, description="Visualise similarity")
     filters: list | None = Field(
         None,
         description="Comma-separated list of filters for the network. Either provide filters, or capacity and depth.",

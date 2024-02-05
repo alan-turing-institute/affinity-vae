@@ -641,6 +641,7 @@ def train(
                 vis.latent_embed_plot_umap(
                     ps, ys, epoch=epoch, writer=writer, mode="pose"
                 )
+
             if settings.VIS_DYN:
                 # merge img and rec into one image for display in altair
                 meta_df["image"] = meta_df["image"].apply(vis.merge)
