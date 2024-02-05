@@ -116,21 +116,17 @@ class AffinityConfig(BaseModel):
     )
     split: PositiveInt = Field(20, description="Split ratio")
     state: FilePath | None = Field(None, description="Path to state file")
-    tensorboard: Optional[bool] = Field(None, description="Use tensorboard")
+    tensorboard: bool | None = Field(None, description="Use tensorboard")
     vis_acc: bool | None = Field(None, description="Visualise accuracy")
     vis_aff: bool | None = Field(None, description="Visualise affinity")
     vis_all: bool | None = Field(None, description="Visualise all")
     vis_cyc: bool | None = Field(
         None, description="Visualise beta/gamma cycle"
     )
-    vis_dis: bool | None = Field(
-        None, description="Visualise disentanglement"
-    )
+    vis_dis: bool | None = Field(None, description="Visualise disentanglement")
     vis_emb: bool | None = Field(None, description="Visualise embedding")
     vis_his: bool | None = Field(None, description="Visualise history")
-    vis_int: bool | None = Field(
-        None, description="Visualise interpolation"
-    )
+    vis_int: bool | None = Field(None, description="Visualise interpolation")
     vis_los: bool | None = Field(None, description="Visualise loss")
     vis_pos: bool | None = Field(None, description="Visualise pose")
     vis_pose_class: None | str = Field(
@@ -140,9 +136,7 @@ class AffinityConfig(BaseModel):
         None, description="Visualise latent space interpolation "
     )
 
-    vis_rec: bool | None = Field(
-        None, description="Visualise reconstruction"
-    )
+    vis_rec: bool | None = Field(None, description="Visualise reconstruction")
     vis_sim: bool | None = Field(None, description="Visualise similarity")
     filters: list | None = Field(
         None,
