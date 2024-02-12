@@ -171,7 +171,7 @@ class GaussianSplatDecoder(AbstractDecoder):
         *,
         n_splats: int = 128,
         latent_dims: int = 8,
-        output_channels: Optional[int] = 0,
+        output_channels: int = 0,
         splat_sigma_range: Tuple[float, float] = (0.02, 0.1),
         default_axis: CartesianAxes = CartesianAxes.Z,
         device: torch.device = torch.device("cpu"),
@@ -209,7 +209,6 @@ class GaussianSplatDecoder(AbstractDecoder):
         self._device = device
         self._ndim = len(shape)
         self._output_channels = output_channels
-
         """Decode the splats to retrieve the coordinates, weights and sigmas."""
         if pose_dims not in (1, 4):
             raise ValueError(
@@ -333,8 +332,11 @@ class GaussianSplatDecoder(AbstractDecoder):
         x = self._splatter(
             splats, weights, sigmas, splat_sigma_range=self._splat_sigma_range
         )
-
         # if we're doing a final convolution, do it here
-        if self._output_channels != 0 and use_final_convolution:
+        if (
+            self._output_channels is not None
+            and self._output_channels != 0
+            and use_final_convolution
+        ):
             x = self._decoder(x)
         return x
