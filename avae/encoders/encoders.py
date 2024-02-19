@@ -246,8 +246,11 @@ class EncoderA(AbstractEncoder):
         encoded = self.encoder(x)
         mu = self.mu(encoded)
         log_var = self.log_var(encoded)
-        pose = self.pose_fc(encoded)
-        return mu, log_var, pose
+        if self.pose:
+            pose = self.pose_fc(encoded)
+            return mu, log_var, pose
+        else:
+            return mu, log_var
 
 
 class EncoderB(AbstractEncoder):
