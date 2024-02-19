@@ -109,7 +109,6 @@ class AffinityConfig(BaseModel):
         pattern='^(adam|sgd|asgd)$',
     )
     pose_dims: int = Field(1, description="Pose dimensions")
-
     rescale: float = Field(None, description="Rescale data")
     restart: bool = Field(False, description="Restart training")
     shift_min: bool = Field(
