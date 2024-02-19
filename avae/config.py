@@ -108,7 +108,10 @@ class AffinityConfig(BaseModel):
         description="Optimisation method.It can be adam/sgd/asgd",
         pattern='^(adam|sgd|asgd)$',
     )
-    pose_dims: PositiveInt = Field(1, description="Pose dimensions")
+    pose_dims: int = Field(1, description="Pose dimensions")
+    if pose_dims < 0:
+        raise ValueError('Input should be greater than 0')
+
     rescale: float = Field(None, description="Rescale data")
     restart: bool = Field(False, description="Restart training")
     shift_min: bool = Field(
