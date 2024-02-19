@@ -164,6 +164,8 @@ def latent_embed_plot_tsne(
     epoch: int = 0,
     writer: typing.Any = None,
     perplexity: int = 40,
+    marker_size: int = 24,
+    l_w: int = 2,
     display: bool = False,
 ) -> None:
     """Plot static TSNE embedding.
@@ -253,7 +255,7 @@ def latent_embed_plot_tsne(
             plt.scatter(
                 lats[idx, 0],
                 lats[idx, 1],
-                s=24,
+                s=marker_size,
                 label=mol[:4],
                 facecolor=color,
                 edgecolor=color,
@@ -277,6 +279,7 @@ def latent_embed_plot_tsne(
                 stacked=True,
                 fill=False,
                 label=mol[:4],
+                linewidth=l_w,
             )
         plt.legend(
             prop={"size": 10},
