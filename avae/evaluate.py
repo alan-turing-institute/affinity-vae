@@ -7,7 +7,7 @@ import torch
 
 from . import settings, vis
 from .data import load_data
-from .utils import accuracy
+from .utils import accuracy, latest_file
 from .utils_learning import add_meta, pass_batch, set_device
 
 
@@ -85,16 +85,13 @@ def evaluate(
                 "There are no existing model states saved or provided via the state flag in config unable to evaluate."
             )
         else:
-            state = sorted(
-                [s for s in os.listdir("states") if ".pt" in s],
-                key=lambda x: int(x.split("_")[2][1:]),
-            )[-1]
+            state = latest_file("states", ".pt")
             state = os.path.join("states", state)
 
     s = os.path.basename(state)
     fname = s.split(".")[0].split("_")
     dshape = list(tests)[0][0].shape[2:]
-    pose_dims = fname[3]
+    pose_dims = int(fname[-1])
 
     logging.info("Loading model from: {}".format(state))
     checkpoint = torch.load(state)
@@ -105,14 +102,7 @@ def evaluate(
     # ########################## EVALUATE ################################
 
     if meta is None:
-        metas = sorted(
-            [
-                f
-                for f in os.listdir("states")
-                if ".pkl" in f and "eval" not in f
-            ],
-            key=lambda x: int(x.split("_")[2][1:]),
-        )[-1]
+        metas = latest_file("states", ".pkl")
         meta = os.path.join("states", metas)
 
     logging.info("Loading model from: {}".format(meta))
@@ -122,6 +112,7 @@ def evaluate(
     x_test = []
     y_test = []
     c_test = []
+    p_test = None
 
     if pose_dims != 0:
         p_test = []
