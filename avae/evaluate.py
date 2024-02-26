@@ -114,7 +114,7 @@ def evaluate(
     c_test = []
     p_test = None
 
-    if pose_dims != 0:
+    if pose_dims is not 0:
         p_test = []
 
     logging.debug("Batch: [0/%d]" % (len(tests)))
@@ -170,7 +170,7 @@ def evaluate(
         )
 
     # visualise pose disentanglement
-    if pose_dims != 0 and settings.VIS_POS:
+    if pose_dims is not 0 and settings.VIS_POS:
         vis.pose_disentanglement_plot(
             dshape,
             x_test,
@@ -180,7 +180,7 @@ def evaluate(
             mode="_eval",
         )
 
-    if pose_dims != 0 and settings.VIS_POSE_CLASS:
+    if pose_dims is not 0 and settings.VIS_POSE_CLASS:
         vis.pose_class_disentanglement_plot(
             dshape,
             x_test,
