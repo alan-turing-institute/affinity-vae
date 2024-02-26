@@ -373,7 +373,10 @@ def latest_file(path: str, extension: str) -> str:
         if entry.name.lower().endswith(extension):
             # get the modification time of the file using entry.stat().st_mtime_ns
             mod_time = entry.stat().st_mtime_ns
-            if mod_time > most_recent_time and "eval" not in entry.name.lower() :
+            if (
+                mod_time > most_recent_time
+                and "eval" not in entry.name.lower()
+            ):
                 # update the most recent file and its modification time
                 most_recent_file = entry.name
                 most_recent_time = mod_time
