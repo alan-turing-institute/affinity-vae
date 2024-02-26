@@ -53,6 +53,7 @@ class TrainEvalTest(unittest.TestCase):
             "opt_method": "adam",
             "freq_all": 5,
             "vis_all": True,
+            "vis_format": "png",
         }
 
         self.data = config.load_config_params(local_vars=self.data_params)

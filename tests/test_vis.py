@@ -44,6 +44,7 @@ class VisPipelineTest(unittest.TestCase):
             # vis
             "vis_all": False,
             "freq_all": 1,
+            "vis_format": "png",
         }
 
         self.data = config.load_config_params(local_vars=self.data_params)
