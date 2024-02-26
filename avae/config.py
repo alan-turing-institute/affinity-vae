@@ -133,8 +133,11 @@ class AffinityConfig(BaseModel):
     vis_pose_class: None | str = Field(
         None, description="Visualise pose per class interpolation"
     )
+    vis_format: None | str = Field(
+        None, description="The format of saved images. Options: png , pdf"
+    )
     vis_z_n_int: None | str = Field(
-        None, description="Visualise latent space interpolation "
+        "png", description="Visualise latent space interpolation "
     )
 
     vis_rec: bool | None = Field(None, description="Visualise reconstruction")
@@ -341,6 +344,7 @@ def setup_visualisation_config(data: dict) -> None:
         data["dynamic"] if data["dynamic"] is not None else data["vis_all"]
     )
     settings.VIS_POSE_CLASS = data["vis_pose_class"]
+    settings.VIS_FORMAT = data["vis_format"]
     settings.VIS_Z_N_INT = data["vis_z_n_int"]
 
     settings.FREQ_EVAL = (

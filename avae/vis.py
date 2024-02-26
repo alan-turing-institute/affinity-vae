@@ -19,6 +19,7 @@ from sklearn.manifold import TSNE
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix, f1_score
 from sklearn.metrics.pairwise import cosine_similarity
 
+from . import settings
 from .utils import (
     colour_per_class,
     create_grid_for_plotting,
@@ -295,7 +296,7 @@ def latent_embed_plot_tsne(
     if not display:
         if not os.path.exists("plots"):
             os.mkdir("plots")
-        plt.savefig(f"plots/embedding_TSNE{mode}.png")
+        plt.savefig(f"plots/embedding_TSNE{mode}.{settings.VIS_FORMAT}")
     else:
         plt.show()
     if writer:
@@ -437,7 +438,9 @@ def latent_embed_plot_umap(
     if not display:
         if not os.path.exists("plots"):
             os.mkdir("plots")
-        plt.savefig(f"plots/embedding_UMAP{mode}.png", dpi=300)
+        plt.savefig(
+            f"plots/embedding_UMAP{mode}.{settings.VIS_FORMAT}", dpi=300
+        )
     else:
         plt.show()
 
@@ -642,7 +645,7 @@ def confidence_plot(x, y, s, suffix=None):
                 label="lat" + str(i + 1),
             )
         ax[c].set_title(cl)
-    name = "plots/confidence.png"
+    name = f"plots/confidence.{settings.VIS_FORMAT}"
     if suffix is not None:
         name = name[:-4] + "_" + suffix + name[-4:]
     handles, labels = ax[-1].get_legend_handles_labels()
@@ -727,7 +730,9 @@ def accuracy_plot(
         if not os.path.exists("plots"):
             os.mkdir("plots")
 
-        plt.savefig(f"plots/confusion_train{mode}.png", dpi=300)
+        plt.savefig(
+            f"plots/confusion_train{mode}.{settings.VIS_FORMAT}", dpi=300
+        )
 
         if writer:
             writer.add_figure("Accuracy", fig, epoch)
@@ -758,7 +763,9 @@ def accuracy_plot(
             os.mkdir("plots")
         plt.xlabel("Predicted label (%)")
         plt.ylabel("True label (%)")
-        plt.savefig(f"plots/confusion_train{mode}_norm.png", dpi=300)
+        plt.savefig(
+            f"plots/confusion_train{mode}_norm.{settings.VIS_FORMAT}", dpi=300
+        )
 
         if writer:
             writer.add_figure("Accuracy (Norm)", fig, epoch)
@@ -814,7 +821,7 @@ def accuracy_plot(
             ),
             fontsize=12,
         )
-        plt.savefig(figure_name + ".png", dpi=300)
+        plt.savefig(figure_name + f".{settings.VIS_FORMAT}", dpi=300)
         plt.close()
 
         fig, ax = plt.subplots(
@@ -838,7 +845,7 @@ def accuracy_plot(
         )
         plt.xlabel("Predicted label (%)")
         plt.ylabel("True label (%)")
-        plt.savefig(figure_name + "_norm.png", dpi=300)
+        plt.savefig(f"{figure_name}_norm.{settings.VIS_FORMAT}", dpi=300)
         plt.close()
 
 
@@ -949,7 +956,7 @@ def f1_plot(
         plt.legend(loc="lower left")
         plt.title("F1 Score at epoch {}".format(epoch))
         plt.ylabel("F1 Score")
-        plt.savefig(f"plots/f1{mode}.png", dpi=150)
+        plt.savefig(f"plots/f1{mode}.{settings.VIS_FORMAT}", dpi=150)
 
         if writer:
             writer.add_figure("F1 score", fig, epoch)
@@ -1056,7 +1063,7 @@ def loss_plot(
     plt.tight_layout()
     if not os.path.exists("plots"):
         os.mkdir("plots")
-    plt.savefig("plots/loss.png", dpi=300)
+    plt.savefig(f"plots/loss.{settings.VIS_FORMAT}", dpi=300)
     plt.close()
 
     # only training loss
@@ -1073,7 +1080,7 @@ def loss_plot(
     plt.yticks(fontsize=16)
     plt.legend()
     plt.tight_layout()
-    plt.savefig("plots/loss_train.png", dpi=300)
+    plt.savefig(f"plots/loss_train.{settings.VIS_FORMAT}", dpi=300)
     plt.close()
 
     # plotting only the total loss as it sometimes is a few order of magnitude higher than KLD and affinity losses
@@ -1099,7 +1106,7 @@ def loss_plot(
     plt.yticks(fontsize=16)
     plt.legend()
     plt.tight_layout()
-    plt.savefig("plots/loss_total.png", dpi=300)
+    plt.savefig(f"plots/loss_total.{settings.VIS_FORMAT}", dpi=300)
     plt.close()
 
 
@@ -1141,8 +1148,8 @@ def recon_plot(
     )
     logging.info("Visualising reconstructions " + mode + "...\n")
 
-    fname_in = str(mode) + "_recon_in.png"
-    fname_out = str(mode) + "_recon_out.png"
+    fname_in = f"{str(mode)}_recon_in.{settings.VIS_FORMAT}"
+    fname_out = f"{str(mode)}_recon_out.{settings.VIS_FORMAT}"
 
     if data_dim == 3:
         img_2d = img[:, :, :, :, img.shape[-1] // 2]
@@ -1293,7 +1300,7 @@ def latent_4enc_interpolate_plot(
                 random.sample(list(np.where(ys == classes[idx])[0]), k=1),
                 axis=0,
             )
-            enc.append(lat.numpy())
+            enc.append(lat)
 
         enc = np.asarray(enc)
         alpha_values = torch.linspace(0, 1, num_steps)
@@ -1344,7 +1351,7 @@ def latent_4enc_interpolate_plot(
             )
         elif data_dim == 2:
             save_imshow_png(
-                f"latent_interpolate_{num_fig}.png",
+                f"latent_interpolate_{num_fig}.{settings.VIS_FORMAT}",
                 grid_for_napari,
                 display=display,
             )
@@ -1446,7 +1453,10 @@ def latent_disentamglement_plot(
     if data_dim == 3:
         save_mrc_file(f"disentanglement-latent_{mode}.mrc", grid_for_napari)
     elif data_dim == 2:
-        save_imshow_png(f"disentanglement-latent_{mode}.png", grid_for_napari)
+        save_imshow_png(
+            f"disentanglement-latent_{mode}.{settings.VIS_FORMAT}",
+            grid_for_napari,
+        )
 
 
 def pose_class_disentanglement_plot(
@@ -1551,7 +1561,7 @@ def pose_class_disentanglement_plot(
             save_mrc_file(f"pose_interpolate_{mode}_{i}.mrc", grid_for_napari)
         elif data_dim == 2:
             save_imshow_png(
-                f"pose_interpolate_{mode}_{i}.png",
+                f"pose_interpolate_{mode}_{i}.{settings.VIS_FORMAT}",
                 grid_for_napari,
                 display=display,
             )
@@ -1636,7 +1646,7 @@ def pose_disentanglement_plot(
         )
     elif data_dim == 2:
         save_imshow_png(
-            f"disentanglement-pose_{mode}_{label}.png",
+            f"disentanglement-pose_{mode}_{label}.{settings.VIS_FORMAT}",
             grid_for_napari,
             display=display,
         )
@@ -1765,7 +1775,9 @@ def interpolations_plot(
     if data_dim == 3:
         save_mrc_file(f"interpolations_{mode}.mrc", grid_for_napari)
     elif data_dim == 2:
-        save_imshow_png(f"interpolations_{mode}.png", grid_for_napari)
+        save_imshow_png(
+            f"interpolations_{mode}.{settings.VIS_FORMAT}", grid_for_napari
+        )
 
 
 def plot_affinity_matrix(
@@ -1832,7 +1844,7 @@ def plot_affinity_matrix(
     fig.tight_layout()
     if not os.path.exists("plots"):
         os.mkdir("plots")
-    plt.savefig("plots/affinity_matrix.png", dpi=300)
+    plt.savefig(f"plots/affinity_matrix.{settings.VIS_FORMAT}", dpi=300)
     plt.close()
 
 
@@ -1865,7 +1877,9 @@ def plot_classes_distribution(data: list, category: str) -> None:
     plt.tight_layout()
     if not os.path.exists("plots"):
         os.mkdir("plots")
-    plt.savefig("plots/classes_distribution_" + category + ".png", dpi=300)
+    plt.savefig(
+        f"plots/classes_distribution_{category}.{settings.VIS_FORMAT}", dpi=300
+    )
     plt.close()
 
 
@@ -1891,7 +1905,7 @@ def plot_cyc_variable(array: list, variable_name: str):
     plt.tight_layout()
     if not os.path.exists("plots"):
         os.mkdir("plots")
-    plt.savefig(f"plots/{variable_name}_array.png", dpi=300)
+    plt.savefig(f"plots/{variable_name}_array.{settings.VIS_FORMAT}", dpi=300)
     plt.close()
 
 
@@ -1980,7 +1994,9 @@ def latent_space_similarity_plot(
     if not display:
         if not os.path.exists("plots"):
             os.mkdir("plots")
-        plt.savefig(f"plots/similarity_mean{mode}.png", dpi=dpi)
+        plt.savefig(
+            f"plots/similarity_mean{mode}.{settings.VIS_FORMAT}", dpi=dpi
+        )
         plt.close()
     else:
         plt.show()

@@ -219,7 +219,7 @@ class GaussianSplatDecoder(AbstractDecoder):
 
         # add a final convolutional decoder to generate an image if the number
         # of output channels has been provided
-        if output_channels is not 0:
+        if output_channels != 0:
             conv = (
                 torch.nn.Conv2d
                 if self._ndim == SpatialDims.TWO
