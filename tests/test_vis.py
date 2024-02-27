@@ -44,6 +44,7 @@ class VisPipelineTest(unittest.TestCase):
             # vis
             "vis_all": False,
             "freq_all": 1,
+            "vis_format": "png",
         }
 
         self.data = config.load_config_params(local_vars=self.data_params)
@@ -56,7 +57,7 @@ class VisPipelineTest(unittest.TestCase):
             self.data, eval=False, nolat=True, nostate=True
         )
 
-        self.assertEqual(n_plots, 7)
+        self.assertEqual(n_plots, 11)
         # confusion val and train + val and train norm, f1, f1 val and f1 train
 
     def test_loss(self):
