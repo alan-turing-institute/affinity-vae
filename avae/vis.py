@@ -698,14 +698,24 @@ def accuracy_plot(
     else:
         classes_list = np.unique(np.concatenate((y_train, ypred_train)))
 
+    # Compute confusion matrix
     cm = confusion_matrix(y_train, ypred_train, labels=classes_list)
+
+    # Convert confusion matrix to a DataFrame to be saved as csv file
+    cm_df = pd.DataFrame(cm)
+
     disp = ConfusionMatrixDisplay(
         confusion_matrix=cm, display_labels=classes_list
     )
 
     avg_accuracy = cm.diagonal() / cm.sum(axis=1)
 
+    # Normalize confusion matrix
     cmn = (cm.astype("float") / cm.sum(axis=1)[:, np.newaxis]) * 100
+
+    # Convert normalised confusion matrix to a DataFrame to be saved as csv file
+    cmn_df = pd.DataFrame(cmn)
+
     dispn = ConfusionMatrixDisplay(
         confusion_matrix=cmn, display_labels=classes_list
     )
@@ -734,6 +744,12 @@ def accuracy_plot(
             f"plots/confusion_train{mode}.{settings.VIS_FORMAT}", dpi=300
         )
 
+        # Save confusion matrix DataFrame to CSV
+        cm_df.to_csv(f'plots/confusion_train{mode}.csv', index=False)
+
+        # Save normalised confusion matrix DataFrame to CSV
+        cmn_df.to_csv(f'plots/confusion_train{mode}_norm.csv', index=False)
+
         if writer:
             writer.add_figure("Accuracy", fig, epoch)
 
@@ -759,8 +775,6 @@ def accuracy_plot(
             fontsize=12,
         )
 
-        if not os.path.exists("plots"):
-            os.mkdir("plots")
         plt.xlabel("Predicted label (%)")
         plt.ylabel("True label (%)")
         plt.savefig(
@@ -782,14 +796,29 @@ def accuracy_plot(
         ordered_class_eval = classes_list
 
     cm_eval = confusion_matrix(y_val, ypred_val, labels=ordered_class_eval)
+
+    # Convert confusion matrix to a DataFrame to be saved as csv file
+    cm_eval_df = pd.DataFrame(cm_eval)
+
     disp_eval = ConfusionMatrixDisplay(
         confusion_matrix=cm_eval, display_labels=ordered_class_eval
     )
     avg_accuracy_eval = cm_eval.diagonal() / cm_eval.sum(axis=1)
 
+    # Normalise the validation confusion matrix
     cmn_eval = (
         cm_eval.astype("float") / cm_eval.sum(axis=1)[:, np.newaxis] * 100
     )
+
+    # Convert confusion matrix to a DataFrame to be saved as csv file
+    cmn_eval_df = pd.DataFrame(cmn_eval)
+
+    # Save confusion matrix DataFrame to CSV
+    cm_eval_df.to_csv(f'plots/confusion_valid{mode}.csv', index=False)
+
+    # Save normalised confusion matrix DataFrame to CSV
+    cmn_eval_df.to_csv(f'plots/confusion_valid{mode}_norm.csv', index=False)
+
     dispn_eval = ConfusionMatrixDisplay(
         confusion_matrix=cmn_eval, display_labels=ordered_class_eval
     )
