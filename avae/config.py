@@ -134,10 +134,10 @@ class AffinityConfig(BaseModel):
         None, description="Visualise pose per class interpolation"
     )
     vis_format: None | str = Field(
-        None, description="The format of saved images. Options: png , pdf"
+        "png", description="The format of saved images. Options: png , pdf"
     )
     vis_z_n_int: None | str = Field(
-        "png", description="Visualise latent space interpolation "
+        None, description="Visualise latent space interpolation "
     )
 
     vis_rec: bool | None = Field(None, description="Visualise reconstruction")
