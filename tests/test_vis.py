@@ -57,7 +57,7 @@ class VisPipelineTest(unittest.TestCase):
             self.data, eval=False, nolat=True, nostate=True
         )
 
-        self.assertEqual(n_plots, 7)
+        self.assertEqual(n_plots, 11)
         # confusion val and train + val and train norm, f1, f1 val and f1 train
 
     def test_loss(self):

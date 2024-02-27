@@ -78,7 +78,7 @@ class TrainEvalTest(unittest.TestCase):
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
 
-        self.assertEqual(n_plots_eval, 52)
+        self.assertEqual(n_plots_eval, 60)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 3)
 
@@ -100,7 +100,7 @@ class TrainEvalTest(unittest.TestCase):
         self.assertEqual(n_plots_train, 37)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
-        self.assertEqual(n_plots_eval, 52)
+        self.assertEqual(n_plots_eval, 60)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 3)
 
@@ -128,7 +128,7 @@ class TrainEvalTest(unittest.TestCase):
         self.assertEqual(n_plots_train, 35)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
-        self.assertEqual(n_plots_eval, 49)
+        self.assertEqual(n_plots_eval, 57)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 3)
 
@@ -156,7 +156,7 @@ class TrainEvalTest(unittest.TestCase):
         self.assertEqual(n_plots_train, 35)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
-        self.assertEqual(n_plots_eval, 49)
+        self.assertEqual(n_plots_eval, 57)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 3)
 
@@ -178,7 +178,7 @@ class TrainEvalTest(unittest.TestCase):
         self.assertEqual(n_plots_train, 32)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
-        self.assertEqual(n_plots_eval, 44)
+        self.assertEqual(n_plots_eval, 52)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 3)
 
@@ -200,7 +200,7 @@ class TrainEvalTest(unittest.TestCase):
         self.assertEqual(n_plots_train, 35)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
-        self.assertEqual(n_plots_eval, 48)
+        self.assertEqual(n_plots_eval, 56)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 3)
 
