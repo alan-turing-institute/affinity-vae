@@ -18,6 +18,8 @@ from .vis import format, plot_affinity_matrix, plot_classes_distribution
 np.random.seed(42)
 from typing import Any, Literal, overload
 
+from caked.dataloader import DiskDataLoader
+
 
 @overload
 def load_data(
@@ -118,255 +120,129 @@ def load_data(
     lookup: pd.DataFrame
         Affinity matrix, returned only if eval is False.
     """
+    if classes is not None:
+        classes_list = pd.read_csv(classes).columns.tolist()
+    else:
+        classes_list = []
 
     if not eval:
         if affinity is not None:
-            # load affinity matrix
-            lookup = pd.read_csv(affinity, header=0)
-        else:
-            lookup = None
 
-        # create ProteinDataset
-        data = Dataset_reader(
-            datapath,
-            amatrix=lookup,
-            classes=classes,
-            gaussian_blur=gaussian_blur,
-            normalise=normalise,
-            shift_min=shift_min,
-            rescale=rescale,
-            lim=lim,
-            datatype=datatype,
+            affinity = get_affinity_matrix(affinity, classes_list)
+
+        transformations = []
+        if gaussian_blur:
+            transformations.append('gaussian_blur')
+        if normalise:
+            transformations.append('normalise')
+        if shift_min:
+            transformations.append('shift_min')
+        if rescale is not None:
+            transformations.append(f'rescale={rescale}')
+
+        loader = DiskDataLoader(
+            pipeline="disk",
+            classes=classes_list,
+            dataset_size=lim,
+            training=True,
+            transformations=(
+                None if len(transformations) == 0 else transformations
+            ),
         )
 
-        # ################# Visualising affinity matrix ###################
-        if affinity is not None and settings.VIS_AFF:
-            plot_affinity_matrix(
-                lookup=lookup,
-                all_classes=lookup.columns.tolist(),
-                selected_classes=data.final_classes,
-            )
+        loader.load(datapath=datapath, datatype=datatype)
 
-        # updating affinity matrix with the final classes
-        lookup = data.amatrix
+        data = loader.data
 
-        # split into train / val sets
-        idx = np.random.permutation(len(data))
-        s = int(np.ceil(len(data) * int(splt) / 100))
-        if s < 2:
-            raise RuntimeError(
-                "Train and validation sets must be larger than 1 sample, "
-                "train: {}, val: {}.".format(len(idx[:-s]), len(idx[-s:]))
-            )
-        train_data = Subset(data, indices=idx[:-s])
-        val_data = Subset(data, indices=idx[-s:])
+        trains, vals = loader.get_loader(batch_size=batch_s, split=splt)
 
         # ################# Visualising class distribution ###################
 
-        train_y = [y[1] for _, y in enumerate(train_data)]
-        val_y = [y[1] for _, y in enumerate(val_data)]
+        train_y: list = []
+        val_y: list = []
 
         if settings.VIS_HIS:
             plot_classes_distribution(train_y, "train")
             plot_classes_distribution(val_y, "validation")
 
-        # split into batches
-        trains = DataLoader(
-            train_data,
-            batch_size=batch_s,
-            num_workers=0,
-            shuffle=True,
-            drop_last=True,
-        )
-        vals = DataLoader(
-            val_data,
-            batch_size=batch_s,
-            num_workers=0,
-            shuffle=True,
-            drop_last=(not no_val_drop),
-        )
-        tests = []
-        if len(vals) < 1 or len(trains) < 1:
-            # ensure the batch size is not smaller than validation set
-            raise RuntimeError(
-                "Validation or train set is too small for the current batch "
-                "size. Please edit either split percent '-sp/--split' or batch"
-                " size '-ba/--batch' or set '-nd/--no_val_drop flag' (only if "
-                "val is too small). Batch: {}, train: {}, val: {}, "
-                "split: {}%.".format(
-                    batch_s, len(train_data), len(val_data), splt
-                )
-            )
         logging.info("############################################### DATA")
         logging.info("Data size: {}".format(len(data)))
-        logging.info("Class list: {}".format(data.final_classes))
+        logging.info("Class list: {}".format(data.classes))
         logging.info(
-            "Train / val split: {}, {}".format(len(train_data), len(val_data))
+            "Train / val split: {}, {}".format(len(train_y), len(val_y))
         )
         logging.info(
             "Train / val batches: {}, {}\n".format(len(trains), len(vals))
         )
 
-        if affinity is not None:
-            lookup = lookup.to_numpy(dtype=np.float32)
-        else:
-            lookup = None
-
     if eval or ("test" in os.listdir(datapath)):
         if "test" in os.listdir(datapath):
             datapath = os.path.join(datapath, "test")
-        data = Dataset_reader(
-            datapath,
-            gaussian_blur=gaussian_blur,
-            normalise=normalise,
-            shift_min=shift_min,
-            rescale=rescale,
-            lim=lim,
-            datatype=datatype,
+
+        test_loader = DiskDataLoader(
+            pipeline="disk",
+            classes=[],
+            dataset_size=lim,
+            training=False,
+            training_path=transformations,
         )
+
+        test_loader.load(datapath=datapath, datatype=datatype)
+
+        data = test_loader.data
+        tests = test_loader.get_loader(batch_size=batch_s, split=splt)
 
         logging.info("############################################### EVAL")
         logging.info("Eval data size: {}".format(len(data)))
-        tests = DataLoader(
-            data, batch_size=batch_s, num_workers=0, shuffle=True
-        )
         logging.info("Eval batches: {}\n".format(len(tests)))
 
     if eval:
         return tests, data.dim()
     else:
-        return trains, vals, tests, lookup, data.dim()  # , dsize
+        return trains, vals, tests, affinity, data.dim()  # , dsize
 
 
-class Dataset_reader(Dataset):
-    def __init__(
-        self,
-        root_dir: str,
-        amatrix: npt.NDArray | None = None,
-        classes: str | None = None,
-        transform: typing.Any = None,
-        gaussian_blur: bool = False,
-        normalise: bool = False,
-        shift_min: bool = False,
-        rescale: bool | None = None,
-        lim: int | None = None,
-        datatype: str = "mrc",
-    ):
-        super().__init__()
-        self.datatype = datatype
-        self.shift_min = shift_min
-        self.normalise = normalise
-        self.gaussian_blur = gaussian_blur
-        self.rescale = rescale
-        self.transform = transform
-        self.amatrix = amatrix
-        self.root_dir = root_dir
+def get_affinity_matrix(
+    affinity_path: str | None, classes: list = []
+) -> pd.DataFrame:
+    """Loads affinity matrix from a given path, subsets it given selected classes and returns it as a pandas DataFrame.
 
-        self.paths = [
-            f for f in os.listdir(root_dir) if "." + self.datatype in f
-        ]
+    Parameters
+    ----------
+    affinity: str
+        Path to the affinity matrix.
+    classes: list
+        List of classes to be selected from the data.
 
-        random.shuffle(self.paths)
-        ids = np.unique([f.split("_")[0] for f in self.paths])
-        self.final_classes = ids
-        if classes is not None:
-            classes_list = pd.read_csv(classes).columns.tolist()
-            self.final_classes = classes_list
+    Returns
+    -------
+    affinity: pd.DataFrame
+        Affinity matrix.
+    """
+    if affinity_path is not None:
+        # load affinity matrix
+        affinity = pd.read_csv(affinity_path, header=0)
+    else:
+        affinity = None
 
-        if self.amatrix is not None:
-            class_check = np.in1d(self.final_classes, self.amatrix.columns)
-            if not np.all(class_check):
-                raise RuntimeError(
-                    "Not all classes in the training set are present in the "
-                    "affinity matrix. Missing classes: {}".format(
-                        np.asarray(ids)[~class_check]
-                    )
+    if affinity is not None:
+        class_check = np.in1d(classes, affinity.columns)
+        if not np.all(class_check):
+            raise RuntimeError(
+                "Not all classes in the training set are present in the "
+                "affinity matrix. Missing classes: {}".format(
+                    np.asarray(classes)[~class_check]
                 )
+            )
+        if settings.VIS_AFF:
+            plot_affinity_matrix(
+                lookup=affinity,
+                all_classes=affinity.columns.tolist(),
+                selected_classes=classes,
+            )
 
-            # subset affinity matrix with only the relevant classes
-            index = [
-                self.amatrix.columns.get_loc(f"{columns}")
-                for columns in self.final_classes
-            ]
-            self.amatrix = self.amatrix.iloc[index, index]
+        # subset affinity matrix with only the relevant classes
+        index = [affinity.columns.get_loc(f"{columns}") for columns in classes]
+        sub_affinity = affinity.iloc[index, index]
 
-        self.paths = [
-            p
-            for p in self.paths
-            for c in self.final_classes
-            if c in p.split("_")[0]
-        ]
-
-        self.paths = self.paths[:lim]
-
-    def __len__(self):
-        return len(self.paths)
-
-    def dim(self):
-        return len(np.array(self.read(self.paths[0])).shape)
-
-    def __getitem__(self, item):
-        filename = self.paths[item]
-
-        data = np.array(self.read(filename))
-        x = self.voxel_transformation(data)
-
-        # ground truth
-        y = filename.split("_")[0]
-
-        # similarity column / vector
-        if self.amatrix is not None:
-            aff = self.amatrix.columns.get_loc(f"{y}")
-        else:
-            # in evaluation mode - test set
-            aff = 0  # cannot be None, but not used anywhere during evaluation
-
-        # file info and metadata
-        meta = "_".join(filename.split(".")[0].split("_")[1:])
-        avg = np.around(np.average(x), decimals=4)
-        img = format(x, len(data.shape))  # used for dynamic preview in Altair
-        meta = {
-            "filename": filename,
-            "id": y,
-            "meta": meta,
-            "avg": avg,
-            "image": img,
-        }
-        return x, y, aff, meta
-
-    def read(self, filename):
-
-        if self.datatype == "npy":
-            return np.load(os.path.join(self.root_dir, filename))
-
-        elif self.datatype == "mrc":
-            with mrcfile.open(os.path.join(self.root_dir, filename)) as f:
-                return np.array(f.data)
-
-    def voxel_transformation(self, x):
-
-        if self.rescale:
-            x = np.asarray(x, dtype=np.float32)
-            sh = tuple([self.rescale / s for s in x.shape])
-            x = zoom(x, sh)
-
-        # convert numpy to torch tensor
-        x = Tensor(x)
-
-        # unsqueeze adds a dimension for batch processing the data
-        x = x.unsqueeze(0)
-
-        if self.shift_min:
-            x = (x - x.min()) / (x.max() - x.min())
-
-        if self.gaussian_blur:
-            T = transforms.GaussianBlur(3, sigma=(0.08, 10.0))
-            x = T(x)
-
-        if self.normalise:
-            T = transforms.Normalize(0, 1, inplace=False)
-            x = T(x)
-
-        if self.transform:
-            x = self.transform(x)
-        return x
+    return sub_affinity.to_numpy(dtype=np.float32)
