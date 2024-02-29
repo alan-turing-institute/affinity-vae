@@ -1,22 +1,15 @@
 import logging
 import os
-import random
-import typing
 
-import mrcfile
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
-from scipy.ndimage import zoom
-from torch import Tensor
-from torch.utils.data import DataLoader, Dataset, Subset
-from torchvision import transforms
+from torch.utils.data import DataLoader
 
 from . import settings
-from .vis import format, plot_affinity_matrix, plot_classes_distribution
+from .vis import plot_affinity_matrix, plot_classes_distribution
 
 np.random.seed(42)
-from typing import Any, Literal, overload
+from typing import Literal, overload
 
 from caked.dataloader import DiskDataLoader
 
@@ -125,21 +118,24 @@ def load_data(
     else:
         classes_list = []
 
+    transformations = []
+    if gaussian_blur:
+        transformations.append('gaussian_blur')
+    if normalise:
+        transformations.append('normalise')
+    if shift_min:
+        transformations.append('shiftmin')
+    if rescale is not None:
+        transformations.append(f'rescale={rescale}')
+
     if not eval:
+
+        # for training we need to load the affinity matrix
         if affinity is not None:
 
             affinity = get_affinity_matrix(affinity, classes_list)
 
-        transformations = []
-        if gaussian_blur:
-            transformations.append('gaussian_blur')
-        if normalise:
-            transformations.append('normalise')
-        if shift_min:
-            transformations.append('shift_min')
-        if rescale is not None:
-            transformations.append(f'rescale={rescale}')
-
+        # create dataloader
         loader = DiskDataLoader(
             pipeline="disk",
             classes=classes_list,
@@ -151,23 +147,21 @@ def load_data(
         )
 
         loader.load(datapath=datapath, datatype=datatype)
-
-        data = loader.data
-
-        trains, vals = loader.get_loader(batch_size=batch_s, split=splt)
+        trains, vals = loader.get_loader(batch_size=batch_s, split_size=splt)
 
         # ################# Visualising class distribution ###################
 
-        train_y: list = []
-        val_y: list = []
+        # getting labels from dataloaders
+        train_y = list(sum([y[1] for _, y in enumerate(trains)], ()))
+        val_y = list(sum([y[1] for _, y in enumerate(vals)], ()))
 
         if settings.VIS_HIS:
             plot_classes_distribution(train_y, "train")
             plot_classes_distribution(val_y, "validation")
 
         logging.info("############################################### DATA")
-        logging.info("Data size: {}".format(len(data)))
-        logging.info("Class list: {}".format(data.classes))
+        logging.info("Data size: {}".format(len(loader.dataset)))
+        logging.info("Class list: {}".format(classes_list))
         logging.info(
             "Train / val split: {}, {}".format(len(train_y), len(val_y))
         )
@@ -175,6 +169,7 @@ def load_data(
             "Train / val batches: {}, {}\n".format(len(trains), len(vals))
         )
 
+    tests = []
     if eval or ("test" in os.listdir(datapath)):
         if "test" in os.listdir(datapath):
             datapath = os.path.join(datapath, "test")
@@ -188,18 +183,16 @@ def load_data(
         )
 
         test_loader.load(datapath=datapath, datatype=datatype)
-
-        data = test_loader.data
         tests = test_loader.get_loader(batch_size=batch_s, split=splt)
 
         logging.info("############################################### EVAL")
-        logging.info("Eval data size: {}".format(len(data)))
+        logging.info("Eval data size: {}".format(len(test_loader.dataset)))
         logging.info("Eval batches: {}\n".format(len(tests)))
 
     if eval:
-        return tests, data.dim()
+        return tests, test_loader.dataset.dim()
     else:
-        return trains, vals, tests, affinity, data.dim()  # , dsize
+        return trains, vals, tests, affinity, loader.dataset.dim()  # , dsize
 
 
 def get_affinity_matrix(
