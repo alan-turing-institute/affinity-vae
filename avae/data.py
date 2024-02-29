@@ -209,7 +209,7 @@ def get_affinity_matrix(
 
     Returns
     -------
-    affinity: pd.DataFrame
+    affinity: Numpy array
         Affinity matrix.
     """
     if affinity_path is not None:

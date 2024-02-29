@@ -151,7 +151,7 @@ def train(
     torch.manual_seed(42)
 
     # ############################### DATA ###############################
-    trains, vals, tests, lookup, data_dim = load_data(
+    trains, vals, tests, affinity_matrix, data_dim = load_data(
         datapath=datapath,
         datatype=datatype,
         lim=lim,
@@ -343,7 +343,7 @@ def train(
         device,
         beta_arr,
         gamma=gamma_arr,
-        lookup_aff=lookup,
+        lookup_aff=affinity_matrix,
         recon_fn=recon_fn,
         klred=klred,
     )
@@ -396,6 +396,7 @@ def train(
                 len(trains),
                 epoch,
                 epochs,
+                affinity=affinity_matrix,
                 loss=loss,
                 history=t_history,
                 optimizer=optimizer,
@@ -451,6 +452,7 @@ def train(
                 len(vals),
                 epoch,
                 epochs,
+                affinity=affinity_matrix,
                 loss=loss,
                 history=v_history,
                 beta=beta_arr,
