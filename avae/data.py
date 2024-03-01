@@ -150,7 +150,7 @@ def load_data(
         loader.load(datapath=datapath, datatype=datatype)
 
         loader.dataset = AffinityDiskDataset(
-            loader.dataset, affinity, classes_list
+            dataset=loader.dataset, affinity=affinity, classes=classes_list
         )
 
         trains, vals = loader.get_loader(batch_size=batch_s, split_size=splt)
@@ -188,11 +188,18 @@ def load_data(
             classes=[],
             dataset_size=lim,
             training=False,
-            training_path=transformations,
+            transformations=(
+                None if len(transformations) == 0 else transformations
+            ),
         )
 
         test_loader.load(datapath=datapath, datatype=datatype)
-        tests = test_loader.get_loader(batch_size=batch_s, split=splt)
+        test_loader.dataset = AffinityDiskDataset(
+            dataset=test_loader.dataset, classes=[]
+        )
+        tests = test_loader.get_loader(batch_size=batch_s, split_size=splt)
+
+        tests_y = list(sum([y[1] for _, y in enumerate(tests)], ()))
 
         logging.info("############################################### EVAL")
         logging.info("Eval data size: {}".format(len(test_loader.dataset)))
@@ -257,7 +264,12 @@ def get_affinity_matrix(
 
 
 class AffinityDiskDataset(DiskDataset):
-    def __init__(self, dataset, affinity, classes):
+    def __init__(
+        self,
+        dataset: DiskDataset,
+        classes: list,
+        affinity: pd.DataFrame | None = None,
+    ):
         super().__init__(
             paths=dataset.paths,
             datatype=dataset.datatype,
