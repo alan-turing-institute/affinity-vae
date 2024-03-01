@@ -16,7 +16,7 @@ from .cyc_annealing import cyc_annealing
 from .data import load_data
 from .loss import AVAELoss
 from .models import AffinityVAE
-from .utils import accuracy
+from .utils import accuracy, latest_file
 from .utils_learning import add_meta, pass_batch, set_device
 
 
@@ -263,10 +263,7 @@ def train(
                     "There are no existing model states saved or provided via the state flag in config unable to evaluate."
                 )
             else:
-                state = sorted(
-                    [s for s in os.listdir("states") if ".pt" in s],
-                    key=lambda x: int(x.split("_")[2][1:]),
-                )[-1]
+                state = latest_file("states", ".pt")
                 state = os.path.join("states", state)
 
         checkpoint = torch.load(state)
