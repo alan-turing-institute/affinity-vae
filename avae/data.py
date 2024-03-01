@@ -1,17 +1,18 @@
 import logging
 import os
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from torch.utils.data import DataLoader
 
 from . import settings
-from .vis import plot_affinity_matrix, plot_classes_distribution
+from .vis import format, plot_affinity_matrix, plot_classes_distribution
 
 np.random.seed(42)
 from typing import Literal, overload
 
-from caked.dataloader import DiskDataLoader
+from caked.dataloader import DiskDataLoader, DiskDataset
 
 
 @overload
@@ -23,7 +24,7 @@ def load_data(
     splt: int = 20,
     batch_s: int = 64,
     no_val_drop: bool = False,
-    affinity: str | None = None,
+    affinity_path: str | None = None,
     classes: str | None = None,
     gaussian_blur: bool = False,
     normalise: bool = False,
@@ -42,7 +43,7 @@ def load_data(
     splt: int = 20,
     batch_s: int = 64,
     no_val_drop: bool = False,
-    affinity: str | None = None,
+    affinity_path: str | None = None,
     classes: str | None = None,
     gaussian_blur: bool = False,
     normalise: bool = False,
@@ -60,7 +61,7 @@ def load_data(
     splt: int = 20,
     batch_s: int = 64,
     no_val_drop: bool = False,
-    affinity: str | None = None,
+    affinity_path: str | None = None,
     classes: str | None = None,
     gaussian_blur: bool = False,
     normalise: bool = False,
@@ -89,7 +90,7 @@ def load_data(
         If True, the last batch of validation data will not be dropped if it is smaller than batch size.
     eval: bool
         If True, the data will be loaded only for evaluation.
-    affinity: str
+    affinity_path: str
         Path to the affinity matrix.
     classes: list
         List of classes to be selected from the data.
@@ -131,9 +132,9 @@ def load_data(
     if not eval:
 
         # for training we need to load the affinity matrix
-        if affinity is not None:
+        if affinity_path is not None:
 
-            affinity = get_affinity_matrix(affinity, classes_list)
+            affinity = get_affinity_matrix(affinity_path, classes_list)
 
         # create dataloader
         loader = DiskDataLoader(
@@ -147,7 +148,15 @@ def load_data(
         )
 
         loader.load(datapath=datapath, datatype=datatype)
+
+        loader.dataset = AffinityDiskDataset(
+            loader.dataset, affinity, classes_list
+        )
+
         trains, vals = loader.get_loader(batch_size=batch_s, split_size=splt)
+
+        # trains = AffinityDataset(loader.dataset, affinity, classes_list)
+        # vals = AffinityDataset(loader.dataset, affinity, classes_list)
 
         # ################# Visualising class distribution ###################
 
@@ -192,7 +201,13 @@ def load_data(
     if eval:
         return tests, test_loader.dataset.dim()
     else:
-        return trains, vals, tests, affinity, loader.dataset.dim()  # , dsize
+        return (
+            trains,
+            vals,
+            tests,
+            affinity.to_numpy(dtype=np.float32),
+            loader.dataset.dim(),
+        )  # , dsize
 
 
 def get_affinity_matrix(
@@ -238,4 +253,49 @@ def get_affinity_matrix(
         index = [affinity.columns.get_loc(f"{columns}") for columns in classes]
         sub_affinity = affinity.iloc[index, index]
 
-    return sub_affinity.to_numpy(dtype=np.float32)
+    return sub_affinity
+
+
+class AffinityDiskDataset(DiskDataset):
+    def __init__(self, dataset, affinity, classes):
+        super().__init__(
+            paths=dataset.paths,
+            datatype=dataset.datatype,
+            rescale=dataset.rescale,
+            shiftmin=dataset.shiftmin,
+            normalise=dataset.normalise,
+            gaussianblur=dataset.gaussianblur,
+        )
+        self.affinity = affinity
+        self.classes = classes
+
+    def __getitem__(self, index):
+
+        # read data from path
+        data = np.array(self.read(self.paths[index]))
+        x = self.transformation(data)
+
+        # get file basename
+        filename = Path(self.paths[index]).name
+        # ground truth
+        y = Path(filename).name.split("_")[0]
+
+        # similarity column / vector
+        if self.affinity is not None:
+            aff = self.affinity.columns.get_loc(f"{y}")
+        else:
+            # in evaluation mode - test set
+            aff = 0  # cannot be None, but not used anywhere during evaluation
+
+        # file info and metadata
+        meta = "_".join(filename.split(".")[0].split("_")[1:])
+        avg = np.around(np.average(x), decimals=4)
+        img = format(x, len(data.shape))  # used for dynamic preview in Altair
+        meta = {
+            "filename": filename,
+            "id": y,
+            "meta": meta,
+            "avg": avg,
+            "image": img,
+        }
+        return x, y, aff, meta
