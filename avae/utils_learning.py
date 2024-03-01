@@ -60,7 +60,6 @@ def pass_batch(
     batches: int,
     e: int = 1,
     epochs: int = 1,
-    affinity: np.ndarray | None = None,
     history: list = [],
     loss: AVAELoss | None = None,
     optimizer: typing.Any = None,
@@ -136,16 +135,14 @@ def pass_batch(
     # to device
     x = batch[0]
     x = x.to(device)
-    if affinity is not None:
-        affinity = torch.Tensor(affinity).to(device)
+    aff = batch[2]
+    aff = aff.to(device)
 
     # forward
     x = x.to(torch.float32)
     x_hat, lat_mu, lat_logvar, lat, lat_pose = vae(x)
     if loss is not None:
-        history_loss = loss(
-            x, x_hat, lat_mu, lat_logvar, e, batch_aff=affinity
-        )
+        history_loss = loss(x, x_hat, lat_mu, lat_logvar, e, batch_aff=aff)
 
         if beta is None:
             raise RuntimeError(
