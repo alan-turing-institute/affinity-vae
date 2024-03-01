@@ -168,6 +168,7 @@ def latent_embed_plot_tsne(
     marker_size: int = 24,
     l_w: int = 2,
     display: bool = False,
+    vis_format: str = "",
 ) -> None:
     """Plot static TSNE embedding.
 
@@ -187,6 +188,11 @@ def latent_embed_plot_tsne(
         Tensorboard summary writer
     perplexity: int
     display: bool
+        When this variable is set to true, the save_imshow_png function only dispalys the plot
+        and does not save a png image. This is to allow the use of this function in jupyter notebook
+        post calculation. This features is not yet implemented for save_mrc_file.
+    vis_format: str
+        format of the image saved
     """
     logging.info(
         "################################################################",
@@ -195,6 +201,9 @@ def latent_embed_plot_tsne(
         logging.info("Visualising static TSNE embedding...\n")
     else:
         logging.info("Visualising static TSNE embedding " + mode + "...\n")
+
+    if len(vis_format) > 0:
+        settings.VIS_FORMAT = vis_format
 
     xs = np.asarray(xs)
     ys = np.asarray(ys)
@@ -316,6 +325,7 @@ def latent_embed_plot_umap(
     marker_size: int = 24,
     l_w: int = 2,
     display: bool = False,
+    vis_format: str = "",
 ) -> None:
     """Plot static UMAP embedding.
 
@@ -337,6 +347,8 @@ def latent_embed_plot_umap(
         When this variable is set to true, the save_imshow_png function only dispalys the plot
         and does not save a png image. This is to allow the use of this function in jupyter notebook
         post calculation. This features is not yet implemented for save_mrc_file.
+    vis_format: str
+        format of the image saved
     """
     logging.info(
         "################################################################",
@@ -346,6 +358,9 @@ def latent_embed_plot_umap(
         logging.info("Visualising static UMAP embedding...\n")
     else:
         logging.info("Visualising static UMAP embedding " + mode + "...\n")
+
+    if len(vis_format) > 0:
+        settings.VIS_FORMAT = vis_format
 
     xs = np.asarray(xs)
     ys = np.asarray(ys)
@@ -1270,6 +1285,7 @@ def latent_4enc_interpolate_plot(
     plots_config: npt.NDArray,
     poses: list,
     display: bool = False,
+    vis_format: str = "",
 ) -> None:
     """Visualise the interpolation of latent space between 4 randomly selected encodings.
     The number of plots and the number of interpolation steps is modifyable.
@@ -1298,6 +1314,8 @@ def latent_4enc_interpolate_plot(
         When this variable is set to true, the save_imshow_png function only dispalys the plot
         and does not save a png image. This is to allow the use of this function in jupyter notebook
         post calculation. This features is not yet implemented for save_mrc_file.
+    vis_format: str
+        format of the image saved
     """
     logging.info(
         "################################################################",
@@ -1305,6 +1323,9 @@ def latent_4enc_interpolate_plot(
     logging.info(
         "Visualising Latent Interpolation between 4 randomly selected encodings ...\n"
     )
+    if len(vis_format) > 0:
+        settings.VIS_FORMAT = vis_format
+
     padding = 0
     data_dim = len(dsize)
     classes = np.unique(np.asarray(ys))
@@ -1500,6 +1521,7 @@ def pose_class_disentanglement_plot(
     number_of_samples: int = 7,
     specific_enc: npt.NDArray = None,
     display: bool = False,
+    vis_format: str = "",
 ):
 
     """Visualise Pose interpolation per class. This function creates a pose interpolatoion
@@ -1531,6 +1553,8 @@ def pose_class_disentanglement_plot(
         When this variable is set to true, the save_imshow_png function only dispalys the plot
         and does not save a png image. This is to allow the use of this function in jupyter notebook
         post calculation. This features is not yet implemented for save_mrc_file.
+    vis_format: str
+        format of the image saved
     """
     logging.info(
         "Visualising pose disentanglement for each class {}...\n".format(
@@ -1541,6 +1565,9 @@ def pose_class_disentanglement_plot(
         logging.warning(
             "Pose interpolation cannot be done if pose dimension is not specified"
         )
+
+    if len(vis_format) > 0:
+        settings.VIS_FORMAT = vis_format
 
     padding = 0
     data_dim = len(dsize)
@@ -1605,6 +1632,7 @@ def pose_disentanglement_plot(
     label: str = "avg",
     mode: str = "trn",
     display: bool = False,
+    vis_format: str = "",
 ):
     """Visualise pose disentanglement.
 
@@ -1626,6 +1654,8 @@ def pose_disentanglement_plot(
         When this variable is set to true, the save_imshow_png function only dispalys the plot
         and does not save a png image. This is to allow the use of this function in jupyter notebook
         post calculation. This features is not yet implemented for save_mrc_file.
+    vis_format: str
+        format of the image saved
     """
     logging.info(
         "################################################################",
@@ -1636,6 +1666,8 @@ def pose_disentanglement_plot(
         logging.info(
             "Visualising pose disentanglement for class {}...\n".format(label)
         )
+    if len(vis_format) > 0:
+        settings.VIS_FORMAT = vis_format
 
     number_of_samples = 7
     padding = 0
@@ -1814,6 +1846,7 @@ def plot_affinity_matrix(
     all_classes: list,
     selected_classes: list,
     fig_size: int | None = None,
+    vis_format: str = "",
 ) -> None:
     """
     This function plots the Affinity matrix and highlights the
@@ -1827,11 +1860,16 @@ def plot_affinity_matrix(
         The affinity matrix
     selected_classes : list
         All classes selected by the user for training in classes.csv
+    vis_format: str
+        format of the image saved
     """
     logging.info(
         "################################################################",
     )
     logging.info("Visualising affinity matrix ...\n")
+    if len(vis_format) > 0:
+        settings.VIS_FORMAT = vis_format
+
     if fig_size is None:
         with plt.rc_context(
             {"font.weight": "bold", "font.size": int(len(all_classes) / 3) + 3}
@@ -1949,6 +1987,7 @@ def latent_space_similarity_plot(
     font_size: int = 16,
     fig_size: int | None = None,
     dpi: int = 300,
+    vis_format: str = "",
 ) -> None:
     """
     This function calculates the similarity (affinity) between classes in the latent space and builds a matrix.
@@ -1964,11 +2003,16 @@ def latent_space_similarity_plot(
         Epoch number for title
     classes_order: list
         Order of the classes in the matrix
+    vis_format: str
+        format of the image saved
     """
     logging.info(
         "################################################################",
     )
     logging.info("Visualising the latent space similarity matrix ...\n")
+
+    if len(vis_format) > 0:
+        settings.VIS_FORMAT = vis_format
 
     if len(classes_order) == 0:
         unique_classes = np.unique(class_labels)
