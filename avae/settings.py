@@ -17,6 +17,7 @@ VIS_SIM = False
 VIS_DYN = False
 VIS_POSE_CLASS = None
 VIS_Z_N_INT = None
+VIS_FORMAT = "png"
 
 FREQ_ACC = 0
 FREQ_REC = 0

@@ -438,6 +438,13 @@ from avae.train import train
     help="Visualise all above.",
 )
 @click.option(
+    "--vis_format",
+    "-vf",
+    type=str,
+    default=None,
+    help="The format of saved images. Options: png , pdf ",
+)
+@click.option(
     "--freq_eval",
     "-fev",
     type=int,
@@ -617,6 +624,7 @@ def run(
     vis_his,
     vis_sim,
     vis_all,
+    vis_format,
     gpu,
     eval,
     dynamic,
