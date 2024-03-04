@@ -13,12 +13,12 @@ from tests import testdata_mrc
 class DataTest(unittest.TestCase):
     def setUp(self) -> None:
         """Setup data and output directories."""
+        self._orig_dir = os.getcwd()
         self.test_data = os.path.dirname(testdata_mrc.__file__)
         self.test_dir = tempfile.mkdtemp(prefix="avae_")
         print(self.test_data, self.test_dir)
 
         # Change to test directory
-        self._orig_dir = os.getcwd()
         os.chdir(self.test_dir)
 
     def tearDown(self):
@@ -28,6 +28,8 @@ class DataTest(unittest.TestCase):
 
     def test_load_eval_data(self):
         """Test loading evaluation data."""
+
+        sh = 32
 
         shutil.copytree(
             os.path.join(self.test_data, "test"),
@@ -39,11 +41,11 @@ class DataTest(unittest.TestCase):
             datatype="mrc",
             lim=None,
             batch_s=32,
-            collect_meta=False,
             eval=True,
             gaussian_blur=True,
             normalise=True,
             shift_min=True,
+            rescale=sh,
         )
         print(os.getcwd())
 
@@ -54,15 +56,19 @@ class DataTest(unittest.TestCase):
 
         # test ProteinDataset
         eval_batch = list(eval_data)[0]
-        xs, ys, aff = eval_batch
+        xs, ys, aff, meta = eval_batch
         assert len(xs) == len(ys) == len(aff)
         assert (
             np.all(aff.numpy()) == 0
         )  # this is expected only for eval without affinity
 
+        assert xs[0].shape[-1] == sh
+
     def test_load_train_data(self):
         """Test loading training data."""
         shutil.copytree(self.test_data, os.path.join(self.test_dir, "train"))
+
+        sh = 32
 
         out = load_data(
             "./train",
@@ -71,12 +77,12 @@ class DataTest(unittest.TestCase):
             splt=30,
             batch_s=16,
             no_val_drop=True,
-            collect_meta=False,
             eval=False,
             affinity="./train/affinity_fsc_10.csv",
             gaussian_blur=True,
             normalise=True,
             shift_min=True,
+            rescale=sh,
         )
 
         # test load_data
@@ -87,9 +93,10 @@ class DataTest(unittest.TestCase):
 
         # test ProtenDataset
         train_batch = list(train_data)[0]
-        xs, ys, aff = train_batch
+        xs, ys, aff, meta = train_batch
         assert len(xs) == len(ys) == len(aff)
         assert len(np.unique(aff.numpy())) == 4
+        assert xs[0].shape[-1] == sh
 
         # test affinity matrix
         assert isinstance(lookup, np.ndarray)

@@ -1,58 +1,70 @@
-import datetime
+import logging
 import os
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 import torch
+from torch.utils.tensorboard import SummaryWriter
 
-from . import config, vis
+from avae.decoders.decoders import Decoder, DecoderA, DecoderB
+from avae.decoders.differentiable import GaussianSplatDecoder
+from avae.encoders.encoders import Encoder, EncoderA, EncoderB
+
+from . import settings, vis
 from .cyc_annealing import cyc_annealing
 from .data import load_data
 from .loss import AVAELoss
-from .model_a import AffinityVAE as AffinityVAE_A
-from .model_b import AffinityVAE as AffinityVAE_B
-from .utils import accuracy
+from .models import AffinityVAE
+from .utils import accuracy, latest_file
 from .utils_learning import add_meta, pass_batch, set_device
 
 
 def train(
-    datapath,
-    datatype,
-    restart,
-    state,
-    lim,
-    splt,
-    batch_s,
-    no_val_drop,
-    affinity,
-    classes,
-    collect_meta,
-    epochs,
-    channels,
-    depth,
-    lat_dims,
-    pose_dims,
-    learning,
-    beta_load,
-    beta_min,
-    beta_max,
-    beta_cycle,
-    beta_ratio,
-    cyc_method_beta,
-    gamma_load,
-    gamma_min,
-    gamma_max,
-    gamma_cycle,
-    gamma_ratio,
-    cyc_method_gamma,
-    recon_fn,
-    use_gpu,
-    model,
-    opt_method,
-    gaussian_blur,
-    normalise,
-    shift_min,
-    classifier,
+    datapath: str,
+    datatype: str,
+    restart: bool,
+    state: str | None,
+    lim: int | None,
+    splt: int,
+    batch_s: int,
+    no_val_drop: bool,
+    affinity: str | None,
+    classes: str | None,
+    epochs: int,
+    channels: int,
+    depth: int,
+    filters: list | None,
+    lat_dims: int,
+    pose_dims: int,
+    bnorm_encoder: bool,
+    bnorm_decoder: bool,
+    gsd_conv_layers: int,
+    n_splats: int,
+    klred: str,
+    learning: float,
+    beta_load: str | None,
+    beta_min: float,
+    beta_max: float,
+    beta_cycle: int,
+    beta_ratio: float,
+    cyc_method_beta: str,
+    gamma_load: str | None,
+    gamma_min: float,
+    gamma_max: float,
+    gamma_cycle: int,
+    gamma_ratio: float,
+    cyc_method_gamma: str,
+    recon_fn: str,
+    use_gpu: bool,
+    model: str,
+    opt_method: str,
+    gaussian_blur: bool,
+    normalise: bool,
+    shift_min: bool,
+    rescale: bool,
+    tensorboard: bool,
+    classifier: str,
 ):
     """Function to train an AffinityVAE model. The inputs are training configuration parameters. In this function the
     data is loaded, selected and split into training, validation and test sets, the model is initialised and trained
@@ -77,8 +89,6 @@ def train(
         Path to the affinity matrix.
     classes: list
         List of classes to be selected from the data for the training and validation set.
-    collect_meta: bool
-        If True, the meta data for visualisation will be collected and returned.
     epochs: int
         Number of epochs to train the model.
     channels: int
@@ -126,55 +136,102 @@ def train(
         In True, the input data is normalised before being passed to the model.
     shift_min: bool
         If True, the input data is shifted to have a minimum value of 0 and max of 1.
+    tensorboard: bool
+        If True, log metrics and figures using tensorboard.
     classifier: str
         The method to use on the latent space classification. Can be neural network (NN), k nearest neighbourgs (KNN) or logistic regression (LR).
+    bnorm_encoder: bool
+        If True, batch normalisation is applied to the encoder.
+    bnrom_decoder: bool
+        If True, batch normalisation is applied to the decoder.
+    gsd_conv_layers: int
+        activates convolution layers at the end of the differetiable decoder if set
+        and it is an integer defining the number of output channels  .
     """
     torch.manual_seed(42)
 
-    # This time stamp is  commented out because it doesnt work the same on all devices
-    # timestamp = str(datetime.datetime.now().strftime("%Y-%m-%d_T%H:%M:%S.%f"))
-
-    curr_dt = datetime.datetime.now()
-    timestamp = str(int(round(curr_dt.timestamp())))
-
     # ############################### DATA ###############################
     trains, vals, tests, lookup, data_dim = load_data(
-        datapath,
-        datatype,
+        datapath=datapath,
+        datatype=datatype,
         lim=lim,
         splt=splt,
         batch_s=batch_s,
         no_val_drop=no_val_drop,
-        collect_meta=collect_meta,
         eval=False,
         affinity=affinity,
         classes=classes,
         gaussian_blur=gaussian_blur,
         normalise=normalise,
         shift_min=shift_min,
+        rescale=rescale,
     )
+
+    # The spacial dimensions of the data
     dshape = list(trains)[0][0].shape[2:]
     pose = not (pose_dims == 0)
 
     # ############################### MODEL ###############################
     device = set_device(use_gpu)
+    if filters is not None:
+        filters = np.array(
+            np.array(filters).replace(" ", "").split(","), dtype=np.int64
+        )
 
     if model == "a":
-        affinityVAE = AffinityVAE_A
+        encoder = EncoderA(
+            dshape, channels, depth, lat_dims, pose_dims, bnorm=bnorm_encoder
+        )
+        decoder = DecoderA(
+            dshape, channels, depth, lat_dims, pose_dims, bnorm=bnorm_decoder
+        )
     elif model == "b":
-        affinityVAE = AffinityVAE_B
+        encoder = EncoderB(dshape, channels, depth, lat_dims, pose_dims)
+        decoder = DecoderB(dshape, channels, depth, lat_dims, pose_dims)
+    elif model == "u":
+        encoder = Encoder(
+            input_size=dshape,
+            capacity=channels,
+            filters=filters,
+            depth=depth,
+            latent_dims=lat_dims,
+            pose_dims=pose_dims,
+            bnorm=bnorm_encoder,
+        )
+        decoder = Decoder(
+            input_size=dshape,
+            capacity=channels,
+            filters=filters,
+            depth=depth,
+            latent_dims=lat_dims,
+            pose_dims=pose_dims,
+            bnorm=bnorm_decoder,
+        )
+    elif model == "gsd":
+        encoder = EncoderA(
+            dshape, channels, depth, lat_dims, pose_dims, bnorm=bnorm_encoder
+        )
+        decoder = GaussianSplatDecoder(
+            dshape,
+            n_splats=n_splats,
+            latent_dims=lat_dims,
+            output_channels=gsd_conv_layers,
+            device=device,
+            pose_dims=pose_dims,
+        )
     else:
-        raise ValueError("Invalid model type", model, "must be a or b")
+        raise ValueError(
+            "Invalid model type",
+            model,
+            "must be one of : a, b, u or gsd",
+        )
 
-    vae = affinityVAE(
-        channels,
-        depth,
-        dshape,
-        lat_dims,
-        pose_dims=pose_dims,
-    )
+    vae = AffinityVAE(encoder, decoder)
+    vae = vae.to(device)
+    logging.info(vae)
 
-    vae.to(device)
+    # If more than one GPU available, model can use DataParallel
+    print("Using", torch.cuda.device_count(), "GPUs!")
 
     if opt_method == "adam":
         optimizer = torch.optim.Adam(
@@ -206,10 +263,7 @@ def train(
                     "There are no existing model states saved or provided via the state flag in config unable to evaluate."
                 )
             else:
-                state = sorted(
-                    [s for s in os.listdir("states") if ".pt" in s],
-                    key=lambda x: int(x.split("_")[2][1:]),
-                )[-1]
+                state = latest_file("states", ".pt")
                 state = os.path.join("states", state)
 
         checkpoint = torch.load(state)
@@ -278,7 +332,7 @@ def train(
                 f"The length of the gamma array loaded from file is {len(gamma_arr)} but the number of Epochs specified in the input are {epochs}.\n"
                 "These two values should be the same."
             )
-    if config.VIS_CYC:
+    if settings.VIS_CYC:
         vis.plot_cyc_variable(beta_arr, "beta")
         vis.plot_cyc_variable(gamma_arr, "gamma")
 
@@ -288,20 +342,18 @@ def train(
         gamma=gamma_arr,
         lookup_aff=lookup,
         recon_fn=recon_fn,
+        klred=klred,
     )
 
-    print(
-        "Epoch: [0/%d] | Batch: [0/%d] | Loss: -- | Recon: -- | "
-        "KLdiv: -- | Affin: -- | Beta: --" % (epochs, len(trains)),
-        end="\r",
-        flush=True,
-    )
+    if tensorboard:
+        writer = SummaryWriter()
+    else:
+        writer = None
 
     # ########################## TRAINING LOOP ################################
     for epoch in range(e_start, epochs):
 
-        if collect_meta:
-            meta_df = pd.DataFrame()
+        meta_df = pd.DataFrame()
 
         # populate loss with new epoch
         t_history.append(np.zeros(4))
@@ -352,33 +404,31 @@ def train(
             if pose:
                 p_train.extend(lat_pos.cpu().detach().numpy())
 
-            if collect_meta:  # store meta for plots
-                meta_df = add_meta(
-                    data_dim,
-                    meta_df,
-                    batch[-1],
-                    x_hat,
-                    lat_mu,
-                    lat_pos,
-                    lat_logvar,
-                    mode="trn",
-                )
+            # store meta for plots and accuracy
+            meta_df = add_meta(
+                data_dim,
+                meta_df,
+                batch[-1],
+                x_hat,
+                lat_mu,
+                lat_pos,
+                lat_logvar,
+                mode="trn",
+            )
 
         t_history[-1] /= len(trains)
-        print(
-            "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
-            "KLdiv: %f | Affin: %f | Beta: %f"
+
+        logging.info(
+            "Training : Epoch: [%d/%d] | Loss: %f | Recon: %f | "
+            "KLdiv: %f | Affin: %f | Beta: %f | Gamma: %f"
             % (
                 epoch + 1,
                 epochs,
-                b + 1,
-                len(trains),
                 *t_history[-1],
                 beta_arr[epoch],
-            ),
-            flush=True,
+                gamma_arr[epoch],
+            )
         )
-
         # ########################## VAL ######################################
         vae.eval()
         for b, batch in enumerate(vals):
@@ -408,35 +458,38 @@ def train(
             if pose:
                 p_val.extend(vlat_pos.cpu().detach().numpy())
 
-            if collect_meta:  # store meta for plots
-                meta_df = add_meta(
-                    data_dim,
-                    meta_df,
-                    batch[-1],
-                    v_hat,
-                    v_mu,
-                    vlat_pos,
-                    v_logvar,
-                    mode="val",
-                )
-
+            meta_df = add_meta(
+                data_dim,
+                meta_df,
+                batch[-1],
+                v_hat,
+                v_mu,
+                vlat_pos,
+                v_logvar,
+                mode="val",
+            )
         v_history[-1] /= len(vals)
-        print(
-            "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
-            "KLdiv: %f | Affin: %f | Beta: %f"
+
+        logging.info(
+            "Validation : Epoch: [%d/%d] |Loss: %f | Recon: %f | "
+            "KLdiv: %f | Affin: %f | Beta: %f | Gamma: %f"
             % (
                 epoch + 1,
                 epochs,
-                b + 1,
-                len(vals),
                 *v_history[-1],
                 beta_arr[epoch],
-            ),
-            flush=True,
+                gamma_arr[epoch],
+            )
         )
 
+        if writer:
+            for i, loss_name in enumerate(
+                ["Loss", "Recon loss", "KLdiv loss", "Affin loss"]
+            ):
+                writer.add_scalar(loss_name, v_history[-1][i], epoch)
+
         # ########################## TEST #####################################
-        if (epoch + 1) % config.FREQ_EVAL == 0:
+        if (epoch + 1) % settings.FREQ_EVAL == 0:
             for b, batch in enumerate(tests):  # tests empty if no 'test' dir
                 (t, t_hat, t_mu, t_logvar, tlat, tlat_pose, _,) = pass_batch(
                     device, vae, batch, b, len(tests), epoch, epochs
@@ -446,50 +499,60 @@ def train(
                 if pose:
                     p_test.extend(tlat_pose.cpu().detach().numpy())
 
-                if collect_meta:  # store meta for plots
-                    meta_df = add_meta(
-                        data_dim,
-                        meta_df,
-                        batch[-1],
-                        t_hat,
-                        t_mu,
-                        tlat_pose,
-                        t_logvar,
-                        mode="tst",
-                    )
+                # store meta for plots and classification
+                meta_df = add_meta(
+                    data_dim,
+                    meta_df,
+                    batch[-1],
+                    t_hat,
+                    t_mu,
+                    tlat_pose,
+                    t_logvar,
+                    mode="tst",
+                )
+
+            logging.info("Evaluation : Batch: [%d/%d]" % (b + 1, len(tests)))
+        logging.info("\n")  # end of training round
 
         # ########################## VISUALISE ################################
 
+        if classes is not None:
+            classes_list = pd.read_csv(classes).columns.tolist()
+        else:
+            classes_list = []
+
         # visualise accuracy: confusion and F1 scores
-        if config.VIS_ACC and (epoch + 1) % config.FREQ_ACC == 0:
-            train_acc, val_acc, ypred_train, ypred_val = accuracy(
+        if settings.VIS_ACC and (epoch + 1) % settings.FREQ_ACC == 0:
+            train_acc, val_acc, _, ypred_train, ypred_val = accuracy(
                 x_train, y_train, x_val, y_val, classifier=classifier
             )
-            print(
-                "Epoch: [%d/%d] |   Gamma: %f | Beta: %f"
-                % (
-                    epoch + 1,
-                    epochs,
-                    gamma_arr[epoch],
-                    beta_arr[epoch],
-                )
-            )
 
-            print(
-                "\n------------------->>> Accuracy: Train: %f | Val: %f\n"
+            logging.info(
+                "------------------->>> Accuracy: Train: %f | Val: %f\n"
                 % (train_acc, val_acc),
-                flush=True,
             )
             vis.accuracy_plot(
-                y_train, ypred_train, y_val, ypred_val, classes, epoch=epoch
+                y_train,
+                ypred_train,
+                y_val,
+                ypred_val,
+                classes,
+                epoch=epoch,
+                writer=writer,
             )
 
             vis.f1_plot(
-                y_train, ypred_train, y_val, ypred_val, classes, epoch=epoch
+                y_train,
+                ypred_train,
+                y_val,
+                ypred_val,
+                classes,
+                epoch=epoch,
+                writer=writer,
             )
 
         # visualise loss
-        if config.VIS_LOS and epoch > 0:
+        if settings.VIS_LOS and epoch > 0:
             p = [
                 len(trains),
                 depth,
@@ -509,25 +572,37 @@ def train(
             )
 
         # visualise reconstructions - last batch
-        if config.VIS_REC and (epoch + 1) % config.FREQ_REC == 0:
-            vis.recon_plot(x, x_hat, y_train, data_dim, mode="trn")
-            vis.recon_plot(v, v_hat, y_val, data_dim, mode="val")
+        if settings.VIS_REC and (epoch + 1) % settings.FREQ_REC == 0:
+            vis.recon_plot(
+                x,
+                x_hat,
+                y_train,
+                data_dim,
+                mode="trn",
+                epoch=epoch,
+                writer=writer,
+            )
+            vis.recon_plot(
+                v,
+                v_hat,
+                y_val,
+                data_dim,
+                mode="val",
+                epoch=epoch,
+                writer=writer,
+            )
 
         # visualise mean and logvar similarity matrix
-        if config.VIS_SIM and (epoch + 1) % config.FREQ_SIM == 0:
-            if classes is not None:
-                classes_list = pd.read_csv(classes).columns.tolist()
-            else:
-                classes_list = []
+        if settings.VIS_SIM and (epoch + 1) % settings.FREQ_SIM == 0:
 
-            vis.latent_space_similarity(
+            vis.latent_space_similarity_plot(
                 x_train,
                 np.array(y_train),
                 mode="_train",
                 epoch=epoch,
                 classes_order=classes_list,
             )
-            vis.latent_space_similarity(
+            vis.latent_space_similarity_plot(
                 x_val,
                 np.array(y_val),
                 mode="_valid",
@@ -535,12 +610,8 @@ def train(
                 classes_order=classes_list,
             )
 
-        if config.VIS_CON and (epoch + 1) % config.FREQ_CON == 0:
-            vis.confidence_plot(x_train, y_train, c_train, suffix="trn")
-            vis.confidence_plot(x_val, y_val, c_val, suffix="val")
-
         # visualise embeddings
-        if config.VIS_EMB and (epoch + 1) % config.FREQ_EMB == 0:
+        if settings.VIS_EMB and (epoch + 1) % settings.FREQ_EMB == 0:
             if len(tests) != 0:
                 xs = np.r_[x_train, x_val, x_test]
                 ys = np.r_[
@@ -548,34 +619,69 @@ def train(
                     y_val,
                     np.full(shape=len(x_test), fill_value="test"),
                 ]
+                if pose:
+                    ps = np.r_[p_train, p_val, p_test]
             else:
                 xs = np.r_[x_train, x_val]
                 ys = np.r_[y_train, y_val]
-            vis.latent_embed_plot_tsne(xs, ys)
-            vis.latent_embed_plot_umap(xs, ys)
+                if pose:
+                    ps = np.r_[p_train, p_val]
 
-            if collect_meta:
+            vis.latent_embed_plot_tsne(xs, ys, epoch=epoch, writer=writer)
+            vis.latent_embed_plot_umap(
+                xs, ys, classes_list, epoch=epoch, writer=writer
+            )
+            if pose:
+                vis.latent_embed_plot_tsne(
+                    ps, ys, epoch=epoch, writer=writer, mode="pose"
+                )
+                vis.latent_embed_plot_umap(
+                    ps, ys, epoch=epoch, writer=writer, mode="pose"
+                )
+
+            if settings.VIS_DYN:
                 # merge img and rec into one image for display in altair
                 meta_df["image"] = meta_df["image"].apply(vis.merge)
                 vis.dyn_latentembed_plot(meta_df, epoch, embedding="umap")
                 vis.dyn_latentembed_plot(meta_df, epoch, embedding="tsne")
 
         # visualise latent disentanglement
-        if config.VIS_DIS and (epoch + 1) % config.FREQ_DIS == 0:
+        if settings.VIS_DIS and (epoch + 1) % settings.FREQ_DIS == 0:
             if not pose:
-                p_train = None
+                poses = None
+            else:
+                poses = p_train
             vis.latent_disentamglement_plot(
-                x_train, vae, device, data_dim, poses=p_train
+                dshape,
+                x_train,
+                vae,
+                device,
+                poses=poses,
             )
 
         # visualise pose disentanglement
-        if pose and config.VIS_POS and (epoch + 1) % config.FREQ_POS == 0:
+        if pose and settings.VIS_POS and (epoch + 1) % settings.FREQ_POS == 0:
             vis.pose_disentanglement_plot(
-                x_train, p_train, vae, data_dim, device
+                dshape,
+                x_train,
+                p_train,
+                vae,
+                device,
             )
 
+            if settings.VIS_POSE_CLASS is not None:
+                vis.pose_class_disentanglement_plot(
+                    dshape,
+                    x_train,
+                    y_train,
+                    settings.VIS_POSE_CLASS,
+                    p_train,
+                    vae,
+                    device,
+                )
+
         # visualise interpolations
-        if config.VIS_INT and (epoch + 1) % config.FREQ_INT == 0:
+        if settings.VIS_INT and (epoch + 1) % settings.FREQ_INT == 0:
             if len(tests) != 0:
                 xs = np.r_[x_train, x_val, x_test]
                 ys = np.r_[y_train, y_val, np.ones(len(x_test))]
@@ -591,22 +697,33 @@ def train(
                 else:
                     ps = None
 
+            if settings.VIS_Z_N_INT is not None:
+                vis.latent_4enc_interpolate_plot(
+                    dshape,
+                    xs,
+                    ys,
+                    vae,
+                    device,
+                    settings.VIS_Z_N_INT,
+                    poses=ps,
+                )
+
             vis.interpolations_plot(
+                dshape,
                 xs,
                 ys,
                 vae,
                 device,
-                data_dim,
                 poses=ps,  # do we need val and test here?
             )
 
         # ########################## SAVE STATE ###############################
-        if (epoch + 1) % config.FREQ_STA == 0:
+        if (epoch + 1) % settings.FREQ_STA == 0:
             if not os.path.exists("states"):
                 os.mkdir("states")
             mname = (
                 "avae_"
-                + str(timestamp)
+                + str(settings.date_time_run)
                 + "_E"
                 + str(epoch)
                 + "_"
@@ -616,13 +733,8 @@ def train(
                 + ".pt"
             )
 
-            print(
-                "\n################################################################",
-                flush=True,
-            )
-            print(
-                "Saving model state for restarting and evaluation ...\n",
-                flush=True,
+            logging.info(
+                "################################################################"
             )
 
             torch.save(
@@ -636,19 +748,25 @@ def train(
                 },
                 os.path.join("states", mname),
             )
+            logging.info(
+                f"Saved model state: {mname} for restarting and evaluation "
+            )
 
-            if collect_meta:
-                meta_df.to_pickle(
-                    os.path.join(
-                        "states",
-                        "meta_"
-                        + str(timestamp)
-                        + "_E"
-                        + str(epoch)
-                        + "_"
-                        + str(lat_dims)
-                        + "_"
-                        + str(pose_dims)
-                        + ".pkl",
-                    )
-                )
+            filename = (
+                "meta_"
+                + str(settings.date_time_run)
+                + "_E"
+                + str(epoch)
+                + "_"
+                + str(lat_dims)
+                + "_"
+                + str(pose_dims)
+                + ".pkl"
+            )
+            meta_df.to_pickle(os.path.join("states", filename))
+
+            logging.info(f"Saved meta file : {filename} for evaluation \n")
+
+    if writer:
+        writer.flush()
+        writer.close()

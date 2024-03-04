@@ -1,6 +1,6 @@
+import logging
+
 import torch
-import torch.nn.functional as F
-from torch import nn
 
 
 class AffinityLoss:
@@ -26,8 +26,8 @@ class AffinityLoss:
     def __init__(self, lookup: torch.Tensor, device: torch.device):
         self.device = device
         self.lookup = torch.tensor(lookup).to(device)
-        self.cos = nn.CosineSimilarity(dim=1, eps=1e-8)
-        self.l1loss = nn.L1Loss()
+        self.cos = torch.nn.CosineSimilarity(dim=1, eps=1e-8)
+        self.l1loss = torch.nn.L1Loss()
 
     def __call__(
         self, y_true: torch.Tensor, y_pred: torch.Tensor
@@ -48,9 +48,11 @@ class AffinityLoss:
         loss : torch.Tensor
             The affinity loss.
         """
-        # first calculate the affinity ,for the real classes
-        c = torch.combinations(y_true, r=2, with_replacement=False).to(
-            self.device
+        # first calculate the affinity, for the real classes
+        c = (
+            torch.combinations(y_true, r=2, with_replacement=False)
+            .to(self.device)
+            .long()
         )
         affinity = self.lookup[c[:, 0], c[:, 1]].to(self.device)
 
@@ -90,9 +92,18 @@ class AVAELoss:
 
     """
 
-    def __init__(self, device, beta, gamma, lookup_aff=None, recon_fn="MSE"):
+    def __init__(
+        self,
+        device: torch.device,
+        beta: list[float],
+        gamma: list[float],
+        lookup_aff: torch.Tensor | None = None,
+        recon_fn: str = "MSE",
+        klred: str = "mean",
+    ):
         self.device = device
         self.recon_fn = recon_fn
+        self.klred = klred
         self.beta = beta
 
         self.affinity_loss = None
@@ -108,15 +119,22 @@ class AVAELoss:
                 "--affinity parameter."
             )
         elif lookup_aff is not None and max(gamma) == 0:
-            print(
-                "\nWARNING: You provided affinity matrix but no gamma. Unless "
+            logging.warning(
+                "\n\nWARNING: You provided affinity matrix but no gamma. Unless "
                 "you provide gamma, affinity will be ignored and you're "
-                "running a vanilla beta-VAE.\n",
-                flush=True,
+                "running a vanilla beta-VAE.\n"
             )
             self.affinity_loss = None
 
-    def __call__(self, x, recon_x, mu, logvar, epoch, batch_aff=None):
+    def __call__(
+        self,
+        x: torch.Tensor,
+        recon_x: torch.Tensor,
+        mu: torch.Tensor,
+        logvar: torch.Tensor,
+        epoch: int,
+        batch_aff: torch.Tensor | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """Return the aVAE loss.
 
         Parameters
@@ -165,9 +183,13 @@ class AVAELoss:
 
         # recon loss
         if self.recon_fn == "BCE":
-            recon_loss = F.binary_cross_entropy(x, recon_x, reduction="mean")
+            recon_loss = torch.nn.functional.binary_cross_entropy(
+                x, recon_x, reduction="mean"
+            )
         elif self.recon_fn == "MSE":
-            recon_loss = F.mse_loss(x, recon_x, reduction="mean")
+            recon_loss = torch.nn.functional.mse_loss(
+                x, recon_x, reduction="mean"
+            )
         else:
             raise RuntimeError(
                 "AffinityVAE loss requires 'BCE' or 'MSE' for 'loss_fn' "
@@ -175,7 +197,21 @@ class AVAELoss:
             )
 
         # kldiv loss
-        kldivergence = -0.5 * torch.mean(1 + logvar - mu.pow(2) - logvar.exp())
+        if self.klred == "mean":
+            kldivergence = -0.5 * torch.mean(
+                1 + logvar - mu.pow(2) - logvar.exp()
+            )
+        elif self.klred == "sum":
+            kldivergence = torch.mean(
+                -0.5
+                * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), axis=1),
+                axis=0,
+            )
+        else:
+            raise RuntimeError(
+                "AffinityVAE loss requires 'mean' or 'sum' for 'klreduction' "
+                "parameter."
+            )
 
         # affinity loss
         affin_loss = torch.Tensor([0]).to(self.device)

@@ -1,34 +1,79 @@
+import logging
 import os
 import random
+import typing
 
 import mrcfile
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
-from torch import from_numpy
+from scipy.ndimage import zoom
+from torch import Tensor
 from torch.utils.data import DataLoader, Dataset, Subset
 from torchvision import transforms
 
-from . import config
+from . import settings
 from .vis import format, plot_affinity_matrix, plot_classes_distribution
 
 np.random.seed(42)
+from typing import Any, Literal, overload
+
+
+@overload
+def load_data(
+    datapath: str,
+    datatype: str,
+    eval: Literal[True],
+    lim: int | None = None,
+    splt: int = 20,
+    batch_s: int = 64,
+    no_val_drop: bool = False,
+    affinity: str | None = None,
+    classes: str | None = None,
+    gaussian_blur: bool = False,
+    normalise: bool = False,
+    shift_min: bool = False,
+    rescale: bool | None = None,
+) -> tuple[DataLoader, int]:
+    ...
+
+
+@overload
+def load_data(
+    datapath: str,
+    datatype: str,
+    eval: Literal[False],
+    lim: int | None = None,
+    splt: int = 20,
+    batch_s: int = 64,
+    no_val_drop: bool = False,
+    affinity: str | None = None,
+    classes: str | None = None,
+    gaussian_blur: bool = False,
+    normalise: bool = False,
+    shift_min: bool = False,
+    rescale: bool | None = None,
+) -> tuple[DataLoader, DataLoader, DataLoader, pd.DataFrame, int]:
+    ...
 
 
 def load_data(
     datapath: str,
     datatype: str,
-    lim: int = None,
+    eval: bool,
+    lim: int | None = None,
     splt: int = 20,
     batch_s: int = 64,
     no_val_drop: bool = False,
-    collect_meta: bool = False,
-    eval: bool = True,
-    affinity=None,
-    classes=None,
-    gaussian_blur=False,
-    normalise=False,
-    shift_min=False,
-):
+    affinity: str | None = None,
+    classes: str | None = None,
+    gaussian_blur: bool = False,
+    normalise: bool = False,
+    shift_min: bool = False,
+    rescale: bool | None = None,
+) -> tuple[DataLoader, DataLoader, DataLoader, pd.DataFrame, int] | tuple[
+    DataLoader, int
+]:
     """Loads all data needed for training, testing and evaluation. Loads MRC files from a given path, selects subset of
     classes if requested, splits it into train / val  and test in batch sets, loads affinity matrix. Returns train,
     validation and test data as DataLoader objects.
@@ -47,8 +92,6 @@ def load_data(
         Batch size.
     no_val_drop: bool
         If True, the last batch of validation data will not be dropped if it is smaller than batch size.
-    collect_meta: bool
-        If True, the meta data for visualisation will be collected and returned.
     eval: bool
         If True, the data will be loaded only for evaluation.
     affinity: str
@@ -91,13 +134,13 @@ def load_data(
             gaussian_blur=gaussian_blur,
             normalise=normalise,
             shift_min=shift_min,
+            rescale=rescale,
             lim=lim,
-            collect_m=collect_meta,
             datatype=datatype,
         )
 
         # ################# Visualising affinity matrix ###################
-        if affinity is not None and config.VIS_AFF:
+        if affinity is not None and settings.VIS_AFF:
             plot_affinity_matrix(
                 lookup=lookup,
                 all_classes=lookup.columns.tolist(),
@@ -123,7 +166,7 @@ def load_data(
         train_y = [y[1] for _, y in enumerate(train_data)]
         val_y = [y[1] for _, y in enumerate(val_data)]
 
-        if config.VIS_HIS:
+        if settings.VIS_HIS:
             plot_classes_distribution(train_y, "train")
             plot_classes_distribution(val_y, "validation")
 
@@ -154,11 +197,15 @@ def load_data(
                     batch_s, len(train_data), len(val_data), splt
                 )
             )
-        print("\nData size:", len(data), flush=True)
-        print("\nClass list:", data.final_classes, flush=True)
-        print("Train / val split:", len(train_data), len(val_data), flush=True)
-        print("Train / val batches:", len(trains), len(vals), flush=True)
-        print(flush=True)
+        logging.info("############################################### DATA")
+        logging.info("Data size: {}".format(len(data)))
+        logging.info("Class list: {}".format(data.final_classes))
+        logging.info(
+            "Train / val split: {}, {}".format(len(train_data), len(val_data))
+        )
+        logging.info(
+            "Train / val batches: {}, {}\n".format(len(trains), len(vals))
+        )
 
         if affinity is not None:
             lookup = lookup.to_numpy(dtype=np.float32)
@@ -173,17 +220,17 @@ def load_data(
             gaussian_blur=gaussian_blur,
             normalise=normalise,
             shift_min=shift_min,
+            rescale=rescale,
             lim=lim,
-            collect_m=collect_meta,
             datatype=datatype,
         )
 
-        print("Eval data size:", len(data), flush=True)
+        logging.info("############################################### EVAL")
+        logging.info("Eval data size: {}".format(len(data)))
         tests = DataLoader(
             data, batch_size=batch_s, num_workers=0, shuffle=True
         )
-        print("Eval batches:", len(tests), flush=True)
-        print(flush=True)
+        logging.info("Eval batches: {}\n".format(len(tests)))
 
     if eval:
         return tests, data.dim()
@@ -194,24 +241,24 @@ def load_data(
 class Dataset_reader(Dataset):
     def __init__(
         self,
-        root_dir,
-        amatrix=None,
-        classes=None,
-        transform=None,
-        gaussian_blur=False,
-        normalise=False,
-        shift_min=False,
-        lim=None,
-        collect_m=False,
-        datatype="mrc",
+        root_dir: str,
+        amatrix: npt.NDArray | None = None,
+        classes: str | None = None,
+        transform: typing.Any = None,
+        gaussian_blur: bool = False,
+        normalise: bool = False,
+        shift_min: bool = False,
+        rescale: bool | None = None,
+        lim: int | None = None,
+        datatype: str = "mrc",
     ):
         super().__init__()
         self.datatype = datatype
         self.shift_min = shift_min
         self.normalise = normalise
         self.gaussian_blur = gaussian_blur
+        self.rescale = rescale
         self.transform = transform
-        self.collect_meta = collect_m
         self.amatrix = amatrix
         self.root_dir = root_dir
 
@@ -274,23 +321,18 @@ class Dataset_reader(Dataset):
             # in evaluation mode - test set
             aff = 0  # cannot be None, but not used anywhere during evaluation
 
-        if self.collect_meta:
-            # file info and metadata
-            meta = "_".join(filename.split(".")[0].split("_")[1:])
-            avg = np.around(np.average(x), decimals=4)
-            img = format(
-                x, len(data.shape)
-            )  # used for dynamic preview in Altair
-            meta = {
-                "filename": filename,
-                "id": y,
-                "meta": meta,
-                "avg": avg,
-                "image": img,
-            }
-            return x, y, aff, meta
-        else:
-            return x, y, aff
+        # file info and metadata
+        meta = "_".join(filename.split(".")[0].split("_")[1:])
+        avg = np.around(np.average(x), decimals=4)
+        img = format(x, len(data.shape))  # used for dynamic preview in Altair
+        meta = {
+            "filename": filename,
+            "id": y,
+            "meta": meta,
+            "avg": avg,
+            "image": img,
+        }
+        return x, y, aff, meta
 
     def read(self, filename):
 
@@ -303,8 +345,13 @@ class Dataset_reader(Dataset):
 
     def voxel_transformation(self, x):
 
+        if self.rescale:
+            x = np.asarray(x, dtype=np.float32)
+            sh = tuple([self.rescale / s for s in x.shape])
+            x = zoom(x, sh)
+
         # convert numpy to torch tensor
-        x = from_numpy(x)
+        x = Tensor(x)
 
         # unsqueeze adds a dimension for batch processing the data
         x = x.unsqueeze(0)

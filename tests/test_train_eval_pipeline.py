@@ -6,89 +6,63 @@ import unittest
 
 import torch
 
-from avae import config
-from avae.evaluate import evaluate
-from avae.train import train
+from avae import config, settings
+from run import run_pipeline
 from tests import testdata_mrc, testdata_npy
 
 # fixing random seeds so we dont get fail on mrc tests
-torch.random.manual_seed(0)
+torch.random.manual_seed(10)
 random.seed(10)
 
 
 class TrainEvalTest(unittest.TestCase):
     def setUp(self) -> None:
         """Test instantiation of the pipeline."""
-
         self.testdata_mrc = os.path.dirname(testdata_mrc.__file__)
         self.testdata_npy = os.path.dirname(testdata_npy.__file__)
 
-        self.data = {
+        self.data_params = {
             "datapath": self.testdata_mrc,
             "datatype": "mrc",
-            "limit": 100,
             "split": 10,
             "batch": 25,
             "no_val_drop": True,
             "affinity": os.path.join(self.testdata_mrc, "affinity_fsc_10.csv"),
             "classes": os.path.join(self.testdata_mrc, "classes.csv"),
-            "collect_meta": True,
+            "dynamic": True,
             "epochs": 5,
             "channels": 3,
             "depth": 4,
             "latent_dims": 8,
             "pose_dims": 3,
             "learning": 0.03,
-            "beta_load": None,
             "beta_min": 0,
-            "beta_max": 1,
-            "beta_cycle": "flat",
-            "beta_ratio": None,
+            "beta": 1,
+            "beta_cycle": 1,
             "cyc_method_beta": "flat",
-            "gamma_load": None,
             "gamma_min": 0,
-            "gamma_max": 1,
-            "gamma_cycle": None,
-            "gamma_ratio": None,
+            "gamma": 1,
             "cyc_method_gamma": "flat",
-            "recon_fn": "MSE",
-            "use_gpu": False,
-            "restart": False,
-            "state": None,
-            "gpu": None,
-            "meta": None,
+            "loss_fn": "MSE",
             "gaussian_blur": True,
             "normalise": True,
             "shift_min": True,
+            "rescale": 32,
+            "tensorboard": True,
             "classifier": "NN",
+            "opt_method": "adam",
+            "freq_all": 5,
+            "vis_all": True,
+            "vis_format": "png",
         }
 
-        config.FREQ_ACC = 5
-        config.FREQ_REC = 5
-        config.FREQ_EMB = 5
-        config.FREQ_INT = 5
-        config.FREQ_DIS = 5
-        config.FREQ_POS = 5
-        config.FREQ_EVAL = 5
-        config.FREQ_STA = 5
-        config.FREQ_CON = 5
-        config.FREQ_SIM = 5
-
-        config.VIS_CYC = True
-        config.VIS_LOS = True
-        config.VIS_ACC = True
-        config.VIS_REC = True
-        config.VIS_EMB = True
-        config.VIS_INT = True
-        config.VIS_DIS = True
-        config.VIS_POS = True
-        config.VIS_HIS = True
-        config.VIS_CON = True
-        config.VIS_AFF = True
-        config.VIS_SIM = True
+        self.data = config.load_config_params(local_vars=self.data_params)
+        config.setup_visualisation_config(self.data)
 
     def test_model_a_mrc(self):
         self.data["model"] = "a"
+        settings.VIS_POSE_CLASS = "1b23,1dkg"
+
         (
             n_dir_train,
             n_plots_train,
@@ -99,17 +73,19 @@ class TrainEvalTest(unittest.TestCase):
             n_states_eval,
         ) = helper_train_eval(self.data)
 
-        self.assertEqual(n_dir_train, 3)
-        self.assertEqual(n_plots_train, 32)
+        self.assertEqual(n_dir_train, 4)
+        self.assertEqual(n_plots_train, 37)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
 
-        self.assertEqual(n_plots_eval, 50)
+        self.assertEqual(n_plots_eval, 60)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 3)
 
     def test_model_b_mrc(self):
         self.data["model"] = "b"
+        settings.VIS_POSE_CLASS = "1b23,1dkg"
+
         (
             n_dir_train,
             n_plots_train,
@@ -120,11 +96,11 @@ class TrainEvalTest(unittest.TestCase):
             n_states_eval,
         ) = helper_train_eval(self.data)
 
-        self.assertEqual(n_dir_train, 3)
-        self.assertEqual(n_plots_train, 32)
+        self.assertEqual(n_dir_train, 4)
+        self.assertEqual(n_plots_train, 37)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
-        self.assertEqual(n_plots_eval, 50)
+        self.assertEqual(n_plots_eval, 60)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 3)
 
@@ -132,6 +108,8 @@ class TrainEvalTest(unittest.TestCase):
         self.data["model"] = "a"
         self.data["datatype"] = "npy"
         self.data["datapath"] = self.testdata_npy
+        settings.VIS_POSE_CLASS = "2,i"
+
         self.data["affinity"] = os.path.join(
             self.testdata_npy, "affinity_an.csv"
         )
@@ -146,95 +124,134 @@ class TrainEvalTest(unittest.TestCase):
             n_states_eval,
         ) = helper_train_eval(self.data)
 
-        self.assertEqual(n_dir_train, 3)
-        self.assertEqual(n_plots_train, 30)
+        self.assertEqual(n_dir_train, 4)
+        self.assertEqual(n_plots_train, 35)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
-        self.assertEqual(n_plots_eval, 47)
+        self.assertEqual(n_plots_eval, 57)
+        self.assertEqual(n_latent_eval, 4)
+        self.assertEqual(n_states_eval, 3)
+
+    def test_model_b_npy(self):
+        self.data["model"] = "b"
+        self.data["datatype"] = "npy"
+        self.data["datapath"] = self.testdata_npy
+        settings.VIS_POSE_CLASS = "2,i"
+
+        self.data["affinity"] = os.path.join(
+            self.testdata_npy, "affinity_an.csv"
+        )
+        self.data["classes"] = os.path.join(self.testdata_npy, "classes.csv")
+        (
+            n_dir_train,
+            n_plots_train,
+            n_latent_train,
+            n_states_train,
+            n_plots_eval,
+            n_latent_eval,
+            n_states_eval,
+        ) = helper_train_eval(self.data)
+
+        self.assertEqual(n_dir_train, 4)
+        self.assertEqual(n_plots_train, 35)
+        self.assertEqual(n_latent_train, 2)
+        self.assertEqual(n_states_train, 2)
+        self.assertEqual(n_plots_eval, 57)
+        self.assertEqual(n_latent_eval, 4)
+        self.assertEqual(n_states_eval, 3)
+
+    def test_model_nopose(self):
+        self.data["model"] = "u"
+        self.data["pose_dims"] = 0
+
+        (
+            n_dir_train,
+            n_plots_train,
+            n_latent_train,
+            n_states_train,
+            n_plots_eval,
+            n_latent_eval,
+            n_states_eval,
+        ) = helper_train_eval(self.data)
+
+        self.assertEqual(n_dir_train, 4)
+        self.assertEqual(n_plots_train, 32)
+        self.assertEqual(n_latent_train, 2)
+        self.assertEqual(n_states_train, 2)
+        self.assertEqual(n_plots_eval, 52)
+        self.assertEqual(n_latent_eval, 4)
+        self.assertEqual(n_states_eval, 3)
+
+    def test_model_nogamma(self):
+        self.data["model"] = "u"
+        self.data["gamma"] = 0
+
+        (
+            n_dir_train,
+            n_plots_train,
+            n_latent_train,
+            n_states_train,
+            n_plots_eval,
+            n_latent_eval,
+            n_states_eval,
+        ) = helper_train_eval(self.data)
+
+        self.assertEqual(n_dir_train, 4)
+        self.assertEqual(n_plots_train, 35)
+        self.assertEqual(n_latent_train, 2)
+        self.assertEqual(n_states_train, 2)
+        self.assertEqual(n_plots_eval, 56)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 3)
 
 
-def helper_train_eval(data):
-
-    temp_dir = tempfile.TemporaryDirectory()
+def helper_train_eval(
+    data, eval=True, noplot=False, nolat=False, nostate=False
+):
+    temp_dir = tempfile.TemporaryDirectory(prefix='avae-')
     os.chdir(temp_dir.name)
-    train(
-        datapath=data["datapath"],
-        datatype=data["datatype"],
-        restart=data["restart"],
-        state=data["state"],
-        lim=data["limit"],
-        splt=data["split"],
-        batch_s=data["batch"],
-        no_val_drop=data["no_val_drop"],
-        affinity=data["affinity"],
-        classes=data["classes"],
-        collect_meta=data["collect_meta"],
-        epochs=data["epochs"],
-        channels=data["channels"],
-        depth=data["depth"],
-        lat_dims=data["latent_dims"],
-        pose_dims=data["pose_dims"],
-        learning=data["learning"],
-        beta_load=data["beta_load"],
-        beta_min=data["beta_min"],
-        beta_max=data["beta_max"],
-        beta_cycle=data["beta_cycle"],
-        beta_ratio=data["beta_ratio"],
-        cyc_method_beta=data["cyc_method_beta"],
-        gamma_load=data["gamma_load"],
-        gamma_min=data["gamma_min"],
-        gamma_max=data["gamma_max"],
-        gamma_cycle=data["gamma_cycle"],
-        gamma_ratio=data["gamma_ratio"],
-        cyc_method_gamma=data["cyc_method_gamma"],
-        recon_fn=data["recon_fn"],
-        use_gpu=data["gpu"],
-        model=data["model"],
-        opt_method="adam",
-        gaussian_blur=data["gaussian_blur"],
-        normalise=data["normalise"],
-        shift_min=data["shift_min"],
-        classifier=data["classifier"],
-    )
-    n_dir_train = len(next(os.walk(temp_dir.name))[1])
-    n_plots_train = len(os.listdir(os.path.join(temp_dir.name, "plots")))
-    n_latent_train = len(os.listdir(os.path.join(temp_dir.name, "latents")))
-    n_states_train = len(os.listdir(os.path.join(temp_dir.name, "states")))
 
-    evaluate(
-        datapath=os.path.join(data["datapath"], "test"),
-        datatype=data["datatype"],
-        state=data["state"],
-        meta=data["meta"],
-        lim=data["limit"],
-        splt=data["split"],
-        batch_s=data["batch"],
-        classes=data["classes"],
-        collect_meta=True,
-        use_gpu=data["use_gpu"],
-        gaussian_blur=data["gaussian_blur"],
-        normalise=data["normalise"],
-        shift_min=data["shift_min"],
-        classifier=data["classifier"],
-    )
+    if eval:
+        eval = [not eval, eval]
+    else:
+        eval = [eval]
+    ret = []
 
-    n_plots_eval = len(os.listdir(os.path.join(temp_dir.name, "plots")))
-    n_latent_eval = len(os.listdir(os.path.join(temp_dir.name, "latents")))
-    n_states_eval = len(os.listdir(os.path.join(temp_dir.name, "states")))
+    # run training
+    for e in eval:
+        data["eval"] = e
+        if data["eval"]:
+            data["datapath"] = os.path.join(data["datapath"], "test")
+
+        run_pipeline(data)
+
+        n_plots, n_latent, n_states = (0, 0, 0)
+        n_dir = len(next(os.walk(temp_dir.name))[1])
+        if os.path.exists(os.path.join(temp_dir.name, "plots")):
+            n_plots = (
+                len(os.listdir(os.path.join(temp_dir.name, "plots")))
+                if not noplot
+                else None
+            )
+        if os.path.exists(os.path.join(temp_dir.name, "latents")):
+            n_latent = (
+                len(os.listdir(os.path.join(temp_dir.name, "latents")))
+                if not nolat
+                else None
+            )
+        if os.path.exists(os.path.join(temp_dir.name, "states")):
+            n_states = (
+                len(os.listdir(os.path.join(temp_dir.name, "states")))
+                if not nostate
+                else None
+            )
+
+        ret.extend([n_plots, n_latent, n_states])
+    ret.insert(0, n_dir)
 
     shutil.rmtree(temp_dir.name)
 
-    return (
-        n_dir_train,
-        n_plots_train,
-        n_latent_train,
-        n_states_train,
-        n_plots_eval,
-        n_latent_eval,
-        n_states_eval,
-    )
+    return tuple(ret)
 
 
 if __name__ == "__main__":

@@ -1,24 +1,29 @@
 #### Data parameters
 
-datapath: data/shrec21_full_dataset/subtomo_files
-affinity: data/shrec21_full_dataset/subtomo_files/affinity.csv
-classes: data/shrec21_full_dataset/subtomo_files/classes.csv
-state : /your_path_to_saved_state/state.pt
-restart: True
+datapath: tests/testdata_npy
+affinity: tests/testdata_npy/affinity_an.csv
+classes: tests/testdata_npy/classes.csv
+restart: False
 limit: 1000
 split: 20
+datatype: npy
 
 #### Data processing parameters
 shift_mean: False
 gaussian_blur: False
 normalise: False
+rescale: False
 
 #### Network parameters
 
 depth:  3
 channels:  64
+filters: [8, 16, 32, 64]
 latent_dims:  8
 pose_dims: 1
+bnorm_encoder: true
+bnorm_decoder: true
+
 model: a
 
 #### Training parameters
@@ -35,6 +40,7 @@ freq_sta: 10  # frequency of state saves
 beta:  1
 gamma:  2
 loss_fn:  MSE
+klreduction: mean
 
 #### Cyclical annealing parameters for beta
 beta_min: 0
@@ -56,11 +62,11 @@ freq_eval: 10 # frequency of test evaluation (if test present)
 vis_los:  false  # loss on/off (every epoch from epoch 2)
 vis_acc:  false  # confusion matrices and F1 scores on/off (frequency controlled)
 vis_rec:  false  # reconstructions on/off (frequency controlled)
-vis_con:  false  # per-class confidence metrics on/off (frequency controlled)
 vis_emb:  false  # latent embeddings on/off (frequency controlled)
 vis_int:  false  # latent interpolations on/off (frequency controlled)
 vis_dis:  false  # latent disentanglement on/off (frequency controlled)
 vis_pos:  false  # pose disentanglement on/off (frequency controlled)
+vis_pose_class: 1,2 # comma separated string eg. 1,2
 vis_cyc:  false  # beta for cyclic anealing on/off (once per run)
 vis_aff: false   # affinity matrix on/off (once per run)
 vis_his:  false  # class distribution histogram on/off (once per run)
@@ -70,10 +76,12 @@ dynamic: true    # dynamic embedding visualisations on/off (freq same as freq_em
 
 freq_acc: 10  # frequency of accuracy visualisation
 freq_rec: 10  # frequency of reconstruction visualisation
-freq_con: 10  # frequency of per-class confidence metric visualisation
 freq_emb: 10  # frequency of latent embedding visualisation
 freq_int: 10  # frequency of latent interpolation visualisation
 freq_dis: 10  # frequency of latent disentanglement visualisation
 freq_pos: 10  # frequency of pose disentanglement visualisation
 freq_sim: 10  # frequency of similarity matrix visualisation
 freq_all: 10  # sets all above to the same value (inc freq_sta and freq_eval)
+
+#### debug parameters
+debug: false
