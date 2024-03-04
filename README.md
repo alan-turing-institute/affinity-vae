@@ -2,8 +2,8 @@
 [![Tests](https://github.com/alan-turing-institute/affinity-vae/actions/workflows/tests.yml/badge.svg)](https://github.com/alan-turing-institute/affinity-vae/actions/workflows/tests.yml)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 
-> Note: This is a stable version of the code used to produce figures for the paper. The code in `develop` is in constant change. 
-> 
+> Note: This is a stable version of the code used to produce figures for the paper. The code in `develop` is in constant change.
+>
 # Affinity-VAE
 
 **Affinity-VAE for disentanglement, clustering and classification of objects in
