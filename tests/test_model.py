@@ -47,6 +47,8 @@ class ModelInstanceTest(unittest.TestCase):
 
         self.vae_2d = avae(self.encoder_2d, self.decoder_2d)
 
+        self.x = randn(14, 1, 64, 64, 64)
+
     def test_model_instance(self):
         """Test instantiation of the model."""
 
@@ -65,14 +67,24 @@ class ModelInstanceTest(unittest.TestCase):
 
     def test_model_forward(self):
 
-        x = randn(14, 1, 64, 64, 64)
-        y = self.vae(x)
+        y = self.vae(self.x)
 
-        self.assertEqual(x.shape, y[0].shape)
+        self.assertEqual(self.x.shape, y[0].shape)
         self.assertEqual(randn(14, 16).shape, y[1].shape)
         self.assertEqual(randn(14, 16).shape, y[2].shape)
         self.assertEqual(randn(14, 16).shape, y[3].shape)
         self.assertEqual(randn(14, 3).shape, y[4].shape)
+
+    def test_model_reproducibility(self):
+
+        y1 = self.vae(self.x)
+        y2 = self.vae(self.x)
+
+        self.assertEqual(y1[0].all(), y2[0].all())
+        self.assertEqual(y1[1].all(), y2[1].all())
+        self.assertEqual(y1[2].all(), y2[2].all())
+        self.assertEqual(y1[3].all(), y2[3].all())
+        self.assertEqual(y1[4].all(), y2[4].all())
 
 
 class ModelParamsTest(unittest.TestCase):

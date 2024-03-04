@@ -555,6 +555,13 @@ from avae.train import train
     is_flag=True,
     help="Log metrics and figures to tensorboard during training",
 )
+@click.option(
+    "--strategy",
+    "-st",
+    type=str,
+    default=None,
+    help="Define the strategy for distributed training. Options are: 'ddp', 'deepspeed' or 'fsdp",
+)
 def run(
     config_file,
     datapath,
@@ -630,6 +637,7 @@ def run(
     classifier,
     new_out,
     debug,
+    strategy,
 ):
 
     warnings.simplefilter("ignore", FutureWarning)
@@ -651,6 +659,8 @@ def run(
         dir_name = f'results_{settings.date_time_run}_model_{data["model"]}_lat{data["latent_dims"]}_pose{data["pose_dims"]}_lr{data["learning"]}_beta{data["beta"]}_gamma{data["gamma"]}'
         if not os.path.exists(dir_name):
             os.mkdir(dir_name)
+        else:
+            logging.info(f"Directory {dir_name} already exists")
         os.chdir(dir_name)
 
     if not os.path.exists("logs"):
@@ -726,6 +736,7 @@ def run_pipeline(data):
             rescale=data["rescale"],
             tensorboard=data["tensorboard"],
             classifier=data["classifier"],
+            strategy=data["strategy"],
         )
     else:
         evaluate(
