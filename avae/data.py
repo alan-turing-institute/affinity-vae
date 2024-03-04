@@ -2,7 +2,9 @@ import logging
 import os
 import random
 import typing
+from typing import Literal, overload
 
+import lightning as lt
 import mrcfile
 import numpy as np
 import numpy.typing as npt
@@ -15,8 +17,7 @@ from torchvision import transforms
 from . import settings
 from .vis import format, plot_affinity_matrix, plot_classes_distribution
 
-np.random.seed(42)
-from typing import Any, Literal, overload
+lt.pytorch.seed_everything(42)
 
 
 @overload
@@ -24,6 +25,7 @@ def load_data(
     datapath: str,
     datatype: str,
     eval: Literal[True],
+    fabric: lt.fabric.fabric,
     lim: int | None = None,
     splt: int = 20,
     batch_s: int = 64,
@@ -43,6 +45,7 @@ def load_data(
     datapath: str,
     datatype: str,
     eval: Literal[False],
+    fabric: lt.fabric.fabric,
     lim: int | None = None,
     splt: int = 20,
     batch_s: int = 64,
@@ -61,6 +64,7 @@ def load_data(
     datapath: str,
     datatype: str,
     eval: bool,
+    fabric: lt.fabric.fabric,
     lim: int | None = None,
     splt: int = 20,
     batch_s: int = 64,
@@ -185,6 +189,9 @@ def load_data(
             shuffle=True,
             drop_last=(not no_val_drop),
         )
+        trains = fabric.setup_dataloaders(trains)
+        vals = fabric.setup_dataloaders(vals)
+
         tests = []
         if len(vals) < 1 or len(trains) < 1:
             # ensure the batch size is not smaller than validation set
@@ -230,6 +237,8 @@ def load_data(
         tests = DataLoader(
             data, batch_size=batch_s, num_workers=0, shuffle=True
         )
+        tests = fabric.setup_dataloaders(tests)
+
         logging.info("Eval batches: {}\n".format(len(tests)))
 
     if eval:
