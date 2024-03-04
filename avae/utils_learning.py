@@ -1,7 +1,6 @@
 import logging
 import typing
 
-import lightning
 import numpy as np
 import pandas as pd
 import torch
@@ -54,7 +53,7 @@ def dims_after_pooling(start: int, n_pools: int) -> int:
 
 
 def pass_batch(
-    fabric: lightning.Fabric,
+    device: torch.device,
     vae: torch.nn.Module,
     batch: list,
     b: int,
@@ -135,9 +134,9 @@ def pass_batch(
 
     # to device
     x = batch[0]
-    x = x.to(fabric.device)
+    x = x.to(device)
     aff = batch[2]
-    aff = aff.to(fabric.device)
+    aff = aff.to(device)
 
     # forward
     x = x.to(torch.float32)
@@ -161,7 +160,7 @@ def pass_batch(
 
     # backwards
     if optimizer is not None:
-        fabric.backward(history_loss[0])
+        history_loss[0].backward()
         optimizer.step()
         optimizer.zero_grad()
 
@@ -206,11 +205,6 @@ def add_meta(
         Dataframe containing meta data.
 
     """
-    batch_meta = {
-        k: v.to(device='cpu', non_blocking=True) if hasattr(v, 'to') else v
-        for k, v in batch_meta.items()
-    }
-
     meta = pd.DataFrame(batch_meta)
 
     meta["mode"] = mode

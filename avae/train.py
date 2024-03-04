@@ -1,8 +1,8 @@
 import logging
 import os
 
-import lightning as lt
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 import torch
 from torch.utils.tensorboard import SummaryWriter
@@ -65,7 +65,6 @@ def train(
     rescale: bool,
     tensorboard: bool,
     classifier: str,
-    strategy: str,
 ):
     """Function to train an AffinityVAE model. The inputs are training configuration parameters. In this function the
     data is loaded, selected and split into training, validation and test sets, the model is initialised and trained
@@ -145,42 +144,11 @@ def train(
         If True, batch normalisation is applied to the encoder.
     bnrom_decoder: bool
         If True, batch normalisation is applied to the decoder.
-    strategy: str
-        The strategy to use for distributed training. Can be  'ddp', 'deepspeed' or 'fsdp".
     gsd_conv_layers: int
         activates convolution layers at the end of the differetiable decoder if set
         and it is an integer defining the number of output channels  .
     """
-    lt.pytorch.seed_everything(42)
-
-    n_devices = torch.cuda.device_count()
-    logging.info('GPus available: {}'.format(n_devices))
-
-    if n_devices > 0 and use_gpu is True:
-        accelerator = 'gpu'
-
-        if n_devices <= 4:
-            n_nodes = 1
-        else:
-            # Calculate the number of nodes based on the formula: ceil(num_gpus / 4)
-            n_nodes = (n_devices + 3) // 4
-
-        logging.info(
-            f'Setting up fabric with strategy {strategy}, accelerator {accelerator}, devices {n_devices}, num_nodes {n_nodes}'
-        )
-        fabric = lt.Fabric(
-            strategy=strategy,
-            accelerator=accelerator,
-            devices=n_devices,
-            num_nodes=n_nodes,
-            # plugins=[SLURMEnvironment(auto_requeue=False)]
-        )
-
-    else:
-        fabric = lt.Fabric(strategy=strategy, accelerator='auto')
-
-    fabric.launch()
-    device = fabric.device
+    torch.manual_seed(42)
 
     # ############################### DATA ###############################
     trains, vals, tests, lookup, data_dim = load_data(
@@ -197,7 +165,6 @@ def train(
         normalise=normalise,
         shift_min=shift_min,
         rescale=rescale,
-        fabric=fabric,
     )
 
     # The spacial dimensions of the data
@@ -205,6 +172,7 @@ def train(
     pose = not (pose_dims == 0)
 
     # ############################### MODEL ###############################
+    device = set_device(use_gpu)
     if filters is not None:
         filters = np.array(
             np.array(filters).replace(" ", "").split(","), dtype=np.int64
@@ -259,8 +227,11 @@ def train(
         )
 
     vae = AffinityVAE(encoder, decoder)
-
+    vae = vae.to(device)
     logging.info(vae)
+
+    # If more than one GPU available, model can use DataParallel
+    print("Using", torch.cuda.device_count(), "GPUs!")
 
     if opt_method == "adam":
         optimizer = torch.optim.Adam(
@@ -368,11 +339,9 @@ def train(
         vis.plot_cyc_variable(beta_arr, "beta")
         vis.plot_cyc_variable(gamma_arr, "gamma")
 
-    vae, optimizer = fabric.setup(vae, optimizer)
-
     loss = AVAELoss(
-        device=device,
-        beta=beta_arr,
+        device,
+        beta_arr,
         gamma=gamma_arr,
         lookup_aff=lookup,
         recon_fn=recon_fn,
@@ -420,7 +389,7 @@ def train(
                 lat_pos,
                 t_history,
             ) = pass_batch(
-                fabric,
+                device,
                 vae,
                 batch,
                 b,
@@ -475,7 +444,7 @@ def train(
                 vlat_pos,
                 v_history,
             ) = pass_batch(
-                fabric,
+                device,
                 vae,
                 batch,
                 b,
@@ -526,7 +495,7 @@ def train(
         if (epoch + 1) % settings.FREQ_EVAL == 0:
             for b, batch in enumerate(tests):  # tests empty if no 'test' dir
                 (t, t_hat, t_mu, t_logvar, tlat, tlat_pose, _,) = pass_batch(
-                    fabric, vae, batch, b, len(tests), epoch, epochs
+                    device, vae, batch, b, len(tests), epoch, epochs
                 )
                 x_test.extend(t_mu.cpu().detach().numpy())  # store latents
                 c_test.extend(t_logvar.cpu().detach().numpy())
@@ -774,9 +743,9 @@ def train(
             torch.save(
                 {
                     "epoch": epoch + 1,
-                    "model_state_dict": vae._original_module.state_dict(),
-                    "model_class_object": vae._original_module,
-                    "optimizer_state_dict": optimizer._optimizer.state_dict(),
+                    "model_state_dict": vae.state_dict(),
+                    "model_class_object": vae,
+                    "optimizer_state_dict": optimizer.state_dict(),
                     "t_loss_history": t_history,
                     "v_loss_history": v_history,
                 },

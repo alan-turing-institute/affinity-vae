@@ -3,8 +3,8 @@ import shutil
 import tempfile
 import unittest
 
-import lightning as lt
 import numpy as np
+from torch.utils.data import DataLoader
 
 from avae.data import load_data
 from tests import testdata_mrc
@@ -16,8 +16,7 @@ class DataTest(unittest.TestCase):
         self._orig_dir = os.getcwd()
         self.test_data = os.path.dirname(testdata_mrc.__file__)
         self.test_dir = tempfile.mkdtemp(prefix="avae_")
-        self.fabric = lt.Fabric()
-        self.fabric.launch()
+        print(self.test_data, self.test_dir)
 
         # Change to test directory
         os.chdir(self.test_dir)
@@ -47,14 +46,13 @@ class DataTest(unittest.TestCase):
             normalise=True,
             shift_min=True,
             rescale=sh,
-            fabric=self.fabric,
         )
         print(os.getcwd())
 
         # test load_data
         assert len(out) == 1
         eval_data = out
-        # assert isinstance(eval_data, lt.fast.DataLoader)
+        assert isinstance(eval_data, DataLoader)
 
         # test ProteinDataset
         eval_batch = list(eval_data)[0]
@@ -85,14 +83,13 @@ class DataTest(unittest.TestCase):
             normalise=True,
             shift_min=True,
             rescale=sh,
-            fabric=self.fabric,
         )
 
         # test load_data
         assert len(out) == 5
         train_data, val_data, test_data, lookup, data_dim = out
         assert len(train_data) >= len(val_data)
-        # assert isinstance(train_data, lt.fabric.DataLoader)
+        assert isinstance(train_data, DataLoader)
 
         # test ProtenDataset
         train_batch = list(train_data)[0]
@@ -107,27 +104,4 @@ class DataTest(unittest.TestCase):
         assert lookup.shape[0] == lookup.shape[1]
         assert lookup[0][0] == 1
 
-        data_0 = list(out[0])[0][0][0][0][0].detach().numpy()
-        data_1 = list(out[0])[0][0][0][0][0].detach().numpy()
-
-        # test reproducibility
-        out_2, _, _, _, _ = load_data(
-            "./train",
-            datatype="mrc",
-            lim=None,
-            splt=30,
-            batch_s=16,
-            no_val_drop=True,
-            eval=False,
-            affinity="./train/affinity_fsc_10.csv",
-            gaussian_blur=True,
-            normalise=True,
-            shift_min=True,
-            rescale=sh,
-            fabric=self.fabric,
-        )
-        data_0_1 = list(out_2)[0][0][0][0][0].detach().numpy()
-        data_1_1 = list(out_2)[0][0][0][0][0].detach().numpy()
-
-        assert data_0.all() == data_0_1.all()
-        assert data_1.all() == data_1_1.all()
+    # write more tests for ProteinDataset
