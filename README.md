@@ -54,7 +54,7 @@ python -m pytest -s -W ignore
 > the error:
 > `AttributeError: Can't pickle local object 'ProteinDataset.__init__.<locals>.<lambda>'`.
 
-### Installing with pyenv in Baskerville
+### Installing with conda in Baskerville
 
 The following is the recommended way of installing all libraries in Baskervile.
 
@@ -63,7 +63,6 @@ The following is the recommended way of installing all libraries in Baskervile.
 module purge
 module load baskerville
 module load bask-apps/live
-
 module load PyTorch/2.0.1-foss-2022a-CUDA-11.7.0
 module load torchvision/0.15.2-foss-2022a-CUDA-11.7.0
 
@@ -75,11 +74,6 @@ cd  affinity-vae/
 python -m pip install -e ."[baskerville]"
 ```
 
-you can send a SLURM job to the cluster using the script in [tools](tools/slurm_run.sh), with the following command:
-
-```bash
-sbatch slurm_run.sh
-```
 
 ### Quick start
 
