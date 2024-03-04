@@ -131,11 +131,6 @@ def load_data(
 
     if not eval:
 
-        # for training we need to load the affinity matrix
-        if affinity_path is not None:
-
-            affinity = get_affinity_matrix(affinity_path, classes_list)
-
         # create dataloader
         loader = DiskDataLoader(
             pipeline="disk",
@@ -148,6 +143,13 @@ def load_data(
         )
 
         loader.load(datapath=datapath, datatype=datatype)
+
+        if len(classes_list) == 0:
+            classes_list = loader.classes
+
+        # for training, we need to load the affinity matrix
+        if affinity_path is not None:
+            affinity = get_affinity_matrix(affinity_path, classes_list)
 
         loader.dataset = AffinityDiskDataset(
             dataset=loader.dataset, affinity=affinity, classes=classes_list
@@ -195,11 +197,9 @@ def load_data(
 
         test_loader.load(datapath=datapath, datatype=datatype)
         test_loader.dataset = AffinityDiskDataset(
-            dataset=test_loader.dataset, classes=[]
+            dataset=test_loader.dataset, classes=test_loader.classes
         )
-        tests = test_loader.get_loader(batch_size=batch_s, split_size=splt)
-
-        tests_y = list(sum([y[1] for _, y in enumerate(tests)], ()))
+        tests = test_loader.get_loader(batch_size=batch_s)
 
         logging.info("############################################### EVAL")
         logging.info("Eval data size: {}".format(len(test_loader.dataset)))
@@ -260,7 +260,10 @@ def get_affinity_matrix(
         index = [affinity.columns.get_loc(f"{columns}") for columns in classes]
         sub_affinity = affinity.iloc[index, index]
 
-    return sub_affinity
+        return sub_affinity
+
+    else:
+        return None
 
 
 class AffinityDiskDataset(DiskDataset):
