@@ -114,14 +114,17 @@ def load_data(
     lookup: pd.DataFrame
         Affinity matrix, returned only if eval is False.
     """
+
+    # read the class list, if not provided all classes in the dataset will be used as default
     if classes is not None:
         classes_list = pd.read_csv(classes).columns.tolist()
     else:
         classes_list = []
 
+    # get transformations into a list
     transformations = []
     if gaussian_blur:
-        transformations.append('gaussian_blur')
+        transformations.append('gaussianblur')
     if normalise:
         transformations.append('normalise')
     if shift_min:
@@ -131,7 +134,7 @@ def load_data(
 
     if not eval:
 
-        # create dataloader
+        # configure dataloader with the given parameters
         loader = DiskDataLoader(
             pipeline="disk",
             classes=classes_list,
@@ -141,9 +144,10 @@ def load_data(
                 None if len(transformations) == 0 else transformations
             ),
         )
-
+        # load data from the given path
         loader.load(datapath=datapath, datatype=datatype)
 
+        # if classes are not provided, use all classes in the dataset as obtained by the dataloader
         if len(classes_list) == 0:
             classes_list = loader.classes
 
@@ -151,14 +155,13 @@ def load_data(
         if affinity_path is not None:
             affinity = get_affinity_matrix(affinity_path, classes_list)
 
+        # assign the affinity matrix to the dataset (small modification from the caked DiskDataset)
         loader.dataset = AffinityDiskDataset(
             dataset=loader.dataset, affinity=affinity, classes=classes_list
         )
 
+        # split the data into train and validation and get torch dataloaders
         trains, vals = loader.get_loader(batch_size=batch_s, split_size=splt)
-
-        # trains = AffinityDataset(loader.dataset, affinity, classes_list)
-        # vals = AffinityDataset(loader.dataset, affinity, classes_list)
 
         # ################# Visualising class distribution ###################
 
@@ -185,6 +188,7 @@ def load_data(
         if "test" in os.listdir(datapath):
             datapath = os.path.join(datapath, "test")
 
+        # configure dataloader with the given parameters for test or evaluation
         test_loader = DiskDataLoader(
             pipeline="disk",
             classes=[],
@@ -195,10 +199,17 @@ def load_data(
             ),
         )
 
+        # load data from the given path
         test_loader.load(datapath=datapath, datatype=datatype)
+
+        # assign the an affinity matrix of None to the test dataset (this is only for test or evaluation)
         test_loader.dataset = AffinityDiskDataset(
-            dataset=test_loader.dataset, classes=test_loader.classes
+            dataset=test_loader.dataset,
+            classes=test_loader.classes,
+            affinity=None,
         )
+
+        # get torch dataloader
         tests = test_loader.get_loader(batch_size=batch_s)
 
         logging.info("############################################### EVAL")
@@ -218,20 +229,20 @@ def load_data(
 
 
 def get_affinity_matrix(
-    affinity_path: str | None, classes: list = []
+    affinity_path: str, classes: list = []
 ) -> pd.DataFrame:
     """Loads affinity matrix from a given path, subsets it given selected classes and returns it as a pandas DataFrame.
 
     Parameters
     ----------
-    affinity: str
-        Path to the affinity matrix.
+    affinity: str | None
+        Path to the affinity matrix if provided .
     classes: list
         List of classes to be selected from the data.
 
     Returns
     -------
-    affinity: Numpy array
+    affinity: pd.DataFrame or None if no affinity matrix path is provided
         Affinity matrix.
     """
     if affinity_path is not None:
@@ -267,6 +278,10 @@ def get_affinity_matrix(
 
 
 class AffinityDiskDataset(DiskDataset):
+
+    """Modified version of the caked DiskDataset to include the affinity matrix and data metadata that is needed for the
+    affinity pipeline"""
+
     def __init__(
         self,
         dataset: DiskDataset,
