@@ -58,16 +58,21 @@ envs.default.dependencies = [
 [project.optional-dependencies]
 all = ["torch",
     "torchvision",
-    "pydantic>2"]
+    "pydantic>2",
+    "lightning",
+    ]
 
 test = [
     "affinivae[all]",
     "pytest >=6",
     "pytest-cov >=3",
+    "lightning",
 ]
 
 baskerville = [
-    "pydantic>2"
+    "pydantic>2",
+     "lightning",
+
 ]
 napari = [
     "napari[all]",

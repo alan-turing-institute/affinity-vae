@@ -1,6 +1,7 @@
 import logging
 import os
 
+import lightning as lt
 import numpy as np
 import pandas as pd
 import torch
@@ -62,6 +63,8 @@ def evaluate(
 
 
     """
+    fabric = lt.Fabric()
+    fabric.launch()
     # ############################### DATA ###############################
     tests, data_dim = load_data(
         datapath=datapath,
@@ -74,10 +77,11 @@ def evaluate(
         normalise=normalise,
         shift_min=shift_min,
         rescale=rescale,
+        fabric=fabric,
     )
 
     # ############################### MODEL ###############################
-    device = set_device(use_gpu)
+    device = fabric.device
 
     if state is None:
         if not os.path.exists("states"):
@@ -97,7 +101,7 @@ def evaluate(
     checkpoint = torch.load(state)
     vae = checkpoint["model_class_object"]
     vae.load_state_dict(checkpoint["model_state_dict"])
-    vae.to(device)
+    vae = fabric.setup(vae)
 
     # ########################## EVALUATE ################################
 
@@ -122,7 +126,7 @@ def evaluate(
     vae.eval()
     for b, batch in enumerate(tests):
         x, x_hat, lat_mu, lat_logvar, lat, lat_pose, _ = pass_batch(
-            device, vae, batch, b, len(tests)
+            fabric=fabric, vae=vae, batch=batch, b=b, batches=len(tests)
         )
         x_test.extend(lat_mu.cpu().detach().numpy())
         c_test.extend(lat_logvar.cpu().detach().numpy())
