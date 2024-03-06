@@ -148,7 +148,9 @@ def load_data(
             ),
         )
         # load data from the given path
-        loader.load(datapath=datapath, datatype=datatype)
+        loader.load(
+            datapath=datapath, datatype=datatype, no_val_drop=no_val_drop
+        )
 
         # if classes are not provided, use all classes in the dataset as obtained by the dataloader
         if len(classes_list) == 0:
@@ -207,7 +209,7 @@ def load_data(
         # load data from the given path
         test_loader.load(datapath=datapath, datatype=datatype)
 
-        # assign the an affinity matrix of None to the test dataset (this is only for test or evaluation)
+        # assign the affinity matrix of None to the test dataset (this is only for test or evaluation)
         test_loader.dataset = AffinityDiskDataset(
             dataset=test_loader.dataset,
             classes=test_loader.classes,
