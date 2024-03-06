@@ -1,22 +1,17 @@
 import logging
 import os
 from pathlib import Path
-import random
-import typing
 from typing import Literal, overload
 
 import lightning as lt
-import mrcfile
 import numpy as np
 import pandas as pd
+from caked.dataloader import DiskDataLoader, DiskDataset
 from torch.utils.data import DataLoader
 
 from . import settings
 from .vis import format, plot_affinity_matrix, plot_classes_distribution
 
-from typing import Literal, overload
-
-from caked.dataloader import DiskDataLoader, DiskDataset
 lt.pytorch.seed_everything(42)
 
 
@@ -182,19 +177,6 @@ def load_data(
         if settings.VIS_HIS:
             plot_classes_distribution(train_y, "train")
             plot_classes_distribution(val_y, "validation")
-
-        tests = []
-        if len(vals) < 1 or len(trains) < 1:
-            # ensure the batch size is not smaller than validation set
-            raise RuntimeError(
-                "Validation or train set is too small for the current batch "
-                "size. Please edit either split percent '-sp/--split' or batch"
-                " size '-ba/--batch' or set '-nd/--no_val_drop flag' (only if "
-                "val is too small). Batch: {}, train: {}, val: {}, "
-                "split: {}%.".format(
-                    batch_s, len(train_data), len(val_data), splt
-                )
-            )
 
         logging.info("############################################### DATA")
         logging.info("Data size: {}".format(len(loader.dataset)))
