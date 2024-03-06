@@ -148,9 +148,7 @@ def load_data(
             ),
         )
         # load data from the given path
-        loader.load(
-            datapath=datapath, datatype=datatype, no_val_drop=no_val_drop
-        )
+        loader.load(datapath=datapath, datatype=datatype)
 
         # if classes are not provided, use all classes in the dataset as obtained by the dataloader
         if len(classes_list) == 0:
@@ -166,7 +164,9 @@ def load_data(
         )
 
         # split the data into train and validation and get torch dataloaders
-        trains, vals = loader.get_loader(batch_size=batch_s, split_size=splt)
+        trains, vals = loader.get_loader(
+            batch_size=batch_s, split_size=splt, no_val_drop=no_val_drop
+        )
 
         trains = fabric.setup_dataloaders(trains)
         vals = fabric.setup_dataloaders(vals)
