@@ -1350,7 +1350,7 @@ def latent_4enc_interpolate_plot(
                 random.sample(list(np.where(ys == classes[idx])[0]), k=1),
                 axis=0,
             )
-            enc.append(lat.numpy())
+            enc.append(lat)
 
         enc = np.asarray(enc)
         alpha_values = torch.linspace(0, 1, num_steps)
