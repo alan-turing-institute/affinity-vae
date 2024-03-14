@@ -310,32 +310,45 @@ def train(
         vae.train()
         for b, batch in enumerate(trains):
 
-            (
-                x,
-                x_hat,
-                lat_mu,
-                lat_logvar,
-                lat,
-                lat_pos,
-                t_history,
-            ) = pass_batch(
-                fabric,
-                vae,
-                batch,
-                b,
-                len(trains),
-                epoch,
-                epochs,
-                loss=loss,
-                history=t_history,
-                optimizer=optimizer,
-                beta=beta_arr,
+            # get data in the right device
+            x = batch[0].to(device)
+            x = x.to(torch.float32)
+
+            # get affinity data in the right device
+            aff = batch[2].to(device)
+
+            # forward
+            x_hat, lat_mu, lat_logvar, lat, lat_pose = vae(x)
+            history_loss = loss(
+                x, x_hat, lat_mu, lat_logvar, epoch, batch_aff=aff
             )
+
+            # record loss
+            for i in range(len(t_history[-1])):
+                t_history[-1][i] += history_loss[i].item()
+            logging.debug(
+                "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
+                "KLdiv: %f | Affin: %f | Beta: %f"
+                % (
+                    epoch + 1,
+                    epochs,
+                    b + 1,
+                    len(trains),
+                    *history_loss,
+                    beta_arr[epoch],
+                )
+            )
+
+            # backwards
+            fabric.backward(history_loss[0])
+            optimizer.step()
+            optimizer.zero_grad()
+
             x_train.extend(lat_mu.cpu().detach().numpy())  # store latents
             y_train.extend(batch[1])
             c_train.extend(lat_logvar.cpu().detach().numpy())
             if pose:
-                p_train.extend(lat_pos.cpu().detach().numpy())
+                p_train.extend(lat_pose.cpu().detach().numpy())
 
             # store meta for plots and accuracy
             meta_df = add_meta(
@@ -344,7 +357,7 @@ def train(
                 batch[-1],
                 x_hat,
                 lat_mu,
-                lat_pos,
+                lat_pose,
                 lat_logvar,
                 mode="trn",
             )
@@ -365,26 +378,36 @@ def train(
         # ########################## VAL ######################################
         vae.eval()
         for b, batch in enumerate(vals):
-            (
-                v,
-                v_hat,
-                v_mu,
-                v_logvar,
-                vlat,
-                vlat_pos,
-                v_history,
-            ) = pass_batch(
-                fabric,
-                vae,
-                batch,
-                b,
-                len(vals),
-                epoch,
-                epochs,
-                loss=loss,
-                history=v_history,
-                beta=beta_arr,
+
+            # get data in the right device
+            v = batch[0].to(device)
+            v = v.to(torch.float32)
+
+            # get affinity data in the right device
+            aff = batch[2].to(device)
+
+            # forward
+            v_hat, v_mu, v_logvar, vlat, vlat_pos = vae(v)
+            v_history_loss = loss(
+                v, v_hat, v_mu, v_logvar, epoch, batch_aff=aff
             )
+
+            # record loss
+            for i in range(len(t_history[-1])):
+                v_history[-1][i] += v_history_loss[i].item()
+            logging.debug(
+                "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
+                "KLdiv: %f | Affin: %f | Beta: %f"
+                % (
+                    epoch + 1,
+                    epochs,
+                    b + 1,
+                    len(vals),
+                    *v_history_loss,
+                    beta_arr[epoch],
+                )
+            )
+
             x_val.extend(v_mu.cpu().detach().numpy())  # store latents
             y_val.extend(batch[1])
             c_val.extend(v_logvar.cpu().detach().numpy())
@@ -424,9 +447,13 @@ def train(
         # ########################## TEST #####################################
         if (epoch + 1) % settings.FREQ_EVAL == 0:
             for b, batch in enumerate(tests):  # tests empty if no 'test' dir
-                (t, t_hat, t_mu, t_logvar, tlat, tlat_pose, _,) = pass_batch(
-                    fabric, vae, batch, b, len(tests), epoch, epochs
-                )
+                # get data in the right device
+                t = batch[0].to(device)
+                t = t.to(torch.float32)
+
+                # forward
+                t_hat, t_mu, t_logvar, tlat, tlat_pose = vae(t)
+
                 x_test.extend(t_mu.cpu().detach().numpy())  # store latents
                 c_test.extend(t_logvar.cpu().detach().numpy())
                 if pose:
