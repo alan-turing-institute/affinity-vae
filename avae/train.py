@@ -17,7 +17,7 @@ from .data import load_data
 from .loss import AVAELoss
 from .models import build_model
 from .utils import accuracy, latest_file
-from .utils_learning import add_meta, pass_batch, set_device
+from .utils_learning import add_meta, configure_optimiser, pass_batch
 
 
 def train(
@@ -222,24 +222,10 @@ def train(
 
     logging.info(vae)
 
-    if opt_method == "adam":
-        optimizer = torch.optim.Adam(
-            params=vae.parameters(), lr=learning  # , weight_decay=1e-5
-        )
-    elif opt_method == "sgd":
-        optimizer = torch.optim.SGD(
-            params=vae.parameters(), lr=learning  # , weight_decay=1e-5
-        )
-    elif opt_method == "asgd":
-        optimizer = torch.optim.aSGD(
-            params=vae.parameters(), lr=learning  # , weight_decay=1e-5
-        )
-    else:
-        raise ValueError(
-            "Invalid optimisation method",
-            opt_method,
-            "must be adam or sgd if you have other methods in mind, this can be easily added to the train.py",
-        )
+    # ############################### OPTIMISER ###############################
+    optimizer = configure_optimiser(
+        opt_method=opt_method, model=vae, learning_rate=learning
+    )
 
     t_history = []
     v_history = []

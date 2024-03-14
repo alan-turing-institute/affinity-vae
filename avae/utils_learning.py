@@ -227,3 +227,45 @@ def add_meta(
         [meta_df, meta], ignore_index=False
     )  # ignore index doesn't overwrite
     return meta_df
+
+
+def configure_optimiser(
+    opt_method: str, model: torch.nn.Module, learning_rate: float
+):
+    """
+    Configure the optimiser for the training.
+
+    Parameters
+    ----------
+    opt_method : str
+        Optimisation method.
+    model : torch.nn.Module
+        Model to be trained.
+    learning_rate : float
+        Learning rate for the optimiser.
+
+    Returns
+    -------
+    optimizer : torch.optim
+        Optimiser for the training.
+    """
+    if opt_method == "adam":
+        optimizer = torch.optim.Adam(
+            params=model.parameters(), lr=learning_rate  # , weight_decay=1e-5
+        )
+    elif opt_method == "sgd":
+        optimizer = torch.optim.SGD(
+            params=model.parameters(), lr=learning_rate  # , weight_decay=1e-5
+        )
+    elif opt_method == "asgd":
+        optimizer = torch.optim.aSGD(
+            params=model.parameters(), lr=learning_rate  # , weight_decay=1e-5
+        )
+    else:
+        raise ValueError(
+            "Invalid optimisation method",
+            opt_method,
+            "must be adam or sgd if you have other methods in mind, this can be easily added to the train.py",
+        )
+
+    return optimizer
