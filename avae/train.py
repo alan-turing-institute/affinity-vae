@@ -7,12 +7,8 @@ import pandas as pd
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
-from avae.decoders.decoders import Decoder, DecoderA, DecoderB
-from avae.decoders.differentiable import GaussianSplatDecoder
-from avae.encoders.encoders import Encoder, EncoderA, EncoderB
-
 from . import settings, vis
-from .cyc_annealing import cyc_annealing
+from .cyc_annealing import configure_annealing
 from .data import load_data
 from .loss import AVAELoss
 from .models import build_model
@@ -248,65 +244,25 @@ def train(
         t_history = checkpoint["t_loss_history"]
         v_history = checkpoint["v_loss_history"]
 
-    if beta_max == 0 and cyc_method_beta != "flat" and beta_load is not None:
-        raise RuntimeError(
-            "The maximum value for beta is set to 0, it is not possible to"
-            "oscillate between a maximum and minimum. Please choose the flat method for"
-            "cyc_method_beta"
-        )
+    beta_arr = configure_annealing(
+        epochs=epochs,
+        value_max=beta_max,
+        value_min=beta_min,
+        cyc_method=cyc_method_beta,
+        n_cycle=beta_cycle,
+        ratio=beta_ratio,
+        cycle_load=beta_load,
+    )
 
-    if beta_load is None:
-        # If a path for loading the beta array is not provided,
-        # create it given the input
-        beta_arr = (
-            cyc_annealing(
-                epochs,
-                cyc_method_beta,
-                n_cycle=beta_cycle,
-                ratio=beta_ratio,
-            ).var
-            * (beta_max - beta_min)
-            + beta_min
-        )
-    else:
-        beta_arr = np.load(beta_load)
-        if len(beta_arr) != epochs:
-            raise RuntimeError(
-                f"The length of the beta array loaded from file is {len(beta_arr)} but the number of Epochs specified in the input are {epochs}.\n"
-                "These two values should be the same."
-            )
-
-    if (
-        gamma_max == 0
-        and cyc_method_gamma != "flat"
-        and gamma_load is not None
-    ):
-        raise RuntimeError(
-            "The maximum value for gamma is set to 0, it is not possible to"
-            "oscillate between a maximum and minimum. Please choose the flat method for"
-            "cyc_method_gamma"
-        )
-
-    if gamma_load is None:
-        # If a path for loading the gamma array is not provided,
-        # create it given the input
-        gamma_arr = (
-            cyc_annealing(
-                epochs,
-                cyc_method_gamma,
-                n_cycle=gamma_cycle,
-                ratio=gamma_ratio,
-            ).var
-            * (gamma_max - gamma_min)
-            + gamma_min
-        )
-    else:
-        gamma_arr = np.load(gamma_load)
-        if len(gamma_arr) != epochs:
-            raise RuntimeError(
-                f"The length of the gamma array loaded from file is {len(gamma_arr)} but the number of Epochs specified in the input are {epochs}.\n"
-                "These two values should be the same."
-            )
+    gamma_arr = configure_annealing(
+        epochs=epochs,
+        value_max=gamma_max,
+        value_min=gamma_min,
+        cyc_method=cyc_method_gamma,
+        n_cycle=gamma_cycle,
+        ratio=gamma_ratio,
+        cycle_load=gamma_load,
+    )
     if settings.VIS_CYC:
         vis.plot_cyc_variable(beta_arr, "beta")
         vis.plot_cyc_variable(gamma_arr, "gamma")
