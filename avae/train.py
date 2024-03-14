@@ -15,7 +15,7 @@ from . import settings, vis
 from .cyc_annealing import cyc_annealing
 from .data import load_data
 from .loss import AVAELoss
-from .models import AffinityVAE
+from .models import build_model
 from .utils import accuracy, latest_file
 from .utils_learning import add_meta, pass_batch, set_device
 
@@ -205,60 +205,20 @@ def train(
     pose = not (pose_dims == 0)
 
     # ############################### MODEL ###############################
-    if filters is not None:
-        filters = np.array(
-            np.array(filters).replace(" ", "").split(","), dtype=np.int64
-        )
-
-    if model == "a":
-        encoder = EncoderA(
-            dshape, channels, depth, lat_dims, pose_dims, bnorm=bnorm_encoder
-        )
-        decoder = DecoderA(
-            dshape, channels, depth, lat_dims, pose_dims, bnorm=bnorm_decoder
-        )
-    elif model == "b":
-        encoder = EncoderB(dshape, channels, depth, lat_dims, pose_dims)
-        decoder = DecoderB(dshape, channels, depth, lat_dims, pose_dims)
-    elif model == "u":
-        encoder = Encoder(
-            input_size=dshape,
-            capacity=channels,
-            filters=filters,
-            depth=depth,
-            latent_dims=lat_dims,
-            pose_dims=pose_dims,
-            bnorm=bnorm_encoder,
-        )
-        decoder = Decoder(
-            input_size=dshape,
-            capacity=channels,
-            filters=filters,
-            depth=depth,
-            latent_dims=lat_dims,
-            pose_dims=pose_dims,
-            bnorm=bnorm_decoder,
-        )
-    elif model == "gsd":
-        encoder = EncoderA(
-            dshape, channels, depth, lat_dims, pose_dims, bnorm=bnorm_encoder
-        )
-        decoder = GaussianSplatDecoder(
-            dshape,
-            n_splats=n_splats,
-            latent_dims=lat_dims,
-            output_channels=gsd_conv_layers,
-            device=device,
-            pose_dims=pose_dims,
-        )
-    else:
-        raise ValueError(
-            "Invalid model type",
-            model,
-            "must be one of : a, b, u or gsd",
-        )
-
-    vae = AffinityVAE(encoder, decoder)
+    vae = build_model(
+        model_type=model,
+        input_size=dshape,
+        channels=channels,
+        depth=depth,
+        lat_dims=lat_dims,
+        pose_dims=pose_dims,
+        bnorm_encoder=bnorm_encoder,
+        bnorm_decoder=bnorm_decoder,
+        n_splats=n_splats,
+        gsd_conv_layers=gsd_conv_layers,
+        device=device,
+        filters=filters,
+    )
 
     logging.info(vae)
 
