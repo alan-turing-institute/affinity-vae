@@ -4,8 +4,8 @@ from typing import Optional
 import numpy as np
 import torch
 
+from avae.base import dims_after_pooling, set_layer_dim
 from avae.encoders.base import AbstractEncoder
-from avae.models import dims_after_pooling, set_layer_dim
 
 
 class Encoder(AbstractEncoder):

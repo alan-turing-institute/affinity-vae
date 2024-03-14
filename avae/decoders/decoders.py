@@ -4,8 +4,8 @@ import logging
 import numpy as np
 import torch
 
+from avae.base import dims_after_pooling, set_layer_dim
 from avae.decoders.base import AbstractDecoder
-from avae.models import dims_after_pooling, set_layer_dim
 
 
 class Decoder(AbstractDecoder):
