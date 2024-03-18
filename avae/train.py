@@ -281,6 +281,8 @@ def train(
             "must be adam or sgd if you have other methods in mind, this can be easily added to the train.py",
         )
 
+    vae, optimizer = fabric.setup(vae, optimizer)
+
     t_history = []
     v_history = []
     e_start = 0
@@ -364,8 +366,6 @@ def train(
     if settings.VIS_CYC:
         vis.plot_cyc_variable(beta_arr, "beta")
         vis.plot_cyc_variable(gamma_arr, "gamma")
-
-    vae, optimizer = fabric.setup(vae, optimizer)
 
     loss = AVAELoss(
         device=device,
