@@ -9,7 +9,7 @@ import torch
 from . import settings, vis
 from .data import load_data
 from .utils import accuracy, latest_file
-from .utils_learning import add_meta, pass_batch, set_device
+from .utils_learning import add_meta
 
 
 def evaluate(
@@ -122,7 +122,7 @@ def evaluate(
     logging.debug("Batch: [0/%d]" % (len(tests)))
 
     vae.eval()
-    for b, (t, label, aff, meta_data) in enumerate(tests):
+    for batch_number, (t, label, aff, meta_data) in enumerate(tests):
 
         # get data in the right device
         t, aff = t.to(device), aff.to(device)
@@ -152,8 +152,8 @@ def evaluate(
             mode="evl",
         )
 
-        logging.debug("Batch: [%d/%d]" % (b + 1, len(tests)))
-    logging.info("Batch: [%d/%d]" % (b + 1, len(tests)))
+        logging.debug("Batch: [%d/%d]" % (batch_number + 1, len(tests)))
+    logging.info("Batch: [%d/%d]" % (batch_number + 1, len(tests)))
 
     # ########################## VISUALISE ################################
     if classes is not None:
