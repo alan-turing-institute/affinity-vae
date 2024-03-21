@@ -13,7 +13,7 @@ from .data import load_data
 from .loss import AVAELoss
 from .models import build_model
 from .utils import accuracy, latest_file
-from .utils_learning import add_meta, configure_optimiser, pass_batch
+from .utils_learning import add_meta, configure_optimiser
 
 
 def train(
@@ -158,7 +158,7 @@ def train(
         if n_devices <= 4:
             n_nodes = 1
         else:
-            # Calculate the number of nodes based on the formula: ceil(num_gpus / 4)
+            # Calculate the number of nodes based on the formula: ceil(num_gpus / 4), this works for Baskerville where a node has 4 devices
             n_nodes = (n_devices + 3) // 4
 
         logging.info(
@@ -169,7 +169,6 @@ def train(
             accelerator=accelerator,
             devices=n_devices,
             num_nodes=n_nodes,
-            # plugins=[SLURMEnvironment(auto_requeue=False)]
         )
 
     else:
@@ -278,10 +277,7 @@ def train(
         klred=klred,
     )
 
-    if tensorboard:
-        writer = SummaryWriter()
-    else:
-        writer = None
+    writer = SummaryWriter() if tensorboard else None
 
     # ########################## TRAINING LOOP ################################
     for epoch in range(e_start, epochs):
@@ -293,29 +289,20 @@ def train(
         v_history.append(np.zeros(4))
 
         # create holders for latent spaces and labels
-        x_train = []  # 0 x lat_dims
-        y_train = []  # 0 x 1
-        c_train = []
-        x_val = []
-        y_val = []
-        c_val = []
-        x_test = []
-        c_test = []
+        x_train, y_train, c_train = [], [], []
+        x_val, y_val, c_val = [], [], []
+        x_test, c_test = [], []
+
         if pose:
-            p_train = []  # 0 x pose_dims
-            p_val = []
-            p_test = []
+            p_train, p_val, p_test = [], [], []
 
         # ########################## TRAINING #################################
         vae.train()
-        for b, batch in enumerate(trains):
+        for batch_number, (x, label, aff, meta_data) in enumerate(trains):
 
             # get data in the right device
-            x = batch[0].to(device)
+            x, aff = x.to(device), aff.to(device)
             x = x.to(torch.float32)
-
-            # get affinity data in the right device
-            aff = batch[2].to(device)
 
             # forward
             x_hat, lat_mu, lat_logvar, lat, lat_pose = vae(x)
@@ -332,7 +319,7 @@ def train(
                 % (
                     epoch + 1,
                     epochs,
-                    b + 1,
+                    batch_number + 1,
                     len(trains),
                     *history_loss,
                     beta_arr[epoch],
@@ -345,7 +332,7 @@ def train(
             optimizer.zero_grad()
 
             x_train.extend(lat_mu.cpu().detach().numpy())  # store latents
-            y_train.extend(batch[1])
+            y_train.extend(label)
             c_train.extend(lat_logvar.cpu().detach().numpy())
             if pose:
                 p_train.extend(lat_pose.cpu().detach().numpy())
@@ -354,7 +341,7 @@ def train(
             meta_df = add_meta(
                 data_dim,
                 meta_df,
-                batch[-1],
+                meta_data,
                 x_hat,
                 lat_mu,
                 lat_pose,
@@ -377,14 +364,11 @@ def train(
         )
         # ########################## VAL ######################################
         vae.eval()
-        for b, batch in enumerate(vals):
+        for batch_number, (v, label, aff, meta_data) in enumerate(vals):
 
             # get data in the right device
-            v = batch[0].to(device)
+            v, aff = v.to(device), aff.to(device)
             v = v.to(torch.float32)
-
-            # get affinity data in the right device
-            aff = batch[2].to(device)
 
             # forward
             v_hat, v_mu, v_logvar, vlat, vlat_pos = vae(v)
@@ -401,7 +385,7 @@ def train(
                 % (
                     epoch + 1,
                     epochs,
-                    b + 1,
+                    batch_number + 1,
                     len(vals),
                     *v_history_loss,
                     beta_arr[epoch],
@@ -409,7 +393,7 @@ def train(
             )
 
             x_val.extend(v_mu.cpu().detach().numpy())  # store latents
-            y_val.extend(batch[1])
+            y_val.extend(label)
             c_val.extend(v_logvar.cpu().detach().numpy())
             if pose:
                 p_val.extend(vlat_pos.cpu().detach().numpy())
@@ -417,7 +401,7 @@ def train(
             meta_df = add_meta(
                 data_dim,
                 meta_df,
-                batch[-1],
+                meta_data,
                 v_hat,
                 v_mu,
                 vlat_pos,
@@ -446,9 +430,11 @@ def train(
 
         # ########################## TEST #####################################
         if (epoch + 1) % settings.FREQ_EVAL == 0:
-            for b, batch in enumerate(tests):  # tests empty if no 'test' dir
+            for batch_number, (t, label, aff, meta_data) in enumerate(
+                tests
+            ):  # tests empty if no 'test' dir
                 # get data in the right device
-                t = batch[0].to(device)
+                t, aff = t.to(device), aff.to(device)
                 t = t.to(torch.float32)
 
                 # forward
@@ -463,7 +449,7 @@ def train(
                 meta_df = add_meta(
                     data_dim,
                     meta_df,
-                    batch[-1],
+                    meta_data,
                     t_hat,
                     t_mu,
                     tlat_pose,
@@ -471,7 +457,9 @@ def train(
                     mode="tst",
                 )
 
-            logging.info("Evaluation : Batch: [%d/%d]" % (b + 1, len(tests)))
+            logging.info(
+                "Evaluation : Batch: [%d/%d]" % (batch_number + 1, len(tests))
+            )
         logging.info("\n")  # end of training round
 
         # ########################## VISUALISE ################################
@@ -681,6 +669,7 @@ def train(
         if (epoch + 1) % settings.FREQ_STA == 0:
             if not os.path.exists("states"):
                 os.mkdir("states")
+
             mname = (
                 "avae_"
                 + str(settings.date_time_run)
