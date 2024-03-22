@@ -14,7 +14,7 @@ class ModelInstanceTest(unittest.TestCase):
         self.encoder_3d = Encoder(
             capacity=8,
             depth=4,
-            input_size=(64, 64, 64),
+            input_shape=(64, 64, 64),
             latent_dims=16,
             pose_dims=3,
             bnorm=True,
@@ -23,7 +23,7 @@ class ModelInstanceTest(unittest.TestCase):
         self.decoder_3d = Decoder(
             capacity=8,
             depth=4,
-            input_size=(64, 64, 64),
+            input_shape=(64, 64, 64),
             latent_dims=16,
             pose_dims=3,
         )
@@ -33,14 +33,14 @@ class ModelInstanceTest(unittest.TestCase):
         self.encoder_2d = Encoder(
             capacity=8,
             depth=4,
-            input_size=(64, 64),
+            input_shape=(64, 64),
             latent_dims=16,
             pose_dims=3,
         )
         self.decoder_2d = Decoder(
             capacity=8,
             depth=4,
-            input_size=(64, 64),
+            input_shape=(64, 64),
             latent_dims=16,
             pose_dims=3,
         )
@@ -89,7 +89,7 @@ class ModelInstanceTest(unittest.TestCase):
 
 class ModelParamsTest(unittest.TestCase):
     def setUp(self):
-        self.input_size = (64, 64)
+        self.input_shape = (64, 64)
         self.input = randn(14, 1, 64, 64)
         self.capacity_params = [9, 64]
         self.depth_params = [2, 4]
@@ -104,19 +104,19 @@ class ModelParamsTest(unittest.TestCase):
             Encoder()
         assert (
             str(errinfo.value)
-            == "Encoder.__init__() missing 1 required positional argument: 'input_size'"
+            == "Encoder.__init__() missing 1 required positional argument: 'input_shape'"
         )
         with pytest.raises(TypeError) as errinfo:
             Decoder()
         assert (
             str(errinfo.value)
-            == "Decoder.__init__() missing 1 required positional argument: 'input_size'"
+            == "Decoder.__init__() missing 1 required positional argument: 'input_shape'"
         )
 
         # no capacity no filters scenario
         with pytest.raises(RuntimeError) as errinfo:
             Encoder(
-                input_size=self.input_size,
+                input_shape=self.input_shape,
             )
         assert (
             str(errinfo.value)
@@ -124,7 +124,7 @@ class ModelParamsTest(unittest.TestCase):
         )
         with pytest.raises(RuntimeError) as errinfo:
             Decoder(
-                input_size=self.input_size,
+                input_shape=self.input_shape,
             )
         assert (
             str(errinfo.value)
@@ -137,7 +137,7 @@ class ModelParamsTest(unittest.TestCase):
         with pytest.raises(RuntimeError) as errinfo:
             Encoder(
                 filters=[0, -1],
-                input_size=self.input_size,
+                input_shape=self.input_shape,
             )
         assert (
             str(errinfo.value)
@@ -146,7 +146,7 @@ class ModelParamsTest(unittest.TestCase):
         with pytest.raises(RuntimeError) as errinfo:
             Decoder(
                 filters=[0, -1],
-                input_size=self.input_size,
+                input_shape=self.input_shape,
             )
         assert (
             str(errinfo.value)
@@ -157,7 +157,7 @@ class ModelParamsTest(unittest.TestCase):
         with pytest.raises(AssertionError) as errinfo:
             Encoder(
                 filters=[2, 4, 16, 32],
-                input_size=(8, 8),
+                input_shape=(8, 8),
             )
         assert (
             str(errinfo.value)
@@ -166,7 +166,7 @@ class ModelParamsTest(unittest.TestCase):
         with pytest.raises(AssertionError) as errinfo:
             Decoder(
                 filters=[2, 4, 16, 32],
-                input_size=(8, 8),
+                input_shape=(8, 8),
             )
         assert (
             str(errinfo.value)
@@ -178,7 +178,7 @@ class ModelParamsTest(unittest.TestCase):
             Encoder(
                 capacity=8,
                 depth=4,
-                input_size=(8, 8),
+                input_shape=(8, 8),
             )
         assert (
             str(errinfo.value)
@@ -188,7 +188,7 @@ class ModelParamsTest(unittest.TestCase):
             Decoder(
                 capacity=8,
                 depth=4,
-                input_size=(8, 8),
+                input_shape=(8, 8),
             )
         assert (
             str(errinfo.value)
@@ -200,7 +200,7 @@ class ModelParamsTest(unittest.TestCase):
             Encoder(
                 capacity=8,
                 depth=-1,
-                input_size=self.input_size,
+                input_shape=self.input_shape,
             )
         assert (
             str(errinfo.value)
@@ -210,7 +210,7 @@ class ModelParamsTest(unittest.TestCase):
             Decoder(
                 capacity=8,
                 depth=-1,
-                input_size=self.input_size,
+                input_shape=self.input_shape,
             )
         assert (
             str(errinfo.value)
@@ -223,7 +223,7 @@ class ModelParamsTest(unittest.TestCase):
                 capacity=8,
                 depth=4,
                 latent_dims=0,
-                input_size=self.input_size,
+                input_shape=self.input_shape,
             )
         assert (
             str(errinfo.value)
@@ -234,7 +234,7 @@ class ModelParamsTest(unittest.TestCase):
                 capacity=8,
                 depth=4,
                 latent_dims=-1,
-                input_size=self.input_size,
+                input_shape=self.input_shape,
             )
         assert (
             str(errinfo.value)
@@ -248,14 +248,14 @@ class ModelParamsTest(unittest.TestCase):
             enc = Encoder(
                 capacity=dim,
                 depth=1,
-                input_size=self.input_size,
+                input_shape=self.input_shape,
                 latent_dims=16,
                 pose_dims=3,
             )
             dec = Decoder(
                 capacity=dim,
                 depth=1,
-                input_size=self.input_size,
+                input_shape=self.input_shape,
                 latent_dims=16,
                 pose_dims=3,
             )
@@ -268,11 +268,11 @@ class ModelParamsTest(unittest.TestCase):
         # no conv
         input = randn(14, 1, 128)
         enc = Encoder(
-            input_size=(128,),
+            input_shape=(128,),
             depth=0,
         )
         dec = Decoder(
-            input_size=(128,),
+            input_shape=(128,),
             depth=0,
         )
         model = avae(enc, dec)
@@ -284,14 +284,14 @@ class ModelParamsTest(unittest.TestCase):
             enc = Encoder(
                 capacity=8,
                 depth=dim,
-                input_size=self.input_size,
+                input_shape=self.input_shape,
                 latent_dims=16,
                 pose_dims=3,
             )
             dec = Decoder(
                 capacity=8,
                 depth=dim,
-                input_size=self.input_size,
+                input_shape=self.input_shape,
                 latent_dims=16,
                 pose_dims=3,
             )
@@ -305,13 +305,13 @@ class ModelParamsTest(unittest.TestCase):
 
             enc = Encoder(
                 filters=dim,
-                input_size=self.input_size,
+                input_shape=self.input_shape,
                 latent_dims=16,
                 pose_dims=3,
             )
             dec = Decoder(
                 filters=dim,
-                input_size=self.input_size,
+                input_shape=self.input_shape,
                 latent_dims=16,
                 pose_dims=3,
             )
@@ -322,13 +322,13 @@ class ModelParamsTest(unittest.TestCase):
         # uneven filters
         enc = Encoder(
             filters=dim,
-            input_size=self.input_size,
+            input_shape=self.input_shape,
             latent_dims=16,
             pose_dims=3,
         )
         dec = Decoder(
             filters=[16],
-            input_size=self.input_size,
+            input_shape=self.input_shape,
             latent_dims=16,
             pose_dims=3,
         )
@@ -342,13 +342,13 @@ class ModelParamsTest(unittest.TestCase):
 
             enc = Encoder(
                 filters=[8, 16],
-                input_size=self.input_size,
+                input_shape=self.input_shape,
                 latent_dims=dim,
                 pose_dims=3,
             )
             dec = Decoder(
                 filters=[8, 16],
-                input_size=self.input_size,
+                input_shape=self.input_shape,
                 latent_dims=dim,
                 pose_dims=3,
             )
@@ -363,7 +363,7 @@ class ModelParamsTest(unittest.TestCase):
             enc = Encoder(
                 capacity=8,
                 depth=4,
-                input_size=self.input_size,
+                input_shape=self.input_shape,
                 latent_dims=16,
                 pose_dims=dim,
                 bnorm=True,
@@ -373,8 +373,12 @@ class ModelParamsTest(unittest.TestCase):
 
     def test_batchnorm(self):
 
-        enc = Encoder(filters=[8, 16], input_size=self.input_size, bnorm=True)
-        dec = Decoder(filters=[8, 16], input_size=self.input_size, bnorm=False)
+        enc = Encoder(
+            filters=[8, 16], input_shape=self.input_shape, bnorm=True
+        )
+        dec = Decoder(
+            filters=[8, 16], input_shape=self.input_shape, bnorm=False
+        )
         model = avae(enc, dec)
         output = model(self.input)
         self.assertEqual(output[0].shape, self.input.shape)

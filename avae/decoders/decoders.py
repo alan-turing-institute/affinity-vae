@@ -4,8 +4,8 @@ import logging
 import numpy as np
 import torch
 
+from avae.base import dims_after_pooling, set_layer_dim
 from avae.decoders.base import AbstractDecoder
-from avae.models import dims_after_pooling, set_layer_dim
 
 
 class Decoder(AbstractDecoder):
@@ -13,7 +13,7 @@ class Decoder(AbstractDecoder):
 
     Parameters
     ----------
-    input_size: tuple (X, Y) or tuple (X, Y, Z)
+    input_shape: tuple (X, Y) or tuple (X, Y, Z)
         Tuple representing the size of the data for each image
         dimension X, Y and Z.
     latent_dims: int
@@ -33,7 +33,7 @@ class Decoder(AbstractDecoder):
 
     def __init__(
         self,
-        input_size: tuple,
+        input_shape: tuple,
         capacity: int | None = None,
         filters: list[int] | None = None,
         depth: int = 4,
@@ -76,7 +76,7 @@ class Decoder(AbstractDecoder):
             assert all(
                 [
                     int(x) == x
-                    for x in np.array(input_size) / (2 ** len(self.filters))
+                    for x in np.array(input_shape) / (2 ** len(self.filters))
                 ]
             ), (
                 "Input size not compatible with --depth. Input must be divisible "
@@ -84,14 +84,14 @@ class Decoder(AbstractDecoder):
             )
 
             self.bottom_dim = tuple(
-                [int(i / (2 ** len(self.filters))) for i in input_size]
+                [int(i / (2 ** len(self.filters))) for i in input_shape]
             )
 
             # define layer dimensions
-            CONV, TCONV, BNORM = set_layer_dim(len(input_size))
+            CONV, TCONV, BNORM = set_layer_dim(len(input_shape))
 
         else:
-            self.bottom_dim = input_size
+            self.bottom_dim = input_shape
 
         if latent_dims <= 0:
             raise RuntimeError(
@@ -177,7 +177,7 @@ class Decoder(AbstractDecoder):
 class DecoderA(AbstractDecoder):
     def __init__(
         self,
-        input_size: tuple,
+        input_shape: tuple,
         capacity: int = 8,
         depth: int = 4,
         latent_dims: int = 8,
@@ -189,7 +189,7 @@ class DecoderA(AbstractDecoder):
         self.bnorm = bnorm
 
         assert all(
-            [int(x) == x for x in np.array(input_size) / (2**depth)]
+            [int(x) == x for x in np.array(input_shape) / (2**depth)]
         ), (
             "Input size not compatible with --depth. Input must be divisible "
             "by {}.".format(2**depth)
@@ -200,7 +200,7 @@ class DecoderA(AbstractDecoder):
             [
                 filters[-1],
             ]
-            + [dims_after_pooling(ax, depth) for ax in input_size]
+            + [dims_after_pooling(ax, depth) for ax in input_shape]
         )
         flat_shape = np.prod(unflat_shape)
 
@@ -276,7 +276,7 @@ class DecoderB(AbstractDecoder):
 
     def __init__(
         self,
-        input_size: tuple,
+        input_shape: tuple,
         capacity: int,
         depth: int = 4,
         latent_dims: int = 8,
@@ -288,13 +288,13 @@ class DecoderB(AbstractDecoder):
         self.pose = not (pose_dims == 0)
 
         assert all(
-            [int(x) == x for x in np.array(input_size) / (2**depth)]
+            [int(x) == x for x in np.array(input_shape) / (2**depth)]
         ), (
             "Input size not compatible with --depth. Input must be divisible "
             "by {}.".format(2**depth)
         )
-        _, TCONV, BNORM = set_layer_dim(len(input_size))
-        self.bottom_dim = tuple([int(i / (2**depth)) for i in input_size])
+        _, TCONV, BNORM = set_layer_dim(len(input_shape))
+        self.bottom_dim = tuple([int(i / (2**depth)) for i in input_shape])
 
         #  iteratively define deconvolution and batch normalisation layers
         self.conv_dec = torch.nn.ModuleList()

@@ -3,6 +3,82 @@ import math
 import numpy as np
 
 
+def configure_annealing(
+    epochs: int,
+    value_max: float,
+    value_min: float,
+    cyc_method: str,
+    n_cycle: int,
+    ratio: float,
+    cycle_load: str | None = None,
+):
+    """
+    This function is used to configure the annealing of the beta and gamma values.
+    It creates an array of values that oscillate between a maximum and minimum value
+    for a defined number of cycles. This is used for gamma and beta in the loss term.
+    The function also allows for the loading of a pre-existing array of beta or gamma values.
+
+    Parameters
+    ----------
+    epochs: int
+        Number of epochs in training
+    value_max: float
+        Maximum value of the beta or gamma
+    value_min: float
+        Minimum value of the beta or gamma
+    cyc_method : str
+        The method for constructing the cyclical mixing weight
+                    - Flat : regular beta-vae
+                    - Linear
+                    - Sigmoid
+                    - Cosine
+                    - ramp
+                    - delta
+    n_cycle: int
+        Number of cycles of the variable to oscillate between min and max
+                during the epochs
+    ratio: float
+        Ratio of increase during ramping
+    cycle_load: str | None
+        Path to a file containing the beta or gamma array
+
+    Returns
+    -------
+    cycle_arr: np.ndarray
+        Array of beta or gamma values
+
+    """
+    if value_max == 0 and cyc_method != "flat" and cycle_load is not None:
+        raise RuntimeError(
+            "The maximum value for beta is set to 0, it is not possible to"
+            "oscillate between a maximum and minimum. Please choose the flat method for"
+            "cyc_method_beta"
+        )
+
+    if cycle_load is None:
+        # If a path for loading the beta array is not provided,
+        # create it given the input
+        cycle_arr = (
+            cyc_annealing(
+                epochs,
+                cyc_method,
+                n_cycle=n_cycle,
+                ratio=ratio,
+            ).var
+            * (value_max - value_min)
+            + value_min
+        )
+    else:
+        cycle_arr = np.load(cycle_load)
+        if len(cycle_arr) != epochs:
+            raise RuntimeError(
+                f"The length of the beta array loaded from file is {len(cycle_arr)} but the number of Epochs specified in the input are {epochs}.\n"
+                "These two values should be the same."
+            )
+
+    return cycle_arr
+
+
 class cyc_annealing:
 
     """

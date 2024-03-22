@@ -37,7 +37,7 @@ class LossTest(unittest.TestCase):
         self.encoder_3d = Encoder(
             capacity=8,
             depth=4,
-            input_size=(64, 64, 64),
+            input_shape=(64, 64, 64),
             latent_dims=16,
             pose_dims=3,
             bnorm=True,
@@ -46,7 +46,7 @@ class LossTest(unittest.TestCase):
         self.decoder_3d = Decoder(
             capacity=8,
             depth=4,
-            input_size=(64, 64, 64),
+            input_shape=(64, 64, 64),
             latent_dims=16,
             pose_dims=3,
         )

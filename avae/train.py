@@ -7,17 +7,13 @@ import pandas as pd
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
-from avae.decoders.decoders import Decoder, DecoderA, DecoderB
-from avae.decoders.differentiable import GaussianSplatDecoder
-from avae.encoders.encoders import Encoder, EncoderA, EncoderB
-
 from . import settings, vis
-from .cyc_annealing import cyc_annealing
+from .cyc_annealing import configure_annealing
 from .data import load_data
 from .loss import AVAELoss
-from .models import AffinityVAE
+from .models import build_model
 from .utils import accuracy, latest_file
-from .utils_learning import add_meta, pass_batch, set_device
+from .utils_learning import add_meta, configure_optimiser
 
 
 def train(
@@ -78,6 +74,10 @@ def train(
         Path to the data directory.
     datatype: str
         data file formats : mrc, npy
+    restart: bool
+        If True, the model will be restarted from the latest saved state.
+    state: str
+        Path to the model state file to be used for evaluation/restart.
     lim: int
         Limit the number of samples to load.
     splt: int
@@ -96,6 +96,8 @@ def train(
         Number of channels in the input data.
     depth: int
         Depth of the model.
+    filters: list
+        List of filters to use in the model.
     lat_dims: int
         Number of latent dimensions.
     pose_dims: int
@@ -143,13 +145,23 @@ def train(
         The method to use on the latent space classification. Can be neural network (NN), k nearest neighbourgs (KNN) or logistic regression (LR).
     bnorm_encoder: bool
         If True, batch normalisation is applied to the encoder.
-    bnrom_decoder: bool
+    bnorm_decoder: bool
         If True, batch normalisation is applied to the decoder.
     strategy: str
         The strategy to use for distributed training. Can be  'ddp', 'deepspeed' or 'fsdp".
     gsd_conv_layers: int
         activates convolution layers at the end of the differetiable decoder if set
-        and it is an integer defining the number of output channels  .
+        and it is an integer defining the number of output channels.
+    n_splats: int
+        The number of splats in the Gaussian Splat Decoder.
+    klred: str
+        The method to reduce the KL divergence. Can be 'mean' or 'sum'.
+    beta_load: str
+        Path to the beta values to load.
+    gamma_load: str
+        Path to the gamma values to load.
+    rescale: bool
+        If True, the input data is rescaled to have a mean of 0 and std of 1.
     """
     lt.pytorch.seed_everything(42)
 
@@ -162,7 +174,7 @@ def train(
         if n_devices <= 4:
             n_nodes = 1
         else:
-            # Calculate the number of nodes based on the formula: ceil(num_gpus / 4)
+            # Calculate the number of nodes based on the formula: ceil(num_gpus / 4), this works for Baskerville where a node has 4 devices
             n_nodes = (n_devices + 3) // 4
 
         logging.info(
@@ -173,7 +185,6 @@ def train(
             accelerator=accelerator,
             devices=n_devices,
             num_nodes=n_nodes,
-            # plugins=[SLURMEnvironment(auto_requeue=False)]
         )
 
     else:
@@ -205,81 +216,27 @@ def train(
     pose = not (pose_dims == 0)
 
     # ############################### MODEL ###############################
-    if filters is not None:
-        filters = np.array(
-            np.array(filters).replace(" ", "").split(","), dtype=np.int64
-        )
-
-    if model == "a":
-        encoder = EncoderA(
-            dshape, channels, depth, lat_dims, pose_dims, bnorm=bnorm_encoder
-        )
-        decoder = DecoderA(
-            dshape, channels, depth, lat_dims, pose_dims, bnorm=bnorm_decoder
-        )
-    elif model == "b":
-        encoder = EncoderB(dshape, channels, depth, lat_dims, pose_dims)
-        decoder = DecoderB(dshape, channels, depth, lat_dims, pose_dims)
-    elif model == "u":
-        encoder = Encoder(
-            input_size=dshape,
-            capacity=channels,
-            filters=filters,
-            depth=depth,
-            latent_dims=lat_dims,
-            pose_dims=pose_dims,
-            bnorm=bnorm_encoder,
-        )
-        decoder = Decoder(
-            input_size=dshape,
-            capacity=channels,
-            filters=filters,
-            depth=depth,
-            latent_dims=lat_dims,
-            pose_dims=pose_dims,
-            bnorm=bnorm_decoder,
-        )
-    elif model == "gsd":
-        encoder = EncoderA(
-            dshape, channels, depth, lat_dims, pose_dims, bnorm=bnorm_encoder
-        )
-        decoder = GaussianSplatDecoder(
-            dshape,
-            n_splats=n_splats,
-            latent_dims=lat_dims,
-            output_channels=gsd_conv_layers,
-            device=device,
-            pose_dims=pose_dims,
-        )
-    else:
-        raise ValueError(
-            "Invalid model type",
-            model,
-            "must be one of : a, b, u or gsd",
-        )
-
-    vae = AffinityVAE(encoder, decoder)
+    vae = build_model(
+        model_type=model,
+        input_shape=dshape,
+        channels=channels,
+        depth=depth,
+        lat_dims=lat_dims,
+        pose_dims=pose_dims,
+        bnorm_encoder=bnorm_encoder,
+        bnorm_decoder=bnorm_decoder,
+        n_splats=n_splats,
+        gsd_conv_layers=gsd_conv_layers,
+        device=device,
+        filters=filters,
+    )
 
     logging.info(vae)
 
-    if opt_method == "adam":
-        optimizer = torch.optim.Adam(
-            params=vae.parameters(), lr=learning  # , weight_decay=1e-5
-        )
-    elif opt_method == "sgd":
-        optimizer = torch.optim.SGD(
-            params=vae.parameters(), lr=learning  # , weight_decay=1e-5
-        )
-    elif opt_method == "asgd":
-        optimizer = torch.optim.aSGD(
-            params=vae.parameters(), lr=learning  # , weight_decay=1e-5
-        )
-    else:
-        raise ValueError(
-            "Invalid optimisation method",
-            opt_method,
-            "must be adam or sgd if you have other methods in mind, this can be easily added to the train.py",
-        )
+    # ############################### OPTIMISER ###############################
+    optimizer = configure_optimiser(
+        opt_method=opt_method, model=vae, learning_rate=learning
+    )
 
     vae, optimizer = fabric.setup(vae, optimizer)
 
@@ -304,65 +261,25 @@ def train(
         t_history = checkpoint["t_loss_history"]
         v_history = checkpoint["v_loss_history"]
 
-    if beta_max == 0 and cyc_method_beta != "flat" and beta_load is not None:
-        raise RuntimeError(
-            "The maximum value for beta is set to 0, it is not possible to"
-            "oscillate between a maximum and minimum. Please choose the flat method for"
-            "cyc_method_beta"
-        )
+    beta_arr = configure_annealing(
+        epochs=epochs,
+        value_max=beta_max,
+        value_min=beta_min,
+        cyc_method=cyc_method_beta,
+        n_cycle=beta_cycle,
+        ratio=beta_ratio,
+        cycle_load=beta_load,
+    )
 
-    if beta_load is None:
-        # If a path for loading the beta array is not provided,
-        # create it given the input
-        beta_arr = (
-            cyc_annealing(
-                epochs,
-                cyc_method_beta,
-                n_cycle=beta_cycle,
-                ratio=beta_ratio,
-            ).var
-            * (beta_max - beta_min)
-            + beta_min
-        )
-    else:
-        beta_arr = np.load(beta_load)
-        if len(beta_arr) != epochs:
-            raise RuntimeError(
-                f"The length of the beta array loaded from file is {len(beta_arr)} but the number of Epochs specified in the input are {epochs}.\n"
-                "These two values should be the same."
-            )
-
-    if (
-        gamma_max == 0
-        and cyc_method_gamma != "flat"
-        and gamma_load is not None
-    ):
-        raise RuntimeError(
-            "The maximum value for gamma is set to 0, it is not possible to"
-            "oscillate between a maximum and minimum. Please choose the flat method for"
-            "cyc_method_gamma"
-        )
-
-    if gamma_load is None:
-        # If a path for loading the gamma array is not provided,
-        # create it given the input
-        gamma_arr = (
-            cyc_annealing(
-                epochs,
-                cyc_method_gamma,
-                n_cycle=gamma_cycle,
-                ratio=gamma_ratio,
-            ).var
-            * (gamma_max - gamma_min)
-            + gamma_min
-        )
-    else:
-        gamma_arr = np.load(gamma_load)
-        if len(gamma_arr) != epochs:
-            raise RuntimeError(
-                f"The length of the gamma array loaded from file is {len(gamma_arr)} but the number of Epochs specified in the input are {epochs}.\n"
-                "These two values should be the same."
-            )
+    gamma_arr = configure_annealing(
+        epochs=epochs,
+        value_max=gamma_max,
+        value_min=gamma_min,
+        cyc_method=cyc_method_gamma,
+        n_cycle=gamma_cycle,
+        ratio=gamma_ratio,
+        cycle_load=gamma_load,
+    )
     if settings.VIS_CYC:
         vis.plot_cyc_variable(beta_arr, "beta")
         vis.plot_cyc_variable(gamma_arr, "gamma")
@@ -376,10 +293,7 @@ def train(
         klred=klred,
     )
 
-    if tensorboard:
-        writer = SummaryWriter()
-    else:
-        writer = None
+    writer = SummaryWriter() if tensorboard else None
 
     # ########################## TRAINING LOOP ################################
     for epoch in range(e_start, epochs):
@@ -391,58 +305,62 @@ def train(
         v_history.append(np.zeros(4))
 
         # create holders for latent spaces and labels
-        x_train = []  # 0 x lat_dims
-        y_train = []  # 0 x 1
-        c_train = []
-        x_val = []
-        y_val = []
-        c_val = []
-        x_test = []
-        c_test = []
+        x_train, y_train, c_train = [], [], []
+        x_val, y_val, c_val = [], [], []
+        x_test, c_test = [], []
+
         if pose:
-            p_train = []  # 0 x pose_dims
-            p_val = []
-            p_test = []
+            p_train, p_val, p_test = [], [], []
 
         # ########################## TRAINING #################################
         vae.train()
-        for b, batch in enumerate(trains):
+        for batch_number, (x, label, aff, meta_data) in enumerate(trains):
 
-            (
-                x,
-                x_hat,
-                lat_mu,
-                lat_logvar,
-                lat,
-                lat_pos,
-                t_history,
-            ) = pass_batch(
-                fabric,
-                vae,
-                batch,
-                b,
-                len(trains),
-                epoch,
-                epochs,
-                loss=loss,
-                history=t_history,
-                optimizer=optimizer,
-                beta=beta_arr,
+            # get data in the right device
+            x, aff = x.to(device), aff.to(device)
+            x = x.to(torch.float32)
+
+            # forward
+            x_hat, lat_mu, lat_logvar, lat, lat_pose = vae(x)
+            history_loss = loss(
+                x, x_hat, lat_mu, lat_logvar, epoch, batch_aff=aff
             )
+
+            # record loss
+            for i in range(len(t_history[-1])):
+                t_history[-1][i] += history_loss[i].item()
+            logging.debug(
+                "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
+                "KLdiv: %f | Affin: %f | Beta: %f"
+                % (
+                    epoch + 1,
+                    epochs,
+                    batch_number + 1,
+                    len(trains),
+                    *history_loss,
+                    beta_arr[epoch],
+                )
+            )
+
+            # backwards
+            fabric.backward(history_loss[0])
+            optimizer.step()
+            optimizer.zero_grad()
+
             x_train.extend(lat_mu.cpu().detach().numpy())  # store latents
-            y_train.extend(batch[1])
+            y_train.extend(label)
             c_train.extend(lat_logvar.cpu().detach().numpy())
             if pose:
-                p_train.extend(lat_pos.cpu().detach().numpy())
+                p_train.extend(lat_pose.cpu().detach().numpy())
 
             # store meta for plots and accuracy
             meta_df = add_meta(
                 data_dim,
                 meta_df,
-                batch[-1],
+                meta_data,
                 x_hat,
                 lat_mu,
-                lat_pos,
+                lat_pose,
                 lat_logvar,
                 mode="trn",
             )
@@ -462,29 +380,36 @@ def train(
         )
         # ########################## VAL ######################################
         vae.eval()
-        for b, batch in enumerate(vals):
-            (
-                v,
-                v_hat,
-                v_mu,
-                v_logvar,
-                vlat,
-                vlat_pos,
-                v_history,
-            ) = pass_batch(
-                fabric,
-                vae,
-                batch,
-                b,
-                len(vals),
-                epoch,
-                epochs,
-                loss=loss,
-                history=v_history,
-                beta=beta_arr,
+        for batch_number, (v, label, aff, meta_data) in enumerate(vals):
+
+            # get data in the right device
+            v, aff = v.to(device), aff.to(device)
+            v = v.to(torch.float32)
+
+            # forward
+            v_hat, v_mu, v_logvar, vlat, vlat_pos = vae(v)
+            v_history_loss = loss(
+                v, v_hat, v_mu, v_logvar, epoch, batch_aff=aff
             )
+
+            # record loss
+            for i in range(len(t_history[-1])):
+                v_history[-1][i] += v_history_loss[i].item()
+            logging.debug(
+                "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
+                "KLdiv: %f | Affin: %f | Beta: %f"
+                % (
+                    epoch + 1,
+                    epochs,
+                    batch_number + 1,
+                    len(vals),
+                    *v_history_loss,
+                    beta_arr[epoch],
+                )
+            )
+
             x_val.extend(v_mu.cpu().detach().numpy())  # store latents
-            y_val.extend(batch[1])
+            y_val.extend(label)
             c_val.extend(v_logvar.cpu().detach().numpy())
             if pose:
                 p_val.extend(vlat_pos.cpu().detach().numpy())
@@ -492,7 +417,7 @@ def train(
             meta_df = add_meta(
                 data_dim,
                 meta_df,
-                batch[-1],
+                meta_data,
                 v_hat,
                 v_mu,
                 vlat_pos,
@@ -521,10 +446,16 @@ def train(
 
         # ########################## TEST #####################################
         if (epoch + 1) % settings.FREQ_EVAL == 0:
-            for b, batch in enumerate(tests):  # tests empty if no 'test' dir
-                (t, t_hat, t_mu, t_logvar, tlat, tlat_pose, _,) = pass_batch(
-                    fabric, vae, batch, b, len(tests), epoch, epochs
-                )
+            for batch_number, (t, label, aff, meta_data) in enumerate(
+                tests
+            ):  # tests empty if no 'test' dir
+                # get data in the right device
+                t, aff = t.to(device), aff.to(device)
+                t = t.to(torch.float32)
+
+                # forward
+                t_hat, t_mu, t_logvar, tlat, tlat_pose = vae(t)
+
                 x_test.extend(t_mu.cpu().detach().numpy())  # store latents
                 c_test.extend(t_logvar.cpu().detach().numpy())
                 if pose:
@@ -534,7 +465,7 @@ def train(
                 meta_df = add_meta(
                     data_dim,
                     meta_df,
-                    batch[-1],
+                    meta_data,
                     t_hat,
                     t_mu,
                     tlat_pose,
@@ -542,7 +473,9 @@ def train(
                     mode="tst",
                 )
 
-            logging.info("Evaluation : Batch: [%d/%d]" % (b + 1, len(tests)))
+            logging.info(
+                "Evaluation : Batch: [%d/%d]" % (batch_number + 1, len(tests))
+            )
         logging.info("\n")  # end of training round
 
         # ########################## VISUALISE ################################
@@ -752,6 +685,7 @@ def train(
         if (epoch + 1) % settings.FREQ_STA == 0:
             if not os.path.exists("states"):
                 os.mkdir("states")
+
             mname = (
                 "avae_"
                 + str(settings.date_time_run)

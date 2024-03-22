@@ -9,7 +9,7 @@ import torch
 from . import settings, vis
 from .data import load_data
 from .utils import accuracy, latest_file
-from .utils_learning import add_meta, pass_batch, set_device
+from .utils_learning import add_meta
 
 
 def evaluate(
@@ -113,9 +113,7 @@ def evaluate(
     meta_df = pd.read_pickle(meta)
 
     # create holders for latent spaces and labels
-    x_test = []
-    y_test = []
-    c_test = []
+    x_test, y_test, c_test = [], [], []
     p_test = None
 
     if pose_dims != 0:
@@ -124,34 +122,38 @@ def evaluate(
     logging.debug("Batch: [0/%d]" % (len(tests)))
 
     vae.eval()
-    for b, batch in enumerate(tests):
-        x, x_hat, lat_mu, lat_logvar, lat, lat_pose, _ = pass_batch(
-            fabric=fabric, vae=vae, batch=batch, b=b, batches=len(tests)
-        )
-        x_test.extend(lat_mu.cpu().detach().numpy())
-        c_test.extend(lat_logvar.cpu().detach().numpy())
+    for batch_number, (t, label, aff, meta_data) in enumerate(tests):
 
+        # get data in the right device
+        t, aff = t.to(device), aff.to(device)
+        t = t.to(torch.float32)
+
+        # forward
+        t_hat, t_mu, t_logvar, tlat, tlat_pose = vae(t)
+
+        x_test.extend(t_mu.cpu().detach().numpy())  # store latents
+        c_test.extend(t_logvar.cpu().detach().numpy())
         # if labels are present save them otherwise save test
         try:
-            y_test.extend(batch[1])
+            y_test.extend(label)
         except IndexError:
-            np.full(shape=len(batch[0]), fill_value="test")
-        if lat_pose is not None:
-            p_test.extend(lat_pose.cpu().detach().numpy())
+            np.full(shape=len(t), fill_value="test")
+        if tlat_pose is not None:
+            p_test.extend(tlat_pose.cpu().detach().numpy())
 
         meta_df = add_meta(
             data_dim,
             meta_df,
-            batch[-1],
-            x_hat,
-            lat_mu,
-            lat_pose,
-            lat_logvar,
+            meta_data,
+            t_hat,
+            t_mu,
+            tlat_pose,
+            tlat,
             mode="evl",
         )
 
-        logging.debug("Batch: [%d/%d]" % (b + 1, len(tests)))
-    logging.info("Batch: [%d/%d]" % (b + 1, len(tests)))
+        logging.debug("Batch: [%d/%d]" % (batch_number + 1, len(tests)))
+    logging.info("Batch: [%d/%d]" % (batch_number + 1, len(tests)))
 
     # ########################## VISUALISE ################################
     if classes is not None:
@@ -160,7 +162,7 @@ def evaluate(
         classes_list = []
     # visualise reconstructions - last batch
     if settings.VIS_REC:
-        vis.recon_plot(x, x_hat, y_test, data_dim, mode="evl")
+        vis.recon_plot(t, t_hat, y_test, data_dim, mode="evl")
 
     # visualise latent disentanglement
     if settings.VIS_DIS:

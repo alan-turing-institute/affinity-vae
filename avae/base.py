@@ -1,4 +1,5 @@
 import enum
+import logging
 
 import torch
 
@@ -34,3 +35,35 @@ class AbstractAffinityVAE(torch.nn.Module):
         raise NotImplementedError(
             "Reparameterize method must be implemented in child class."
         )
+
+
+def set_layer_dim(
+    ndim: SpatialDims | int,
+) -> tuple[torch.nn.Module, torch.nn.Module, torch.nn.Module]:
+    if ndim == SpatialDims.TWO:
+        return torch.nn.Conv2d, torch.nn.ConvTranspose2d, torch.nn.BatchNorm2d
+    elif ndim == SpatialDims.THREE:
+        return torch.nn.Conv3d, torch.nn.ConvTranspose3d, torch.nn.BatchNorm3d
+    else:
+        logging.error("Data must be 2D or 3D.")
+        exit(1)
+
+
+def dims_after_pooling(start: int, n_pools: int) -> int:
+    """Calculate the size of a layer after n pooling ops.
+
+    Parameters
+    ----------
+    start: int
+        The size of the layer before pooling.
+    n_pools: int
+        The number of pooling operations.
+
+    Returns
+    -------
+    int
+        The size of the layer after pooling.
+
+
+    """
+    return start // (2**n_pools)
