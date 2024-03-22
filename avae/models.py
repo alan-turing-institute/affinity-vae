@@ -140,7 +140,7 @@ def build_model(
         decoder = DecoderB(input_shape, channels, depth, lat_dims, pose_dims)
     elif model_type == "u":
         encoder = Encoder(
-            input_size=input_shape,
+            input_shape=input_shape,
             capacity=channels,
             filters=filters,
             depth=depth,
