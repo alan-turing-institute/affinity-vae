@@ -81,11 +81,15 @@ you can send a SLURM job to the cluster using the script in [tools](tools/slurm_
 sbatch slurm_run.sh
 ```
 
-### Quick start
+
+## Running Affinity-VAE: A quick start
 
 We have a [tutorial](tutorials/README.md) on how to run Affinity-VAE on the
 MNIST dataset. We recommend to start there for the first time you run
 Affinity-VAE.
+
+<details>
+<summary><i>Affinity-VAE configuration parameters</i></summary>
 
 Affinity-VAE has a running script (`run.py`) that allows you to configure and
 run the code. You can look at the available configuration options by running:
@@ -128,9 +132,22 @@ Options:
   -de, --depth INTEGER            Depth of the convolutional layers (default
                                   3).
   -ch, --channels INTEGER         First layer channels (default 64).
+  -fl, --filters TEXT             Comma-separated list of filters for the
+                                  network. Either provide filters, or capacity
+                                  and depth.
   -ld, --latent_dims INTEGER      Latent space dimension (default 10).
   -pd, --pose_dims INTEGER        If pose on, number of pose dimensions. If 0
                                   and gamma=0 it becomesa standard beta-VAE.
+  -bn_enc, --bnorm_encoder        Batch normalisation in encoder is on if
+                                  True.
+  -bn_dec, --bnorm_decoder        Batch normalisation in encoder is on if
+                                  True.
+  -gsdcl, --gsd_conv_layers INTEGER
+                                  The number of output channels for the
+                                  convolution layers at the end of the GSD
+                                  decoder
+  -spl, --n_splats INTEGER        Number of Gaussian splats.
+  -kr, --klreduction TEXT         Mean or sum reduction on KLD term.
   -be, --beta FLOAT               Beta maximum in the case of cyclical
                                   annealing schedule
   -bl, --beta_load                The path to the saved beta array file to be
@@ -165,7 +182,8 @@ Options:
   -ev, --eval                     Evaluate test data.
   -dn, --dynamic                  Enable collecting meta and dynamic latent
                                   space plots.
-  -m, --model TEXT                Choose model to run.
+  -m, --model TEXT                Choose model to run. The choice of models
+                                  are a, b, u and gsd
   -vl, --vis_los                  Visualise loss (every epoch starting at
                                   epoch 2).
   -vac, --vis_acc                 Visualise confusion matrix and F1 scores
@@ -181,13 +199,16 @@ Options:
   -vps, --vis_pos                 Visualise pose disentanglement (frequency
                                   controlled).
   -vpsc, --vis_pose_class TEXT    Example: A,B,C. your deliminator should be
-                                  commas and no spaces .Classes to be used for
+                                  commas and no spaces. Classes to be used for
                                   pose interpolation (a seperate pose
                                   interpolation figure would be created for
                                   each class).
-  -vpsc, --vis_z_n_int TEXT       Number of Latent interpolation classes to to be printed, number of interpolation steps in each  plot.
-                                  Example: 1,10. 1 plot with 10 interpolation steps between two classes.
-                                  your deliminator should be commas and no spaces.
+  -vzni, --vis_z_n_int TEXT       Number of Latent interpolation classes to to
+                                  be printed, number of interpolation steps in
+                                  each  plot. Example: 1,10. 1 plot with 10
+                                  interpolation steps between two classes.
+                                  your deliminator should be commas and no
+                                  spaces.
   -vc, --vis_cyc                  Visualise cyclical parameters (once per
                                   run).
   -va, --vis_aff                  Visualise affinity matrix (once per run).
@@ -195,7 +216,8 @@ Options:
                                   per run).
   -similarity, --vis_sim          Visualise train-val model similarity matrix.
   -va, --vis_all                  Visualise all above.
-  -vf, --vis_format               The format of saved images. Options: png , pdf
+  -vf, --vis_format TEXT          The format of saved images. Options: png ,
+                                  pdf
   -fev, --freq_eval INTEGER       Frequency at which to evaluate test set.
   -fs, --freq_sta INTEGER         Frequency at which to save state
   -fac, --freq_acc INTEGER        Frequency at which to visualise confusion
@@ -222,17 +244,20 @@ Options:
   -nrm, --normalise               Normalise data
   -sftm, --shift_min              Shift the minimum of the data to one zero
                                   and the maximum to one
-  -res --rescale                  Rescale images to given value (tuple, one
+  -res, --rescale INTEGER         Rescale images to given value (tuple, one
                                   value per dim).
   -tb, --tensorboard              Log metrics and figures to tensorboard
                                   during training
+  -st, --strategy TEXT            Define the strategy for distributed
+                                  training. Options are: 'ddp', 'deepspeed' or
+                                  'fsdp
   --help                          Show this message and exit.
 ```
 
 Note that setting `-g/--gamma` to `0` and `-pd/--pose_dims` to `0` will run a
 vanilla beta-VAE.
+</details>
 
-### Quickstart
 
 #### Configuring from the command line
 
