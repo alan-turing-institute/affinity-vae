@@ -69,18 +69,18 @@ def set_device(gpu: bool) -> torch.device:
 
 
 def build_model(
-    model_type,
-    input_size,
-    channels,
-    depth,
-    lat_dims,
-    pose_dims,
-    bnorm_encoder,
-    bnorm_decoder,
-    n_splats,
-    gsd_conv_layers,
-    device,
-    filters=None,
+    model_type: str,
+    input_shape: tuple,
+    channels: int,
+    depth: int,
+    lat_dims: int,
+    pose_dims: int,
+    bnorm_encoder: bool,
+    bnorm_decoder: bool,
+    n_splats: int,
+    gsd_conv_layers: int,
+    device: torch.device,
+    filters: list | None = None,
 ):
     """Create the AffinityVAE model.
 
@@ -88,7 +88,7 @@ def build_model(
     ----------
     model_type : str
         The type of model to create. Must be one of : a, b, u or gsd.
-    input_size : int
+    input_shape : tuple
         The size of the input.
     channels : int
         The number of channels in the model.
@@ -108,7 +108,7 @@ def build_model(
         The number of convolutional layers in the Gaussian Splat Decoder.
     device : torch.device
         The device to use for training and inference.
-    filters : list
+    filters : list or None
         The filters to use in the model.
 
     """
@@ -120,7 +120,7 @@ def build_model(
 
     if model_type == "a":
         encoder = EncoderA(
-            input_size,
+            input_shape,
             channels,
             depth,
             lat_dims,
@@ -128,7 +128,7 @@ def build_model(
             bnorm=bnorm_encoder,
         )
         decoder = DecoderA(
-            input_size,
+            input_shape,
             channels,
             depth,
             lat_dims,
@@ -136,11 +136,11 @@ def build_model(
             bnorm=bnorm_decoder,
         )
     elif model_type == "b":
-        encoder = EncoderB(input_size, channels, depth, lat_dims, pose_dims)
-        decoder = DecoderB(input_size, channels, depth, lat_dims, pose_dims)
+        encoder = EncoderB(input_shape, channels, depth, lat_dims, pose_dims)
+        decoder = DecoderB(input_shape, channels, depth, lat_dims, pose_dims)
     elif model_type == "u":
         encoder = Encoder(
-            input_size=input_size,
+            input_size=input_shape,
             capacity=channels,
             filters=filters,
             depth=depth,
@@ -149,7 +149,7 @@ def build_model(
             bnorm=bnorm_encoder,
         )
         decoder = Decoder(
-            input_size=input_size,
+            input_shape=input_shape,
             capacity=channels,
             filters=filters,
             depth=depth,
@@ -159,7 +159,7 @@ def build_model(
         )
     elif model_type == "gsd":
         encoder = EncoderA(
-            input_size,
+            input_shape,
             channels,
             depth,
             lat_dims,
@@ -167,7 +167,7 @@ def build_model(
             bnorm=bnorm_encoder,
         )
         decoder = GaussianSplatDecoder(
-            input_size,
+            input_shape,
             n_splats=n_splats,
             latent_dims=lat_dims,
             output_channels=gsd_conv_layers,

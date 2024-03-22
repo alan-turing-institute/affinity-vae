@@ -188,7 +188,7 @@ class Encoder(AbstractEncoder):
 class EncoderA(AbstractEncoder):
     def __init__(
         self,
-        input_size: tuple,
+        input_shape: tuple,
         capacity: Optional[int] = None,
         depth: int = 4,
         latent_dims: int = 8,
@@ -200,7 +200,7 @@ class EncoderA(AbstractEncoder):
         self.bnorm = bnorm
 
         assert all(
-            [int(x) == x for x in np.array(input_size) / (2**depth)]
+            [int(x) == x for x in np.array(input_shape) / (2**depth)]
         ), (
             "Input size not compatible with --depth. Input must be divisible "
             "by {}.".format(2**depth)
@@ -211,7 +211,7 @@ class EncoderA(AbstractEncoder):
             [
                 filters[-1],
             ]
-            + [dims_after_pooling(ax, depth) for ax in input_size]
+            + [dims_after_pooling(ax, depth) for ax in input_shape]
         )
         flat_shape = np.prod(unflat_shape)
 

@@ -202,7 +202,7 @@ def train(
     # ############################### MODEL ###############################
     vae = build_model(
         model_type=model,
-        input_size=dshape,
+        input_shape=dshape,
         channels=channels,
         depth=depth,
         lat_dims=lat_dims,

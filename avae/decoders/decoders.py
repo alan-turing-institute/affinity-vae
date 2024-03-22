@@ -13,7 +13,7 @@ class Decoder(AbstractDecoder):
 
     Parameters
     ----------
-    input_size: tuple (X, Y) or tuple (X, Y, Z)
+    input_shape: tuple (X, Y) or tuple (X, Y, Z)
         Tuple representing the size of the data for each image
         dimension X, Y and Z.
     latent_dims: int
@@ -33,7 +33,7 @@ class Decoder(AbstractDecoder):
 
     def __init__(
         self,
-        input_size: tuple,
+        input_shape: tuple,
         capacity: int | None = None,
         filters: list[int] | None = None,
         depth: int = 4,
@@ -76,7 +76,7 @@ class Decoder(AbstractDecoder):
             assert all(
                 [
                     int(x) == x
-                    for x in np.array(input_size) / (2 ** len(self.filters))
+                    for x in np.array(input_shape) / (2 ** len(self.filters))
                 ]
             ), (
                 "Input size not compatible with --depth. Input must be divisible "
@@ -84,14 +84,14 @@ class Decoder(AbstractDecoder):
             )
 
             self.bottom_dim = tuple(
-                [int(i / (2 ** len(self.filters))) for i in input_size]
+                [int(i / (2 ** len(self.filters))) for i in input_shape]
             )
 
             # define layer dimensions
-            CONV, TCONV, BNORM = set_layer_dim(len(input_size))
+            CONV, TCONV, BNORM = set_layer_dim(len(input_shape))
 
         else:
-            self.bottom_dim = input_size
+            self.bottom_dim = input_shape
 
         if latent_dims <= 0:
             raise RuntimeError(
