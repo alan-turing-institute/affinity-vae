@@ -352,8 +352,8 @@ class Dataset_reader(Dataset):
             try:
                 with mrcfile.open(os.path.join(self.root_dir, filename)) as f:
                     return np.array(f.data)
-            except IOError:
-                raise IOError(
+            except ValueError:
+                raise ValueError(
                     "File {} is corrupted.".format(
                         os.path.join(self.root_dir, filename)
                     )
