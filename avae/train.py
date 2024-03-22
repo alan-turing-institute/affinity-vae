@@ -74,6 +74,10 @@ def train(
         Path to the data directory.
     datatype: str
         data file formats : mrc, npy
+    restart: bool
+        If True, the model will be restarted from the latest saved state.
+    state: str
+        Path to the model state file to be used for evaluation/restart.
     lim: int
         Limit the number of samples to load.
     splt: int
@@ -92,6 +96,8 @@ def train(
         Number of channels in the input data.
     depth: int
         Depth of the model.
+    filters: list
+        List of filters to use in the model.
     lat_dims: int
         Number of latent dimensions.
     pose_dims: int
@@ -139,13 +145,23 @@ def train(
         The method to use on the latent space classification. Can be neural network (NN), k nearest neighbourgs (KNN) or logistic regression (LR).
     bnorm_encoder: bool
         If True, batch normalisation is applied to the encoder.
-    bnrom_decoder: bool
+    bnorm_decoder: bool
         If True, batch normalisation is applied to the decoder.
     strategy: str
         The strategy to use for distributed training. Can be  'ddp', 'deepspeed' or 'fsdp".
     gsd_conv_layers: int
         activates convolution layers at the end of the differetiable decoder if set
-        and it is an integer defining the number of output channels  .
+        and it is an integer defining the number of output channels.
+    n_splats: int
+        The number of splats in the Gaussian Splat Decoder.
+    klred: str
+        The method to reduce the KL divergence. Can be 'mean' or 'sum'.
+    beta_load: str
+        Path to the beta values to load.
+    gamma_load: str
+        Path to the gamma values to load.
+    rescale: bool
+        If True, the input data is rescaled to have a mean of 0 and std of 1.
     """
     lt.pytorch.seed_everything(42)
 
