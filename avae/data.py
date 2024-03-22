@@ -349,8 +349,15 @@ class Dataset_reader(Dataset):
             return np.load(os.path.join(self.root_dir, filename))
 
         elif self.datatype == "mrc":
-            with mrcfile.open(os.path.join(self.root_dir, filename)) as f:
-                return np.array(f.data)
+            try:
+                with mrcfile.open(os.path.join(self.root_dir, filename)) as f:
+                    return np.array(f.data)
+            except ValueError:
+                raise ValueError(
+                    "File {} is corrupted.".format(
+                        os.path.join(self.root_dir, filename)
+                    )
+                )
 
     def voxel_transformation(self, x):
 
