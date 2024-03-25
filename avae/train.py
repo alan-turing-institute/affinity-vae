@@ -183,7 +183,7 @@ def train(
     device = fabric.device
 
     # ############################### DATA ###############################
-    trains, vals, tests, lookup, data_dim = load_data(
+    trains, vals, tests, affinity_matrix, data_dim = load_data(
         datapath=datapath,
         datatype=datatype,
         lim=lim,
@@ -191,7 +191,7 @@ def train(
         batch_s=batch_s,
         no_val_drop=no_val_drop,
         eval=False,
-        affinity=affinity,
+        affinity_path=affinity,
         classes=classes,
         gaussian_blur=gaussian_blur,
         normalise=normalise,
@@ -371,7 +371,7 @@ def train(
         device=device,
         beta=beta_arr,
         gamma=gamma_arr,
-        lookup_aff=lookup,
+        lookup_aff=affinity_matrix,
         recon_fn=recon_fn,
         klred=klred,
     )
