@@ -15,6 +15,9 @@ from .vis import format, plot_affinity_matrix, plot_classes_distribution
 lt.pytorch.seed_everything(42)
 
 
+# As the function load_data can return different types of data depending on the value of the eval parameter, it uses
+# function overloading to define multiple signatures for the function. This allows the function to have different return
+# types and behaviors based on the input parameters.
 @overload
 def load_data(
     datapath: str,
@@ -73,9 +76,8 @@ def load_data(
 ) -> tuple[DataLoader, DataLoader, DataLoader, pd.DataFrame, int] | tuple[
     DataLoader, int
 ]:
-    """Loads all data needed for training, testing and evaluation. Loads MRC files from a given path, selects subset of
-    classes if requested, splits it into train / val  and test in batch sets, loads affinity matrix. Returns train,
-    validation and test data as DataLoader objects.
+    """This function a wrapper around the DiskDataLoader class from the caked library. It loads data from a given path, selects a subset of classes if requested, splits it into train / val and test in batch sets, and loads an affinity matrix.
+    The function is overloaded to return different types of data depending on the value of the eval parameter. If eval is True, the function returns only the test data and the dimension of the data. If eval is False, the function returns train, validation, and test data, the affinity matrix, and the dimension of the data.
 
     Parameters
     ----------
@@ -104,6 +106,8 @@ def load_data(
         In True, the input data is normalised before being passed to the model.
     shift_min: bool
         If True, the minimum value of the input data is shifted to 0 and maximum to 1.
+    rescale: int
+        If not None, the input data is rescaled to the given value.
 
 
     Returns
@@ -137,7 +141,10 @@ def load_data(
 
     if not eval:
 
-        # configure dataloader with the given parameters
+        # configure the DiskDataLoader from the caked library with the data parameters
+        # the caked library is used to load data from the given path, split it into train and validation, apply transformations, and get torch dataloaders
+        # the caked implementation used to be a part of the avae library, but it was moved to the caked library to make it more modular and reusable
+        # you can find the caked library here: https://github.com/alan-turing-institute/caked/
         loader = DiskDataLoader(
             pipeline="disk",
             classes=classes_list,
@@ -147,7 +154,7 @@ def load_data(
                 None if len(transformations) == 0 else transformations
             ),
         )
-        # load data from the given path
+        # using the caked library we load data from the given path
         loader.load(datapath=datapath, datatype=datatype)
 
         # if classes are not provided, use all classes in the dataset as obtained by the dataloader
@@ -158,12 +165,12 @@ def load_data(
         if affinity_path is not None:
             affinity = get_affinity_matrix(affinity_path, classes_list)
 
-        # assign the affinity matrix to the dataset (small modification from the caked DiskDataset)
+        # assign the affinity matrix to the dataset (small modification from the caked DiskDataset, which only returns data and labels, and we need the affinity matrix indexes for training).
         loader.dataset = AffinityDiskDataset(
             dataset=loader.dataset, affinity=affinity, classes=classes_list
         )
 
-        # split the data into train and validation and get torch dataloaders
+        # using caked, we split the data into train and validation and get torch dataloaders
         trains, vals = loader.get_loader(
             batch_size=batch_s, split_size=splt, no_val_drop=no_val_drop
         )
@@ -195,7 +202,7 @@ def load_data(
         if "test" in os.listdir(datapath):
             datapath = os.path.join(datapath, "test")
 
-        # configure dataloader with the given parameters for test or evaluation
+        # configure the caked library dataloader with the given parameters for test or evaluation
         test_loader = DiskDataLoader(
             pipeline="disk",
             classes=[],
@@ -209,7 +216,7 @@ def load_data(
         # load data from the given path
         test_loader.load(datapath=datapath, datatype=datatype)
 
-        # assign the an affinity matrix of None to the test dataset (this is only for test or evaluation)
+        # assign the affinity matrix of None to the test dataset (this is only for test or evaluation)
         test_loader.dataset = AffinityDiskDataset(
             dataset=test_loader.dataset,
             classes=test_loader.classes,
