@@ -121,7 +121,7 @@ def evaluate(
 
     vae.eval()
     for b, batch in enumerate(tests):
-        x, x_hat, lat_mu, lat_logvar, lat, lat_pose, _ = pass_batch(
+        x, x_hat, x_before_conv, lat_mu, lat_logvar, lat, lat_pose, _ = pass_batch(
             device, vae, batch, b, len(tests)
         )
         x_test.extend(lat_mu.cpu().detach().numpy())

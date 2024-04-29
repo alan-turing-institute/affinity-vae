@@ -1,6 +1,13 @@
 from typing import Optional, Tuple
+import typing
+import logging
+import torchvision
+import numpy as np
+from scipy import stats
 
 import torch
+from avae.utils import save_imshow_png
+from avae import settings, vis
 
 from avae.decoders.base import AbstractDecoder
 from avae.decoders.spatial import (
@@ -9,6 +16,24 @@ from avae.decoders.spatial import (
     axis_angle_to_quaternion,
     quaternion_to_rotation_matrix,
 )
+
+class STEFunction(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, input):
+        return (input > 0).float()
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        return torch.nn.functional.hardtanh(grad_output)
+
+        
+class StraightThroughEstimator(torch.nn.Module):
+    def __init__(self):
+        super(StraightThroughEstimator, self).__init__()
+
+    def forward(self, x):
+        x = STEFunction.apply(x)
+        return x
 
 
 class GaussianSplatRenderer(torch.nn.Module):
@@ -185,13 +210,15 @@ class GaussianSplatDecoder(AbstractDecoder):
             torch.nn.Linear(latent_dims, n_splats * 3),
             torch.nn.Tanh(),
         )
+
+
         # weights are effectively whether a splat is used or not
         # use a soft step function to make this `binary` (but differentiable)
         # NOTE(arl): not sure if this really makes any difference
         self.weights = torch.nn.Sequential(
             torch.nn.Linear(latent_dims, n_splats),
-            torch.nn.Tanh(),
-            SoftStep(k=10.0),
+            StraightThroughEstimator(),
+            #SoftStep(k=10.0),
         )
         # sigma ends up being scaled by `splat_sigma_range`
         self.sigmas = torch.nn.Sequential(
@@ -226,11 +253,11 @@ class GaussianSplatDecoder(AbstractDecoder):
                 else torch.nn.Conv3d
             )
             self._decoder = torch.nn.Sequential(
-                conv(1, 32, 3, padding="same"),
-                torch.nn.ReLU(),
-                conv(32, 32, 3, padding="same"),
-                torch.nn.ReLU(),
-                conv(32, output_channels, 3, padding="same"),
+                conv(1, 1, 9, padding="same"),
+                #torch.nn.ReLU(),
+                #conv(32, 32, 3, padding="same"),
+                #torch.nn.ReLU(),
+                #conv(32, output_channels, 3, padding="same"),
             )
 
     def configure_renderer(
@@ -332,11 +359,14 @@ class GaussianSplatDecoder(AbstractDecoder):
         x = self._splatter(
             splats, weights, sigmas, splat_sigma_range=self._splat_sigma_range
         )
-        # if we're doing a final convolution, do it here
+
+        x_before_conv = x
+
         if (
             self._output_channels is not None
             and self._output_channels != 0
             and use_final_convolution
         ):
             x = self._decoder(x)
-        return x
+
+        return x, x_before_conv

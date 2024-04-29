@@ -1370,7 +1370,7 @@ def latent_4enc_interpolate_plot(
 
                 # Decode the interpolated encoding to generate an image
                 with torch.no_grad():
-                    decoded_images = vae.decoder(
+                    decoded_images, x_before_conv = vae.decoder(
                         interpolated_z.view(-1, latent_dim).to(device=device),
                         (torch.zeros(1, poses[0].shape[0]) + pose_mean).to(
                             device=device
@@ -1474,11 +1474,11 @@ def latent_disentamglement_plot(
                     current_pos_grid = torch.from_numpy(
                         np.array([pos_means])
                     ).to(device)
-                    current_recon = vae.decoder(
+                    current_recon, x_before_conv = vae.decoder(
                         current_lat_grid, current_pos_grid
                     )
                 else:
-                    current_recon = vae.decoder(current_lat_grid, None)
+                    current_recon, x_before_conv = vae.decoder(current_lat_grid, None)
 
             recon_images.append(current_recon.cpu().squeeze().numpy())
 
@@ -1808,7 +1808,7 @@ def interpolations_plot(
                 )
             with torch.no_grad():
                 if poses is not None:
-                    decoded_images = vae.decoder(
+                    decoded_images, x_before_conv = vae.decoder(
                         interpolated_z.view(-1, latent_dim).to(device=device),
                         (
                             torch.zeros(1, poses[0].shape[0])
@@ -1816,7 +1816,7 @@ def interpolations_plot(
                         ).to(device=device),
                     )
                 else:
-                    decoded_images = vae.decoder(
+                    decoded_images, x_before_conv = vae.decoder(
                         interpolated_z.view(-1, latent_dim).to(device=device),
                         None,
                     )
@@ -2069,6 +2069,59 @@ def latent_space_similarity_plot(
             os.mkdir("plots")
         plt.savefig(
             f"plots/similarity_mean{mode}.{settings.VIS_FORMAT}", dpi=dpi
+        )
+        plt.close()
+    else:
+        plt.show()
+
+
+
+def plot_array_distribution_tool(data, array_name, display: bool = False,
+):
+    """
+    This is a tool for developers 
+    Plot histogram, boxplot, and violin plot of the data on a single figure.
+
+    Parameters:
+        data (array-like): The input data.
+
+    Returns:
+        None
+    """
+    if isinstance(data, torch.Tensor):
+        # If data is a torch tensor, detach and move it to CPU
+        data = data.detach().cpu().numpy()
+        
+    elif not isinstance(data, np.ndarray):
+        # If data is not a numpy array or a torch tensor, convert it to numpy array
+        data = np.array(data)
+
+    # Flatten the array if it has more than two dimensions
+    if data.ndim > 2:
+        data = data.flatten()
+
+    fig, axes = plt.subplots(3, 1, figsize=(8, 18))
+
+    axes[0].hist(data, bins=10, density=True, alpha=0.6, color='b')
+    axes[0].set_title('Histogram of Data')
+    axes[0].set_xlabel('Value')
+    axes[0].set_ylabel('Frequency')
+
+    axes[1].boxplot(data)
+    axes[1].set_title('Boxplot of Data')
+    axes[1].set_ylabel('Value')
+
+    axes[2].violinplot(data)
+    axes[2].set_title('Violin Plot of Data')
+    axes[2].set_ylabel('Value')
+
+    plt.tight_layout()
+
+    if not display:
+        if not os.path.exists("plots"):
+            os.mkdir("plots")
+        plt.savefig(
+            f"plots/array_{array_name}_stats.{settings.VIS_FORMAT}"
         )
         plt.close()
     else:

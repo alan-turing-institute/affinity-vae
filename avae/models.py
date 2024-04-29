@@ -88,9 +88,9 @@ class AffinityVAE(AbstractAffinityVAE):
         # reparametrise
         latent = self.reparametrise(latent_mu, latent_logvar)
         # decode
-        x_recon = self.decoder(latent, latent_pose)  # pose set to None if pd=0
+        x_recon, x_before_conv = self.decoder(latent, latent_pose)  # pose set to None if pd=0
 
-        return x_recon, latent_mu, latent_logvar, latent, latent_pose
+        return x_recon, x_before_conv, latent_mu, latent_logvar, latent, latent_pose
 
     def reparametrise(self, mu, log_var):
         if self.training:

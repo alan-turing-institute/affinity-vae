@@ -253,7 +253,7 @@ class DecoderA(AbstractDecoder):
 
     def forward(self, x, x_pose):
         if self.pose:
-            return self.decoder(torch.cat([x_pose, x], dim=-1))
+            return self.decoder(torch.cat([x_pose, x], dim=-1)), self.decoder(torch.cat([x_pose, x], dim=-1))
         else:
             return self.decoder(x)
 

@@ -140,7 +140,7 @@ def pass_batch(
 
     # forward
     x = x.to(torch.float32)
-    x_hat, lat_mu, lat_logvar, lat, lat_pose = vae(x)
+    x_hat, x_before_conv,lat_mu, lat_logvar, lat, lat_pose = vae(x)
     if loss is not None:
         history_loss = loss(x, x_hat, lat_mu, lat_logvar, e, batch_aff=aff)
 
@@ -164,7 +164,7 @@ def pass_batch(
         optimizer.step()
         optimizer.zero_grad()
 
-    return x, x_hat, lat_mu, lat_logvar, lat, lat_pose, history
+    return x, x_hat, x_before_conv, lat_mu, lat_logvar, lat, lat_pose, history
 
 
 def add_meta(

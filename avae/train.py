@@ -380,6 +380,7 @@ def train(
             (
                 x,
                 x_hat,
+                x_before_conv,
                 lat_mu,
                 lat_logvar,
                 lat,
@@ -435,6 +436,7 @@ def train(
             (
                 v,
                 v_hat,
+                v_before_conv,
                 v_mu,
                 v_logvar,
                 vlat,
@@ -582,6 +584,32 @@ def train(
                 epoch=epoch,
                 writer=writer,
             )
+
+            xx = x_before_conv.detach().cpu().numpy()
+            vis.plot_array_distribution_tool((xx - np.min(xx)) / (np.max(xx) - np.min(xx)), "xx_normalised")
+            vis.plot_array_distribution_tool(x_hat.detach().cpu().numpy(), "x_hat")
+            vis.plot_array_distribution_tool(xx, "xx")
+
+            vis.recon_plot(
+                x,
+                x_before_conv,
+                y_train,
+                data_dim,
+                mode="trn_before_conv",
+                epoch=epoch,
+                writer=writer,
+            )
+
+            vis.recon_plot(
+                x,
+                (x_before_conv - torch.min(x_before_conv)) / (torch.max(x_before_conv) - torch.min(x_before_conv)),
+                y_train,
+                data_dim,
+                mode="trn_before_conv_normalised",
+                epoch=epoch,
+                writer=writer,
+            )
+
             vis.recon_plot(
                 v,
                 v_hat,
