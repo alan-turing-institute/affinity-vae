@@ -129,7 +129,7 @@ def evaluate(
         t = t.to(torch.float32)
 
         # forward
-        t_hat, t_mu, t_logvar, tlat, tlat_pose = vae(t)
+        t_hat, t_before_conv, t_mu, t_logvar, tlat, tlat_pose = vae(t)
 
         x_test.extend(t_mu.cpu().detach().numpy())  # store latents
         c_test.extend(t_logvar.cpu().detach().numpy())

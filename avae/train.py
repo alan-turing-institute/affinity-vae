@@ -321,7 +321,12 @@ def train(
             x = x.to(torch.float32)
 
             # forward
-            x_hat, lat_mu, lat_logvar, lat, lat_pose = vae(x)
+            if vae.decoder.__class__.__name__ == "GaussianSplatDecoder":
+                x_hat, x_before_conv, lat_mu, lat_logvar, lat, lat_pose = vae(
+                    x
+                )
+            else:
+                x_hat, lat_mu, lat_logvar, lat, lat_pose = vae(x)
             history_loss = loss(
                 x, x_hat, lat_mu, lat_logvar, epoch, batch_aff=aff
             )
@@ -387,7 +392,10 @@ def train(
             v = v.to(torch.float32)
 
             # forward
-            v_hat, v_mu, v_logvar, vlat, vlat_pos = vae(v)
+            if vae.decoder.__class__.__name__ == "GaussianSplatDecoder":
+                v_hat, v_before_conv, v_mu, v_logvar, vlat, vlat_pos = vae(v)
+            else:
+                v_hat, v_mu, v_logvar, vlat, vlat_pos = vae(v)
             v_history_loss = loss(
                 v, v_hat, v_mu, v_logvar, epoch, batch_aff=aff
             )
@@ -454,7 +462,17 @@ def train(
                 t = t.to(torch.float32)
 
                 # forward
-                t_hat, t_mu, t_logvar, tlat, tlat_pose = vae(t)
+                if vae.decoder.__class__.__name__ == "GaussianSplatDecoder":
+                    (
+                        t_hat,
+                        t_before_conv,
+                        t_mu,
+                        t_logvar,
+                        tlat,
+                        tlat_pose,
+                    ) = vae(t)
+                else:
+                    t_hat, t_mu, t_logvar, tlat, tlat_pose = vae(t)
 
                 x_test.extend(t_mu.cpu().detach().numpy())  # store latents
                 c_test.extend(t_logvar.cpu().detach().numpy())
@@ -546,6 +564,37 @@ def train(
                 epoch=epoch,
                 writer=writer,
             )
+
+            xx = x_before_conv.detach().cpu().numpy()
+            vis.plot_array_distribution_tool(
+                (xx - np.min(xx)) / (np.max(xx) - np.min(xx)), "xx_normalised"
+            )
+            vis.plot_array_distribution_tool(
+                x_hat.detach().cpu().numpy(), "x_hat"
+            )
+            vis.plot_array_distribution_tool(xx, "xx")
+
+            vis.recon_plot(
+                x,
+                x_before_conv,
+                y_train,
+                data_dim,
+                mode="trn_before_conv",
+                epoch=epoch,
+                writer=writer,
+            )
+
+            vis.recon_plot(
+                x,
+                (x_before_conv - torch.min(x_before_conv))
+                / (torch.max(x_before_conv) - torch.min(x_before_conv)),
+                y_train,
+                data_dim,
+                mode="trn_before_conv_normalised",
+                epoch=epoch,
+                writer=writer,
+            )
+
             vis.recon_plot(
                 v,
                 v_hat,
