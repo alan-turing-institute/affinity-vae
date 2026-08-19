@@ -177,6 +177,7 @@ def load_data(
 
         trains = fabric.setup_dataloaders(trains)
         vals = fabric.setup_dataloaders(vals)
+        
         # ################# Visualising class distribution ###################
 
         # getting labels from dataloaders
@@ -267,7 +268,7 @@ def get_affinity_matrix(
         affinity = None
 
     if affinity is not None:
-        class_check = np.in1d(classes, affinity.columns)
+        class_check = np.isin(classes, affinity.columns)
         if not np.all(class_check):
             raise RuntimeError(
                 "Not all classes in the training set are present in the "
@@ -334,13 +335,10 @@ class AffinityDiskDataset(DiskDataset):
 
         # file info and metadata
         meta = "_".join(filename.split(".")[0].split("_")[1:])
-        avg = np.around(np.average(x), decimals=4)
         img = format(x, len(data.shape))  # used for dynamic preview in Altair
         meta = {
             "filename": filename,
-            "id": y,
             "meta": meta,
-            "avg": avg,
             "image": img,
         }
         return x, y, aff, meta

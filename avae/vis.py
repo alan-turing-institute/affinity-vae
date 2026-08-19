@@ -538,7 +538,7 @@ def dyn_latentembed_plot(
     )
 
     # tooltip disla on-mouseover
-    tooltip = ["id", "meta", "mode", "avg", "image"]  # .append(opts)
+    tooltip = ["id", "meta", "mode", "image"]  # .append(opts)
 
     # main scatter plot
     scatter = (
@@ -1110,23 +1110,6 @@ def loss_plot(
     plt.savefig(f"plots/loss.{settings.VIS_FORMAT}", dpi=300)
     plt.close()
 
-    # only training loss
-    for i, loss in enumerate(train_loss):
-        s = "-"
-        plt.plot(
-            range(1, epochs + 1), loss, c=cols[i], linestyle=s, label=labs[i]
-        )
-
-    plt.yscale("log")
-    plt.ylabel("Loss", fontsize=16)
-    plt.xlabel("Epochs", fontsize=16)
-    plt.xticks(fontsize=16)
-    plt.yticks(fontsize=16)
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig(f"plots/loss_train.{settings.VIS_FORMAT}", dpi=300)
-    plt.close()
-
     # plotting only the total loss as it sometimes is a few order of magnitude higher than KLD and affinity losses
     plt.plot(
         range(1, epochs + 1),
@@ -1152,7 +1135,6 @@ def loss_plot(
     plt.tight_layout()
     plt.savefig(f"plots/loss_total.{settings.VIS_FORMAT}", dpi=300)
     plt.close()
-
 
 def recon_plot(
     img: torch.Tensor,

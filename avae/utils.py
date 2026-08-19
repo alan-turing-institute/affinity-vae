@@ -17,6 +17,18 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import make_pipeline
 
 
+def as_list(value: object) -> list:
+    if isinstance(value, torch.Tensor):
+        return value.detach().cpu().numpy().tolist()
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+    if isinstance(value, list):
+        return value
+    if isinstance(value, tuple):
+        return list(value)
+    return [value]
+
+
 def accuracy(
     x_train: npt.NDArray,
     y_train: npt.NDArray,
