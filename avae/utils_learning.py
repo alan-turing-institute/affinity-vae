@@ -1,232 +1,182 @@
 import logging
-import typing
-
-import lightning
 import numpy as np
 import pandas as pd
 import torch
-
-from avae.loss import AVAELoss
-from avae.vis import format
+import torch.distributed as dist
 
 
-def set_device(gpu: bool) -> torch.device:
-    """Set the torch device to use for training and inference.
+def format_meta_df(
+    mode: str,
+    filename_mode: list,
+    meta_mode: list,
+    x_mode: list,
+    xhat_mode: list,
+    z_mode: list,
+    logvar_mode: list,
+    pose: bool,
+    pose_mode: list | None,
+    y_mode: list | None = None,
+) -> pd.DataFrame | None:
+    """Build metadata DataFrame for a single mode."""
+    if len(z_mode) == 0:
+        return None
 
-    Parameters
-    ----------
-    gpu: bool
-        If True, the model will be trained on GPU.
+    n = len(z_mode)
+    base_images = list(x_mode)
+    if len(base_images) < n:
+        base_images = base_images + [""] * (n - len(base_images))
 
-    Returns
-    -------
-    device: torch.device
-
-    """
-    device = torch.device(
-        "cuda" if gpu and torch.cuda.is_available() else "cpu"
-    )
-    if gpu and device == "cpu":
-        logging.warning(
-            "\n\nWARNING: no GPU available, running on CPU instead.\n"
-        )
-    return device
-
-
-def dims_after_pooling(start: int, n_pools: int) -> int:
-    """Calculate the size of a layer after n pooling ops.
-
-    Parameters
-    ----------
-    start: int
-        The size of the layer before pooling.
-    n_pools: int
-        The number of pooling operations.
-
-    Returns
-    -------
-    int
-        The size of the layer after pooling.
-
-
-    """
-    return start // (2**n_pools)
-
-
-def pass_batch(
-    fabric: lightning.Fabric,
-    vae: torch.nn.Module,
-    batch: list,
-    b: int,
-    batches: int,
-    e: int = 1,
-    epochs: int = 1,
-    history: list = [],
-    loss: AVAELoss | None = None,
-    optimizer: typing.Any = None,
-    beta: list[float] | None = None,
-) -> tuple[
-    torch.Tensor,
-    torch.Tensor,
-    torch.Tensor,
-    torch.Tensor,
-    torch.Tensor,
-    torch.Tensor,
-    list,
-]:
-    """Passes a batch through the affinity VAE model epoch and computes the loss.
-
-    Parameters
-    ----------
-    device: torch.device
-        Device to use for training.
-    vae: torch.nn.Module
-        Affinity VAE model class.
-    batch: list
-        List of batches with data and labels.
-    b: int
-        Batch number.
-    batches: int
-        Total number of batches.
-    e: int
-        Epoch number.
-    epochs: int
-        Total number of epochs.
-    history: list
-        List of training losses.
-    loss: avae.loss.AVAELoss
-        Loss function class.
-    optimizer: torch.optim
-        Optimizer.
-    beta: float
-        Beta parameter for affinity-VAE.
-
-    Returns
-    -------
-    x: torch.Tensor
-        Input data.
-    x_hat: torch.Tensor
-        Reconstructed data.
-    lat_mu: torch.Tensor
-        Latent mean.
-    lat_logvar: torch.Tensor
-        Latent log variance.
-    lat: torch.Tensor
-        Latent representation.
-    lat_pose: torch.Tensor
-        Latent pose.
-    history: list
-        List of training losses.
-
-
-    """
-    if bool(history == []) ^ bool(loss is None):
-        raise RuntimeError(
-            "When validating, both 'loss' and 'history' parameters must be "
-            "present in 'pass_batch' function."
-        )
-    if bool(e is None) ^ bool(epochs is None):
-        raise RuntimeError(
-            "Function 'pass_batch' expects both 'e' and 'epoch' parameters."
-        )
-    if e is None and epochs is None:
-        e = 1
-        epochs = 1
-
-    # to device
-    x = batch[0]
-    x = x.to(fabric.device)
-    aff = batch[2]
-    aff = aff.to(fabric.device)
-
-    # forward
-    x = x.to(torch.float32)
-    x_hat, lat_mu, lat_logvar, lat, lat_pose = vae(x)
-    if loss is not None:
-        history_loss = loss(x, x_hat, lat_mu, lat_logvar, e, batch_aff=aff)
-
-        if beta is None:
-            raise RuntimeError(
-                "Please pass beta value to pass_batch function."
-            )
-
-        # record loss
-        for i in range(len(history[-1])):
-            history[-1][i] += history_loss[i].item()
-        logging.debug(
-            "Epoch: [%d/%d] | Batch: [%d/%d] | Loss: %f | Recon: %f | "
-            "KLdiv: %f | Affin: %f | Beta: %f"
-            % (e + 1, epochs, b + 1, batches, *history_loss, beta[e])
-        )
-
-    # backwards
-    if optimizer is not None:
-        fabric.backward(history_loss[0])
-        optimizer.step()
-        optimizer.zero_grad()
-
-    return x, x_hat, lat_mu, lat_logvar, lat, lat_pose, history
-
-
-def add_meta(
-    data_dim: int,
-    meta_df: pd.DataFrame,
-    batch_meta: dict,
-    x_hat: torch.Tensor,
-    latent_mu: torch.Tensor,
-    lat_pose: torch.Tensor,
-    latent_logvar: torch.Tensor,
-    mode: str = "trn",
-) -> pd.DataFrame:
-    """
-    Created meta data about data and training.
-
-    Parameters
-    ----------
-    data_dim: int
-        Dimensions of the data.
-    meta_df: pd.DataFrame
-        Dataframe containing meta data, to which new data is added.
-    batch_meta: dict
-        Meta data about the batch.
-    x_hat: torch.Tensor
-        Reconstructed data.
-    latent_mu: torch.Tensor
-        Latent mean.
-    lat_pose: torch.Tensor
-        Latent pose.
-    lat_logvar: torch.Tensor
-        Latent logvar.
-    mode: str
-        Data category on training (either 'trn', 'val' or 'test').
-
-    Returns
-    -------
-    meta_df: pd.DataFrame
-        Dataframe containing meta data.
-
-    """
-    batch_meta = {
-        k: v.to(device='cpu', non_blocking=True) if hasattr(v, 'to') else v
-        for k, v in batch_meta.items()
+    mode_meta = {
+        "filename": list(filename_mode),
+        "meta": list(meta_mode),
+        "image": [
+            str(base_images[i]) + str(xhat_mode[i]) for i in range(n)
+        ],
+        "mode": [mode] * n,
     }
 
-    meta = pd.DataFrame(batch_meta)
+    if y_mode is not None:
+        mode_meta["id"] = list(y_mode)
 
-    meta["mode"] = mode
-    meta["image"] += format(x_hat, data_dim)
-    for d in range(latent_mu.shape[-1]):
-        meta[f"lat{d}"] = np.array(latent_mu[:, d].cpu().detach().numpy())
-    for d in range(latent_logvar.shape[-1]):
-        lat_std = np.exp(0.5 * latent_logvar[:, d].cpu().detach().numpy())
-        meta[f"std-{d}"] = np.array(lat_std)
-    if lat_pose is not None:
-        for d in range(lat_pose.shape[-1]):
-            meta[f"pos{d}"] = np.array(lat_pose[:, d].cpu().detach().numpy())
-    meta_df = pd.concat(
-        [meta_df, meta], ignore_index=False
-    )  # ignore index doesn't overwrite
-    return meta_df
+    lat_arr = np.asarray(z_mode)
+    logvar_arr = np.asarray(logvar_mode)
+    for d in range(lat_arr.shape[-1]):
+        mode_meta[f"lat{d}"] = lat_arr[:, d]
+        mode_meta[f"logvar-{d}"] = logvar_arr[:, d]
+        mode_meta[f"std-{d}"] = np.exp(0.5 * logvar_arr[:, d])
+
+    if pose and pose_mode is not None and len(pose_mode) > 0:
+        pose_arr = np.asarray(pose_mode)
+        for d in range(pose_arr.shape[-1]):
+            mode_meta[f"pos{d}"] = pose_arr[:, d]
+
+    return pd.DataFrame(mode_meta)
+
+
+def build_meta_df(
+    pose: bool,
+    train: dict | None = None,
+    val: dict | None = None,
+    test: dict | None = None,
+    eval_data: dict | None = None,
+) -> pd.DataFrame:
+    """Build metadata DataFrame from optional per-mode buffers."""
+    local_meta_parts = []
+
+    if train is not None:
+        mode_meta_df = format_meta_df(
+            mode="trn",
+            filename_mode=train.get("filename", []),
+            meta_mode=train.get("meta", []),
+            x_mode=train.get("x", []),
+            xhat_mode=train.get("xhat", []),
+            z_mode=train.get("z", []),
+            logvar_mode=train.get("logvar", []),
+            pose=pose,
+            pose_mode=train.get("pose"),
+            y_mode=train.get("y", []),
+        )
+        if mode_meta_df is not None:
+            local_meta_parts.append(mode_meta_df)
+
+    if val is not None:
+        mode_meta_df = format_meta_df(
+            mode="val",
+            filename_mode=val.get("filename", []),
+            meta_mode=val.get("meta", []),
+            x_mode=val.get("x", []),
+            xhat_mode=val.get("xhat", []),
+            z_mode=val.get("z", []),
+            logvar_mode=val.get("logvar", []),
+            pose=pose,
+            pose_mode=val.get("pose"),
+            y_mode=val.get("y", []),
+        )
+        if mode_meta_df is not None:
+            local_meta_parts.append(mode_meta_df)
+
+    if test is not None:
+        mode_meta_df = format_meta_df(
+            mode="tst",
+            filename_mode=test.get("filename", []),
+            meta_mode=test.get("meta", []),
+            x_mode=test.get("x", []),
+            xhat_mode=test.get("xhat", []),
+            z_mode=test.get("z", []),
+            logvar_mode=test.get("logvar", []),
+            pose=pose,
+            pose_mode=test.get("pose"),
+            y_mode=test.get("y", []),
+        )
+        if mode_meta_df is not None:
+            local_meta_parts.append(mode_meta_df)
+
+    if eval_data is not None:
+        mode_meta_df = format_meta_df(
+            mode="evl",
+            filename_mode=eval_data.get("filename", []),
+            meta_mode=eval_data.get("meta", []),
+            x_mode=eval_data.get("x", []),
+            xhat_mode=eval_data.get("xhat", []),
+            z_mode=eval_data.get("z", []),
+            logvar_mode=eval_data.get("logvar", []),
+            pose=pose,
+            pose_mode=eval_data.get("pose"),
+            y_mode=eval_data.get("y"),
+        )
+        if mode_meta_df is not None:
+            local_meta_parts.append(mode_meta_df)
+
+    if local_meta_parts:
+        return pd.concat(local_meta_parts, ignore_index=False)
+
+    return pd.DataFrame()
+
+
+def combine_meta_df(
+    meta_df: pd.DataFrame, rank_zero: bool, world_size: int
+) -> pd.DataFrame:
+    """Combine per-rank metadata DataFrames into one DataFrame on rank zero."""
+    if not (dist.is_available() and dist.is_initialized() and world_size > 1):
+        return meta_df
+
+    gathered_meta = [None] * world_size if rank_zero else None
+    dist.gather_object(meta_df, gathered_meta, dst=0)
+
+    if not rank_zero:
+        return pd.DataFrame()
+
+    non_empty_meta = [
+        df for df in gathered_meta if isinstance(df, pd.DataFrame) and not df.empty
+    ]
+    if non_empty_meta:
+        return pd.concat(non_empty_meta, ignore_index=False)
+
+    return pd.DataFrame()
+
+
+def log_progress(message: str) -> None:
+    """Log a single console line that overwrites the previous one."""
+    logger = logging.getLogger()
+    stream_handlers = [
+        handler
+        for handler in logger.handlers
+        if isinstance(handler, logging.StreamHandler)
+        and not isinstance(handler, logging.FileHandler)
+    ]
+
+    if not stream_handlers:
+        logger.info(message)
+        return
+
+    original_terminators = [handler.terminator for handler in stream_handlers]
+    try:
+        for handler in stream_handlers:
+            handler.terminator = "\r"
+        logger.info(message)
+    finally:
+        for handler, terminator in zip(stream_handlers, original_terminators):
+            handler.terminator = terminator
 
 
 def configure_optimiser(

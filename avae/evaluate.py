@@ -9,7 +9,7 @@ import torch
 from . import settings, vis
 from .data import load_data
 from .utils import accuracy, latest_file
-from .utils_learning import add_meta
+from .utils_learning import build_meta_df, log_progress
 
 
 def evaluate(
@@ -113,13 +113,14 @@ def evaluate(
     meta_df = pd.read_pickle(meta)
 
     # create holders for latent spaces and labels
+    filename_test, meta_test, x_test_meta, xhat_test = [], [], [], []
     x_test, y_test, c_test = [], [], []
     p_test = None
 
     if pose_dims != 0:
         p_test = []
 
-    logging.debug("Batch: [0/%d]" % (len(tests)))
+    log_progress("Batch: [0/%d]" % (len(tests)))
 
     vae.eval()
     for batch_number, (t, label, aff, meta_data) in enumerate(tests):
@@ -141,19 +142,28 @@ def evaluate(
         if tlat_pose is not None:
             p_test.extend(tlat_pose.cpu().detach().numpy())
 
-        meta_df = add_meta(
-            data_dim,
-            meta_df,
-            meta_data,
-            t_hat,
-            t_mu,
-            tlat_pose,
-            tlat,
-            mode="evl",
-        )
+        filename_test.extend(meta_data.get("filename", []))
+        meta_test.extend(meta_data.get("meta", []))
+        x_test_meta.extend(meta_data.get("image", []))
+        xhat_test.extend(vis.format(t_hat, data_dim))
 
-        logging.debug("Batch: [%d/%d]" % (batch_number + 1, len(tests)))
-    logging.info("Batch: [%d/%d]" % (batch_number + 1, len(tests)))
+        log_progress("Batch: [%d/%d]" % (batch_number + 1, len(tests)))
+    logging.info("\nEvaluation batches complete: [%d/%d]" % (batch_number + 1, len(tests)))
+
+    eval_meta_df = build_meta_df(
+        pose=p_test is not None,
+        eval_data={
+            "filename": filename_test,
+            "meta": meta_test,
+            "x": x_test_meta,
+            "xhat": xhat_test,
+            "z": x_test,
+            "logvar": c_test,
+            "pose": p_test,
+        },
+    )
+
+    meta_df = pd.concat([meta_df, eval_meta_df], ignore_index=False)
 
     # ########################## VISUALISE ################################
     if classes is not None:
