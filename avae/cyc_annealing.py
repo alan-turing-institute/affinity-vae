@@ -3,7 +3,7 @@ import math
 import numpy as np
 
 
-def configure_annealing(
+def setup_annealing(
     epochs: int,
     value_max: float,
     value_min: float,

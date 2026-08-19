@@ -90,6 +90,10 @@ class AffinityConfig(BaseModel):
     gamma_ratio: float = Field(0.5, description="Gamma ratio")
     gaussian_blur: bool = Field(False, description=" Apply gaussian blur")
     gpu: bool = Field(True, description="Use GPU")
+    gpu_devices: str | None = Field(
+        None,
+        description="Comma-separated CUDA device indices to use (example: 0,1,3).",
+    )
     latent_dims: PositiveInt = Field(8, description="Latent space dimensions")
     learning: PositiveFloat = Field(0.001, description="Learning rate")
     limit: PositiveInt | None = Field(

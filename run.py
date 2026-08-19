@@ -298,11 +298,18 @@ from avae.train import train
 )
 @click.option(
     "--gpu",
-    "-g",
+    "-gpu",
     type=bool,
     default=None,
     is_flag=True,
     help="Use GPU for training.",
+)
+@click.option(
+    "--gpu_devices",
+    "-gdev",
+    type=str,
+    default=None,
+    help="Comma-separated CUDA device indices to use (example: 0,1,3). If set, uses these devices directly.",
 )
 @click.option(
     "--eval",
@@ -407,7 +414,7 @@ from avae.train import train
 )
 @click.option(
     "--vis_aff",
-    "-va",
+    "-vaf",
     type=bool,
     default=None,
     is_flag=True,
@@ -431,7 +438,7 @@ from avae.train import train
 )
 @click.option(
     "--vis_all",
-    "-va",
+    "-vall",
     type=bool,
     default=None,
     is_flag=True,
@@ -548,7 +555,7 @@ from avae.train import train
 )
 @click.option(
     "--rescale",
-    "-res",
+    "-rsc",
     type=int,
     default=None,
     is_flag=False,
@@ -564,7 +571,7 @@ from avae.train import train
 )
 @click.option(
     "--strategy",
-    "-st",
+    "-str",
     type=str,
     default=None,
     help="Define the strategy for distributed training. Options are: 'ddp', 'deepspeed' or 'fsdp",
@@ -633,6 +640,7 @@ def run(
     vis_all,
     vis_format,
     gpu,
+    gpu_devices,
     eval,
     dynamic,
     model,
@@ -693,7 +701,8 @@ def run(
         run_pipeline(data)
 
     except Exception as e:
-        logging.exception("An exception was thrown!", e)
+        logging.exception("An exception was thrown: %s", e)
+        raise
 
 
 def run_pipeline(data):
@@ -736,6 +745,7 @@ def run_pipeline(data):
             cyc_method_gamma=data["cyc_method_gamma"],
             recon_fn=data["loss_fn"],
             use_gpu=data["gpu"],
+            gpu_devices=data["gpu_devices"],
             model=data["model"],
             opt_method=data["opt_method"],
             gaussian_blur=data["gaussian_blur"],
