@@ -5,14 +5,13 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from .base import SpatialDims, dims_after_pooling, set_layer_dim
-from .utils_gpu import set_device
-
-
 from avae.base import AbstractAffinityVAE
 from avae.decoders.decoders import Decoder, DecoderA, DecoderB
 from avae.decoders.differentiable import GaussianSplatDecoder
 from avae.encoders.encoders import Encoder, EncoderA, EncoderB
+
+from .base import SpatialDims, dims_after_pooling, set_layer_dim
+from .utils_gpu import set_device
 
 
 def model_setup(

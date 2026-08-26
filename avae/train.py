@@ -13,9 +13,7 @@ from .data import load_data
 from .loss import AVAELoss
 from .models import model_setup
 from .utils import accuracy, as_list, latest_file
-from .utils_gpu import (
-    setup_gpus,
-)
+from .utils_gpu import setup_gpus
 from .utils_learning import (
     build_meta_df,
     combine_meta_df,
@@ -257,7 +255,6 @@ def train(
 
     logging.info(vae)
 
-
     # ################################# LOSS #################################
 
     loss = AVAELoss(
@@ -289,13 +286,12 @@ def train(
                 state = latest_file("states", ".pt")
                 state = os.path.join("states", state)
 
-        checkpoint = torch.load(state)
+        checkpoint = torch.load(state, weights_only=False)
         vae.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         e_start = checkpoint["epoch"]
         t_history = checkpoint["t_loss_history"]
         v_history = checkpoint["v_loss_history"]
-
 
     # ########################## TRAINING LOOP ################################
     for epoch in range(e_start, epochs):
@@ -441,7 +437,9 @@ def train(
                     if pose:
                         p_test.extend(tlat_pose.cpu().detach().numpy())
 
-                    filename_test.extend(as_list(meta_data.get("filename", [])))
+                    filename_test.extend(
+                        as_list(meta_data.get("filename", []))
+                    )
                     meta_test.extend(as_list(meta_data.get("meta", [])))
                     x_test.extend(as_list(meta_data.get("image", [])))
                     xhat_test.extend(vis.format(t_hat, data_dim))
@@ -450,18 +448,17 @@ def train(
                         "Epoch: [%d/%d] | Batch: [%d/%d]"
                         % (epoch + 1, epochs, batch_number + 1, len(tests))
                     )
-                logging.info("Evaluation : Epoch: [%d/%d]" % (epoch + 1, epochs))
+                logging.info(
+                    "Evaluation : Epoch: [%d/%d]" % (epoch + 1, epochs)
+                )
             logging.info("\n")  # end of training round
 
         needs_meta_df = (
-            (
-                rank_zero
-                and settings.VIS_EMB
-                and settings.VIS_DYN
-                and (epoch + 1) % settings.FREQ_EMB == 0
-            )
-            or ((epoch + 1) % settings.FREQ_STA == 0)
-        )
+            rank_zero
+            and settings.VIS_EMB
+            and settings.VIS_DYN
+            and (epoch + 1) % settings.FREQ_EMB == 0
+        ) or ((epoch + 1) % settings.FREQ_STA == 0)
         if needs_meta_df:
             meta_df = build_meta_df(
                 pose=pose,
@@ -512,7 +509,11 @@ def train(
             classes_list = []
 
         # visualise accuracy: confusion and F1 scores
-        if rank_zero and settings.VIS_ACC and (epoch + 1) % settings.FREQ_ACC == 0:
+        if (
+            rank_zero
+            and settings.VIS_ACC
+            and (epoch + 1) % settings.FREQ_ACC == 0
+        ):
             train_acc, val_acc, _, ypred_train, ypred_val = accuracy(
                 z_train, y_train, z_val, y_val, classifier=classifier
             )
@@ -562,7 +563,11 @@ def train(
             )
 
         # visualise reconstructions - last batch
-        if rank_zero and settings.VIS_REC and (epoch + 1) % settings.FREQ_REC == 0:
+        if (
+            rank_zero
+            and settings.VIS_REC
+            and (epoch + 1) % settings.FREQ_REC == 0
+        ):
             vis.recon_plot(
                 x,
                 x_hat,
@@ -583,7 +588,11 @@ def train(
             )
 
         # visualise mean and logvar similarity matrix
-        if rank_zero and settings.VIS_SIM and (epoch + 1) % settings.FREQ_SIM == 0:
+        if (
+            rank_zero
+            and settings.VIS_SIM
+            and (epoch + 1) % settings.FREQ_SIM == 0
+        ):
             vis.latent_space_similarity_plot(
                 z_train,
                 np.array(y_train),
@@ -600,7 +609,11 @@ def train(
             )
 
         # visualise embeddings
-        if rank_zero and settings.VIS_EMB and (epoch + 1) % settings.FREQ_EMB == 0:
+        if (
+            rank_zero
+            and settings.VIS_EMB
+            and (epoch + 1) % settings.FREQ_EMB == 0
+        ):
             if len(tests) != 0:
                 xs = np.r_[z_train, z_val, z_test]
                 ys = np.r_[
@@ -630,12 +643,22 @@ def train(
 
             if settings.VIS_DYN:
                 # merge img and rec into one image for display in altair
-                combined_meta_df["image"] = combined_meta_df["image"].apply(vis.merge)
-                vis.dyn_latentembed_plot(combined_meta_df, epoch, embedding="umap")
-                vis.dyn_latentembed_plot(combined_meta_df, epoch, embedding="tsne")
+                combined_meta_df["image"] = combined_meta_df["image"].apply(
+                    vis.merge
+                )
+                vis.dyn_latentembed_plot(
+                    combined_meta_df, epoch, embedding="umap"
+                )
+                vis.dyn_latentembed_plot(
+                    combined_meta_df, epoch, embedding="tsne"
+                )
 
         # visualise latent disentanglement
-        if rank_zero and settings.VIS_DIS and (epoch + 1) % settings.FREQ_DIS == 0:
+        if (
+            rank_zero
+            and settings.VIS_DIS
+            and (epoch + 1) % settings.FREQ_DIS == 0
+        ):
             if not pose:
                 poses = None
             else:
@@ -649,7 +672,12 @@ def train(
             )
 
         # visualise pose disentanglement
-        if rank_zero and pose and settings.VIS_POS and (epoch + 1) % settings.FREQ_POS == 0:
+        if (
+            rank_zero
+            and pose
+            and settings.VIS_POS
+            and (epoch + 1) % settings.FREQ_POS == 0
+        ):
             vis.pose_disentanglement_plot(
                 dshape,
                 z_train,
@@ -670,7 +698,11 @@ def train(
                 )
 
         # visualise interpolations
-        if rank_zero and settings.VIS_INT and (epoch + 1) % settings.FREQ_INT == 0:
+        if (
+            rank_zero
+            and settings.VIS_INT
+            and (epoch + 1) % settings.FREQ_INT == 0
+        ):
             if len(tests) != 0:
                 xs = np.r_[z_train, z_val, z_test]
                 ys = np.r_[y_train, y_val, np.ones(len(z_test))]

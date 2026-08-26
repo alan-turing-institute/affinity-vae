@@ -134,7 +134,7 @@ class GenerativeAffinityVAEWidget(QtWidgets.QWidget):
         self._pose_range_max = pose_space.max(axis=0)
 
         if self.manifold == "umap":
-            self._mapper = umap.UMAP(random_state=42)
+            self._mapper = umap.UMAP(random_state=42, n_jobs=1)
             self._embedding = self._mapper.fit_transform(latent_space)
         elif self.manifold == "load":
             self._embedding = self._meta_df[

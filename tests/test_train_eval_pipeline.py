@@ -1,6 +1,5 @@
 import os
 import random
-import shutil
 import tempfile
 import unittest
 
@@ -74,11 +73,11 @@ class TrainEvalTest(unittest.TestCase):
         ) = helper_train_eval(self.data)
 
         self.assertEqual(n_dir_train, 4)
-        self.assertEqual(n_plots_train, 37)
+        self.assertEqual(n_plots_train, 36)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
 
-        self.assertEqual(n_plots_eval, 60)
+        self.assertEqual(n_plots_eval, 59)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 3)
 
@@ -97,10 +96,10 @@ class TrainEvalTest(unittest.TestCase):
         ) = helper_train_eval(self.data)
 
         self.assertEqual(n_dir_train, 4)
-        self.assertEqual(n_plots_train, 37)
+        self.assertEqual(n_plots_train, 36)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
-        self.assertEqual(n_plots_eval, 60)
+        self.assertEqual(n_plots_eval, 59)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 3)
 
@@ -125,10 +124,10 @@ class TrainEvalTest(unittest.TestCase):
         ) = helper_train_eval(self.data)
 
         self.assertEqual(n_dir_train, 4)
-        self.assertEqual(n_plots_train, 35)
+        self.assertEqual(n_plots_train, 34)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
-        self.assertEqual(n_plots_eval, 57)
+        self.assertEqual(n_plots_eval, 56)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 3)
 
@@ -153,10 +152,10 @@ class TrainEvalTest(unittest.TestCase):
         ) = helper_train_eval(self.data)
 
         self.assertEqual(n_dir_train, 4)
-        self.assertEqual(n_plots_train, 35)
+        self.assertEqual(n_plots_train, 34)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
-        self.assertEqual(n_plots_eval, 57)
+        self.assertEqual(n_plots_eval, 56)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 3)
 
@@ -175,11 +174,11 @@ class TrainEvalTest(unittest.TestCase):
         ) = helper_train_eval(self.data)
 
         self.assertEqual(n_dir_train, 4)
-        self.assertEqual(n_plots_train, 32)
+        self.assertEqual(n_plots_train, 31)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
 
-        self.assertEqual(n_plots_eval, 52)
+        self.assertEqual(n_plots_eval, 51)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 3)
 
@@ -198,10 +197,10 @@ class TrainEvalTest(unittest.TestCase):
         ) = helper_train_eval(self.data)
 
         self.assertEqual(n_dir_train, 4)
-        self.assertEqual(n_plots_train, 35)
+        self.assertEqual(n_plots_train, 34)
         self.assertEqual(n_latent_train, 2)
         self.assertEqual(n_states_train, 2)
-        self.assertEqual(n_plots_eval, 56)
+        self.assertEqual(n_plots_eval, 55)
         self.assertEqual(n_latent_eval, 4)
         self.assertEqual(n_states_eval, 3)
 
@@ -209,50 +208,50 @@ class TrainEvalTest(unittest.TestCase):
 def helper_train_eval(
     data, eval=True, noplot=False, nolat=False, nostate=False
 ):
-    temp_dir = tempfile.TemporaryDirectory(prefix='avae-')
-    os.chdir(temp_dir.name)
+    original_cwd = os.getcwd()
+    with tempfile.TemporaryDirectory(prefix='avae-') as temp_dir:
+        os.chdir(temp_dir)
+        try:
+            if eval:
+                eval = [not eval, eval]
+            else:
+                eval = [eval]
+            ret = []
 
-    if eval:
-        eval = [not eval, eval]
-    else:
-        eval = [eval]
-    ret = []
+            # run training
+            for e in eval:
+                data["eval"] = e
+                if data["eval"]:
+                    data["datapath"] = os.path.join(data["datapath"], "test")
 
-    # run training
-    for e in eval:
-        data["eval"] = e
-        if data["eval"]:
-            data["datapath"] = os.path.join(data["datapath"], "test")
+                run_pipeline(data)
 
-        run_pipeline(data)
+                n_plots, n_latent, n_states = (0, 0, 0)
+                n_dir = len(next(os.walk(temp_dir))[1])
+                if os.path.exists(os.path.join(temp_dir, "plots")):
+                    n_plots = (
+                        len(os.listdir(os.path.join(temp_dir, "plots")))
+                        if not noplot
+                        else None
+                    )
+                if os.path.exists(os.path.join(temp_dir, "latents")):
+                    n_latent = (
+                        len(os.listdir(os.path.join(temp_dir, "latents")))
+                        if not nolat
+                        else None
+                    )
+                if os.path.exists(os.path.join(temp_dir, "states")):
+                    n_states = (
+                        len(os.listdir(os.path.join(temp_dir, "states")))
+                        if not nostate
+                        else None
+                    )
 
-        n_plots, n_latent, n_states = (0, 0, 0)
-        n_dir = len(next(os.walk(temp_dir.name))[1])
-        if os.path.exists(os.path.join(temp_dir.name, "plots")):
-            n_plots = (
-                len(os.listdir(os.path.join(temp_dir.name, "plots")))
-                if not noplot
-                else None
-            )
-        if os.path.exists(os.path.join(temp_dir.name, "latents")):
-            n_latent = (
-                len(os.listdir(os.path.join(temp_dir.name, "latents")))
-                if not nolat
-                else None
-            )
-        if os.path.exists(os.path.join(temp_dir.name, "states")):
-            n_states = (
-                len(os.listdir(os.path.join(temp_dir.name, "states")))
-                if not nostate
-                else None
-            )
-
-        ret.extend([n_plots, n_latent, n_states])
-    ret.insert(0, n_dir)
-
-    shutil.rmtree(temp_dir.name)
-
-    return tuple(ret)
+                ret.extend([n_plots, n_latent, n_states])
+            ret.insert(0, n_dir)
+            return tuple(ret)
+        finally:
+            os.chdir(original_cwd)
 
 
 if __name__ == "__main__":

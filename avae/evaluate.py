@@ -8,7 +8,7 @@ import torch
 
 from . import settings, vis
 from .data import load_data
-from .utils import accuracy, latest_file
+from .utils import accuracy, as_list, latest_file
 from .utils_learning import build_meta_df, log_progress
 
 
@@ -98,7 +98,7 @@ def evaluate(
     pose_dims = int(fname[-1])
 
     logging.info("Loading model from: {}".format(state))
-    checkpoint = torch.load(state)
+    checkpoint = torch.load(state, weights_only=False)
     vae = checkpoint["model_class_object"]
     vae.load_state_dict(checkpoint["model_state_dict"])
     vae = fabric.setup(vae)
@@ -113,8 +113,8 @@ def evaluate(
     meta_df = pd.read_pickle(meta)
 
     # create holders for latent spaces and labels
-    filename_test, meta_test, x_test_meta, xhat_test = [], [], [], []
-    x_test, y_test, c_test = [], [], []
+    filename_test, meta_test, x_test, xhat_test = [], [], [], []
+    z_test, y_test, c_test = [], [], []
     p_test = None
 
     if pose_dims != 0:
@@ -132,7 +132,7 @@ def evaluate(
         # forward
         t_hat, t_mu, t_logvar, tlat, tlat_pose = vae(t)
 
-        x_test.extend(t_mu.cpu().detach().numpy())  # store latents
+        z_test.extend(t_mu.cpu().detach().numpy())  # store latents
         c_test.extend(t_logvar.cpu().detach().numpy())
         # if labels are present save them otherwise save test
         try:
@@ -142,22 +142,25 @@ def evaluate(
         if tlat_pose is not None:
             p_test.extend(tlat_pose.cpu().detach().numpy())
 
-        filename_test.extend(meta_data.get("filename", []))
-        meta_test.extend(meta_data.get("meta", []))
-        x_test_meta.extend(meta_data.get("image", []))
+        filename_test.extend(as_list(meta_data.get("filename", [])))
+        meta_test.extend(as_list(meta_data.get("meta", [])))
+        x_test.extend(as_list(meta_data.get("image", [])))
         xhat_test.extend(vis.format(t_hat, data_dim))
 
         log_progress("Batch: [%d/%d]" % (batch_number + 1, len(tests)))
-    logging.info("\nEvaluation batches complete: [%d/%d]" % (batch_number + 1, len(tests)))
+    logging.info(
+        "\nEvaluation batches complete: [%d/%d]"
+        % (batch_number + 1, len(tests))
+    )
 
     eval_meta_df = build_meta_df(
         pose=p_test is not None,
         eval_data={
             "filename": filename_test,
             "meta": meta_test,
-            "x": x_test_meta,
+            "x": x_test,
             "xhat": xhat_test,
-            "z": x_test,
+            "z": z_test,
             "logvar": c_test,
             "pose": p_test,
         },
@@ -178,7 +181,7 @@ def evaluate(
     if settings.VIS_DIS:
         vis.latent_disentamglement_plot(
             dshape,
-            x_test,
+            z_test,
             vae,
             device,
             poses=p_test,
@@ -189,7 +192,7 @@ def evaluate(
     if pose_dims != 0 and settings.VIS_POS:
         vis.pose_disentanglement_plot(
             dshape,
-            x_test,
+            z_test,
             p_test,
             vae,
             device,
@@ -199,7 +202,7 @@ def evaluate(
     if pose_dims != 0 and settings.VIS_POSE_CLASS:
         vis.pose_class_disentanglement_plot(
             dshape,
-            x_test,
+            z_test,
             y_test,
             settings.VIS_POSE_CLASS,
             p_test,
@@ -211,8 +214,8 @@ def evaluate(
     if settings.VIS_INT:
         vis.interpolations_plot(
             dshape,
-            x_test,
-            np.ones(len(x_test)),
+            z_test,
+            np.ones(len(z_test)),
             vae,
             device,
             poses=p_test,
@@ -222,15 +225,15 @@ def evaluate(
     # visualise embeddings
     if settings.VIS_EMB:
         vis.latent_embed_plot_umap(
-            x_test, np.array(y_test), classes_list, "_eval"
+            z_test, np.array(y_test), classes_list, "_eval"
         )
         vis.latent_embed_plot_tsne(
-            x_test, np.array(y_test), classes_list, "_eval"
+            z_test, np.array(y_test), classes_list, "_eval"
         )
 
     if settings.VIS_SIM:
         vis.latent_space_similarity_plot(
-            x_test, np.array(y_test), mode="_eval", classes_order=classes_list
+            z_test, np.array(y_test), mode="_eval", classes_order=classes_list
         )
 
     # ############################# Predict #############################
@@ -249,13 +252,13 @@ def evaluate(
     # visualise embeddings
     if settings.VIS_EMB:
         vis.latent_embed_plot_umap(
-            np.concatenate([x_test, latents_training]),
+            np.concatenate([z_test, latents_training]),
             np.concatenate([np.array(y_test), np.array(latents_training_id)]),
             classes_list,
             "_train_eval_comparison",
         )
         vis.latent_embed_plot_tsne(
-            np.concatenate([x_test, latents_training]),
+            np.concatenate([z_test, latents_training]),
             np.concatenate([np.array(y_test), np.array(latents_training_id)]),
             classes_list,
             "_train_eval_comparison",
@@ -265,7 +268,7 @@ def evaluate(
     (train_acc, val_acc, val_acc_selected, ypred_train, ypred_val,) = accuracy(
         latents_training,
         np.array(latents_training_id),
-        x_test,
+        z_test,
         np.array(y_test),
         classifier=classifier,
     )

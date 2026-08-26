@@ -3,7 +3,6 @@ import os
 import tempfile
 import unittest
 
-import avae.settings as settings
 import configs
 from avae.config import AffinityConfig, load_config_params, write_config_file
 from tests import testdata_mrc, testdata_npy
@@ -111,12 +110,12 @@ class ConfigTest(unittest.TestCase):
         )
         os.chdir(self.temp_dir.name)
 
-        write_config_file(settings.date_time_run, data)
+        write_config_file(data)
 
         files = glob.glob(
             self.temp_dir.name
             + "/configs/*"
-            + settings.date_time_run
+            + data["date_time_run"]
             + "*.yaml"
         )
 

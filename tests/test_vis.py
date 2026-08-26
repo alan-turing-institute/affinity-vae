@@ -68,7 +68,7 @@ class VisPipelineTest(unittest.TestCase):
             self.data, eval=False, nolat=True, nostate=True
         )
 
-        self.assertEqual(n_plots, 3)  # loss, total loss, train loss
+        self.assertEqual(n_plots, 2)  # loss and total loss
 
     def test_recon(self):
         settings.VIS_REC = True

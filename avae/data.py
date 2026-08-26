@@ -177,7 +177,7 @@ def load_data(
 
         trains = fabric.setup_dataloaders(trains)
         vals = fabric.setup_dataloaders(vals)
-        
+
         # ################# Visualising class distribution ###################
 
         # getting labels from dataloaders
@@ -335,7 +335,15 @@ class AffinityDiskDataset(DiskDataset):
 
         # file info and metadata
         meta = "_".join(filename.split(".")[0].split("_")[1:])
-        img = format(x, len(data.shape))  # used for dynamic preview in Altair
+        formatted_img = format(
+            x, len(data.shape)
+        )  # used for dynamic preview in Altair
+        if isinstance(formatted_img, list):
+            img = formatted_img[0] if formatted_img else ""
+        elif isinstance(formatted_img, str):
+            img = formatted_img
+        else:
+            img = ""
         meta = {
             "filename": filename,
             "meta": meta,

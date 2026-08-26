@@ -92,18 +92,17 @@ def accuracy(
 
         parameters = {
             "hidden_layer_sizes": [
-                (250, 150, 30),
-                (100, 50, 15),
-                (50, 20, 10),
+                (100, 50),
+                (50, 20),
                 (20, 10, 5),
-                (200,),
+                (100,),
                 (50,),
             ],
         }
         method = MLPClassifier(
-            max_iter=500,
+            max_iter=5000,
             activation="relu",
-            solver="adam",
+            solver="lbfgs",
             random_state=1,
             alpha=1,
         )
@@ -361,6 +360,10 @@ def latent_space_similarity_mat(
             cosine_sims = cosine_sim_matrix[class_i_indices][
                 :, class_j_indices
             ]
+            if cosine_sims.size == 0:
+                cosine_sim_mat[i, j] = 0.0
+                cosine_sim_mat[j, i] = 0.0
+                continue
             if plot_mode == "mean":
                 cosine_sim_mat[i, j] = np.mean(cosine_sims)
                 cosine_sim_mat[j, i] = cosine_sim_mat[

@@ -16,7 +16,7 @@ class DataTest(unittest.TestCase):
         self._orig_dir = os.getcwd()
         self.test_data = os.path.dirname(testdata_mrc.__file__)
         self.test_dir = tempfile.mkdtemp(prefix="avae_")
-        self.fabric = lt.Fabric()
+        self.fabric = lt.Fabric(accelerator="cpu", devices=1)
         self.fabric.launch()
 
         # Change to test directory

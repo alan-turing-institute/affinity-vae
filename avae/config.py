@@ -1,6 +1,7 @@
 import logging
 import os
 import pathlib
+from datetime import datetime
 
 import yaml
 from pydantic import (
@@ -18,7 +19,7 @@ import avae.settings as settings
 
 # Model configuration
 class AffinityConfig(BaseModel):
-    affinity: FilePath = Field(None, description="Path to affinity file")
+    affinity: FilePath | None = Field(None, description="Path to affinity file")
     batch: PositiveInt = Field(128, description="Batch size")
     beta: float = Field(1, description="Beta value")
     beta_cycle: PositiveInt = Field(4, description="Beta cycle")
@@ -26,7 +27,7 @@ class AffinityConfig(BaseModel):
     beta_min: float = Field(0, description="Minimum betvalue")
     beta_ratio: PositiveFloat = Field(0, description="Beta value")
     channels: PositiveInt = Field(64, description="First layer channels")
-    classes: FilePath = Field(None, description="Path to classes file")
+    classes: FilePath | None = Field(None, description="Path to classes file")
     classifier: str = Field(
         "NN",
         pattern='^(KNN|NN|LR)$',
@@ -36,6 +37,10 @@ class AffinityConfig(BaseModel):
     config_file: FilePath | None = Field(
         None, description="Path to config file"
     )
+    date_time_run: str = Field(
+        default_factory=lambda: datetime.now().strftime("%H_%M_%d_%m_%Y"),
+        description="Timestamp identifying this run, used in output filenames.",
+    )
     cyc_method_beta: str = Field(
         'flat',
         pattern='^(cycle_sigmoid|flat|cycle_linear|cycle_cosine|ramp)$',
@@ -44,7 +49,7 @@ class AffinityConfig(BaseModel):
         'flat',
         pattern='^(cycle_sigmoid|flat|cycle_linear|cycle_cosine|ramp)$',
     )
-    datapath: DirectoryPath = Field(None, description="Path to data directory")
+    datapath: DirectoryPath | None = Field(None, description="Path to data directory")
     datatype: str = Field('mrc', pattern='^npy|mrc$', description="Data type")
     debug: bool = Field(False, description="Debug mode")
     depth: PositiveInt = Field(3, description="Number of layers")
@@ -303,14 +308,16 @@ def load_config_params(
     return data.model_dump()
 
 
-def write_config_file(time_stamp_name, data) -> None:
+def write_config_file(data) -> None:
     # record final configuration in logger and save to yaml file
     for key, val in data.items():
         logging.info("Parameter " + key + " set to value: " + str(data[key]))
 
     if not os.path.exists("configs"):
         os.mkdir("configs")
-    file = open("configs/avae_final_config" + time_stamp_name + ".yaml", "w")
+    file = open(
+        "configs/avae_final_config" + data["date_time_run"] + ".yaml", "w"
+    )
     yaml.dump(data, file)
     file.close()
 

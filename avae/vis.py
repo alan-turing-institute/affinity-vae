@@ -3,6 +3,7 @@ import logging
 import os.path
 import random
 import typing
+import warnings
 
 import altair
 import matplotlib.gridspec as gridspec
@@ -73,7 +74,7 @@ def _decoder(i: str) -> Image:
     return Image.open(BytesIO(base64.b64decode(i)))
 
 
-def format(im: Image, data_dim: int) -> str | list[str] | None:
+def format(im: Image, data_dim: int) -> list[str]:
     """Format PIL Image as Pandas compatible Altair image display.
 
     Parameters
@@ -85,10 +86,10 @@ def format(im: Image, data_dim: int) -> str | list[str] | None:
 
     Returns
     -------
-    list
-        Formatted images compatible Altair image display is batch is true, as we are adding a reconstruction to an input that already exist.
-    str
-        Formatted image compatible Altair image display if batch is not true.
+    list[str]
+        Formatted images compatible with Altair image display. Batch input
+        returns one encoded item per sample, while single-sample input returns
+        a one-element list.
     """
     if len(im.shape) == 5 and data_dim == 3:
         batch = True
@@ -113,7 +114,7 @@ def format(im: Image, data_dim: int) -> str | list[str] | None:
             "\n\nWARNING: Wrong data format, please pass either a single "
             "unsqueezed tensor or a batch to image formatter. Exiting.\n",
         )
-        return None
+        return []
     im *= 255
     im = im.astype(np.uint8)
     if batch:
@@ -121,7 +122,7 @@ def format(im: Image, data_dim: int) -> str | list[str] | None:
         # exists in the DF, '&' is a separator.
         return ["&" + _encoder(Image.fromarray(i)) for i in im]
     else:
-        return _encoder(Image.fromarray(im))
+        return [_encoder(Image.fromarray(im))]
 
 
 def merge(im: str) -> str | None:
@@ -380,7 +381,7 @@ def latent_embed_plot_umap(
         )
 
     if xs.shape[-1] > 2:
-        reducer = umap.UMAP(random_state=rs)
+        reducer = umap.UMAP(random_state=rs, n_jobs=1)
         embedding = reducer.fit_transform(xs)
     elif xs.shape[-1] == 2 or xs.shape[-1] == 1:
         embedding = xs
@@ -490,7 +491,7 @@ def dyn_latentembed_plot(
     latentspace = df[[col for col in df if col.startswith("lat")]].to_numpy()
     if embedding == "umap":
         lat_emb = np.array(
-            umap.UMAP(random_state=42).fit_transform(latentspace)
+            umap.UMAP(random_state=42, n_jobs=1).fit_transform(latentspace)
         )
         titlex = "UMAP-1"
         titley = "UMAP-2"
@@ -508,21 +509,34 @@ def dyn_latentembed_plot(
     # add no std to radio select options - change value here for marker size!
     if "std-off" not in df.columns:
         df.insert(loc=0, column="std-off", value=np.zeros(len(lat_emb)) + 0.5)
+    # add certainty averaged across all latent dimensions as an extra option
+    std_dim_cols = [
+        col
+        for col in df.columns
+        if col.startswith("std-") and col not in ("std-off", "std-avg")
+    ]
+    if std_dim_cols and "std-avg" not in df.columns:
+        df["std-avg"] = df[std_dim_cols].mean(axis=1)
     opts = [col for col in df.columns if col.startswith("std")]
 
     # create radio buttons and bind to a folded column select
     bind_checkbox = altair.binding_radio(
         options=opts,
         labels=[
-            str(int(i.split("-")[-1]) + 1)
-            if "off" not in i
-            else i.split("-")[-1]
+            "off"
+            if i == "std-off"
+            else "avg"
+            if i == "std-avg"
+            else str(int(i.split("-")[-1]) + 1)
             for i in opts
         ],
         name="Certainty of prediction per dimension:",
     )
     column_select = altair.selection_point(
-        fields=["column"], bind=bind_checkbox, name="certainty"
+        fields=["column"],
+        bind=bind_checkbox,
+        value=[{"column": "std-off"}],
+        name="certainty",
     )
 
     # mode, class and in-chart selections (also work with shft+click for multi)
@@ -608,12 +622,19 @@ def dyn_latentembed_plot(
     )
 
     # organise charts in window and configure fonts
-    chart = (
-        (scatter | altair.vconcat(legend_class, legend_mode))
-        .configure_axis(labelFontSize=20, titleFontSize=20)
-        .configure_legend(labelFontSize=20, titleFontSize=20)
-        .configure_title(fontSize=20)
-    )
+    # class/mode selections are shared across the scatter and legend views;
+    # Altair merges the duplicates and warns benignly, so silence that message.
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="Automatically deduplicated selection parameter.*",
+        )
+        chart = (
+            (scatter | altair.vconcat(legend_class, legend_mode))
+            .configure_axis(labelFontSize=20, titleFontSize=20)
+            .configure_legend(labelFontSize=20, titleFontSize=20)
+            .configure_title(fontSize=20)
+        )
 
     # save charts and latent embedding
     if not os.path.exists("latents"):
@@ -947,10 +968,18 @@ def f1_plot(
         ypred_val = np.array(ypred_val)[index].tolist()
 
     train_f1_score = f1_score(
-        y_train, ypred_train, average=None, labels=classes_list
+        y_train,
+        ypred_train,
+        average=None,
+        labels=classes_list,
+        zero_division=0,
     ).tolist()
     valid_f1_score = f1_score(
-        y_val, ypred_val, average=None, labels=classes_list
+        y_val,
+        ypred_val,
+        average=None,
+        labels=classes_list,
+        zero_division=0,
     ).tolist()
 
     if mode == "_eval":
@@ -1135,6 +1164,7 @@ def loss_plot(
     plt.tight_layout()
     plt.savefig(f"plots/loss_total.{settings.VIS_FORMAT}", dpi=300)
     plt.close()
+
 
 def recon_plot(
     img: torch.Tensor,
@@ -1767,8 +1797,8 @@ def interpolations_plot(
     # Generate a gird of latent vectors interpolated between reps of four ids
 
     grid_size = 6
-    alpha_values = torch.linspace(0, 1, grid_size)
-    beta_values = torch.linspace(0, 1, grid_size)
+    alpha_values = np.linspace(0.0, 1.0, grid_size, dtype=np.float32)
+    beta_values = np.linspace(0.0, 1.0, grid_size, dtype=np.float32)
     decoded_grid = []
     for i, h in enumerate(alpha_values):
         for j, v in enumerate(beta_values):
@@ -1780,6 +1810,9 @@ def interpolations_plot(
                 + (1 - h) * v * class_rep_lats[2]
                 + h * v * class_rep_lats[3]
             )
+            interpolated_z_t = torch.from_numpy(
+                np.asarray(interpolated_z, dtype=np.float32)
+            ).view(-1, latent_dim)
 
             if poses is not None:
                 interpolated_pose = (
@@ -1788,18 +1821,18 @@ def interpolations_plot(
                     + (1 - h) * v * class_reps_poses[2]
                     + h * v * class_reps_poses[3]
                 )
+                interpolated_pose_t = torch.from_numpy(
+                    np.asarray(interpolated_pose, dtype=np.float32)
+                ).view(-1, poses_dim)
             with torch.no_grad():
                 if poses is not None:
                     decoded_images = vae.decoder(
-                        interpolated_z.view(-1, latent_dim).to(device=device),
-                        (
-                            torch.zeros(1, poses[0].shape[0])
-                            + interpolated_pose
-                        ).to(device=device),
+                        interpolated_z_t.to(device=device),
+                        interpolated_pose_t.to(device=device),
                     )
                 else:
                     decoded_images = vae.decoder(
-                        interpolated_z.view(-1, latent_dim).to(device=device),
+                        interpolated_z_t.to(device=device),
                         None,
                     )
 

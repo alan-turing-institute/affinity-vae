@@ -1,8 +1,12 @@
 import logging
+
 import numpy as np
 import pandas as pd
 import torch
 import torch.distributed as dist
+
+from .base import dims_after_pooling
+from .utils_gpu import set_device
 
 
 def format_meta_df(
@@ -29,9 +33,7 @@ def format_meta_df(
     mode_meta = {
         "filename": list(filename_mode),
         "meta": list(meta_mode),
-        "image": [
-            str(base_images[i]) + str(xhat_mode[i]) for i in range(n)
-        ],
+        "image": [str(base_images[i]) + str(xhat_mode[i]) for i in range(n)],
         "mode": [mode] * n,
     }
 
@@ -146,8 +148,13 @@ def combine_meta_df(
     if not rank_zero:
         return pd.DataFrame()
 
+    if gathered_meta is None:
+        return pd.DataFrame()
+
     non_empty_meta = [
-        df for df in gathered_meta if isinstance(df, pd.DataFrame) and not df.empty
+        df
+        for df in gathered_meta
+        if isinstance(df, pd.DataFrame) and not df.empty
     ]
     if non_empty_meta:
         return pd.concat(non_empty_meta, ignore_index=False)
