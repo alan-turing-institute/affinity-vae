@@ -638,6 +638,7 @@ def confidence_plot(x, y, s, suffix=None):
     if len(np.unique(y)) % 2 != 0:
         rows += 1
     fig, ax = plt.subplots(len(np.unique(y)), sharex=True, sharey=True)
+    ax = np.atleast_1d(ax)   
     for c, cl in enumerate(np.unique(y)):
         mu_cl = np.take(x, np.where(np.array(y) == cl)[0], axis=0)
         var_cl = np.take(s, np.where(np.array(y) == cl)[0], axis=0)
@@ -667,6 +668,7 @@ def confidence_plot(x, y, s, suffix=None):
     leg = fig.legend(
         handles, labels, bbox_to_anchor=(1.06, 0.9)
     )  # , loc="upper left")
+    plt.tight_layout()   
     fig.savefig(name, bbox_extra_artists=(leg,), bbox_inches="tight")
     plt.close()
 
@@ -713,6 +715,10 @@ def accuracy_plot(
     else:
         classes_list = np.unique(np.concatenate((y_train, ypred_train)))
 
+    #to avoid figure being too small with too little classses
+    fig_size  = max(6, int(len(classes_list)) / 2)
+    font_size = max(8, int(len(classes_list) / 3) + 3)
+
     # Compute confusion matrix
     cm = confusion_matrix(y_train, ypred_train, labels=classes_list)
 
@@ -736,10 +742,10 @@ def accuracy_plot(
     )
 
     with plt.rc_context(
-        {"font.weight": "bold", "font.size": int(len(classes_list) / 3) + 3}
+        {"font.weight": "bold", "font.size": font_size}
     ):
         fig, ax = plt.subplots(
-            figsize=(int(len(classes_list)) / 2, int(len(classes_list)) / 2)
+            figsize=(fig_size, fig_size)
         )
 
         disp.plot(cmap=plt.cm.Blues, ax=ax, xticks_rotation=90)
@@ -747,7 +753,7 @@ def accuracy_plot(
         plt.tight_layout()
         plt.title(
             "Average accuracy at epoch {}: {:.3f}%".format(
-                epoch, np.mean(avg_accuracy) * 100
+                epoch, np.mean(avg_accuracy) 
             ),
             fontsize=10,
         )
@@ -755,6 +761,7 @@ def accuracy_plot(
         if not os.path.exists("plots"):
             os.mkdir("plots")
 
+        plt.tight_layout()   
         plt.savefig(
             f"plots/confusion_train{mode}.{settings.VIS_FORMAT}", dpi=300
         )
@@ -771,7 +778,7 @@ def accuracy_plot(
         plt.close()
 
         fig, ax = plt.subplots(
-            figsize=(int(len(classes_list)) / 2, int(len(classes_list)) / 2)
+            figsize=(fig_size, fig_size)
         )
 
         dispn.plot(
@@ -787,7 +794,7 @@ def accuracy_plot(
             "Average accuracy at epoch {}: {:.3f}%".format(
                 epoch, np.mean(avg_accuracy) * 100
             ),
-            fontsize=12,
+            fontsize=font_size+2,
         )
 
         plt.xlabel("Predicted label (%)")
@@ -848,13 +855,12 @@ def accuracy_plot(
     with plt.rc_context(
         {
             "font.weight": "bold",
-            "font.size": int(len(ordered_class_eval) / 3) + 3,
+            "font.size": font_size,
         }
     ):
         fig, ax = plt.subplots(
             figsize=(
-                int(len(ordered_class_eval)) / 2,
-                int(len(ordered_class_eval)) / 2,
+                fig_size,fig_size
             )
         )
         disp_eval.plot(cmap=plt.cm.Blues, ax=ax, xticks_rotation=90)
@@ -863,13 +869,13 @@ def accuracy_plot(
             "Average accuracy at epoch {}: {:.1f}%".format(
                 epoch, np.mean(avg_accuracy_eval) * 100
             ),
-            fontsize=12,
+            fontsize=font_size+2,
         )
         plt.savefig(figure_name + f".{settings.VIS_FORMAT}", dpi=300)
         plt.close()
 
         fig, ax = plt.subplots(
-            figsize=(int(len(classes_list)) / 2, int(len(classes_list)) / 2)
+            figsize=(fig_size,fig_size)
         )
 
         dispn_eval.plot(
@@ -935,6 +941,8 @@ def f1_plot(
         classes_list = np.unique(np.concatenate((y_train, ypred_train)))
 
     classes_list_eval = np.unique(np.concatenate((y_val, ypred_val)))
+    fig_size  = max(6, int(len(classes_list)) / 2)
+    font_size = max(8, int(len(classes_list) / 3) + 3)
 
     if np.setdiff1d(classes_list_eval, classes_list).size > 0:
         logging.info(
@@ -985,13 +993,12 @@ def f1_plot(
     with plt.rc_context(
         {
             "font.weight": "bold",
-            "font.size": int(len(classes_list) / 3) + 3,
+            "font.size": font_size,
         }
     ):
         fig, ax = plt.subplots(
             figsize=(
-                int(len(classes_list)) / 2,
-                int(len(classes_list)) / 2,
+                fig_size,fig_size
             )
         )
         plt.plot(classes_list, train_f1_score, label="train", marker="o")
@@ -1000,6 +1007,7 @@ def f1_plot(
         plt.legend(loc="lower left")
         plt.title("F1 Score at epoch {}".format(epoch))
         plt.ylabel("F1 Score")
+        plt.tight_layout()
         plt.savefig(f"plots/f1{mode}.{settings.VIS_FORMAT}", dpi=150)
 
         if writer:
@@ -1852,21 +1860,17 @@ def plot_affinity_matrix(
     if len(vis_format) > 0:
         settings.VIS_FORMAT = vis_format
 
-    if fig_size is None:
-        with plt.rc_context(
-            {"font.weight": "bold", "font.size": int(len(all_classes) / 3) + 3}
-        ):
-            fig, ax = plt.subplots(
-                figsize=(int(len(all_classes)) / 2, int(len(all_classes)) / 2)
-            )
-    else:
-        fig, ax = plt.subplots(figsize=(fig_size, fig_size))
+    fig_size  = fig_size if fig_size is not None else max(6, int(len(all_classes)) / 2)
+    font_size = max(8, int(len(all_classes) / 3) + 3)   
+   
     # Create the figure and gridspec
+    fig = plt.figure(figsize=(fig_size, fig_size))
     gs = gridspec.GridSpec(1, 2, width_ratios=[9, 0.4])
 
     # Plot the data on the left grid
-    ax = plt.subplot(gs[0])
-    ax.set_title("Affinity Matrix", fontsize=16)
+    ax  = fig.add_subplot(gs[0])  
+    ax2 = fig.add_subplot(gs[1])
+    ax.set_title("Affinity Matrix", fontsize=font_size+2)
 
     im = ax.imshow(lookup, vmin=-1, vmax=1, cmap=plt.get_cmap("RdBu"))
 
@@ -1996,6 +2000,7 @@ def latent_space_similarity_plot(
     if len(vis_format) > 0:
         settings.VIS_FORMAT = vis_format
 
+
     if len(classes_order) == 0:
         unique_classes = np.unique(class_labels)
     else:
@@ -2011,6 +2016,8 @@ def latent_space_similarity_plot(
             unique_classes = classes_order
 
     num_classes = len(unique_classes)
+    fig_size  = fig_size if fig_size is not None else max(6,int(num_classes / 2))
+    font_size = max(8, int(num_classes/ 3) + 3)   
     cosine_sim = latent_space_similarity_mat(
         latent_space,
         class_labels,
@@ -2024,18 +2031,17 @@ def latent_space_similarity_plot(
         with plt.rc_context(
             {
                 "font.weight": "bold",
-                "font.size": int(len(unique_classes) / 3) + 3,
+                "font.size": font_size,
             }
         ):
             fig, ax = plt.subplots(
                 figsize=(
-                    int(len(unique_classes)) / 2,
-                    int(len(unique_classes)) / 2,
+                    fig_size, fig_size
                 )
             )
     else:
         fig, ax = plt.subplots(figsize=(fig_size, fig_size))
-    fig.tight_layout(pad=3)
+    fig.tight_layout()
     plt.imshow(cosine_sim, cmap="RdBu", vmin=-1, vmax=1)
     plt.colorbar(label="Average Cosine Similarity")
     plt.xticks(ticks=np.arange(num_classes), labels=unique_classes)
