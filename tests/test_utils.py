@@ -1,6 +1,6 @@
 import pytest
 
-from avae.utils_learning import dims_after_pooling
+from avae.base import dims_after_pooling
 
 
 @pytest.mark.parametrize(

@@ -1,12 +1,137 @@
 import logging
+import typing
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
+import sklearn.manifold
+import sklearn.metrics
+import sklearn.model_selection
+import sklearn.neighbors
+import sklearn.neural_network
+import sklearn.pipeline
+import sklearn.preprocessing
 import torch
 import torch.distributed as dist
 
-from .base import dims_after_pooling
-from .utils_gpu import set_device
+
+def accuracy(
+    x_train: npt.NDArray,
+    y_train: npt.NDArray,
+    x_val: npt.NDArray,
+    y_val: npt.NDArray,
+    classifier: str = "NN",
+) -> tuple[float, float, float, npt.NDArray, npt.NDArray]:
+    """Compute classification accuracy and predictions for latent vectors."""
+    logging.info(
+        "############################################### Computing accuracy..."
+    )
+    labels = np.unique(np.concatenate((y_train, y_val)))
+    label_encoder = sklearn.preprocessing.LabelEncoder()
+    label_encoder.fit(labels)
+
+    training_classes = np.unique(y_train)
+    if np.setdiff1d(training_classes, np.unique(y_val)).size > 0:
+        logging.info(
+            "Class %s was unseen in training data. Computing accuracy for "
+            "sets of seen and unseen data",
+            np.setdiff1d(training_classes, np.unique(y_val)),
+        )
+
+    selected_indices = np.argwhere(np.isin(y_val, training_classes)).ravel()
+    y_train_encoded = label_encoder.transform(y_train)
+    y_val_encoded = label_encoder.transform(y_val)
+
+    parameters: dict[str, typing.Any]
+    if classifier == "NN":
+        parameters = {
+            "hidden_layer_sizes": [
+                (100, 50),
+                (50, 20),
+                (20, 10, 5),
+                (100,),
+                (50,),
+            ],
+        }
+        method = sklearn.neural_network.MLPClassifier(
+            max_iter=10000,
+            activation="relu",
+            solver="lbfgs",
+            tol=1e-2,
+            random_state=1,
+            alpha=1,
+        )
+    elif classifier == "KNN":
+        parameters = {"n_neighbors": range(1, 500, 100)}
+        method = sklearn.neighbors.KNeighborsClassifier()
+    else:
+        raise ValueError("Invalid classifier type must be NN, KNN or LR")
+
+    classifier_search = sklearn.model_selection.GridSearchCV(
+        estimator=method,
+        param_grid=parameters,
+        scoring="f1_macro",
+        cv=2,
+        verbose=0,
+    )
+    fitted_classifier = sklearn.pipeline.make_pipeline(
+        sklearn.preprocessing.StandardScaler(), classifier_search
+    )
+    fitted_classifier.fit(x_train, y_train_encoded)
+    logging.info(
+        "Best parameters found for %s: %s",
+        classifier,
+        classifier_search.best_params_,
+    )
+
+    y_pred_train_encoded = fitted_classifier.predict(x_train)
+    y_pred_val_encoded = fitted_classifier.predict(x_val)
+    train_accuracy = sklearn.metrics.accuracy_score(
+        y_train_encoded, y_pred_train_encoded
+    )
+    val_accuracy = sklearn.metrics.accuracy_score(
+        y_val_encoded, y_pred_val_encoded
+    )
+    selected_val_accuracy = sklearn.metrics.accuracy_score(
+        y_val_encoded[selected_indices], y_pred_val_encoded[selected_indices]
+    )
+
+    return (
+        train_accuracy,
+        val_accuracy,
+        selected_val_accuracy,
+        label_encoder.inverse_transform(y_pred_train_encoded),
+        label_encoder.inverse_transform(y_pred_val_encoded),
+    )
+
+
+def tsne_embedding(xs: npt.NDArray, perplexity: int = 40) -> npt.NDArray:
+    """Project latent vectors to at most two dimensions for plotting."""
+    xs = np.asarray(xs)
+    if xs.ndim != 2:
+        raise ValueError("Embedding only accepts 2D arrays.")
+
+    if xs.shape[-1] <= 2:
+        return xs
+
+    perplexity = min(perplexity, len(xs) - 1)
+    logging.info(
+        "############################################### Computing t-SNE..."
+    )
+    logging.info(
+        "Samples: %d | Dimensions: %d | Perplexity: %d\n",
+        len(xs),
+        xs.shape[-1],
+        perplexity,
+    )
+    return sklearn.manifold.TSNE(
+        n_components=2,
+        perplexity=perplexity,
+        max_iter=500,
+        angle=0.7,
+        n_jobs=-1,
+        random_state=42,
+    ).fit_transform(xs)
 
 
 def format_meta_df(

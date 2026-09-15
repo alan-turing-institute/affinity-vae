@@ -1,6 +1,7 @@
 import copy
 import logging
 import os.path
+import pathlib
 import random
 import typing
 import warnings
@@ -11,16 +12,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+import PIL.Image
+import scipy.stats
+import sklearn.metrics
+import sklearn.metrics.pairwise
 import torch
 import torchvision
-import umap
-from PIL import Image
-from scipy.stats import norm
-from sklearn.manifold import TSNE
-from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix, f1_score
-from sklearn.metrics.pairwise import cosine_similarity
 
-from . import settings
+from . import utils_learning
 from .utils import (
     colour_per_class,
     create_grid_for_plotting,
@@ -32,7 +31,7 @@ from .utils import (
 )
 
 
-def _encoder(i: Image) -> str:
+def _encoder(i: PIL.Image) -> str:
     """Encode PIL Image as base64 buffer.
     Parameters
     ----------
@@ -46,9 +45,9 @@ def _encoder(i: Image) -> str:
 
     """
     import base64
-    from io import BytesIO
+    import io
 
-    with BytesIO() as buffer:
+    with io.BytesIO() as buffer:
         i.thumbnail((110, 110))
         i.save(buffer, "PNG")
         data = base64.encodebytes(buffer.getvalue()).decode("utf-8")
@@ -56,7 +55,7 @@ def _encoder(i: Image) -> str:
     return f"{data}"
 
 
-def _decoder(i: str) -> Image:
+def _decoder(i: str) -> PIL.Image:
     """Decode base64 buffer as PIL Image.
     Parameters
     ----------
@@ -69,12 +68,12 @@ def _decoder(i: str) -> Image:
         Decoded image.
     """
     import base64
-    from io import BytesIO
+    import io
 
-    return Image.open(BytesIO(base64.b64decode(i)))
+    return PIL.Image.open(io.BytesIO(base64.b64decode(i)))
 
 
-def format(im: Image, data_dim: int) -> list[str]:
+def format(im: PIL.Image, data_dim: int) -> list[str]:
     """Format PIL Image as Pandas compatible Altair image display.
 
     Parameters
@@ -120,9 +119,9 @@ def format(im: Image, data_dim: int) -> list[str]:
     if batch:
         # if batch we are adding a reconstruction to an input that already
         # exists in the DF, '&' is a separator.
-        return ["&" + _encoder(Image.fromarray(i)) for i in im]
+        return ["&" + _encoder(PIL.Image.fromarray(i)) for i in im]
     else:
-        return [_encoder(Image.fromarray(im))]
+        return [_encoder(PIL.Image.fromarray(im))]
 
 
 def merge(im: str) -> str | None:
@@ -139,6 +138,9 @@ def merge(im: str) -> str | None:
     str
         Merged image.
     """
+    if im.startswith("data:image/"):
+        return im
+
     i = im.split("&")
     if len(i) != 2:
         logging.warning(
@@ -150,7 +152,7 @@ def merge(im: str) -> str | None:
     im1 = _decoder(i[0])
     im2 = _decoder(i[1])
 
-    new_image = Image.new("L", (im2.size[0] + im1.size[0], im2.size[1]))
+    new_image = PIL.Image.new("L", (im2.size[0] + im1.size[0], im2.size[1]))
     new_image.paste(im1, (0, 0))
     new_image.paste(im2, (im1.size[0], 0))
     data = _encoder(new_image)
@@ -169,7 +171,8 @@ def latent_embed_plot_tsne(
     marker_size: int = 24,
     l_w: int = 2,
     display: bool = False,
-    vis_format: str = "",
+    vis_format: str = "png",
+    embedding: npt.NDArray | None = None,
 ) -> None:
     """Plot static TSNE embedding.
 
@@ -194,6 +197,9 @@ def latent_embed_plot_tsne(
         post calculation. This features is not yet implemented for save_mrc_file.
     vis_format: str
         format of the image saved
+    embedding: np.ndarray | None
+        Precomputed embedding coordinates. If omitted, they are calculated
+        from ``xs``.
     """
     logging.info(
         "################################################################",
@@ -203,18 +209,11 @@ def latent_embed_plot_tsne(
     else:
         logging.info("Visualising static TSNE embedding " + mode + "...\n")
 
-    if len(vis_format) > 0:
-        settings.VIS_FORMAT = vis_format
-
     xs = np.asarray(xs)
     ys = np.asarray(ys)
 
-    if len(ys) < perplexity:
-        perplexity = len(ys) - 1
-
-    if len(xs.shape) != 2:
-        logging.error("Embedding only accepts 2D arrays.")
-        exit(1)
+    if xs.ndim != 2:
+        raise ValueError("Embedding only accepts 2D arrays.")
     if xs.shape[-1] == 1:
         logging.warning(
             "Data contains 1 dimension, cannot create embedding,"
@@ -226,12 +225,15 @@ def latent_embed_plot_tsne(
             " embedding, plotting scatter of original data...\n"
         )
 
-    if xs.shape[-1] > 2:
-        lats = TSNE(
-            n_components=2, perplexity=perplexity, random_state=42
-        ).fit_transform(xs)
-    elif xs.shape[-1] == 2 or xs.shape[-1] == 1:
-        lats = xs
+    lats = (
+        utils_learning.tsne_embedding(xs, perplexity=perplexity)
+        if embedding is None
+        else np.asarray(embedding)
+    )
+    if len(lats) != len(xs):
+        raise ValueError(
+            "Embedding and latent vectors must have equal lengths."
+        )
 
     if classes is None:
         classes = sorted(list(np.unique(ys)))
@@ -306,7 +308,7 @@ def latent_embed_plot_tsne(
     if not display:
         if not os.path.exists("plots"):
             os.mkdir("plots")
-        plt.savefig(f"plots/embedding_TSNE{mode}.{settings.VIS_FORMAT}")
+        plt.savefig(f"plots/embedding_TSNE{mode}.{vis_format}")
     else:
         plt.show()
     if writer:
@@ -315,161 +317,13 @@ def latent_embed_plot_tsne(
     plt.close()
 
 
-def latent_embed_plot_umap(
-    xs: npt.NDArray,
-    ys: npt.NDArray,
-    classes: list | None = None,
-    mode: str = "",
-    epoch: int = 0,
-    writer: typing.Any = None,
-    rs: int = 42,
-    marker_size: int = 24,
-    l_w: int = 2,
-    display: bool = False,
-    vis_format: str = "",
-) -> None:
-    """Plot static UMAP embedding.
-
-    Parameters
-    ----------
-    xs: np.ndarray
-        Array of latent vectors.
-    ys: np.ndarray
-        Array of labels.
-    classes: list
-        List of classes.
-    mode: str
-        Added data mode to the name of the saved figure (e.g train, valid, eval).
-    epoch: int
-        Current epoch
-    writer: SummaryWriter
-        Tensorboard summary writer
-    display: bool
-        When this variable is set to true, the save_imshow_png function only dispalys the plot
-        and does not save a png image. This is to allow the use of this function in jupyter notebook
-        post calculation. This features is not yet implemented for save_mrc_file.
-    vis_format: str
-        format of the image saved
-    """
-    logging.info(
-        "################################################################",
-    )
-
-    if not mode:
-        logging.info("Visualising static UMAP embedding...\n")
-    else:
-        logging.info("Visualising static UMAP embedding " + mode + "...\n")
-
-    if len(vis_format) > 0:
-        settings.VIS_FORMAT = vis_format
-
-    xs = np.asarray(xs)
-    ys = np.asarray(ys)
-
-    if len(xs.shape) != 2:
-        logging.error("Embedding only accepts 2D arrays.")
-        exit(1)
-    if xs.shape[-1] == 1:
-        logging.warning(
-            "Data contains 1 dimension, cannot create embedding,"
-            " plotting histogram instead...\n"
-        )
-    if xs.shape[-1] == 2:
-        logging.warning(
-            "Data already contains 2 dimensions, cannot create"
-            " embedding, plotting scatter of original data...\n"
-        )
-
-    if xs.shape[-1] > 2:
-        reducer = umap.UMAP(random_state=rs, n_jobs=1)
-        embedding = reducer.fit_transform(xs)
-    elif xs.shape[-1] == 2 or xs.shape[-1] == 1:
-        embedding = xs
-
-    if classes is None:
-        classes = sorted(list(np.unique(ys)))
-    else:
-        if np.setdiff1d(ys, classes).size > 0:
-            classes = list(
-                np.concatenate((classes, np.setdiff1d(ys, classes)))
-            )
-
-    n_classes = len(classes)
-    if n_classes < 3:
-        fig, ax = plt.subplots(
-            figsize=(int(n_classes / 2) + 7, int(n_classes / 2) + 5)
-        )
-    else:
-        fig, ax = plt.subplots(
-            figsize=(int(n_classes / 2) + 4, int(n_classes / 2) + 2)
-        )
-
-    colours = colour_per_class(classes)
-
-    if xs.shape[-1] != 1:
-
-        for mol_id, mol in enumerate(set(ys.tolist())):
-            idx = np.where(np.array(ys.tolist()) == mol)[0]
-            color = colours[classes.index(mol)]
-
-            ax.scatter(
-                embedding[idx, 0],
-                embedding[idx, 1],
-                s=marker_size,
-                label=mol[:4],
-                facecolor=color,
-                edgecolor=color,
-                alpha=0.2,
-            )
-
-        ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left", fontsize=16)
-        plt.xlabel("UMAP-1")
-        plt.ylabel("UMAP-2")
-
-    if xs.shape[-1] == 1:
-
-        for mol_id, mol in enumerate(set(ys.tolist())):
-            idx = np.where(np.array(ys.tolist()) == mol)[0]
-            cols = colours[classes.index(mol)]
-            plt.hist(
-                embedding[idx],
-                100,
-                color=cols,
-                histtype="step",
-                stacked=True,
-                fill=False,
-                label=mol[:4],
-                linewidth=l_w,
-            )
-        plt.legend(
-            prop={"size": 10},
-            bbox_to_anchor=(1.05, 1),
-            loc="upper left",
-            fontsize=16,
-        )
-        plt.xlabel("dim 1")
-        plt.ylabel("freq")
-
-    plt.tight_layout()
-    if not display:
-        if not os.path.exists("plots"):
-            os.mkdir("plots")
-        plt.savefig(
-            f"plots/embedding_UMAP{mode}.{settings.VIS_FORMAT}", dpi=300
-        )
-    else:
-        plt.show()
-
-    if writer:
-        writer.add_figure("UMAP embedding", fig, epoch)
-
-    plt.close()
-
-
 def dyn_latentembed_plot(
-    df: pd.DataFrame, epoch: int, embedding: str = "umap", mode: str = ""
+    df: pd.DataFrame,
+    epoch: int,
+    mode: str = "",
+    embedding: npt.NDArray | None = None,
 ):
-    """Plot dynamic TSNE or UMAP embedding.
+    """Plot dynamic TSNE embedding.
 
     Parameters
     ----------
@@ -477,32 +331,30 @@ def dyn_latentembed_plot(
         Dataframe containing the latent vectors.
     epoch: int
         Current epoch.
-    embedding: str
-        Type of embedding to use, either 'umap' or 'tsne'.
     mode: str
         Added data mode to the name of the saved figure (e.g train, valid, eval).
+    embedding: np.ndarray | None
+        Precomputed embedding coordinates. If omitted, they are calculated
+        from the latent columns in ``df``.
     """
     logging.info(
         "################################################################",
     )
-    logging.info("Visualising dynamic embedding {}...\n".format(embedding))
+    logging.info("Visualising dynamic embedding...\n")
 
     epoch += 1
     latentspace = df[[col for col in df if col.startswith("lat")]].to_numpy()
-    if embedding == "umap":
-        lat_emb = np.array(
-            umap.UMAP(random_state=42, n_jobs=1).fit_transform(latentspace)
-        )
-        titlex = "UMAP-1"
-        titley = "UMAP-2"
-    else:
-        lat_emb = np.array(
-            TSNE(n_components=2, perplexity=40, random_state=42).fit_transform(
-                latentspace
-            )
-        )
-        titlex = "t-SNE-1"
-        titley = "t-SNE-2"
+    lat_emb = np.asarray(
+        utils_learning.tsne_embedding(latentspace)
+        if embedding is None
+        else embedding
+    )
+    if len(lat_emb) != len(df):
+        raise ValueError("Embedding and metadata must have equal lengths.")
+    if lat_emb.shape[1] == 1:
+        lat_emb = np.column_stack([lat_emb[:, 0], np.zeros(len(lat_emb))])
+    titlex = "t-SNE-1"
+    titley = "t-SNE-2"
     df["emb-x"], df["emb-y"] = np.array(lat_emb)[:, 0], np.array(lat_emb)[:, 1]
 
     # create column select options for radio buttons
@@ -639,14 +491,11 @@ def dyn_latentembed_plot(
     # save charts and latent embedding
     if not os.path.exists("latents"):
         os.mkdir("latents")
-        # save latentspace and ids
-    if embedding == "umap":
-        chart.save(f"latents/plt_latent_embed_epoch_{epoch}_umap{mode}.html")
-    elif embedding == "tsne":
-        chart.save(f"latents/plt_latent_embed_epoch_{epoch}_tsne{mode}.html")
+    # save latentspace and ids
+    chart.save(f"latents/latent_epoch_{epoch}_{mode}.html")
 
 
-def confidence_plot(x, y, s, suffix=None):
+def confidence_plot(x, y, s, suffix=None, vis_format="png"):
     logging.info(
         "################################################################",
     )
@@ -676,12 +525,12 @@ def confidence_plot(x, y, s, suffix=None):
         for i in range(len(mu_cl)):
             ax[c].plot(
                 xs,
-                norm.pdf(xs, mu_cl[i], std_cl[i]),
+                scipy.stats.norm.pdf(xs, mu_cl[i], std_cl[i]),
                 color=cols[i],
                 label="lat" + str(i + 1),
             )
         ax[c].set_title(cl)
-    name = f"plots/confidence.{settings.VIS_FORMAT}"
+    name = f"plots/confidence.{vis_format}"
     if suffix is not None:
         name = name[:-4] + "_" + suffix + name[-4:]
     handles, labels = ax[-1].get_legend_handles_labels()
@@ -701,6 +550,7 @@ def accuracy_plot(
     mode: str = "",
     epoch: int = 0,
     writer: typing.Any = None,
+    vis_format: str = "png",
 ):
     """Plot confusion matrix .
 
@@ -714,8 +564,6 @@ def accuracy_plot(
         Validation labels (unseen data).
     ypred_val: np.array
         Predicted validation labels (unseen data).
-    classes: str
-        Path to csv file containing classes to be used.
     mode: str
         Added data mode to the name of the saved figures (e.g train, valid, eval).
     epoch: int
@@ -729,18 +577,17 @@ def accuracy_plot(
 
     logging.info("Visualising accuracy: confusion and F1 scores ...\n")
 
-    if classes is not None:
-        classes_list = pd.read_csv(classes).columns.tolist()
-    else:
-        classes_list = np.unique(np.concatenate((y_train, ypred_train)))
+    classes_list = np.unique(np.concatenate((y_train, ypred_train)))
 
     # Compute confusion matrix
-    cm = confusion_matrix(y_train, ypred_train, labels=classes_list)
+    cm = sklearn.metrics.confusion_matrix(
+        y_train, ypred_train, labels=classes_list
+    )
 
     # Convert confusion matrix to a DataFrame to be saved as csv file
     cm_df = pd.DataFrame(cm)
 
-    disp = ConfusionMatrixDisplay(
+    disp = sklearn.metrics.ConfusionMatrixDisplay(
         confusion_matrix=cm, display_labels=classes_list
     )
 
@@ -752,7 +599,7 @@ def accuracy_plot(
     # Convert normalised confusion matrix to a DataFrame to be saved as csv file
     cmn_df = pd.DataFrame(cmn)
 
-    dispn = ConfusionMatrixDisplay(
+    dispn = sklearn.metrics.ConfusionMatrixDisplay(
         confusion_matrix=cmn, display_labels=classes_list
     )
 
@@ -776,9 +623,7 @@ def accuracy_plot(
         if not os.path.exists("plots"):
             os.mkdir("plots")
 
-        plt.savefig(
-            f"plots/confusion_train{mode}.{settings.VIS_FORMAT}", dpi=300
-        )
+        plt.savefig(f"plots/confusion_train{mode}.{vis_format}", dpi=300)
 
         # Save confusion matrix DataFrame to CSV
         cm_df.to_csv(f'plots/confusion_train{mode}.csv', index=False)
@@ -813,9 +658,7 @@ def accuracy_plot(
 
         plt.xlabel("Predicted label (%)")
         plt.ylabel("True label (%)")
-        plt.savefig(
-            f"plots/confusion_train{mode}_norm.{settings.VIS_FORMAT}", dpi=300
-        )
+        plt.savefig(f"plots/confusion_train{mode}_norm.{vis_format}", dpi=300)
 
         if writer:
             writer.add_figure("Accuracy (Norm)", fig, epoch)
@@ -831,12 +674,14 @@ def accuracy_plot(
     else:
         ordered_class_eval = classes_list
 
-    cm_eval = confusion_matrix(y_val, ypred_val, labels=ordered_class_eval)
+    cm_eval = sklearn.metrics.confusion_matrix(
+        y_val, ypred_val, labels=ordered_class_eval
+    )
 
     # Convert confusion matrix to a DataFrame to be saved as csv file
     cm_eval_df = pd.DataFrame(cm_eval)
 
-    disp_eval = ConfusionMatrixDisplay(
+    disp_eval = sklearn.metrics.ConfusionMatrixDisplay(
         confusion_matrix=cm_eval, display_labels=ordered_class_eval
     )
     avg_accuracy_eval = cm_eval.diagonal() / cm_eval.sum(axis=1)
@@ -855,7 +700,7 @@ def accuracy_plot(
     # Save normalised confusion matrix DataFrame to CSV
     cmn_eval_df.to_csv(f'plots/confusion_valid{mode}_norm.csv', index=False)
 
-    dispn_eval = ConfusionMatrixDisplay(
+    dispn_eval = sklearn.metrics.ConfusionMatrixDisplay(
         confusion_matrix=cmn_eval, display_labels=ordered_class_eval
     )
 
@@ -886,7 +731,7 @@ def accuracy_plot(
             ),
             fontsize=12,
         )
-        plt.savefig(figure_name + f".{settings.VIS_FORMAT}", dpi=300)
+        plt.savefig(figure_name + f".{vis_format}", dpi=300)
         plt.close()
 
         fig, ax = plt.subplots(
@@ -910,7 +755,7 @@ def accuracy_plot(
         )
         plt.xlabel("Predicted label (%)")
         plt.ylabel("True label (%)")
-        plt.savefig(f"{figure_name}_norm.{settings.VIS_FORMAT}", dpi=300)
+        plt.savefig(f"{figure_name}_norm.{vis_format}", dpi=300)
         plt.close()
 
 
@@ -919,13 +764,14 @@ def f1_plot(
     ypred_train: npt.NDArray,
     y_val: npt.NDArray,
     ypred_val: npt.NDArray,
-    classes: str | None = None,
     mode: str = "",
     epoch: int = 0,
     writer: typing.Any = None,
+    vis_format: str = "png",
 ):
-    """Plot F1 values. If classes list is provided, the F1 scores are calculated only for the classess in the
-    list. This avoids F1 scores being affected by unseen clases that can be added in evaluation.
+    """Plot F1 values using classes observed in the training labels.
+
+    Evaluation classes unseen during training are excluded from the scores.
 
     Parameters
     ----------
@@ -937,8 +783,6 @@ def f1_plot(
         Validation labels (unseen data).
     ypred_val: np.array
         Predicted validation labels (unseen data).
-    classes: str
-        Path to csv file containing classes to be used.
     mode: str
         Added data mode to the name of the saved figures (e.g train, valid, eval).
     epoch: int
@@ -950,11 +794,7 @@ def f1_plot(
         "################################################################",
     )
     logging.info("Visualising F1 scores ...\n")
-    if classes is not None:
-        classes_list = pd.read_csv(classes).columns.tolist()
-    else:
-        classes_list = np.unique(np.concatenate((y_train, ypred_train)))
-
+    classes_list = np.unique(np.concatenate((y_train, ypred_train)))
     classes_list_eval = np.unique(np.concatenate((y_val, ypred_val)))
 
     if np.setdiff1d(classes_list_eval, classes_list).size > 0:
@@ -967,14 +807,14 @@ def f1_plot(
         y_val = np.array(y_val)[index].tolist()
         ypred_val = np.array(ypred_val)[index].tolist()
 
-    train_f1_score = f1_score(
+    train_f1_score = sklearn.metrics.f1_score(
         y_train,
         ypred_train,
         average=None,
         labels=classes_list,
         zero_division=0,
     ).tolist()
-    valid_f1_score = f1_score(
+    valid_f1_score = sklearn.metrics.f1_score(
         y_val,
         ypred_val,
         average=None,
@@ -1029,7 +869,7 @@ def f1_plot(
         plt.legend(loc="lower left")
         plt.title("F1 Score at epoch {}".format(epoch))
         plt.ylabel("F1 Score")
-        plt.savefig(f"plots/f1{mode}.{settings.VIS_FORMAT}", dpi=150)
+        plt.savefig(f"plots/f1{mode}.{vis_format}", dpi=150)
 
         if writer:
             writer.add_figure("F1 score", fig, epoch)
@@ -1044,6 +884,7 @@ def loss_plot(
     train_loss: list[float],
     val_loss: list[float] | None = None,
     p: list | None = None,
+    vis_format: str = "png",
 ) -> None:
     """Visualise loss over epochs.
 
@@ -1136,7 +977,7 @@ def loss_plot(
     plt.tight_layout()
     if not os.path.exists("plots"):
         os.mkdir("plots")
-    plt.savefig(f"plots/loss.{settings.VIS_FORMAT}", dpi=300)
+    plt.savefig(f"plots/loss.{vis_format}", dpi=300)
     plt.close()
 
     # plotting only the total loss as it sometimes is a few order of magnitude higher than KLD and affinity losses
@@ -1162,7 +1003,7 @@ def loss_plot(
     plt.yticks(fontsize=16)
     plt.legend()
     plt.tight_layout()
-    plt.savefig(f"plots/loss_total.{settings.VIS_FORMAT}", dpi=300)
+    plt.savefig(f"plots/loss_total.{vis_format}", dpi=300)
     plt.close()
 
 
@@ -1175,6 +1016,7 @@ def recon_plot(
     epoch: int = 0,
     writer: typing.Any = None,
     display: bool = False,
+    vis_format: str = "png",
 ) -> None:
     """Visualise reconstructions.
 
@@ -1204,8 +1046,8 @@ def recon_plot(
     )
     logging.info("Visualising reconstructions " + mode + "...\n")
 
-    fname_in = f"{str(mode)}_recon_in.{settings.VIS_FORMAT}"
-    fname_out = f"{str(mode)}_recon_out.{settings.VIS_FORMAT}"
+    fname_in = f"{str(mode)}_recon_in.{vis_format}"
+    fname_out = f"{str(mode)}_recon_out.{vis_format}"
 
     if data_dim == 3:
         img_2d = img[:, :, :, :, img.shape[-1] // 2]
@@ -1237,7 +1079,7 @@ def recon_plot(
     if data_dim == 3:
         rec = rec.detach().cpu().numpy()
         img = img.detach().cpu().numpy()
-        label = np.array(label)
+        labels = np.asarray(label)[-len(img) :]
         dsize = rec.shape[-data_dim:]
 
         # The number of reconstruction and input images to be displayed in the .mrc output file
@@ -1245,10 +1087,12 @@ def recon_plot(
         number_of_columns = 3
         padding = 0
 
-        if len(label) < number_of_random_samples * number_of_columns:
+        if len(labels) < number_of_random_samples * number_of_columns:
             # In there are not enough images for the stack, do one column only
-            number_of_random_samples = len(label)
-            number_of_columns = 0
+            number_of_random_samples = min(
+                number_of_random_samples, len(labels)
+            )
+            number_of_columns = 1
 
         # define the dimensions for the napari grid
         grid_for_napari = np.zeros(
@@ -1260,18 +1104,17 @@ def recon_plot(
             dtype=np.float32,
         )
 
-        logging.info("Molecules in the reconstructions are  ...")
+        reconstruction_index: list[dict[str, int | str]] = []
         for k in range(number_of_columns):
             # select 10 images at random
-            rand_select = np.random.randint(
-                0, high=img.shape[0], size=number_of_random_samples, dtype=int
-            )  #
-            img = img[rand_select, :, :, :, :]
-            rec = rec[rand_select, :, :, :, :]
-            logging.info(f"column {k} : {label[rand_select]}")
+            selected_indices = np.random.choice(
+                len(img), size=number_of_random_samples, replace=False
+            )
+            selected_img = img[selected_indices]
+            selected_rec = rec[selected_indices]
 
             # stack the images together with their reconstruction
-            rec_img = np.hstack((img, rec))
+            rec_img = np.hstack((selected_img, selected_rec))
 
             # Create and save the mrc file with single transversals
             for j in range(2):
@@ -1284,8 +1127,20 @@ def recon_plot(
                         :,
                     ] = rec_img[i, j, :, :, :]
 
+            reconstruction_index.extend(
+                {
+                    "grid_column": k,
+                    "grid_row": i,
+                    "batch_index": int(source_index),
+                    "label": labels[source_index],
+                }
+                for i, source_index in enumerate(selected_indices)
+            )
+
         save_mrc_file(str(mode) + "_recons.mrc", grid_for_napari)
-        logging.info("\n")
+        pd.DataFrame(reconstruction_index).to_csv(
+            f"plots/{mode}_recons.csv", index=False
+        )
 
 
 def latent_4enc_interpolate_plot(
@@ -1297,7 +1152,7 @@ def latent_4enc_interpolate_plot(
     plots_config: npt.NDArray,
     poses: list,
     display: bool = False,
-    vis_format: str = "",
+    vis_format: str = "png",
 ) -> None:
     """Visualise the interpolation of latent space between 4 randomly selected encodings.
     The number of plots and the number of interpolation steps is modifyable.
@@ -1335,8 +1190,6 @@ def latent_4enc_interpolate_plot(
     logging.info(
         "Visualising Latent Interpolation between 4 randomly selected encodings ...\n"
     )
-    if len(vis_format) > 0:
-        settings.VIS_FORMAT = vis_format
 
     padding = 0
     data_dim = len(dsize)
@@ -1413,7 +1266,7 @@ def latent_4enc_interpolate_plot(
             )
         elif data_dim == 2:
             save_imshow_png(
-                f"latent_interpolate_{num_fig}.{settings.VIS_FORMAT}",
+                f"latent_interpolate_{num_fig}.{vis_format}",
                 grid_for_napari,
                 display=display,
             )
@@ -1426,6 +1279,7 @@ def latent_disentamglement_plot(
     device: torch.device,
     poses: list | None = None,
     mode: str = "trn",
+    vis_format: str = "png",
 ) -> None:
     """Visualise latent content disentanglement.
 
@@ -1461,7 +1315,7 @@ def latent_disentamglement_plot(
 
     lat_means = np.mean(latents, axis=0)
     lat_stds = np.std(latents, axis=0)
-    lat_dims = latents.shape[-1]
+    latent_dims = latents.shape[-1]
 
     if poses is not None:
         pos_means = np.mean(poses_space, axis=0)
@@ -1469,8 +1323,8 @@ def latent_disentamglement_plot(
 
     recon_images = []
 
-    # Generate vectors representing single transversals along each lat_dim
-    for l_dim in range(lat_dims):
+    # Generate vectors representing single transversals along each latent_dims
+    for l_dim in range(latent_dims):
         for grid_spot in range(number_of_samples):
             means = copy.deepcopy(lat_means)
             # every 0.4 interval from -1.2 to 1.2 sigma
@@ -1497,14 +1351,14 @@ def latent_disentamglement_plot(
     # Combine the individual decoded images into a single array
     recon_images = np.array(recon_images)
     recon_images = np.reshape(
-        recon_images, (lat_dims, number_of_samples, *dsize)
+        recon_images, (latent_dims, number_of_samples, *dsize)
     )
 
     grid_for_napari = create_grid_for_plotting(
-        lat_dims, number_of_samples, dsize, padding
+        latent_dims, number_of_samples, dsize, padding
     )
     grid_for_napari = fill_grid_for_plottting(
-        lat_dims,
+        latent_dims,
         number_of_samples,
         grid_for_napari,
         dsize,
@@ -1516,7 +1370,7 @@ def latent_disentamglement_plot(
         save_mrc_file(f"disentanglement-latent_{mode}.mrc", grid_for_napari)
     elif data_dim == 2:
         save_imshow_png(
-            f"disentanglement-latent_{mode}.{settings.VIS_FORMAT}",
+            f"disentanglement-latent_{mode}.{vis_format}",
             grid_for_napari,
         )
 
@@ -1533,7 +1387,7 @@ def pose_class_disentanglement_plot(
     number_of_samples: int = 7,
     specific_enc: npt.NDArray = None,
     display: bool = False,
-    vis_format: str = "",
+    vis_format: str = "png",
 ):
 
     """Visualise Pose interpolation per class. This function creates a pose interpolatoion
@@ -1577,9 +1431,6 @@ def pose_class_disentanglement_plot(
         logging.warning(
             "Pose interpolation cannot be done if pose dimension is not specified"
         )
-
-    if len(vis_format) > 0:
-        settings.VIS_FORMAT = vis_format
 
     padding = 0
     data_dim = len(dsize)
@@ -1629,7 +1480,7 @@ def pose_class_disentanglement_plot(
             save_mrc_file(f"pose_interpolate_{mode}_{i}.mrc", grid_for_napari)
         elif data_dim == 2:
             save_imshow_png(
-                f"pose_interpolate_{mode}_{i}.{settings.VIS_FORMAT}",
+                f"pose_interpolate_{mode}_{i}.{vis_format}",
                 grid_for_napari,
                 display=display,
             )
@@ -1644,7 +1495,7 @@ def pose_disentanglement_plot(
     label: str = "avg",
     mode: str = "trn",
     display: bool = False,
-    vis_format: str = "",
+    vis_format: str = "png",
 ):
     """Visualise pose disentanglement.
 
@@ -1678,8 +1529,6 @@ def pose_disentanglement_plot(
         logging.info(
             "Visualising pose disentanglement for class {}...\n".format(label)
         )
-    if len(vis_format) > 0:
-        settings.VIS_FORMAT = vis_format
 
     number_of_samples = 7
     padding = 0
@@ -1719,7 +1568,7 @@ def pose_disentanglement_plot(
         )
     elif data_dim == 2:
         save_imshow_png(
-            f"disentanglement-pose_{mode}_{label}.{settings.VIS_FORMAT}",
+            f"disentanglement-pose_{mode}_{label}.{vis_format}",
             grid_for_napari,
             display=display,
         )
@@ -1733,6 +1582,7 @@ def interpolations_plot(
     device: torch.device,
     poses: list | None = None,
     mode: str = "trn",
+    vis_format: str = "png",
 ) -> None:
     """Visualise interpolations.
 
@@ -1851,9 +1701,7 @@ def interpolations_plot(
     if data_dim == 3:
         save_mrc_file(f"interpolations_{mode}.mrc", grid_for_napari)
     elif data_dim == 2:
-        save_imshow_png(
-            f"interpolations_{mode}.{settings.VIS_FORMAT}", grid_for_napari
-        )
+        save_imshow_png(f"interpolations_{mode}.{vis_format}", grid_for_napari)
 
 
 def plot_affinity_matrix(
@@ -1861,7 +1709,7 @@ def plot_affinity_matrix(
     all_classes: list,
     selected_classes: list,
     fig_size: int | None = None,
-    vis_format: str = "",
+    vis_format: str = "png",
 ) -> None:
     """
     This function plots the Affinity matrix and highlights the
@@ -1882,8 +1730,6 @@ def plot_affinity_matrix(
         "################################################################",
     )
     logging.info("Visualising affinity matrix ...\n")
-    if len(vis_format) > 0:
-        settings.VIS_FORMAT = vis_format
 
     if fig_size is None:
         with plt.rc_context(
@@ -1926,11 +1772,13 @@ def plot_affinity_matrix(
     fig.tight_layout()
     if not os.path.exists("plots"):
         os.mkdir("plots")
-    plt.savefig(f"plots/affinity_matrix.{settings.VIS_FORMAT}", dpi=300)
+    plt.savefig(f"plots/affinity_matrix.{vis_format}", dpi=300)
     plt.close()
 
 
-def plot_classes_distribution(data: list, category: str) -> None:
+def plot_classes_distribution(
+    data: list, category: str, vis_format: str = "png"
+) -> None:
     """Plot histogram with classes distribution
 
     Parameters
@@ -1959,13 +1807,13 @@ def plot_classes_distribution(data: list, category: str) -> None:
     plt.tight_layout()
     if not os.path.exists("plots"):
         os.mkdir("plots")
-    plt.savefig(
-        f"plots/classes_distribution_{category}.{settings.VIS_FORMAT}", dpi=300
-    )
+    plt.savefig(f"plots/classes_distribution_{category}.{vis_format}", dpi=300)
     plt.close()
 
 
-def plot_cyc_variable(array: list, variable_name: str):
+def plot_cyc_variable(
+    array: list, variable_name: str, vis_format: str = "png"
+):
     """Plot evolution of variable from the cyclical training
 
     Parameters
@@ -1987,7 +1835,7 @@ def plot_cyc_variable(array: list, variable_name: str):
     plt.tight_layout()
     if not os.path.exists("plots"):
         os.mkdir("plots")
-    plt.savefig(f"plots/{variable_name}_array.{settings.VIS_FORMAT}", dpi=300)
+    plt.savefig(f"plots/{variable_name}_array.{vis_format}", dpi=300)
     plt.close()
 
 
@@ -1996,13 +1844,13 @@ def latent_space_similarity_plot(
     class_labels: npt.NDArray,
     mode: str = "",
     epoch: int = 0,
-    classes_order: list = [],
+    affinity_matrix: pathlib.Path | None = None,
     plot_mode: str = "mean",
     display: bool = False,
     font_size: int = 16,
     fig_size: int | None = None,
     dpi: int = 300,
-    vis_format: str = "",
+    vis_format: str = "png",
 ) -> None:
     """
     This function calculates the similarity (affinity) between classes in the latent space and builds a matrix.
@@ -2016,8 +1864,8 @@ def latent_space_similarity_plot(
         Mode of the calculation (train, test, val)
     epoch: int
         Epoch number for title
-    classes_order: list
-        Order of the classes in the matrix
+    affinity_matrix: pathlib.Path | None
+        File path to affinity matrix
     vis_format: str
         format of the image saved
     """
@@ -2026,12 +1874,12 @@ def latent_space_similarity_plot(
     )
     logging.info("Visualising the latent space similarity matrix ...\n")
 
-    if len(vis_format) > 0:
-        settings.VIS_FORMAT = vis_format
-
-    if len(classes_order) == 0:
+    if affinity_matrix is None:
         unique_classes = np.unique(class_labels)
     else:
+        classes_order = (
+            pd.read_csv(affinity_matrix, header=0).columns.astype(str).tolist()
+        )
         unique_classes_in_data = np.unique(class_labels)
         if np.setdiff1d(unique_classes_in_data, classes_order).size > 0:
             unique_classes = np.concatenate(
@@ -2082,9 +1930,7 @@ def latent_space_similarity_plot(
     if not display:
         if not os.path.exists("plots"):
             os.mkdir("plots")
-        plt.savefig(
-            f"plots/similarity_mean{mode}.{settings.VIS_FORMAT}", dpi=dpi
-        )
+        plt.savefig(f"plots/similarity_mean{mode}.{vis_format}", dpi=dpi)
         plt.close()
     else:
         plt.show()
