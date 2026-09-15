@@ -50,7 +50,6 @@ class DataTest(unittest.TestCase):
             rescale=sh,
             fabric=self.fabric,
         )
-        print(os.getcwd())
 
         # test load_data
         assert len(out) == 1

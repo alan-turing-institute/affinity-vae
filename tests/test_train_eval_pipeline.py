@@ -1,4 +1,3 @@
-import logging
 import os
 import random
 import tempfile
@@ -146,15 +145,10 @@ def helper_train_eval(
                     data.datapath = os.path.join(data.datapath, "test")
 
                 run_pipeline(data)
-                logging.info('Crrent working directory: %s', os.getcwd())
-                logging.info(
-                    'Current directory contents: %s', os.listdir(os.getcwd())
-                )
 
                 n_plots, n_latent, n_states = (0, 0, 0)
                 n_dir = len(next(os.walk(temp_dir))[1])
                 if os.path.exists(os.path.join(temp_dir, "plots")):
-                    print(os.listdir(os.path.join(temp_dir, "plots")))
                     n_plots = (
                         len(os.listdir(os.path.join(temp_dir, "plots")))
                         if not noplot

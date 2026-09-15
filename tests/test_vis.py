@@ -52,10 +52,8 @@ class VisPipelineTest(unittest.TestCase):
             "freq_all": 1,
             "vis_format": "png",
         }
-        import logging
 
         self.data = config.load_config_params(local_args=self.data_params)
-        logging.info('>>>>>>>>>>>>>>>>>>> %s', str(self.data))
 
     def test_pipeline_dispatches_visualisations(self):
         visualisations = (
