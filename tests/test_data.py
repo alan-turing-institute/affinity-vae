@@ -2,6 +2,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from unittest import mock
 
 import lightning as lt
 import numpy as np
@@ -41,7 +42,7 @@ class DataTest(unittest.TestCase):
             "./eval",
             datatype="mrc",
             lim=None,
-            batch_s=32,
+            batch=32,
             eval=True,
             gaussian_blur=True,
             normalise=True,
@@ -77,7 +78,7 @@ class DataTest(unittest.TestCase):
             datatype="mrc",
             lim=None,
             splt=30,
-            batch_s=16,
+            batch=16,
             no_val_drop=True,
             eval=False,
             affinity_path="./train/affinity_fsc_10.csv",
@@ -116,7 +117,7 @@ class DataTest(unittest.TestCase):
             datatype="mrc",
             lim=None,
             splt=30,
-            batch_s=16,
+            batch=16,
             no_val_drop=True,
             eval=False,
             affinity_path="./train/affinity_fsc_10.csv",
@@ -131,3 +132,32 @@ class DataTest(unittest.TestCase):
 
         assert data_0.all() == data_0_1.all()
         assert data_1.all() == data_1_1.all()
+
+    def test_nonzero_rank_does_not_plot_data_visualisations(self):
+        """Only global rank zero creates plots during data loading."""
+        shutil.copytree(self.test_data, os.path.join(self.test_dir, "train"))
+
+        with (
+            mock.patch.object(
+                type(self.fabric),
+                "global_rank",
+                new_callable=mock.PropertyMock,
+                return_value=1,
+            ),
+            mock.patch("avae.data.plot_affinity_matrix") as plot_affinity,
+            mock.patch(
+                "avae.data.plot_classes_distribution"
+            ) as plot_distribution,
+        ):
+            load_data(
+                "./train",
+                datatype="mrc",
+                eval=False,
+                affinity_path="./train/affinity_fsc_10.csv",
+                vis_aff=True,
+                vis_his=True,
+                fabric=self.fabric,
+            )
+
+        plot_affinity.assert_not_called()
+        plot_distribution.assert_not_called()
